@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
