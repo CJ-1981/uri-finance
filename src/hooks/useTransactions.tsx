@@ -63,6 +63,32 @@ export const useTransactions = (projectId: string | undefined) => {
     await fetchTransactions();
   };
 
+  const updateTransaction = async (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date">>) => {
+    const { error } = await supabase
+      .from("transactions")
+      .update(updates)
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update transaction");
+      return;
+    }
+    toast.success("Transaction updated!");
+    await fetchTransactions();
+  };
+
+  const deleteTransaction = async (id: string) => {
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to delete transaction");
+      return;
+    }
+    toast.success("Transaction deleted");
+    await fetchTransactions();
+  };
+
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -73,5 +99,5 @@ export const useTransactions = (projectId: string | undefined) => {
 
   const balance = totalIncome - totalExpense;
 
-  return { transactions, loading, addTransaction, fetchTransactions, totalIncome, totalExpense, balance };
+  return { transactions, loading, addTransaction, updateTransaction, deleteTransaction, fetchTransactions, totalIncome, totalExpense, balance };
 };

@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, TrendingUp, TrendingDown } from "lucide-react";
-
-const CATEGORIES = ["Salary", "Freelance", "Sales", "Investment", "Food", "Transport", "Utilities", "Entertainment", "Shopping", "Health", "Education", "General"];
+import { Category } from "@/hooks/useCategories";
 
 interface Props {
+  categories: Category[];
   onAdd: (tx: {
     type: "income" | "expense";
     amount: number;
@@ -18,7 +18,7 @@ interface Props {
   }) => Promise<void>;
 }
 
-const AddTransactionSheet = ({ onAdd }: Props) => {
+const AddTransactionSheet = ({ categories, onAdd }: Props) => {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -57,7 +57,6 @@ const AddTransactionSheet = ({ onAdd }: Props) => {
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          {/* Type toggle */}
           <div className="flex gap-2">
             <button
               type="button"
@@ -105,8 +104,8 @@ const AddTransactionSheet = ({ onAdd }: Props) => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
