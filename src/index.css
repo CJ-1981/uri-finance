@@ -6,6 +6,62 @@
 
 @layer base {
   :root {
+    --background: 210 20% 98%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 168 60% 40%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 16% 93%;
+    --secondary-foreground: 220 16% 30%;
+
+    --muted: 210 14% 95%;
+    --muted-foreground: 215 12% 45%;
+
+    --accent: 168 40% 92%;
+    --accent-foreground: 168 60% 30%;
+
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    --ring: 168 60% 40%;
+
+    --radius: 0.75rem;
+
+    --income: 152 60% 40%;
+    --income-foreground: 152 80% 15%;
+    --expense: 0 72% 50%;
+    --expense-foreground: 0 80% 15%;
+
+    --chart-income: 152 60% 40%;
+    --chart-expense: 0 72% 50%;
+    --chart-1: 168 60% 40%;
+    --chart-2: 200 60% 45%;
+    --chart-3: 280 60% 55%;
+    --chart-4: 40 80% 50%;
+    --chart-5: 320 60% 50%;
+
+    --sidebar-background: 210 16% 96%;
+    --sidebar-foreground: 220 16% 30%;
+    --sidebar-primary: 168 60% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 14% 93%;
+    --sidebar-accent-foreground: 220 16% 30%;
+    --sidebar-border: 220 14% 88%;
+    --sidebar-ring: 168 60% 40%;
+
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  .dark {
     --background: 220 20% 7%;
     --foreground: 210 20% 92%;
 
@@ -34,8 +90,6 @@
     --input: 220 14% 18%;
     --ring: 168 60% 48%;
 
-    --radius: 0.75rem;
-
     --income: 152 60% 50%;
     --income-foreground: 152 80% 15%;
     --expense: 0 72% 58%;
@@ -57,8 +111,6 @@
     --sidebar-accent-foreground: 210 20% 80%;
     --sidebar-border: 220 14% 18%;
     --sidebar-ring: 168 60% 48%;
-
-    font-family: 'Space Grotesk', sans-serif;
   }
 }
 
