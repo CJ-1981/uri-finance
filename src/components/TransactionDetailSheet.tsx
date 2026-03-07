@@ -1,62 +1,78 @@
 import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, TrendingUp, TrendingDown } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { TrendingUp, TrendingDown, Trash2, Save } from "lucide-react";
+import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 
 interface Props {
+  transaction: Transaction | null;
   categories: Category[];
-  onAdd: (tx: {
-    type: "income" | "expense";
-    amount: number;
-    category: string;
-    description?: string;
-    transaction_date?: string;
-  }) => Promise<void>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date">>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-const AddTransactionSheet = ({ categories, onAdd }: Props) => {
-  const [open, setOpen] = useState(false);
+const TransactionDetailSheet = ({ transaction, categories, open, onOpenChange, onUpdate, onDelete }: Props) => {
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [submitting, setSubmitting] = useState(false);
+  const [date, setDate] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || Number(amount) <= 0) return;
-    setSubmitting(true);
-    await onAdd({
+  // Sync state when transaction changes
+  const resetForm = () => {
+    if (transaction) {
+      setType(transaction.type);
+      setAmount(String(transaction.amount));
+      setCategory(transaction.category);
+      setDescription(transaction.description || "");
+      setDate(transaction.transaction_date);
+    }
+  };
+
+  const handleOpenChange = (val: boolean) => {
+    if (val && transaction) resetForm();
+    onOpenChange(val);
+  };
+
+  const handleSave = async () => {
+    if (!transaction || !amount || Number(amount) <= 0) return;
+    setSaving(true);
+    await onUpdate(transaction.id, {
       type,
       amount: Number(amount),
       category,
-      description: description || undefined,
+      description: description || null,
       transaction_date: date,
     });
-    setSubmitting(false);
-    setAmount("");
-    setDescription("");
-    setOpen(false);
+    setSaving(false);
+    onOpenChange(false);
   };
 
+  const handleDelete = async () => {
+    if (!transaction) return;
+    await onDelete(transaction.id);
+    onOpenChange(false);
+  };
+
+  if (!transaction) return null;
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button size="icon" className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
-          <Plus className="h-6 w-6" />
-        </Button>
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8">
         <SheetHeader>
-          <SheetTitle className="text-foreground">Add Transaction</SheetTitle>
+          <SheetTitle className="text-foreground">Edit Transaction</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4">
+          {/* Type toggle */}
           <div className="flex gap-2">
             <button
               type="button"
@@ -90,8 +106,6 @@ const AddTransactionSheet = ({ categories, onAdd }: Props) => {
               min="0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              required
               className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
             />
           </div>
@@ -122,7 +136,7 @@ const AddTransactionSheet = ({ categories, onAdd }: Props) => {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">Description (optional)</Label>
+            <Label className="text-muted-foreground text-xs">Description</Label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -131,17 +145,38 @@ const AddTransactionSheet = ({ categories, onAdd }: Props) => {
             />
           </div>
 
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-          >
-            {submitting ? "Adding..." : "Add Transaction"}
-          </Button>
-        </form>
+          <div className="flex gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="h-12 px-4">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
+                  <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+            >
+              <Save className="h-4 w-4 mr-1" />
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
       </SheetContent>
     </Sheet>
   );
 };
 
-export default AddTransactionSheet;
+export default TransactionDetailSheet;

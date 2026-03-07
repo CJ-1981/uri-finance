@@ -4,9 +4,10 @@ import { format, parseISO } from "date-fns";
 
 interface Props {
   transactions: Transaction[];
+  onSelect: (tx: Transaction) => void;
 }
 
-const TransactionList = ({ transactions }: Props) => {
+const TransactionList = ({ transactions, onSelect }: Props) => {
   if (transactions.length === 0) {
     return (
       <div className="py-12 text-center text-muted-foreground text-sm">
@@ -20,7 +21,8 @@ const TransactionList = ({ transactions }: Props) => {
       {transactions.slice(0, 20).map((tx, i) => (
         <div
           key={tx.id}
-          className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3 animate-fade-in"
+          onClick={() => onSelect(tx)}
+          className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3 animate-fade-in cursor-pointer active:scale-[0.98] transition-transform"
           style={{ animationDelay: `${i * 50}ms` }}
         >
           <div

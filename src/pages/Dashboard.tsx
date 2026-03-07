@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
-import { useTransactions } from "@/hooks/useTransactions";
+import { useTransactions, Transaction } from "@/hooks/useTransactions";
+import { useCategories } from "@/hooks/useCategories";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
+import TransactionDetailSheet from "@/components/TransactionDetailSheet";
+import CategoryManager from "@/components/CategoryManager";
 import FinanceCharts from "@/components/FinanceCharts";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List } from "lucide-react";
@@ -12,8 +15,16 @@ import { LogOut, BarChart3, List } from "lucide-react";
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
-  const { transactions, addTransaction, totalIncome, totalExpense, balance } = useTransactions(activeProject?.id);
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, totalIncome, totalExpense, balance } = useTransactions(activeProject?.id);
+  const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const [view, setView] = useState<"list" | "charts">("list");
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const handleSelectTx = (tx: Transaction) => {
+    setSelectedTx(tx);
+    setDetailOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -27,9 +38,18 @@ const Dashboard = () => {
             onCreate={createProject}
             onJoin={joinProject}
           />
-          <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {activeProject && (
+              <CategoryManager
+                categories={categories}
+                onAdd={addCategory}
+                onDelete={deleteCategory}
+              />
+            )}
+            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -90,13 +110,23 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={transactions} />
+              <TransactionList transactions={transactions} onSelect={handleSelectTx} />
             ) : (
               <FinanceCharts transactions={transactions} />
             )}
 
             {/* FAB */}
-            <AddTransactionSheet onAdd={addTransaction} />
+            <AddTransactionSheet categories={categories} onAdd={addTransaction} />
+
+            {/* Detail sheet */}
+            <TransactionDetailSheet
+              transaction={selectedTx}
+              categories={categories}
+              open={detailOpen}
+              onOpenChange={setDetailOpen}
+              onUpdate={updateTransaction}
+              onDelete={deleteTransaction}
+            />
           </div>
         )}
       </main>
