@@ -10,7 +10,8 @@ import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import CategoryManager from "@/components/CategoryManager";
 import FinanceCharts from "@/components/FinanceCharts";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
