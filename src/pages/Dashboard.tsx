@@ -10,7 +10,8 @@ import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import CategoryManager from "@/components/CategoryManager";
 import FinanceCharts from "@/components/FinanceCharts";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -20,6 +21,7 @@ const Dashboard = () => {
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
@@ -46,6 +48,9 @@ const Dashboard = () => {
                 onDelete={deleteCategory}
               />
             )}
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-muted-foreground hover:text-foreground">
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
               <LogOut className="h-4 w-4" />
             </Button>
