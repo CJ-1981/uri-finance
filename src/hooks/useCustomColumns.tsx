@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+export type ColumnType = "numeric" | "text";
+
 export interface CustomColumn {
   id: string;
   project_id: string;
   name: string;
+  column_type: ColumnType;
   created_at: string;
 }
 
@@ -29,11 +32,11 @@ export const useCustomColumns = (projectId: string | undefined) => {
     fetchColumns();
   }, [fetchColumns]);
 
-  const addColumn = async (name: string) => {
+  const addColumn = async (name: string, columnType: ColumnType = "numeric") => {
     if (!projectId || !name.trim()) return;
     const { error } = await supabase
       .from("custom_columns")
-      .insert({ project_id: projectId, name: name.trim() });
+      .insert({ project_id: projectId, name: name.trim(), column_type: columnType });
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Column already exists" : "Failed to add column");
       return;

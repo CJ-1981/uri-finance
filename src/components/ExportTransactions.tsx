@@ -36,9 +36,10 @@ const downloadFile = (content: string, filename: string, mime: string, successMs
   toast.success(`${successMsg} ${filename}`);
 };
 
-const getCustomVal = (tx: Transaction, colName: string) => {
-  const val = tx.custom_values?.[colName];
-  return val != null ? Number(val).toFixed(2) : "";
+const getCustomVal = (tx: Transaction, col: CustomColumn) => {
+  const val = tx.custom_values?.[col.name];
+  if (val == null) return "";
+  return col.column_type === "numeric" ? Number(val).toFixed(2) : String(val);
 };
 
 const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
@@ -46,7 +47,7 @@ const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
   const rows = transactions.map((tx) => {
     const base = `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`;
-    const custom = cols.map((c) => getCustomVal(tx, c.name)).join(",");
+    const custom = cols.map((c) => `"${getCustomVal(tx, c)}"`).join(",");
     return cols.length ? `${base},${custom}` : base;
   });
   downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv", msg);
@@ -56,7 +57,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   const colTh = cols.map((c) => `<th>${c.name}</th>`).join("");
   const header = `<tr><th>${h.date}</th><th>${h.type}</th><th>${h.category}</th><th>${h.description}</th><th>${h.amount}</th>${colTh}</tr>`;
   const rows = transactions.map((tx) => {
-    const colTd = cols.map((c) => `<td>${getCustomVal(tx, c.name)}</td>`).join("");
+    const colTd = cols.map((c) => `<td>${getCustomVal(tx, c)}</td>`).join("");
     return `<tr><td>${formatDate(tx)}</td><td>${tx.type}</td><td>${tx.category}</td><td>${tx.description || ""}</td><td>${formatAmount(tx)}</td>${colTd}</tr>`;
   }).join("");
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>${header}${rows}</table></body></html>`;
@@ -69,7 +70,7 @@ const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: Cus
   const colSep = cols.map(() => " ---: |").join("");
   const sep = `| --- | --- | --- | --- | ---: |${colSep}`;
   const rows = transactions.map((tx) => {
-    const colVals = cols.map((c) => ` ${getCustomVal(tx, c.name) || "-"} |`).join("");
+    const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
     return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
   });
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);

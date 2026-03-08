@@ -40,11 +40,13 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       { key: "income" as MetricKey, label: t("tx.income"), color: "hsl(152, 60%, 50%)" },
       { key: "expense" as MetricKey, label: t("tx.expense"), color: "hsl(0, 72%, 58%)" },
     ];
-    const custom = customColumns.map((col, i) => ({
-      key: col.name as MetricKey,
-      label: col.name,
-      color: COLORS[(i + 2) % COLORS.length],
-    }));
+    const custom = customColumns
+      .filter((col) => col.column_type === "numeric")
+      .map((col, i) => ({
+        key: col.name as MetricKey,
+        label: col.name,
+        color: COLORS[(i + 2) % COLORS.length],
+      }));
     return [...base, ...custom];
   }, [customColumns, t]);
 
@@ -75,7 +77,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       row.income = monthTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
       row.expense = monthTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
 
-      for (const col of customColumns) {
+      for (const col of customColumns.filter((c) => c.column_type === "numeric")) {
         row[col.name] = monthTxs.reduce((s, tx) => {
           const v = tx.custom_values?.[col.name];
           return s + (v != null ? Number(v) : 0);

@@ -66,8 +66,12 @@ const TransactionList = ({ transactions, onSelect, headers, customColumns }: Pro
           {customColumns.map((col) => {
             const val = tx.custom_values?.[col.name];
             return (
-              <span key={col.id} className="hidden sm:block w-20 text-right text-xs text-muted-foreground">
-                {val != null ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}
+              <span key={col.id} className="hidden sm:block w-20 text-right text-xs text-muted-foreground truncate">
+                {val != null
+                  ? col.column_type === "numeric"
+                    ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 })
+                    : String(val)
+                  : "—"}
               </span>
             );
           })}

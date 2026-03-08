@@ -56,10 +56,15 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const handleSave = async () => {
     if (!transaction || !amount || Number(amount) <= 0) return;
     setSaving(true);
-    const cv: Record<string, number> = {};
+    const cv: Record<string, number | string> = {};
     for (const col of customColumns) {
       const val = customValues[col.name];
-      if (val && !isNaN(Number(val))) cv[col.name] = Number(val);
+      if (!val) continue;
+      if (col.column_type === "numeric") {
+        if (!isNaN(Number(val))) cv[col.name] = Number(val);
+      } else {
+        cv[col.name] = val;
+      }
     }
     await onUpdate(transaction.id, {
       type,
@@ -163,11 +168,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 <div key={col.id} className="space-y-2">
                   <Label className="text-muted-foreground text-xs">{col.name}</Label>
                   <Input
-                    type="number"
-                    step="0.01"
+                    type={col.column_type === "numeric" ? "number" : "text"}
+                    step={col.column_type === "numeric" ? "0.01" : undefined}
                     value={customValues[col.name] || ""}
                     onChange={(e) => setCustomValues((prev) => ({ ...prev, [col.name]: e.target.value }))}
-                    placeholder="0.00"
+                    placeholder={col.column_type === "numeric" ? "0.00" : ""}
                     className="bg-muted/50 border-border/50"
                   />
                 </div>

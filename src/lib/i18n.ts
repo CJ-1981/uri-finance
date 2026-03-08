@@ -81,8 +81,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.columnHeaders": "Column Headers",
     "admin.columnHeadersDesc": "Customize transaction column names for display and exports.",
     "admin.reset": "Reset",
-    "admin.customColumns": "Custom Numeric Columns",
-    "admin.customColumnsDesc": "Add extra numeric fields to transactions (e.g. Tax, Discount, Quantity).",
+    "admin.customColumns": "Custom Columns",
+    "admin.customColumnsDesc": "Add extra fields to transactions — numeric (Tax, Discount) or text (Notes, Reference).",
     "admin.categories": "Categories",
     "admin.categoriesDesc": "Manage transaction categories for this project.",
     "admin.projectInfo": "Project Info",
@@ -93,6 +93,9 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Custom columns
     "cc.placeholder": "Column name (e.g. Tax, Discount)",
+    "cc.textPlaceholder": "Column name (e.g. Notes, Reference)",
+    "cc.numeric": "Numeric",
+    "cc.text": "Text",
     "cc.noColumns": "No custom columns yet.",
     "cc.added": "Column added",
     "cc.duplicate": "Column already exists",
@@ -214,8 +217,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.columnHeaders": "열 이름",
     "admin.columnHeadersDesc": "표시 및 내보내기에 사용할 거래 열 이름을 설정하세요.",
     "admin.reset": "초기화",
-    "admin.customColumns": "사용자 정의 숫자 열",
-    "admin.customColumnsDesc": "거래에 추가 숫자 필드를 추가하세요 (예: 세금, 할인, 수량).",
+    "admin.customColumns": "사용자 정의 열",
+    "admin.customColumnsDesc": "거래에 추가 필드를 추가하세요 — 숫자 (세금, 할인) 또는 텍스트 (메모, 참조).",
     "admin.categories": "카테고리",
     "admin.categoriesDesc": "이 프로젝트의 거래 카테고리를 관리하세요.",
     "admin.projectInfo": "프로젝트 정보",
@@ -226,6 +229,9 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Custom columns
     "cc.placeholder": "열 이름 (예: 세금, 할인)",
+    "cc.textPlaceholder": "열 이름 (예: 메모, 참조)",
+    "cc.numeric": "숫자",
+    "cc.text": "텍스트",
     "cc.noColumns": "사용자 정의 열이 없습니다.",
     "cc.added": "열이 추가되었습니다",
     "cc.duplicate": "이미 존재하는 열입니다",

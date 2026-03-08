@@ -16,18 +16,21 @@ export type Database = {
     Tables: {
       custom_columns: {
         Row: {
+          column_type: string
           created_at: string
           id: string
           name: string
           project_id: string
         }
         Insert: {
+          column_type?: string
           created_at?: string
           id?: string
           name: string
           project_id: string
         }
         Update: {
+          column_type?: string
           created_at?: string
           id?: string
           name?: string
