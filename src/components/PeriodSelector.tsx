@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { startOfDay, subDays, subMonths, format, parseISO } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/hooks/useI18n";
@@ -23,6 +22,7 @@ interface Props {
 
 const PeriodSelector = ({ period, onPeriodChange, customRange, onCustomRangeChange }: Props) => {
   const { t } = useI18n();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const presets: { key: PeriodKey; label: string }[] = [
@@ -34,75 +34,77 @@ const PeriodSelector = ({ period, onPeriodChange, customRange, onCustomRangeChan
     { key: "custom", label: t("period.custom") },
   ];
 
-  const handlePreset = (key: PeriodKey) => {
-    if (key === "custom") {
-      setCalendarOpen(true);
+  const activeLabel = useMemo(() => {
+    if (period === "custom" && customRange.from) {
+      const from = format(customRange.from, "MMM d");
+      const to = customRange.to ? format(customRange.to, "MMM d") : "…";
+      return `${from} – ${to}`;
     }
-    onPeriodChange(key);
+    return presets.find((p) => p.key === period)?.label || t("period.all");
+  }, [period, customRange, presets, t]);
+
+  const handleSelect = (key: PeriodKey) => {
+    if (key === "custom") {
+      setMenuOpen(false);
+      setCalendarOpen(true);
+      onPeriodChange("custom");
+    } else {
+      onPeriodChange(key);
+      setMenuOpen(false);
+    }
   };
 
-  const customLabel = useMemo(() => {
-    if (period !== "custom") return t("period.custom");
-    const from = customRange.from ? format(customRange.from, "MMM d") : "…";
-    const to = customRange.to ? format(customRange.to, "MMM d") : "…";
-    return `${from} – ${to}`;
-  }, [period, customRange, t]);
-
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {presets.map((p) => {
-        if (p.key === "custom") {
-          return (
-            <Popover key="custom" open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  onClick={() => handlePreset("custom")}
-                  className={cn(
-                    "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                    period === "custom"
-                      ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                      : "bg-muted/30 text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="h-3 w-3" />
-                  {customLabel}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="range"
-                  selected={{ from: customRange.from, to: customRange.to }}
-                  onSelect={(range) => {
-                    onCustomRangeChange({ from: range?.from, to: range?.to });
-                    onPeriodChange("custom");
-                    if (range?.from && range?.to) {
-                      setCalendarOpen(false);
-                    }
-                  }}
-                  numberOfMonths={1}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-          );
-        }
-
-        return (
-          <button
-            key={p.key}
-            onClick={() => handlePreset(p.key)}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-              period === p.key
-                ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                : "bg-muted/30 text-muted-foreground"
-            )}
-          >
-            {p.label}
+    <div className="flex items-center gap-2">
+      {/* Main period dropdown */}
+      <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+        <PopoverTrigger asChild>
+          <button className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
+            <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            {activeLabel}
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
-        );
-      })}
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-36 p-1 pointer-events-auto">
+          {presets.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => handleSelect(p.key)}
+              className={cn(
+                "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors",
+                period === p.key
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground hover:bg-muted"
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
+        </PopoverContent>
+      </Popover>
+
+      {/* Calendar popover for custom range */}
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <PopoverTrigger asChild>
+          <span />
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="range"
+            selected={{ from: customRange.from, to: customRange.to }}
+            onSelect={(range) => {
+              onCustomRangeChange({ from: range?.from, to: range?.to });
+              onPeriodChange("custom");
+              if (range?.from && range?.to) {
+                setCalendarOpen(false);
+              }
+            }}
+            numberOfMonths={1}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };
@@ -124,7 +126,7 @@ export const getStartDate = (period: PeriodKey, customFrom?: Date): Date | undef
 
 export const getEndDate = (period: PeriodKey, customTo?: Date): Date | undefined => {
   if (period === "custom") return customTo;
-  return undefined; // up to today for presets
+  return undefined;
 };
 
 export const filterByPeriod = <T extends { transaction_date: string }>(
