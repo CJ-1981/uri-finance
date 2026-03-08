@@ -143,6 +143,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.transferred": "Ownership transferred",
     "admin.transferFailed": "Failed to transfer ownership",
     "admin.simulating": "Simulating as {role}",
+    "admin.save": "Save",
+    "admin.saving": "Saving...",
 
     // Custom columns
     "cc.placeholder": "Column name (e.g. Tax, Discount)",
