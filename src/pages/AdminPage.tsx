@@ -329,6 +329,55 @@ const AdminPage = () => {
             </div>
           </div>
         </section>
+
+        {/* Database Stats */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              {t("admin.dbStats")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("admin.dbStatsDesc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
+            {dbLoading ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t("admin.dbLoading")}</p>
+            ) : !dbStats ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t("admin.dbError")}</p>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{t("admin.dbSize")}</span>
+                    <span className="font-mono text-foreground">{dbStats.db_size_pretty}</span>
+                  </div>
+                  <Progress
+                    value={Math.min((dbStats.db_size / DB_MAX_BYTES) * 100, 100)}
+                    className="h-2"
+                  />
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    {t("admin.dbMaxSize")}
+                  </p>
+                </div>
+
+                {dbStats.tables && dbStats.tables.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">{t("admin.dbTables")}</p>
+                    {dbStats.tables.map((tbl: any) => (
+                      <div key={tbl.table_name} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                        <span className="text-sm text-foreground font-mono">{tbl.table_name}</span>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{Math.max(0, tbl.row_count)} {t("admin.dbRows")}</span>
+                          <span className="font-mono">{tbl.size}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </section>
       </main>
     </div>
   );
