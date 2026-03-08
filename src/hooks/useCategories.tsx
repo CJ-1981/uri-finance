@@ -88,6 +88,18 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
+  const updateCategoryIcon = async (id: string, icon: string) => {
+    const { error } = await supabase
+      .from("project_categories")
+      .update({ icon } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update icon");
+      return;
+    }
+    await fetchCategories();
+  };
+
   const reorderCategory = async (id: string, direction: "up" | "down") => {
     const idx = categories.findIndex(c => c.id === id);
     if (idx < 0) return;
