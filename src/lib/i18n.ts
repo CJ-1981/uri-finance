@@ -122,8 +122,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.inviteUsed": "Used",
     "admin.inviteUnused": "Available",
     "admin.owner": "Owner",
+    "admin.admin": "Admin",
     "admin.member": "Member",
     "admin.banned": "You have been banned from this project.",
+    "admin.promoteAdmin": "Promote to Admin",
+    "admin.demoteAdmin": "Demote to Member",
+    "admin.promoted": "Role updated",
+    "admin.promoteFailed": "Failed to update role",
+    "admin.transferOwnership": "Transfer Ownership",
+    "admin.transferConfirm": "Are you sure you want to transfer ownership to this member? You will become an admin.",
+    "admin.transferred": "Ownership transferred",
+    "admin.transferFailed": "Failed to transfer ownership",
 
     // Custom columns
     "cc.placeholder": "Column name (e.g. Tax, Discount)",
