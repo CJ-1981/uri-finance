@@ -85,7 +85,7 @@ function saveCacheCounts(counts: Counts, currency: string) {
   localStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, currency, counts }));
 }
 
-const CashCalculator = ({ currency }: CashCalculatorProps) => {
+const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => {
   const { t } = useI18n();
   const denoms = DENOMINATIONS[currency] || DEFAULT_DENOMS;
   const allDenoms = [...denoms.bills, ...denoms.coins];
