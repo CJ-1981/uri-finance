@@ -309,6 +309,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </Button>
           </div>
         </form>
+        </div>
       </SheetContent>
     </Sheet>
   );
