@@ -25,9 +25,11 @@ interface Props {
   /** For multi-edit: full list of selected transactions */
   transactionList?: Transaction[];
   onNavigate?: (tx: Transaction) => void;
+  /** All transactions for historical suggestions */
+  allTransactions?: Transaction[];
 }
 
-const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate }: Props) => {
+const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions }: Props) => {
   const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
