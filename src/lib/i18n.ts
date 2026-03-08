@@ -294,6 +294,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cash.export": "Export MD",
     "cash.cleared": "All counts cleared",
     "cash.exported": "Markdown exported",
+    "cash.copy": "Copy",
+    "cash.copied": "Copied to clipboard",
 
     // Language
     "lang.label": "EN",
