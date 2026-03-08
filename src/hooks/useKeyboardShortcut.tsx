@@ -4,14 +4,17 @@ const STORAGE_KEY = "keyboard_shortcuts";
 
 export interface ShortcutConfig {
   addTransaction: string;
+  addTransactionAlt: string;
 }
 
 const DEFAULT_SHORTCUTS: ShortcutConfig = {
   addTransaction: "n",
+  addTransactionAlt: "",
 };
 
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   addTransaction: "shortcut.addTransaction",
+  addTransactionAlt: "shortcut.addTransactionAlt",
 };
 
 export const getShortcuts = (): ShortcutConfig => {
@@ -29,19 +32,27 @@ export const saveShortcuts = (shortcuts: ShortcutConfig) => {
 export const useKeyboardShortcut = (
   action: keyof ShortcutConfig,
   callback: () => void,
-  enabled = true
+  enabled = true,
+  /** Also listen for this alternate action's key */
+  altAction?: keyof ShortcutConfig
 ) => {
-  const [key, setKey] = useState(() => getShortcuts()[action]);
+  const [keys, setKeys] = useState(() => {
+    const s = getShortcuts();
+    return { primary: s[action], alt: altAction ? s[altAction] : "" };
+  });
 
   useEffect(() => {
-    const refresh = () => setKey(getShortcuts()[action]);
+    const refresh = () => {
+      const s = getShortcuts();
+      setKeys({ primary: s[action], alt: altAction ? s[altAction] : "" });
+    };
     window.addEventListener("storage", refresh);
     window.addEventListener("shortcut-updated", refresh);
     return () => {
       window.removeEventListener("storage", refresh);
       window.removeEventListener("shortcut-updated", refresh);
     };
-  }, [action]);
+  }, [action, altAction]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -50,14 +61,19 @@ export const useKeyboardShortcut = (
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if ((e.target as HTMLElement)?.isContentEditable) return;
 
-      if (e.key.toLowerCase() === key.toLowerCase() && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      const pressed = e.key.toLowerCase();
+      const matches =
+        (keys.primary && pressed === keys.primary.toLowerCase()) ||
+        (keys.alt && pressed === keys.alt.toLowerCase());
+
+      if (matches && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         callback();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [key, callback, enabled]);
+  }, [keys, callback, enabled]);
 
-  return key;
+  return keys.primary;
 };
