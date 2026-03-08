@@ -70,7 +70,7 @@ const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: Cus
   const colSep = cols.map(() => " ---: |").join("");
   const sep = `| --- | --- | --- | --- | ---: |${colSep}`;
   const rows = transactions.map((tx) => {
-    const colVals = cols.map((c) => ` ${getCustomVal(tx, c.name) || "-"} |`).join("");
+    const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
     return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
   });
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);
