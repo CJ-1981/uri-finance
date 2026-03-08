@@ -23,8 +23,23 @@ import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+const getAmountFontSize = (text: string) => {
+  const len = text.length;
+  if (len <= 10) return "text-lg";
+  if (len <= 13) return "text-base";
+  if (len <= 16) return "text-sm";
+  return "text-xs";
+};
 
-const Dashboard = () => {
+const AmountText = ({ value, currency, className }: { value: number; currency: string; className?: string }) => {
+  const formatted = `${currency} ${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+  return (
+    <p className={`mt-1 font-bold ${getAmountFontSize(formatted)} ${className || ""}`}>
+      {formatted}
+    </p>
+  );
+};
+
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions } = useTransactions(activeProject?.id);
