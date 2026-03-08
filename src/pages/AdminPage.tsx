@@ -207,6 +207,7 @@ const AdminPage = () => {
                       <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                         {isOwnerMember && <Crown className="h-3 w-3 text-amber-500" />}
                         {isAdmin && <Shield className="h-3 w-3 text-primary" />}
+                        {isViewer && <EyeOff className="h-3 w-3 text-muted-foreground" />}
                         {roleLabel}
                       </p>
                     </div>
@@ -216,8 +217,8 @@ const AdminPage = () => {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-primary"
-                          onClick={() => handleToggleAdmin(m.id, m.role)}
-                          title={isAdmin ? t("admin.demoteAdmin") : t("admin.promoteAdmin")}
+                          onClick={() => handleCycleRole(m.id, m.role)}
+                          title={t("admin.cycleRole")}
                         >
                           <Shield className="h-3.5 w-3.5" />
                         </Button>
