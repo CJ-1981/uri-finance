@@ -180,7 +180,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="bg-muted/50 border-border/50 min-w-0 w-full px-2 text-sm [&::-webkit-calendar-picker-indicator]{opacity-100}"
+                className="bg-muted/50 border-border/50 min-w-0 w-full px-1.5 text-xs [&::-webkit-calendar-picker-indicator]:w-4 [&::-webkit-calendar-picker-indicator]:h-4 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-date-and-time-value]:text-left"
               />
             </div>
             <div className="space-y-2">
