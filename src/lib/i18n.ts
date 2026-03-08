@@ -150,6 +150,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cc.noColumns": "No custom columns yet.",
     "cc.maskedOn": "Hidden from viewers (click to show)",
     "cc.maskedOff": "Visible to viewers (click to hide)",
+    "cc.requiredOn": "Required (click to make optional)",
+    "cc.requiredOff": "Optional (click to make required)",
     "cc.added": "Column added",
     "cc.duplicate": "Column already exists",
     "cc.addFailed": "Failed to add column",
