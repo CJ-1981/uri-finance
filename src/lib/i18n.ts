@@ -538,10 +538,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Shortcuts
     "shortcut.title": "키보드 단축키",
     "shortcut.addTransaction": "거래 추가",
+    "shortcut.prevTransaction": "이전 거래",
+    "shortcut.nextTransaction": "다음 거래",
     "shortcut.pressKey": "키를 누르세요...",
     "shortcut.save": "저장",
     "shortcut.saved": "단축키가 저장되었습니다",
-    "shortcut.hint": "대시보드에서 이 키를 누르면 거래 추가 폼이 빠르게 열립니다.",
+    "shortcut.hint": "대시보드에서 이 키를 눌러 빠르게 작업을 수행합니다.",
+    "shortcut.arrowHint": "상세 보기에서 화살표 키(← →)로 거래 간 이동할 수 있습니다.",
 
     // Language
     "lang.label": "한국어",
