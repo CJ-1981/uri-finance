@@ -8,6 +8,7 @@ import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { useI18n } from "@/hooks/useI18n";
 import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
+import TrashManager from "@/components/TrashManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
