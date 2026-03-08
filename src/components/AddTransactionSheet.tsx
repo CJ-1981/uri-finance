@@ -11,10 +11,13 @@ import { Transaction } from "@/hooks/useTransactions";
 import { useI18n } from "@/hooks/useI18n";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
+
 interface Props {
   categories: Category[];
   customColumns: CustomColumn[];
   transactions: Transaction[];
+  projectCurrency?: string;
   onAdd: (tx: {
     type: "income" | "expense";
     amount: number;
@@ -22,16 +25,18 @@ interface Props {
     description?: string;
     transaction_date?: string;
     custom_values?: Record<string, number | string>;
+    currency?: string;
   }) => Promise<void>;
 }
 
-const AddTransactionSheet = ({ categories, customColumns, transactions, onAdd }: Props) => {
+const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, onAdd }: Props) => {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [currency, setCurrency] = useState(projectCurrency || "USD");
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
@@ -79,6 +84,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, onAdd }:
       description: description || undefined,
       transaction_date: date,
       custom_values: Object.keys(cv).length > 0 ? cv : undefined,
+      currency,
     });
     setSubmitting(false);
     return true;
@@ -154,7 +160,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, onAdd }:
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory}>
@@ -176,6 +182,19 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, onAdd }:
                 onChange={(e) => setDate(e.target.value)}
                 className="bg-muted/50 border-border/50"
               />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="bg-muted/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

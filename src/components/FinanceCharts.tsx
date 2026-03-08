@@ -20,6 +20,7 @@ interface Props {
   period: PeriodKey;
   customRange: DateRange;
   isViewer?: boolean;
+  projectCurrency?: string;
 }
 
 const COLORS = [
@@ -112,8 +113,9 @@ function GroupSelector({ options, value, onChange }: {
   );
 }
 
-const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer }: Props) => {
+const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer, projectCurrency = "USD" }: Props) => {
   const { t } = useI18n();
+  const fmt = (value: number) => `${projectCurrency} ${value.toLocaleString()}`;
 
   // Filter out masked columns for viewers
   const visibleColumns = useMemo(() =>
@@ -223,7 +225,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
             </defs>
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
-            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
             {trendData.series.map((s) => (
               <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.color} strokeWidth={2} fill={`url(#grad-trend-${s.key})`} name={s.key} />
             ))}
@@ -249,7 +251,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
           <BarChart data={cumulativeData.data} barGap={2}>
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
-            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
             {cumulativeData.series.map((s) => (
               <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} name={s.key} />
             ))}
@@ -279,14 +281,14 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             {pieData.map((c, i) => (
               <div key={c.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                {c.name} <span className="text-foreground font-medium">${c.value.toLocaleString()}</span>
+                {c.name} <span className="text-foreground font-medium">{fmt(c.value)}</span>
               </div>
             ))}
           </div>

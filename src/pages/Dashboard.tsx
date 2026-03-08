@@ -55,15 +55,36 @@ const Dashboard = () => {
     [transactions, period, customRange]
   );
 
-  const totalIncome = useMemo(
-    () => filtered.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0),
-    [filtered]
-  );
-  const totalExpense = useMemo(
-    () => filtered.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0),
-    [filtered]
-  );
+  const projectCurrency = activeProject?.currency || "USD";
+
+  // Group filtered transactions by currency
+  const currencyTotals = useMemo(() => {
+    const map: Record<string, { income: number; expense: number }> = {};
+    filtered.forEach((tx) => {
+      const cur = tx.currency || projectCurrency;
+      if (!map[cur]) map[cur] = { income: 0, expense: 0 };
+      if (tx.type === "income") map[cur].income += Number(tx.amount);
+      else map[cur].expense += Number(tx.amount);
+    });
+    return map;
+  }, [filtered, projectCurrency]);
+
+  // Primary currency totals for the main balance card
+  const totalIncome = currencyTotals[projectCurrency]?.income || 0;
+  const totalExpense = currencyTotals[projectCurrency]?.expense || 0;
   const balance = totalIncome - totalExpense;
+
+  // Other currencies
+  const otherCurrencies = useMemo(
+    () => Object.keys(currencyTotals).filter((c) => c !== projectCurrency).sort(),
+    [currencyTotals, projectCurrency]
+  );
+
+  // Filter chart transactions to project currency only
+  const chartTransactions = useMemo(
+    () => filtered.filter((tx) => (tx.currency || projectCurrency) === projectCurrency),
+    [filtered, projectCurrency]
+  );
 
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
@@ -189,27 +210,48 @@ const Dashboard = () => {
               onCustomRangeChange={setCustomRange}
             />
 
-            {/* Balance cards */}
+            {/* Balance cards - project currency */}
             <div className="grid grid-cols-3 gap-2">
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.balance")}</p>
                 <p className={`mt-1 text-lg font-bold ${balance >= 0 ? "text-income" : "text-expense"}`}>
-                  ${Math.abs(balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  {projectCurrency} {Math.abs(balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.income")}</p>
                 <p className="mt-1 text-lg font-bold text-income">
-                  ${totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  {projectCurrency} {totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.expenses")}</p>
                 <p className="mt-1 text-lg font-bold text-expense">
-                  ${totalExpense.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  {projectCurrency} {totalExpense.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
+
+            {/* Other currency totals */}
+            {otherCurrencies.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {otherCurrencies.map((cur) => {
+                  const t2 = currencyTotals[cur];
+                  const bal = t2.income - t2.expense;
+                  return (
+                    <div key={cur} className="glass-card p-2.5 text-center">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{cur}</p>
+                      <p className={`mt-0.5 text-sm font-bold ${bal >= 0 ? "text-income" : "text-expense"}`}>
+                        {bal >= 0 ? "+" : "-"}{Math.abs(bal).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground">
+                        +{t2.income.toLocaleString()} / -{t2.expense.toLocaleString()}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* View toggle */}
             <div className="flex gap-1 rounded-xl bg-muted/30 p-1">
@@ -235,11 +277,11 @@ const Dashboard = () => {
             {view === "list" ? (
               <TransactionList transactions={filtered} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} isViewer={isViewer} />
             ) : (
-              <FinanceCharts transactions={filtered} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} />
+              <FinanceCharts transactions={chartTransactions} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} projectCurrency={projectCurrency} />
             )}
 
             {/* FAB - hidden for viewers */}
-            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} />}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} />}
 
             {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet
