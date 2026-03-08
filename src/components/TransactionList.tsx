@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
-import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
@@ -9,6 +9,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props {
   transactions: Transaction[];
@@ -21,6 +22,8 @@ interface Props {
   isViewer?: boolean;
 }
 
+const PAGE_SIZES = [10, 25, 50, 100] as const;
+
 const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -28,8 +31,9 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(25);
 
-  // Build a map of category name -> icon for quick lookup
   const categoryIconMap = useMemo(() => {
     const map = new Map<string, string>();
     categories?.forEach(cat => {
@@ -38,13 +42,11 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
     return map;
   }, [categories]);
 
-  // Determine which custom column names are masked (hidden from viewers)
   const maskedColumnNames = useMemo(() => {
     if (!isViewer) return new Set<string>();
     return new Set(customColumns.filter(col => col.masked).map(col => col.name));
   }, [customColumns, isViewer]);
 
-  // Filter transactions by search query matching any text field
   const filteredTransactions = useMemo(() => {
     if (!searchQuery.trim()) return transactions;
     const q = searchQuery.toLowerCase();
@@ -55,7 +57,6 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
       if (tx.currency?.toLowerCase().includes(q)) return true;
       if (tx.transaction_date.includes(q)) return true;
       if (String(tx.amount).includes(q)) return true;
-      // Search custom values — skip masked columns for viewers
       if (tx.custom_values) {
         for (const [key, val] of Object.entries(tx.custom_values)) {
           if (maskedColumnNames.has(key)) continue;
@@ -65,6 +66,16 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
       return false;
     });
   }, [transactions, searchQuery, maskedColumnNames]);
+
+  // Reset page when search or data changes
+  const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  if (safePage !== page) setPage(safePage);
+
+  const paginatedTransactions = useMemo(() => {
+    const start = safePage * pageSize;
+    return filteredTransactions.slice(start, start + pageSize);
+  }, [filteredTransactions, safePage, pageSize]);
 
   const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
 
@@ -79,7 +90,7 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
   };
 
   const toggleAll = () => {
-    const selectableIds = filteredTransactions.slice(0, 20).filter((tx) => ownTxIds.has(tx.id)).map((tx) => tx.id);
+    const selectableIds = paginatedTransactions.filter((tx) => ownTxIds.has(tx.id)).map((tx) => tx.id);
     if (selected.size === selectableIds.length) {
       setSelected(new Set());
     } else {
@@ -119,7 +130,7 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
           placeholder={t("tx.search") || "Search transactions..."}
           className="pl-8 h-8 text-sm bg-muted/30 border-border/50"
         />
@@ -172,7 +183,6 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
                 <CheckSquare className="h-3.5 w-3.5" />
               </Button>
             )}
-            {/* Icon spacer */}
             <div className="w-10 shrink-0 hidden sm:block" />
             <span className="flex-1 min-w-0 truncate">{headers.description}</span>
             <span className="hidden sm:block w-24 text-right shrink-0">{headers.category}</span>
@@ -184,7 +194,7 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
         )}
       </div>
 
-      {filteredTransactions.slice(0, 20).map((tx, i) => (
+      {paginatedTransactions.map((tx, i) => (
         <div
           key={tx.id}
           onClick={() => selectMode ? toggleSelect(tx.id) : onSelect(tx)}
@@ -261,6 +271,48 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
           </p>
         </div>
       ))}
+
+      {/* Pagination controls */}
+      {filteredTransactions.length > 0 && (
+        <div className="flex items-center justify-between px-2 pt-2 pb-1">
+          <div className="flex items-center gap-2">
+            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(0); }}>
+              <SelectTrigger className="h-7 w-[70px] text-xs bg-muted/30 border-border/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZES.map((s) => (
+                  <SelectItem key={s} value={String(s)} className="text-xs">{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground">/ {t("tx.page") || "page"}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground tabular-nums mr-1">
+              {safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, filteredTransactions.length)} / {filteredTransactions.length}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={safePage === 0}
+              onClick={() => setPage(safePage - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={safePage >= totalPages - 1}
+              onClick={() => setPage(safePage + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
