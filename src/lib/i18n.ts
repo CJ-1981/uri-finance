@@ -15,6 +15,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.switchToSignUp": "Don't have an account? Sign up",
     "auth.switchToSignIn": "Already have an account? Sign in",
     "auth.accountCreated": "Account created! You're now signed in.",
+    "auth.inviteCode": "Invite Code",
+    "auth.inviteCodePlaceholder": "Enter invite code from project creator",
+    "auth.invalidInviteCode": "Invalid invite code. Please get one from a project creator.",
     "auth.loading": "Loading...",
 
     // Dashboard
