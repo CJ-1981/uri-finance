@@ -15,9 +15,9 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   const [locale, setLocaleState] = useState<Locale>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      return (stored === "ko" ? "ko" : "en") as Locale;
+      return (stored === "en" ? "en" : "ko") as Locale;
     } catch {
-      return "en";
+      return "ko";
     }
   });
 
