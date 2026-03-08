@@ -12,7 +12,7 @@ import TrashManager from "@/components/TrashManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ const AdminPage = () => {
   const { projects, activeProject, fetchProjects } = useProjects();
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
-  const { columns: customColumns, addColumn, deleteColumn } = useCustomColumns(activeProject?.id);
+  const { columns: customColumns, addColumn, deleteColumn, toggleMasked } = useCustomColumns(activeProject?.id);
   const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -81,8 +81,10 @@ const AdminPage = () => {
     else toast.error(t("admin.removeFailed"));
   };
 
-  const handleToggleAdmin = async (memberId: string, currentRole: string) => {
-    const newRole = currentRole === "admin" ? "member" : "admin";
+  const handleCycleRole = async (memberId: string, currentRole: string) => {
+    const roleOrder = ["member", "viewer", "admin"];
+    const currentIdx = roleOrder.indexOf(currentRole);
+    const newRole = roleOrder[(currentIdx + 1) % roleOrder.length];
     const ok = await updateMemberRole(memberId, newRole);
     if (ok) toast.success(t("admin.promoted"));
     else toast.error(t("admin.promoteFailed"));
@@ -188,10 +190,13 @@ const AdminPage = () => {
                 const isSelf = m.user_id === user?.id;
                 const isOwnerMember = m.user_id === activeProject.owner_id;
                 const isAdmin = m.role === "admin";
+                const isViewer = m.role === "viewer";
                 const roleLabel = isOwnerMember
                   ? t("admin.owner")
                   : isAdmin
                   ? t("admin.admin")
+                  : isViewer
+                  ? t("admin.viewer")
                   : t("admin.member");
                 return (
                   <div key={m.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
@@ -202,6 +207,7 @@ const AdminPage = () => {
                       <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                         {isOwnerMember && <Crown className="h-3 w-3 text-amber-500" />}
                         {isAdmin && <Shield className="h-3 w-3 text-primary" />}
+                        {isViewer && <EyeOff className="h-3 w-3 text-muted-foreground" />}
                         {roleLabel}
                       </p>
                     </div>
@@ -211,8 +217,8 @@ const AdminPage = () => {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-primary"
-                          onClick={() => handleToggleAdmin(m.id, m.role)}
-                          title={isAdmin ? t("admin.demoteAdmin") : t("admin.promoteAdmin")}
+                          onClick={() => handleCycleRole(m.id, m.role)}
+                          title={t("admin.cycleRole")}
                         >
                           <Shield className="h-3.5 w-3.5" />
                         </Button>
@@ -354,7 +360,7 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.customColumnsDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} />
+            <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} onToggleMasked={toggleMasked} />
           </div>
         </section>
 

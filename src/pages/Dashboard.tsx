@@ -5,6 +5,7 @@ import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useCustomColumns } from "@/hooks/useCustomColumns";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useI18n } from "@/hooks/useI18n";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
+  const { isViewer } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
@@ -206,7 +208,7 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={filtered} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} />
+              <TransactionList transactions={filtered} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} isViewer={isViewer} />
             ) : (
               <FinanceCharts transactions={filtered} customColumns={customColumns} period={period} customRange={customRange} />
             )}
@@ -223,6 +225,7 @@ const Dashboard = () => {
               onUpdate={updateTransaction}
               onDelete={deleteTransaction}
               customColumns={customColumns}
+              isViewer={isViewer}
             />
 
             {/* Bulk edit sheet */}

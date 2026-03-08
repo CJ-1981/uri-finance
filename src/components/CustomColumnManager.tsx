@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X, Hash, Type } from "lucide-react";
+import { Plus, X, Hash, Type, EyeOff, Eye } from "lucide-react";
 import { CustomColumn, ColumnType } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 
@@ -9,9 +9,10 @@ interface Props {
   columns: CustomColumn[];
   onAdd: (name: string, type: ColumnType) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
 }
 
-const CustomColumnManager = ({ columns, onAdd, onDelete }: Props) => {
+const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked }: Props) => {
   const [name, setName] = useState("");
   const [colType, setColType] = useState<ColumnType>("numeric");
   const [adding, setAdding] = useState(false);
@@ -76,6 +77,15 @@ const CustomColumnManager = ({ columns, onAdd, onDelete }: Props) => {
                 <Type className="h-3 w-3 text-muted-foreground shrink-0" />
               )}
               {col.name}
+              {onToggleMasked && (
+                <button
+                  onClick={() => onToggleMasked(col.id, !col.masked)}
+                  className={`transition-colors ${col.masked ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}`}
+                  title={col.masked ? t("cc.maskedOn") : t("cc.maskedOff")}
+                >
+                  {col.masked ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                </button>
+              )}
               <button onClick={() => onDelete(col.id)} className="text-muted-foreground hover:text-destructive transition-colors">
                 <X className="h-3.5 w-3.5" />
               </button>

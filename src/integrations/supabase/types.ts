@@ -19,6 +19,7 @@ export type Database = {
           column_type: string
           created_at: string
           id: string
+          masked: boolean
           name: string
           project_id: string
         }
@@ -26,6 +27,7 @@ export type Database = {
           column_type?: string
           created_at?: string
           id?: string
+          masked?: boolean
           name: string
           project_id: string
         }
@@ -33,6 +35,7 @@ export type Database = {
           column_type?: string
           created_at?: string
           id?: string
+          masked?: boolean
           name?: string
           project_id?: string
         }
