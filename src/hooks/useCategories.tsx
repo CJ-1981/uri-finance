@@ -72,5 +72,17 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
-  return { categories, loading, addCategory, deleteCategory, renameCategory, fetchCategories };
+  const updateCategoryCode = async (id: string, code: string) => {
+    const { error } = await supabase
+      .from("project_categories")
+      .update({ code: code.trim() })
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update code");
+      return;
+    }
+    await fetchCategories();
+  };
+
+  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, fetchCategories };
 };
