@@ -131,6 +131,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 const v = e.target.value.replace(/[^0-9.]/g, "");
                 setAmount(v);
               }}
+              disabled={!isOwn}
               className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
             />
           </div>
