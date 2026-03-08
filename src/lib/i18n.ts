@@ -242,6 +242,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.editTransaction": "거래 수정",
     "tx.income": "수입",
     "tx.expense": "지출",
+    "tx.type": "유형",
     "tx.amount": "금액",
     "tx.category": "카테고리",
     "tx.date": "날짜",
