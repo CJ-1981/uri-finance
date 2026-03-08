@@ -150,6 +150,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Charts
     "chart.trend": "Trend (6 months)",
     "chart.comparison": "Comparison (6 months)",
+    "chart.cumulative": "Cumulative (6 months)",
     "chart.expenseByCategory": "Expense by Category",
     "chart.addToSee": "Add transactions to see charts",
 
