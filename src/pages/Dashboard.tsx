@@ -299,7 +299,7 @@ const Dashboard = () => {
             )}
 
             {/* FAB - hidden for viewers */}
-            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} />}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} externalOpen={addTxOpen} onExternalOpenChange={setAddTxOpen} />}
 
             {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet
