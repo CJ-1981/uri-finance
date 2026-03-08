@@ -82,7 +82,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
   };
 
   const handleBulkEdit = () => {
-    const selectedTxs = transactions.filter((tx) => selected.has(tx.id));
+    const selectedTxs = filteredTransactions.filter((tx) => selected.has(tx.id));
     onBulkEditOpen(selectedTxs);
   };
 
