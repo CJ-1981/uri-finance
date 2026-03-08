@@ -342,7 +342,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
       )}
       {/* Floating sum popup for multi-select */}
       {selectedSummary && selectedSummary.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-card border border-border shadow-lg rounded-2xl px-5 py-3 animate-fade-in max-w-[calc(100vw-2rem)]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[55] bg-card border border-border shadow-lg rounded-2xl px-5 py-3 animate-fade-in max-w-[calc(100vw-2rem)]">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <span className="text-muted-foreground font-medium">{selected.size} selected</span>
             <div className="h-4 w-px bg-border" />
