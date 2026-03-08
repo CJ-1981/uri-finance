@@ -17,6 +17,7 @@ interface Props {
   transactions: Transaction[];
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
+  isViewer?: boolean;
 }
 
 const formatAmount = (tx: Transaction) =>
@@ -76,11 +77,12 @@ const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: Cus
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);
 };
 
-const ExportTransactions = ({ transactions, headers, customColumns }: Props) => {
+const ExportTransactions = ({ transactions, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
 
   if (transactions.length === 0) return null;
 
+  const visibleCols = isViewer ? customColumns.filter((c) => !c.masked) : customColumns;
   const msg = t("export.success");
 
   return (
@@ -91,13 +93,13 @@ const ExportTransactions = ({ transactions, headers, customColumns }: Props) => 
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => exportCSV(transactions, headers, customColumns, msg)}>
+        <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg)}>
           {t("export.csv")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportXLS(transactions, headers, customColumns, msg)}>
+        <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg)}>
           {t("export.xls")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, customColumns, msg)}>
+        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg)}>
           {t("export.markdown")}
         </DropdownMenuItem>
       </DropdownMenuContent>
