@@ -216,16 +216,13 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="bg-muted/50 border-border/50 min-w-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NumberedSelect
+                value={category}
+                onValueChange={setCategory}
+                items={categories.map((c) => ({ value: c.name, label: c.name }))}
+                showNumbers
+                className="bg-muted/50 border-border/50 min-w-0"
+              />
             </div>
             <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
@@ -257,16 +254,12 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="bg-muted/50 border-border/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NumberedSelect
+                value={currency}
+                onValueChange={setCurrency}
+                items={CURRENCIES.map((c) => ({ value: c, label: c }))}
+                className="bg-muted/50 border-border/50"
+              />
             </div>
           </div>
 
