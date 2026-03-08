@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,6 +127,33 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     }
   };
 
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleTabKey = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "Tab") return;
+    const form = formRef.current;
+    if (!form) return;
+
+    const focusable = Array.from(
+      form.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+      )
+    ).filter((el) => el.offsetParent !== null); // visible only
+
+    if (focusable.length === 0) return;
+
+    const currentIdx = focusable.indexOf(document.activeElement as HTMLElement);
+    if (e.shiftKey) {
+      e.preventDefault();
+      const prev = currentIdx <= 0 ? focusable.length - 1 : currentIdx - 1;
+      focusable[prev].focus();
+    } else {
+      e.preventDefault();
+      const next = currentIdx >= focusable.length - 1 ? 0 : currentIdx + 1;
+      focusable[next].focus();
+    }
+  }, []);
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -140,7 +167,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleTabKey} className="mt-4 space-y-4">
           <div className="flex gap-2">
             <Button
               type="button"
