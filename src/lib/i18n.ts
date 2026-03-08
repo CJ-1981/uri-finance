@@ -261,6 +261,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     "notFound.message": "Oops! Page not found",
     "notFound.return": "Return to Home",
 
+    // Shortcuts
+    "shortcut.title": "Keyboard Shortcuts",
+    "shortcut.addTransaction": "Add Transaction",
+    "shortcut.pressKey": "Press a key...",
+    "shortcut.save": "Save",
+    "shortcut.saved": "Shortcut saved",
+    "shortcut.hint": "Press this key on the dashboard to quickly open the add transaction form.",
+
     // Language
     "lang.label": "EN",
   },
@@ -523,6 +531,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     "notFound.title": "404",
     "notFound.message": "페이지를 찾을 수 없습니다",
     "notFound.return": "홈으로 돌아가기",
+
+    // Shortcuts
+    "shortcut.title": "키보드 단축키",
+    "shortcut.addTransaction": "거래 추가",
+    "shortcut.pressKey": "키를 누르세요...",
+    "shortcut.save": "저장",
+    "shortcut.saved": "단축키가 저장되었습니다",
+    "shortcut.hint": "대시보드에서 이 키를 누르면 거래 추가 폼이 빠르게 열립니다.",
 
     // Language
     "lang.label": "한국어",

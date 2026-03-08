@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
@@ -17,6 +17,8 @@ import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/componen
 import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye } from "lucide-react";
+import ShortcutSettings from "@/components/ShortcutSettings";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
@@ -42,6 +44,13 @@ const Dashboard = () => {
   const isOwner = !isSimulating && realOwner;
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
+  const [addTxOpen, setAddTxOpen] = useState(false);
+
+  const openAddTx = useCallback(() => {
+    if (activeProject && !isViewer) setAddTxOpen(true);
+  }, [activeProject, isViewer]);
+
+  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer);
 
   const handleRemovePin = () => {
     localStorage.removeItem("app_lock_pin");
@@ -144,6 +153,7 @@ const Dashboard = () => {
             )}
           </div>
           <div className="flex items-center gap-1">
+            <ShortcutSettings />
             <Button
               variant="ghost"
               size="icon"
@@ -289,7 +299,7 @@ const Dashboard = () => {
             )}
 
             {/* FAB - hidden for viewers */}
-            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} />}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} externalOpen={addTxOpen} onExternalOpenChange={setAddTxOpen} />}
 
             {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet
