@@ -151,7 +151,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
   const { t } = useI18n();
 
   if (inline) {
-    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onReorder={onReorder} />;
+    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorder={onReorder} />;
   }
 
   return (
