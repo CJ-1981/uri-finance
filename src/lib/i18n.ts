@@ -579,6 +579,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "shortcut.save": "저장",
     "shortcut.saved": "단축키가 저장되었습니다",
     "shortcut.hint": "대시보드에서 이 키를 눌러 빠르게 작업을 수행합니다.",
+    "shortcut.tabList": "거래내역 탭",
+    "shortcut.tabCharts": "차트 탭",
+    "shortcut.tabCash": "현금 계산기 탭",
 
     // Cash Calculator
     "cash.title": "현금 계산기",
