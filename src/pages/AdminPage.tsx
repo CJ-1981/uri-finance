@@ -81,6 +81,27 @@ const AdminPage = () => {
     else toast.error(t("admin.removeFailed"));
   };
 
+  const handleToggleAdmin = async (memberId: string, currentRole: string) => {
+    const newRole = currentRole === "admin" ? "member" : "admin";
+    const ok = await updateMemberRole(memberId, newRole);
+    if (ok) toast.success(t("admin.promoted"));
+    else toast.error(t("admin.promoteFailed"));
+  };
+
+  const handleTransferOwnership = async (newOwnerId: string) => {
+    if (!user || !activeProject) return;
+    const confirmed = window.confirm(t("admin.transferConfirm"));
+    if (!confirmed) return;
+    const ok = await transferOwnership(newOwnerId, user.id);
+    if (ok) {
+      toast.success(t("admin.transferred"));
+      await fetchProjects();
+      navigate("/");
+    } else {
+      toast.error(t("admin.transferFailed"));
+    }
+  };
+
   const handleCreateInvite = async () => {
     setCreatingInvite(true);
     const ok = await createInvite(inviteLabel);
