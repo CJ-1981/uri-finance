@@ -150,6 +150,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Charts
     "chart.trend": "Trend (6 months)",
     "chart.comparison": "Comparison (6 months)",
+    "chart.cumulative": "Cumulative (6 months)",
     "chart.expenseByCategory": "Expense by Category",
     "chart.addToSee": "Add transactions to see charts",
 
@@ -357,6 +358,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Charts
     "chart.trend": "추이 (6개월)",
     "chart.comparison": "비교 (6개월)",
+    "chart.cumulative": "누적 (6개월)",
     "chart.expenseByCategory": "카테고리별 지출",
     "chart.addToSee": "차트를 보려면 거래를 추가하세요",
 
