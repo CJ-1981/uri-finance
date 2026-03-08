@@ -160,11 +160,11 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3 overflow-hidden">
+            <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="bg-muted/50 border-border/50">
+                <SelectTrigger className="bg-muted/50 border-border/50 min-w-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -174,13 +174,13 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
               <Input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="bg-muted/50 border-border/50 min-w-0 w-full"
+                className="bg-muted/50 border-border/50 min-w-0 w-full [&::-webkit-calendar-picker-indicator]{opacity-100}"
               />
             </div>
             <div className="space-y-2">
