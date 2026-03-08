@@ -145,7 +145,7 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
     allDenoms.forEach((d) => {
       init[d.toString()] = { named: 0, anon: 0 };
     });
-    setCounts(init);
+    setCountsAndCache(init);
     toast.success(t("cash.cleared"));
   };
 
