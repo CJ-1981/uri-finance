@@ -15,7 +15,7 @@ interface Props {
   onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
 }
 
-const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onUpdateSuggestions }: Props) => {
+const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggleRequired, onUpdateSuggestions }: Props) => {
   const [name, setName] = useState("");
   const [colType, setColType] = useState<ColumnType>("numeric");
   const [adding, setAdding] = useState(false);
