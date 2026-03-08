@@ -33,8 +33,13 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
+    setAmount("");
+    setDescription("");
+    setCustomValues({});
+  };
+
+  const doSubmit = async () => {
     if (!amount || Number(amount) <= 0) return;
     setSubmitting(true);
 
@@ -58,10 +63,23 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
       custom_values: Object.keys(cv).length > 0 ? cv : undefined,
     });
     setSubmitting(false);
-    setAmount("");
-    setDescription("");
-    setCustomValues({});
-    setOpen(false);
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const ok = await doSubmit();
+    if (ok) {
+      resetForm();
+      setOpen(false);
+    }
+  };
+
+  const handleAddAndContinue = async () => {
+    const ok = await doSubmit();
+    if (ok) {
+      resetForm();
+    }
   };
 
   return (
@@ -169,13 +187,24 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
             </div>
           )}
 
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-          >
-            {submitting ? t("tx.adding") : t("tx.addTransaction")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              disabled={submitting}
+              onClick={handleAddAndContinue}
+              variant="outline"
+              className="flex-1 font-semibold h-12"
+            >
+              {submitting ? t("tx.adding") : t("tx.addAndContinue")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+            >
+              {submitting ? t("tx.adding") : t("tx.addTransaction")}
+            </Button>
+          </div>
         </form>
       </SheetContent>
     </Sheet>
