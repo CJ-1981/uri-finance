@@ -97,10 +97,17 @@ const Auth = () => {
       };
 
       const userId = await waitForUser();
-      if (userId) {
+      if (userId && projectId) {
+        // Mark invite as used if it's a new-style invite
+        if (inviteId) {
+          await supabase
+            .from("project_invites")
+            .update({ used_by: userId, used_at: new Date().toISOString() })
+            .eq("id", inviteId);
+        }
         await supabase
           .from("project_members")
-          .insert({ project_id: project.id, user_id: userId })
+          .insert({ project_id: projectId, user_id: userId, role: inviteRole })
           .select();
       }
 

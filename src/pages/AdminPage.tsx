@@ -388,17 +388,37 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.invitesDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <Input
-                value={inviteLabel}
-                onChange={(e) => setInviteLabel(e.target.value)}
-                placeholder={t("admin.inviteLabelPlaceholder")}
-                className="flex-1 bg-background text-sm"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder={t("admin.inviteEmailPlaceholder")}
+                className="bg-background text-sm"
+                required
               />
+              <div className="flex gap-2">
+                <Input
+                  value={inviteLabel}
+                  onChange={(e) => setInviteLabel(e.target.value)}
+                  placeholder={t("admin.inviteLabelPlaceholder")}
+                  className="flex-1 bg-background text-sm"
+                />
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                >
+                  <option value="member">{t("admin.member")}</option>
+                  <option value="admin">{t("admin.admin")}</option>
+                  <option value="viewer">{t("admin.viewer")}</option>
+                </select>
+              </div>
               <Button
                 size="sm"
                 onClick={handleCreateInvite}
-                disabled={creatingInvite}
+                disabled={creatingInvite || !inviteEmail.trim()}
+                className="w-full"
               >
                 <Plus className="h-4 w-4 mr-1" /> {t("admin.createInvite")}
               </Button>
@@ -418,9 +438,15 @@ const AdminPage = () => {
                         }`}>
                           {inv.used_by ? t("admin.inviteUsed") : t("admin.inviteUnused")}
                         </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {(inv as any).role || "member"}
+                        </span>
                       </div>
+                      {(inv as any).email && (
+                        <p className="text-xs text-primary/70 truncate mt-0.5">{(inv as any).email}</p>
+                      )}
                       {inv.label && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{inv.label}</p>
+                        <p className="text-xs text-muted-foreground truncate">{inv.label}</p>
                       )}
                     </div>
                     <div className="flex gap-1 shrink-0">

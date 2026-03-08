@@ -80,7 +80,7 @@ export const useProjectMembers = (projectId?: string) => {
     return true;
   };
 
-  const createInvite = async (label?: string) => {
+  const createInvite = async (label?: string, email?: string, role?: string) => {
     if (!projectId) return false;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
@@ -90,8 +90,10 @@ export const useProjectMembers = (projectId?: string) => {
       .insert({ 
         project_id: projectId, 
         created_by: user.id,
-        label: label?.trim() || null
-      });
+        label: label?.trim() || null,
+        email: email?.trim().toLowerCase() || null,
+        role: role || "member",
+      } as any);
     if (error) return false;
     await fetchInvites();
     return true;
