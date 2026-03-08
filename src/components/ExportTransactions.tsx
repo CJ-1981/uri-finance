@@ -47,7 +47,7 @@ const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
   const rows = transactions.map((tx) => {
     const base = `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`;
-    const custom = cols.map((c) => getCustomVal(tx, c.name)).join(",");
+    const custom = cols.map((c) => `"${getCustomVal(tx, c)}"`).join(",");
     return cols.length ? `${base},${custom}` : base;
   });
   downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv", msg);
