@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useCategories } from "@/hooks/useCategories";
@@ -10,7 +10,8 @@ import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -28,8 +29,23 @@ const AdminPage = () => {
   const [savingCurrency, setSavingCurrency] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [creatingInvite, setCreatingInvite] = useState(false);
+  const [dbStats, setDbStats] = useState<any>(null);
+  const [dbLoading, setDbLoading] = useState(false);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+
+  const DB_MAX_BYTES = 500 * 1024 * 1024; // 500 MB
+
+  useEffect(() => {
+    if (!isOwner) return;
+    const fetchStats = async () => {
+      setDbLoading(true);
+      const { data, error } = await supabase.rpc("get_db_stats");
+      setDbLoading(false);
+      if (!error && data) setDbStats(data);
+    };
+    fetchStats();
+  }, [isOwner]);
 
   const handleCurrencyChange = async () => {
     if (!activeProject || !currency.trim()) return;
@@ -311,6 +327,55 @@ const AdminPage = () => {
                 <Check className="h-4 w-4" />
               </Button>
             </div>
+          </div>
+        </section>
+
+        {/* Database Stats */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              {t("admin.dbStats")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("admin.dbStatsDesc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
+            {dbLoading ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t("admin.dbLoading")}</p>
+            ) : !dbStats ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t("admin.dbError")}</p>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">{t("admin.dbSize")}</span>
+                    <span className="font-mono text-foreground">{dbStats.db_size_pretty}</span>
+                  </div>
+                  <Progress
+                    value={Math.min((dbStats.db_size / DB_MAX_BYTES) * 100, 100)}
+                    className="h-2"
+                  />
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    {t("admin.dbMaxSize")}
+                  </p>
+                </div>
+
+                {dbStats.tables && dbStats.tables.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">{t("admin.dbTables")}</p>
+                    {dbStats.tables.map((tbl: any) => (
+                      <div key={tbl.table_name} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                        <span className="text-sm text-foreground font-mono">{tbl.table_name}</span>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{Math.max(0, tbl.row_count)} {t("admin.dbRows")}</span>
+                          <span className="font-mono">{tbl.size}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </section>
       </main>

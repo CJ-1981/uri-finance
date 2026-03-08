@@ -262,6 +262,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_db_stats: { Args: never; Returns: Json }
       is_project_member: {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean

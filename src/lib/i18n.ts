@@ -152,6 +152,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "period.from": "From",
     "period.to": "To",
 
+    // Database
+    "admin.dbStats": "Database Status",
+    "admin.dbStatsDesc": "Monitor storage usage and table sizes.",
+    "admin.dbSize": "Total Size",
+    "admin.dbMaxSize": "Max Size (500 MB)",
+    "admin.dbRows": "rows",
+    "admin.dbLoading": "Loading stats...",
+    "admin.dbError": "Failed to load database stats",
+    "admin.dbTables": "Tables",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
@@ -310,6 +320,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "period.custom": "기간 설정",
     "period.from": "시작일",
     "period.to": "종료일",
+
+    // Database
+    "admin.dbStats": "데이터베이스 상태",
+    "admin.dbStatsDesc": "저장 공간 사용량 및 테이블 크기를 확인합니다.",
+    "admin.dbSize": "전체 크기",
+    "admin.dbMaxSize": "최대 용량 (500 MB)",
+    "admin.dbRows": "행",
+    "admin.dbLoading": "통계 로딩 중...",
+    "admin.dbError": "데이터베이스 통계를 불러오지 못했습니다",
+    "admin.dbTables": "테이블",
 
     // 404
     "notFound.title": "404",
