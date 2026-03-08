@@ -213,8 +213,8 @@ const Dashboard = () => {
               <FinanceCharts transactions={filtered} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} />
             )}
 
-            {/* FAB */}
-            <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} />
+            {/* FAB - hidden for viewers */}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} />}
 
             {/* Detail sheet */}
             <TransactionDetailSheet
