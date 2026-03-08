@@ -264,10 +264,13 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Shortcuts
     "shortcut.title": "Keyboard Shortcuts",
     "shortcut.addTransaction": "Add Transaction",
+    "shortcut.prevTransaction": "Previous Transaction",
+    "shortcut.nextTransaction": "Next Transaction",
     "shortcut.pressKey": "Press a key...",
     "shortcut.save": "Save",
     "shortcut.saved": "Shortcut saved",
-    "shortcut.hint": "Press this key on the dashboard to quickly open the add transaction form.",
+    "shortcut.hint": "Press these keys on the dashboard to quickly perform actions.",
+    "shortcut.arrowHint": "Arrow keys (← →) navigate between transactions in the detail view.",
 
     // Language
     "lang.label": "EN",
