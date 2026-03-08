@@ -143,8 +143,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <div className="flex gap-2">
             <button
               type="button"
+              tabIndex={1}
               onClick={() => setType("income")}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 type === "income"
                   ? "income-badge ring-1 ring-income/30"
                   : "bg-muted text-muted-foreground"
@@ -154,8 +155,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </button>
             <button
               type="button"
+              tabIndex={2}
               onClick={() => setType("expense")}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 type === "expense"
                   ? "expense-badge ring-1 ring-expense/30"
                   : "bg-muted text-muted-foreground"
