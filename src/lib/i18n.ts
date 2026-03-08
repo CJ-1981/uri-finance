@@ -113,6 +113,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "chart.expenseByCategory": "Expense by Category",
     "chart.addToSee": "Add transactions to see charts",
 
+    // Period
+    "period.today": "Today",
+    "period.week": "1 Week",
+    "period.month": "1 Month",
+    "period.sixMonths": "6 Months",
+    "period.all": "All",
+    "period.custom": "Custom",
+    "period.from": "From",
+    "period.to": "To",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
