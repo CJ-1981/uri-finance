@@ -187,13 +187,24 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
             </div>
           )}
 
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-          >
-            {submitting ? t("tx.adding") : t("tx.addTransaction")}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              disabled={submitting}
+              onClick={handleAddAndContinue}
+              variant="outline"
+              className="flex-1 font-semibold h-12"
+            >
+              {submitting ? t("tx.adding") : t("tx.addAndContinue")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+            >
+              {submitting ? t("tx.adding") : t("tx.addTransaction")}
+            </Button>
+          </div>
         </form>
       </SheetContent>
     </Sheet>
