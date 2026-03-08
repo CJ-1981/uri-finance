@@ -93,6 +93,9 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Custom columns
     "cc.placeholder": "Column name (e.g. Tax, Discount)",
+    "cc.textPlaceholder": "Column name (e.g. Notes, Reference)",
+    "cc.numeric": "Numeric",
+    "cc.text": "Text",
     "cc.noColumns": "No custom columns yet.",
     "cc.added": "Column added",
     "cc.duplicate": "Column already exists",
