@@ -323,7 +323,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             <div className="grid grid-cols-2 gap-3">
               {visibleCustomCols.map((col) => (
                   <div key={col.id} className="space-y-2">
-                    <Label className="text-muted-foreground text-xs">{col.name}{col.required && <span className="text-destructive ml-0.5">*</span>}</Label>
+                    <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
                     {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
                       <AutoSuggestInput
                         value={customValues[col.name] || ""}
