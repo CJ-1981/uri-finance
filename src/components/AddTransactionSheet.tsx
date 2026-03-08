@@ -203,6 +203,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <Input
               type="text"
               inputMode="decimal"
+              data-tab-stop
               value={amount}
               onChange={(e) => {
                 const v = e.target.value.replace(/[^0-9.]/g, "");
