@@ -55,6 +55,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.addFailed": "Failed to add transaction",
     "tx.updateFailed": "Failed to update transaction",
     "tx.deleteFailed": "Failed to delete transaction",
+    "tx.select": "Select",
+    "tx.selectAll": "All",
+    "tx.selected": "{n} selected",
+    "tx.bulkDelete": "Delete",
+    "tx.bulkEdit": "Edit",
+    "tx.bulkEditTitle": "Edit {n} transactions",
+    "tx.bulkEditDesc": "Changes will apply to all selected transactions. Leave fields empty to keep current values.",
+    "tx.bulkNoChange": "No change",
+    "tx.bulkType": "Type",
+    "tx.bulkApply": "Apply to {n} items",
 
     // Projects
     "proj.projects": "Projects",
@@ -251,6 +261,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.addFailed": "거래 추가에 실패했습니다",
     "tx.updateFailed": "거래 수정에 실패했습니다",
     "tx.deleteFailed": "거래 삭제에 실패했습니다",
+    "tx.select": "선택",
+    "tx.selectAll": "전체",
+    "tx.selected": "{n}개 선택됨",
+    "tx.bulkDelete": "삭제",
+    "tx.bulkEdit": "수정",
+    "tx.bulkEditTitle": "{n}개 거래 수정",
+    "tx.bulkEditDesc": "변경사항이 선택된 모든 거래에 적용됩니다. 빈 필드는 현재 값을 유지합니다.",
+    "tx.bulkNoChange": "변경 없음",
+    "tx.bulkType": "유형",
+    "tx.bulkApply": "{n}개 항목에 적용",
 
     // Projects
     "proj.projects": "프로젝트",

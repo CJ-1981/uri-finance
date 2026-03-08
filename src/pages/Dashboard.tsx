@@ -10,6 +10,7 @@ import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
+import BulkEditSheet from "@/components/BulkEditSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
@@ -61,9 +62,29 @@ const Dashboard = () => {
   );
   const balance = totalIncome - totalExpense;
 
+  const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
     setDetailOpen(true);
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    for (const id of ids) {
+      await deleteTransaction(id);
+    }
+  };
+
+  const handleBulkEditOpen = (txs: Transaction[]) => {
+    setBulkEditTxs(txs);
+    setBulkEditOpen(true);
+  };
+
+  const handleBulkUpdate = async (ids: string[], updates: Partial<Pick<Transaction, "type" | "category">>) => {
+    for (const id of ids) {
+      await updateTransaction(id, updates);
+    }
   };
 
   return (
@@ -183,7 +204,7 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={filtered} onSelect={handleSelectTx} headers={headers} customColumns={customColumns} />
+              <TransactionList transactions={filtered} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} />
             ) : (
               <FinanceCharts transactions={filtered} customColumns={customColumns} />
             )}
@@ -200,6 +221,15 @@ const Dashboard = () => {
               onUpdate={updateTransaction}
               onDelete={deleteTransaction}
               customColumns={customColumns}
+            />
+
+            {/* Bulk edit sheet */}
+            <BulkEditSheet
+              transactions={bulkEditTxs}
+              categories={categories}
+              open={bulkEditOpen}
+              onOpenChange={setBulkEditOpen}
+              onBulkUpdate={handleBulkUpdate}
             />
           </div>
         )}
