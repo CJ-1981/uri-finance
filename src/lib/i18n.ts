@@ -32,6 +32,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Transaction list
     "tx.noTransactions": "No transactions yet. Tap + to add one.",
+    "tx.search": "Search transactions...",
     "tx.addTransaction": "Add Transaction",
     "tx.editTransaction": "Edit Transaction",
     "tx.income": "Income",
