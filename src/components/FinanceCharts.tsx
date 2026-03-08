@@ -93,17 +93,38 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
     });
   }, [transactions, customColumns]);
 
+  type PieGroupKey = "category" | "type" | string;
+
+  const pieGroupOptions: { key: PieGroupKey; label: string }[] = useMemo(() => {
+    const base: { key: PieGroupKey; label: string }[] = [
+      { key: "category", label: t("tx.category") },
+      { key: "type", label: t("tx.type") },
+    ];
+    const textCols = customColumns
+      .filter((col) => col.column_type === "text")
+      .map((col) => ({ key: col.name as PieGroupKey, label: col.name }));
+    return [...base, ...textCols];
+  }, [customColumns, t]);
+
+  const [pieGroupBy, setPieGroupBy] = useState<PieGroupKey>("category");
+
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
-    transactions
-      .filter((tx) => tx.type === "expense")
-      .forEach((tx) => {
-        map[tx.category] = (map[tx.category] || 0) + Number(tx.amount);
-      });
+    transactions.forEach((tx) => {
+      let groupValue: string;
+      if (pieGroupBy === "category") {
+        groupValue = tx.category;
+      } else if (pieGroupBy === "type") {
+        groupValue = tx.type === "income" ? t("tx.income") : t("tx.expense");
+      } else {
+        groupValue = String(tx.custom_values?.[pieGroupBy] || "N/A");
+      }
+      map[groupValue] = (map[groupValue] || 0) + Number(tx.amount);
+    });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [transactions]);
+  }, [transactions, pieGroupBy, t]);
 
   if (transactions.length === 0) {
     return (
