@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { Transaction } from "@/hooks/useTransactions";
 import { useI18n } from "@/hooks/useI18n";
+import AutoSuggestInput from "@/components/AutoSuggestInput";
 
 interface Props {
   categories: Category[];
