@@ -73,7 +73,7 @@ const Dashboard = () => {
               <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} />
               {isOwner && (
                 <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
-                  <Settings2 className="h-4 w-4" />
+                  <Settings className="h-4 w-4" />
                 </Button>
               )}
               </>
