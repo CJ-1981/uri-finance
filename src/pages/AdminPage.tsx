@@ -52,6 +52,9 @@ const AdminPage = () => {
   const [archiving, setArchiving] = useState(false);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+  const { role: userRole } = useUserRole(activeProject?.id);
+  const isAdmin = userRole === "admin";
+  const canAccess = isOwner || isAdmin;
 
   const DB_MAX_BYTES = 500 * 1024 * 1024; // 500 MB
 
