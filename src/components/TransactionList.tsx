@@ -323,6 +323,6 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
       )}
     </div>
   );
-};
+});
 
 export default TransactionList;
