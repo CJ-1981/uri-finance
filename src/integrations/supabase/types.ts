@@ -227,6 +227,7 @@ export type Database = {
           amount: number
           category: string
           created_at: string
+          currency: string
           custom_values: Json | null
           deleted_at: string | null
           description: string | null
@@ -240,6 +241,7 @@ export type Database = {
           amount: number
           category?: string
           created_at?: string
+          currency?: string
           custom_values?: Json | null
           deleted_at?: string | null
           description?: string | null
@@ -253,6 +255,7 @@ export type Database = {
           amount?: number
           category?: string
           created_at?: string
+          currency?: string
           custom_values?: Json | null
           deleted_at?: string | null
           description?: string | null
