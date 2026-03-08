@@ -40,11 +40,13 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       { key: "income" as MetricKey, label: t("tx.income"), color: "hsl(152, 60%, 50%)" },
       { key: "expense" as MetricKey, label: t("tx.expense"), color: "hsl(0, 72%, 58%)" },
     ];
-    const custom = customColumns.map((col, i) => ({
-      key: col.name as MetricKey,
-      label: col.name,
-      color: COLORS[(i + 2) % COLORS.length],
-    }));
+    const custom = customColumns
+      .filter((col) => col.column_type === "numeric")
+      .map((col, i) => ({
+        key: col.name as MetricKey,
+        label: col.name,
+        color: COLORS[(i + 2) % COLORS.length],
+      }));
     return [...base, ...custom];
   }, [customColumns, t]);
 
