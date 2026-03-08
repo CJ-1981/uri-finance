@@ -15,6 +15,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.switchToSignUp": "Don't have an account? Sign up",
     "auth.switchToSignIn": "Already have an account? Sign in",
     "auth.accountCreated": "Account created! You're now signed in.",
+    "auth.inviteCode": "Invite Code",
+    "auth.inviteCodePlaceholder": "Enter invite code from project creator",
+    "auth.invalidInviteCode": "Invalid invite code. Please get one from a project creator.",
     "auth.loading": "Loading...",
 
     // Dashboard
@@ -145,6 +148,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.switchToSignUp": "계정이 없으신가요? 회원가입",
     "auth.switchToSignIn": "이미 계정이 있으신가요? 로그인",
     "auth.accountCreated": "계정이 생성되었습니다! 로그인되었습니다.",
+    "auth.inviteCode": "초대 코드",
+    "auth.inviteCodePlaceholder": "프로젝트 생성자의 초대 코드를 입력하세요",
+    "auth.invalidInviteCode": "유효하지 않은 초대 코드입니다. 프로젝트 생성자에게 문의하세요.",
     "auth.loading": "로딩 중...",
 
     // Dashboard

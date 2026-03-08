@@ -7,12 +7,14 @@ import { Label } from "@/components/ui/label";
 import { ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/hooks/useI18n";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const { user, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { signIn, signUp } = useAuth();
   const { t, locale, setLocale } = useI18n();
@@ -30,14 +32,53 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = isLogin
-      ? await signIn(email, password)
-      : await signUp(email, password);
-    setSubmitting(false);
 
-    if (error) {
-      toast.error(error.message);
-    } else if (!isLogin) {
+    if (isLogin) {
+      const { error } = await signIn(email, password);
+      setSubmitting(false);
+      if (error) toast.error(error.message);
+    } else {
+      // Validate invite code first
+      const { data: project } = await supabase
+        .from("projects")
+        .select("id, name")
+        .eq("invite_code", inviteCode.trim())
+        .single();
+
+      if (!project) {
+        setSubmitting(false);
+        toast.error(t("auth.invalidInviteCode"));
+        return;
+      }
+
+      // Create account
+      const { error } = await signUp(email, password);
+      if (error) {
+        setSubmitting(false);
+        toast.error(error.message);
+        return;
+      }
+
+      // After signup, get the new user session and auto-join the project
+      // Small delay to let auth state settle
+      const waitForUser = async (): Promise<string | null> => {
+        for (let i = 0; i < 10; i++) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user?.id) return data.session.user.id;
+          await new Promise((r) => setTimeout(r, 300));
+        }
+        return null;
+      };
+
+      const userId = await waitForUser();
+      if (userId) {
+        await supabase
+          .from("project_members")
+          .insert({ project_id: project.id, user_id: userId })
+          .select();
+      }
+
+      setSubmitting(false);
       toast.success(t("auth.accountCreated"));
     }
   };
@@ -101,6 +142,23 @@ const Auth = () => {
                 className="bg-muted/50 border-border/50"
               />
             </div>
+
+            {/* Invite code field - only shown on signup */}
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="inviteCode" className="text-muted-foreground text-sm">
+                  {t("auth.inviteCode")}
+                </Label>
+                <Input
+                  id="inviteCode"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  placeholder={t("auth.inviteCodePlaceholder")}
+                  required
+                  className="bg-muted/50 border-border/50 font-mono"
+                />
+              </div>
+            )}
 
             <Button
               type="submit"
