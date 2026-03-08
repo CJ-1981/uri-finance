@@ -14,6 +14,8 @@ export interface ProjectInvite {
   id: string;
   code: string;
   label: string | null;
+  email: string | null;
+  role: string;
   created_by: string;
   used_by: string | null;
   used_at: string | null;
