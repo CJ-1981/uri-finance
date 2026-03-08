@@ -163,6 +163,8 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Categories
     "cat.newPlaceholder": "New category name",
+    "cat.codePlaceholder": "Code",
+    "cat.editCode": "Edit code",
     "cat.manageCategories": "Manage Categories",
 
     // Export
