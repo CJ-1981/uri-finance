@@ -315,7 +315,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <div className="flex gap-2">
             <Button
               type="button"
-              tabIndex={0}
+              data-tab-stop
               disabled={submitting}
               onClick={handleAddAndContinue}
               variant="outline"
@@ -325,7 +325,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </Button>
             <Button
               type="submit"
-              tabIndex={0}
+              data-tab-stop
               disabled={submitting}
               className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
             >
