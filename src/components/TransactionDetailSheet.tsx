@@ -239,11 +239,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3 overflow-hidden">
+            <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory} disabled={!isOwn}>
-                <SelectTrigger className="bg-muted/50 border-border/50">
+                <SelectTrigger className="bg-muted/50 border-border/50 min-w-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -253,15 +253,47 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                disabled={!isOwn}
-                className="bg-muted/50 border-border/50"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={!isOwn}
+                    className={cn(
+                      "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-sm">
+                      {date ? format(parse(date, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Pick date"}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
+                    onSelect={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
+              <Select value={currency} onValueChange={setCurrency} disabled={!isOwn}>
+                <SelectTrigger className="bg-muted/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
