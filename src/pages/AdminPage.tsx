@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useCategories } from "@/hooks/useCategories";
@@ -51,6 +52,9 @@ const AdminPage = () => {
   const [archiving, setArchiving] = useState(false);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+  const { role: userRole } = useUserRole(activeProject?.id);
+  const isAdmin = userRole === "admin";
+  const canAccess = isOwner || isAdmin;
 
   const DB_MAX_BYTES = 500 * 1024 * 1024; // 500 MB
 
@@ -219,7 +223,7 @@ const AdminPage = () => {
     );
   }
 
-  if (!isOwner) {
+  if (!canAccess) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <ShieldCheck className="h-12 w-12 text-muted-foreground" />
@@ -246,7 +250,8 @@ const AdminPage = () => {
       </header>
 
       <main className="px-4 pt-6 max-w-lg mx-auto space-y-8">
-        {/* Deleted Transactions (Trash) */}
+        {/* Deleted Transactions (Trash) - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -259,8 +264,10 @@ const AdminPage = () => {
             <TrashManager projectId={activeProject.id} currency={activeProject.currency} />
           </div>
         </section>
+        )}
 
-        {/* Archive */}
+        {/* Archive - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -340,8 +347,10 @@ const AdminPage = () => {
             </Button>
           </div>
         </section>
+        )}
 
-        {/* Members */}
+        {/* Members - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.members")}</h2>
@@ -422,8 +431,10 @@ const AdminPage = () => {
             )}
           </div>
         </section>
+        )}
 
-        {/* Invite Codes */}
+        {/* Invite Codes - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.invites")}</h2>
@@ -517,8 +528,10 @@ const AdminPage = () => {
             )}
           </div>
         </section>
+        )}
 
-        {/* Column Headers */}
+        {/* Column Headers - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -543,6 +556,7 @@ const AdminPage = () => {
             ))}
           </div>
         </section>
+        )}
 
         {/* Custom Columns */}
         <section className="space-y-4">
@@ -566,7 +580,8 @@ const AdminPage = () => {
           </div>
         </section>
 
-        {/* Project Info */}
+        {/* Project Info - Owner only */}
+        {isOwner && (<>
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.projectInfo")}</h2>
@@ -664,6 +679,7 @@ const AdminPage = () => {
             </div>
           </div>
         </section>
+        </>)}
       </main>
     </div>
   );
