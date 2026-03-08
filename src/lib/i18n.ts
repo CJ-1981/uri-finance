@@ -40,6 +40,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.amount": "Amount",
     "tx.category": "Category",
     "tx.date": "Date",
+    "tx.currency": "Currency",
     "tx.description": "Description",
     "tx.descriptionOptional": "Description (optional)",
     "tx.descriptionPlaceholder": "What was this for?",
