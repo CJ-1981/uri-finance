@@ -358,6 +358,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.transferConfirm": "이 멤버에게 소유권을 이전하시겠습니까? 당신은 관리자가 됩니다.",
     "admin.transferred": "소유권이 이전되었습니다",
     "admin.transferFailed": "소유권 이전에 실패했습니다",
+    "admin.simulating": "{role}(으)로 시뮬레이션 중",
 
     // Custom columns
     "cc.placeholder": "열 이름 (예: 세금, 할인)",
