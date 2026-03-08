@@ -431,8 +431,10 @@ const AdminPage = () => {
             )}
           </div>
         </section>
+        )}
 
-        {/* Invite Codes */}
+        {/* Invite Codes - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.invites")}</h2>
