@@ -6,6 +6,7 @@ export interface Category {
   id: string;
   project_id: string;
   name: string;
+  code: string;
   created_at: string;
 }
 
