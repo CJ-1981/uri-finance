@@ -13,10 +13,12 @@ import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
+import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -34,6 +36,14 @@ const Dashboard = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
+
+  const handleRemovePin = () => {
+    localStorage.removeItem("app_lock_pin");
+    setHasPin(false);
+    toast.success(t("lock.pinRemoved"));
+  };
 
   // Filter transactions by selected period
   const filtered = useMemo(
@@ -71,6 +81,15 @@ const Dashboard = () => {
               )}
               </>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => hasPin ? handleRemovePin() : setPinDialogOpen(true)}
+              className="text-muted-foreground hover:text-foreground"
+              title={hasPin ? t("lock.disable") : t("lock.enable")}
+            >
+              {hasPin ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -182,6 +201,7 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+      <PinSetupDialog open={pinDialogOpen} onOpenChange={setPinDialogOpen} onComplete={() => setHasPin(true)} />
     </div>
   );
 };

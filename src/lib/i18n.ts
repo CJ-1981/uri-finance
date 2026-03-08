@@ -174,6 +174,20 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleteFailed": "Failed to permanently delete",
     "admin.deletedOn": "Deleted",
 
+    // Lock
+    "lock.title": "App Locked",
+    "lock.enter": "Enter your PIN to unlock",
+    "lock.wrong": "Wrong PIN, try again",
+    "lock.setupTitle": "Set Lock PIN",
+    "lock.setupEnter": "Enter a 4-digit PIN",
+    "lock.setupConfirm": "Confirm your PIN",
+    "lock.mismatch": "PINs didn't match. Try again.",
+    "lock.pinSet": "Lock PIN set successfully!",
+    "lock.pinRemoved": "Lock PIN removed",
+    "lock.enable": "Enable App Lock",
+    "lock.disable": "Remove App Lock",
+    "lock.changePIN": "Change PIN",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
@@ -354,6 +368,20 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleted": "거래가 영구 삭제되었습니다",
     "admin.permDeleteFailed": "영구 삭제에 실패했습니다",
     "admin.deletedOn": "삭제일",
+
+    // Lock
+    "lock.title": "앱 잠금",
+    "lock.enter": "PIN을 입력하여 잠금 해제",
+    "lock.wrong": "잘못된 PIN입니다. 다시 시도하세요",
+    "lock.setupTitle": "잠금 PIN 설정",
+    "lock.setupEnter": "4자리 PIN을 입력하세요",
+    "lock.setupConfirm": "PIN을 다시 입력하세요",
+    "lock.mismatch": "PIN이 일치하지 않습니다. 다시 시도하세요.",
+    "lock.pinSet": "잠금 PIN이 설정되었습니다!",
+    "lock.pinRemoved": "잠금 PIN이 제거되었습니다",
+    "lock.enable": "앱 잠금 활성화",
+    "lock.disable": "앱 잠금 해제",
+    "lock.changePIN": "PIN 변경",
 
     // 404
     "notFound.title": "404",
