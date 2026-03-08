@@ -14,6 +14,7 @@ export interface Transaction {
   transaction_date: string;
   created_at: string;
   custom_values: Record<string, number | string> | null;
+  deleted_at: string | null;
 }
 
 export const useTransactions = (projectId: string | undefined) => {
@@ -28,6 +29,7 @@ export const useTransactions = (projectId: string | undefined) => {
       .from("transactions")
       .select("*")
       .eq("project_id", projectId)
+      .is("deleted_at", null)
       .order("transaction_date", { ascending: false })
       .limit(100);
     setTransactions((data as Transaction[]) || []);
@@ -82,7 +84,7 @@ export const useTransactions = (projectId: string | undefined) => {
   const deleteTransaction = async (id: string) => {
     const { error } = await supabase
       .from("transactions")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);
     if (error) {
       toast.error("Failed to delete transaction");

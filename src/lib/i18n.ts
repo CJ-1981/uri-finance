@@ -162,6 +162,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbError": "Failed to load database stats",
     "admin.dbTables": "Tables",
 
+    // Trash
+    "admin.trash": "Deleted Transactions",
+    "admin.trashDesc": "Restore accidentally deleted transactions.",
+    "admin.trashEmpty": "No deleted transactions.",
+    "admin.restore": "Restore",
+    "admin.restored": "Transaction restored!",
+    "admin.restoreFailed": "Failed to restore transaction",
+    "admin.permDelete": "Delete permanently",
+    "admin.permDeleted": "Transaction permanently deleted",
+    "admin.permDeleteFailed": "Failed to permanently delete",
+    "admin.deletedOn": "Deleted",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
@@ -330,6 +342,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbLoading": "통계 로딩 중...",
     "admin.dbError": "데이터베이스 통계를 불러오지 못했습니다",
     "admin.dbTables": "테이블",
+
+    // Trash
+    "admin.trash": "삭제된 거래",
+    "admin.trashDesc": "실수로 삭제된 거래를 복원할 수 있습니다.",
+    "admin.trashEmpty": "삭제된 거래가 없습니다.",
+    "admin.restore": "복원",
+    "admin.restored": "거래가 복원되었습니다!",
+    "admin.restoreFailed": "거래 복원에 실패했습니다",
+    "admin.permDelete": "영구 삭제",
+    "admin.permDeleted": "거래가 영구 삭제되었습니다",
+    "admin.permDeleteFailed": "영구 삭제에 실패했습니다",
+    "admin.deletedOn": "삭제일",
 
     // 404
     "notFound.title": "404",
