@@ -103,7 +103,7 @@ const Dashboard = () => {
             />
             {activeProject && (
               <>
-              <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} />
+              <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} isViewer={isViewer} />
               {isOwner && (
                 <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
                   <Settings className="h-4 w-4" />
