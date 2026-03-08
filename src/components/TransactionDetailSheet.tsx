@@ -216,7 +216,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="flex items-center justify-between">
             <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
             {totalCount > 1 && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 mr-8">
                 <Button
                   variant="ghost"
                   size="icon"
