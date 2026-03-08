@@ -277,7 +277,7 @@ const Dashboard = () => {
             {view === "list" ? (
               <TransactionList transactions={filtered} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} isViewer={isViewer} />
             ) : (
-              <FinanceCharts transactions={filtered} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} />
+              <FinanceCharts transactions={chartTransactions} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} projectCurrency={projectCurrency} />
             )}
 
             {/* FAB - hidden for viewers */}
