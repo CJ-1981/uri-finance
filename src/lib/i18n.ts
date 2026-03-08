@@ -201,6 +201,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleteFailed": "Failed to permanently delete",
     "admin.deletedOn": "Deleted",
 
+    // Archive
+    "admin.archive": "Data Archive",
+    "admin.archiveDesc": "Export and remove transactions within a date range.",
+    "admin.archiveFrom": "From",
+    "admin.archiveTo": "To",
+    "admin.archiveExportDelete": "Export & Archive",
+    "admin.archiveConfirm": "This will export {n} transactions as CSV and soft-delete them. Continue?",
+    "admin.archiveSuccess": "{n} transactions archived",
+    "admin.archiveEmpty": "No transactions found in selected range.",
+    "admin.archiving": "Archiving...",
+
     // Lock
     "lock.title": "App Locked",
     "lock.enter": "Enter your PIN to unlock",
