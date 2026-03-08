@@ -174,12 +174,18 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
       }
     });
 
+    const fmt = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2 });
+    const billLabel = t("cash.bills");
+    const coinLabel = t("cash.coins");
+
     lines.push("");
-    lines.push(`**${t("cash.namedTotal")}:** ${currency} ${totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push(`**${t("cash.namedTotal")}:** ${currency} ${fmt(totals.named)} (${billLabel}: ${fmt(totals.namedBills)}, ${coinLabel}: ${fmt(totals.namedCoins)})`);
     lines.push("");
-    lines.push(`**${t("cash.anonTotal")}:** ${currency} ${totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push(`**${t("cash.anonTotal")}:** ${currency} ${fmt(totals.anon)} (${billLabel}: ${fmt(totals.anonBills)}, ${coinLabel}: ${fmt(totals.anonCoins)})`);
     lines.push("");
-    lines.push(`**${t("cash.grandTotal")}:** ${currency} ${totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    const totalBills = totals.namedBills + totals.anonBills;
+    const totalCoins = totals.namedCoins + totals.anonCoins;
+    lines.push(`**${t("cash.grandTotal")}:** ${currency} ${fmt(totals.total)} (${billLabel}: ${fmt(totalBills)}, ${coinLabel}: ${fmt(totalCoins)})`);
     return lines.join("\n");
   };
 
