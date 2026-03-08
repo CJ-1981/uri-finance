@@ -55,6 +55,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.addFailed": "Failed to add transaction",
     "tx.updateFailed": "Failed to update transaction",
     "tx.deleteFailed": "Failed to delete transaction",
+    "tx.select": "Select",
+    "tx.selectAll": "All",
+    "tx.selected": "{n} selected",
+    "tx.bulkDelete": "Delete",
+    "tx.bulkEdit": "Edit",
+    "tx.bulkEditTitle": "Edit {n} transactions",
+    "tx.bulkEditDesc": "Changes will apply to all selected transactions. Leave fields empty to keep current values.",
+    "tx.bulkNoChange": "No change",
+    "tx.bulkType": "Type",
+    "tx.bulkApply": "Apply to {n} items",
 
     // Projects
     "proj.projects": "Projects",
