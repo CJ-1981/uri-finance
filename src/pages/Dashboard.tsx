@@ -17,7 +17,8 @@ import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
 import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye } from "lucide-react";
+import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -29,7 +30,7 @@ const Dashboard = () => {
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
-  const { isViewer } = useUserRole(activeProject?.id);
+  const { isViewer, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
@@ -38,7 +39,8 @@ const Dashboard = () => {
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const isOwner = activeProject && user && activeProject.owner_id === user.id;
+  const realOwner = activeProject && user && activeProject.owner_id === user.id;
+  const isOwner = !isSimulating && realOwner;
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
 
@@ -139,7 +141,30 @@ const Dashboard = () => {
           </div>
         </div>
         {activeProject && (
-          <p className="text-[10px] text-muted-foreground truncate mt-1">{activeProject.name}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-[10px] text-muted-foreground truncate flex-1">{activeProject.name}</p>
+            {realOwner && (
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Eye className="h-3 w-3 text-muted-foreground" />
+                {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
+                  const active = isSimulating ? simulatedRole === r : (r === "owner");
+                  return (
+                    <button
+                      key={r}
+                      onClick={() => setSimulatedRole(r === "owner" ? null : r)}
+                      className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-all ${
+                        active
+                          ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {t(`admin.${r}`)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </header>
 
