@@ -102,8 +102,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+      .sort((a, b) => b.value - a.value);
   }, [transactions]);
 
   if (transactions.length === 0) {
