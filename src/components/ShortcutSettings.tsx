@@ -71,7 +71,7 @@ const ShortcutSettings = () => {
           ))}
 
           <p className="text-[10px] text-muted-foreground">{t("shortcut.hint")}</p>
-          <p className="text-[10px] text-muted-foreground">{t("shortcut.arrowHint")}</p>
+          
 
           <Button size="sm" onClick={handleSave} disabled={!!recordingKey} className="w-full">
             {t("shortcut.save")}
