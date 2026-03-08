@@ -349,7 +349,8 @@ const AdminPage = () => {
         </section>
         )}
 
-        {/* Members */}
+        {/* Members - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.members")}</h2>
