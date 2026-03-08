@@ -29,6 +29,21 @@ const AdminPage = () => {
   const [savingCurrency, setSavingCurrency] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [creatingInvite, setCreatingInvite] = useState(false);
+  const [dbStats, setDbStats] = useState<any>(null);
+  const [dbLoading, setDbLoading] = useState(false);
+
+  const DB_MAX_BYTES = 500 * 1024 * 1024; // 500 MB
+
+  useEffect(() => {
+    if (!isOwner) return;
+    const fetchStats = async () => {
+      setDbLoading(true);
+      const { data, error } = await supabase.rpc("get_db_stats");
+      setDbLoading(false);
+      if (!error && data) setDbStats(data);
+    };
+    fetchStats();
+  }, [isOwner]);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
 
