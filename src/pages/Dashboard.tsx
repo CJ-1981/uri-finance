@@ -50,7 +50,7 @@ const Dashboard = () => {
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
   const { isViewer, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
-  const [view, setView] = useState<"list" | "charts">("list");
+  const [view, setView] = useState<"list" | "charts" | "cash">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("all");
