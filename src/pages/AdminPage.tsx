@@ -267,14 +267,14 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.archiveDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <label className="text-xs text-muted-foreground">{t("admin.archiveFrom")}</label>
                 <Input
                   type="date"
                   value={archiveFrom}
                   onChange={(e) => setArchiveFrom(e.target.value)}
-                  className="bg-background text-sm"
+                  className="bg-background text-sm w-full min-w-0"
                 />
               </div>
               <div className="space-y-1">
@@ -283,7 +283,7 @@ const AdminPage = () => {
                   type="date"
                   value={archiveTo}
                   onChange={(e) => setArchiveTo(e.target.value)}
-                  className="bg-background text-sm"
+                  className="bg-background text-sm w-full min-w-0"
                 />
               </div>
             </div>
