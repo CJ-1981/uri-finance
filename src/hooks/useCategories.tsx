@@ -116,5 +116,5 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
-  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, reorderCategory, fetchCategories };
+  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, fetchCategories };
 };

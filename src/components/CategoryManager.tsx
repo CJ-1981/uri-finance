@@ -166,7 +166,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
           <SheetTitle className="text-foreground">{t("cat.manageCategories")}</SheetTitle>
         </SheetHeader>
         <div className="mt-4">
-          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onReorder={onReorder} />
+          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorder={onReorder} />
         </div>
       </SheetContent>
     </Sheet>
