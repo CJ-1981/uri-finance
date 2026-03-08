@@ -18,7 +18,7 @@ interface Props {
     category: string;
     description?: string;
     transaction_date?: string;
-    custom_values?: Record<string, number>;
+    custom_values?: Record<string, number | string>;
   }) => Promise<void>;
 }
 
