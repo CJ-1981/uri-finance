@@ -52,36 +52,6 @@ const Dashboard = () => {
 
   useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer);
 
-  // j/k to navigate and open transactions in list view
-  const [focusedIndex, setFocusedIndex] = useState(-1);
-  const visibleTxs = filtered.slice(0, 20);
-
-  const goNextTx = useCallback(() => {
-    if (view !== "list" || !activeProject || detailOpen) return;
-    setFocusedIndex((prev) => {
-      const next = Math.min(prev + 1, visibleTxs.length - 1);
-      if (visibleTxs[next]) {
-        setSelectedTx(visibleTxs[next]);
-        setDetailOpen(true);
-      }
-      return next;
-    });
-  }, [view, activeProject, detailOpen, visibleTxs]);
-
-  const goPrevTx = useCallback(() => {
-    if (view !== "list" || !activeProject || detailOpen) return;
-    setFocusedIndex((prev) => {
-      const next = Math.max(prev - 1, 0);
-      if (visibleTxs[next]) {
-        setSelectedTx(visibleTxs[next]);
-        setDetailOpen(true);
-      }
-      return next;
-    });
-  }, [view, activeProject, detailOpen, visibleTxs]);
-
-  useKeyboardShortcut("nextTransaction", goNextTx, !!activeProject && view === "list" && !detailOpen);
-  useKeyboardShortcut("prevTransaction", goPrevTx, !!activeProject && view === "list" && !detailOpen);
 
   const handleRemovePin = () => {
     localStorage.removeItem("app_lock_pin");
