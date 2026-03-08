@@ -144,7 +144,9 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
 
     lines.push("");
     lines.push(`**${t("cash.namedTotal")}:** ${currency} ${totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push("");
     lines.push(`**${t("cash.anonTotal")}:** ${currency} ${totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push("");
     lines.push(`**${t("cash.grandTotal")}:** ${currency} ${totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
     return lines.join("\n");
   };
