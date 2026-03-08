@@ -20,6 +20,7 @@ interface Props {
   period: PeriodKey;
   customRange: DateRange;
   isViewer?: boolean;
+  projectCurrency?: string;
 }
 
 const COLORS = [
