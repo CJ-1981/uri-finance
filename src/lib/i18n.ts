@@ -301,6 +301,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cash.exported": "Markdown exported",
     "cash.copy": "Copy",
     "cash.copied": "Copied to clipboard",
+    "cash.target": "Target (Income)",
+    "cash.matching": "Matching",
+    "cash.excess": "Excess",
+    "cash.deficit": "Deficit",
+    "cash.gap": "Gap",
 
     // Language
     "lang.label": "EN",
