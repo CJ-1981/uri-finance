@@ -13,9 +13,10 @@ interface Props {
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
   onToggleRequired?: (id: string, required: boolean) => Promise<void>;
   onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
+  onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
 }
 
-const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggleRequired, onUpdateSuggestions }: Props) => {
+const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggleRequired, onUpdateSuggestions, onReorder }: Props) => {
   const [name, setName] = useState("");
   const [colType, setColType] = useState<ColumnType>("numeric");
   const [adding, setAdding] = useState(false);
@@ -36,7 +37,6 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
       setExpandedCol(null);
     } else {
       setExpandedCol(col.id);
-      // Initialize textarea with existing suggestions
       if (!suggestionsText[col.id]) {
         setSuggestionsText((prev) => ({
           ...prev,
@@ -97,9 +97,27 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
         <p className="text-xs text-muted-foreground">{t("cc.noColumns")}</p>
       ) : (
         <div className="space-y-2">
-          {columns.map((col) => (
+          {columns.map((col, idx) => (
             <div key={col.id} className="space-y-1">
               <div className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground">
+                {onReorder && (
+                  <div className="flex flex-col shrink-0 mr-0.5">
+                    <button
+                      onClick={() => onReorder(col.id, "up")}
+                      disabled={idx === 0}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+                    >
+                      <ChevronUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => onReorder(col.id, "down")}
+                      disabled={idx === columns.length - 1}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+                    >
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
                 {col.column_type === "numeric" ? (
                   <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
                 ) : (
@@ -115,11 +133,6 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
                     <FileText className="h-3.5 w-3.5" />
                     {(col.suggestions || []).length > 0 && (
                       <span className="text-[10px] tabular-nums">{col.suggestions.length}</span>
-                    )}
-                    {expandedCol === col.id ? (
-                      <ChevronUp className="h-3 w-3" />
-                    ) : (
-                      <ChevronDown className="h-3 w-3" />
                     )}
                   </button>
                 )}
