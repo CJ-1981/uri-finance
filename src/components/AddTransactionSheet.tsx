@@ -290,17 +290,19 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <div className="flex gap-2">
             <Button
               type="button"
+              tabIndex={0}
               disabled={submitting}
               onClick={handleAddAndContinue}
               variant="outline"
-              className="flex-1 font-semibold h-12 focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex-1 font-semibold h-12"
             >
               {submitting ? t("tx.adding") : t("tx.addAndContinue")}
             </Button>
             <Button
               type="submit"
+              tabIndex={0}
               disabled={submitting}
-              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
             >
               {submitting ? t("tx.adding") : t("tx.addTransaction")}
             </Button>
