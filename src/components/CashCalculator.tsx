@@ -57,6 +57,7 @@ function formatDenom(value: number, currency: string): string {
 
 interface CashCalculatorProps {
   currency: string;
+  targetAmount?: number;
 }
 
 type Counts = Record<string, { named: number; anon: number }>;
