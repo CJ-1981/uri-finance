@@ -9,6 +9,7 @@ import TransactionList from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import CategoryManager from "@/components/CategoryManager";
 import FinanceCharts from "@/components/FinanceCharts";
+import ExportTransactions from "@/components/ExportTransactions";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -41,12 +42,15 @@ const Dashboard = () => {
             onJoin={joinProject}
           />
           <div className="flex items-center gap-1">
-            {activeProject && (
+           {activeProject && (
+              <>
+              <ExportTransactions transactions={transactions} />
               <CategoryManager
                 categories={categories}
                 onAdd={addCategory}
                 onDelete={deleteCategory}
               />
+              </>
             )}
             <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-muted-foreground hover:text-foreground">
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
