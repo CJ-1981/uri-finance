@@ -39,59 +39,40 @@ const TOOLTIP_STYLE = {
 
 const ITEM_STYLE = { color: "hsl(210, 20%, 92%)" };
 
-type PieGroupKey = "category" | "type" | string;
-type MetricKey = "income" | "expense" | string;
+type GroupKey = "category" | "type" | string;
 
-/** Determine time buckets based on period */
 function getTimeBuckets(period: PeriodKey, customRange: DateRange) {
   const now = new Date();
   let start: Date;
   let end: Date = endOfDay(now);
 
   switch (period) {
-    case "today":
-      start = startOfDay(now);
-      break;
-    case "week":
-      start = startOfDay(subDays(now, 7));
-      break;
-    case "month":
-      start = startOfDay(subMonths(now, 1));
-      break;
-    case "sixMonths":
-      start = startOfDay(subMonths(now, 6));
-      break;
+    case "today": start = startOfDay(now); break;
+    case "week": start = startOfDay(subDays(now, 7)); break;
+    case "month": start = startOfDay(subMonths(now, 1)); break;
+    case "sixMonths": start = startOfDay(subMonths(now, 6)); break;
     case "custom":
       start = customRange.from ? startOfDay(customRange.from) : startOfDay(subMonths(now, 6));
       end = customRange.to ? endOfDay(customRange.to) : end;
       break;
-    case "all":
-    default:
-      start = startOfDay(subMonths(now, 12));
-      break;
+    case "all": default: start = startOfDay(subMonths(now, 12)); break;
   }
 
   const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
   if (diffDays <= 1) {
-    // Single day — no meaningful chart buckets, just show 1 bucket
     return [{ start, end, label: format(start, "MMM d") }];
   } else if (diffDays <= 14) {
-    // Daily buckets
     return eachDayOfInterval({ start, end }).map((d) => ({
-      start: startOfDay(d),
-      end: endOfDay(d),
-      label: format(d, "MMM d"),
+      start: startOfDay(d), end: endOfDay(d), label: format(d, "MMM d"),
     }));
   } else if (diffDays <= 90) {
-    // Weekly buckets
     return eachWeekOfInterval({ start, end }).map((d) => ({
       start: startOfWeek(d),
-      end: endOfDay(new Date(Math.min(startOfWeek(new Date(d.getTime() + 7 * 24 * 60 * 60 * 1000)).getTime() - 1, end.getTime()))),
+      end: endOfDay(new Date(Math.min(startOfWeek(new Date(d.getTime() + 7 * 86400000)).getTime() - 1, end.getTime()))),
       label: format(d, "MMM d"),
     }));
   } else {
-    // Monthly buckets
     return eachMonthOfInterval({ start, end }).map((d) => ({
       start: startOfMonth(d),
       end: endOfDay(new Date(Math.min(startOfMonth(new Date(d.getFullYear(), d.getMonth() + 1, 1)).getTime() - 1, end.getTime()))),
@@ -100,106 +81,107 @@ function getTimeBuckets(period: PeriodKey, customRange: DateRange) {
   }
 }
 
+function getGroupValue(tx: Transaction, groupBy: GroupKey, t: (k: string) => string): string {
+  if (groupBy === "category") return tx.category;
+  if (groupBy === "type") return tx.type === "income" ? t("tx.income") : t("tx.expense");
+  return String(tx.custom_values?.[groupBy] || "N/A");
+}
+
+function GroupSelector({ options, value, onChange }: {
+  options: { key: GroupKey; label: string }[];
+  value: GroupKey;
+  onChange: (k: GroupKey) => void;
+}) {
+  return (
+    <div className="flex gap-1">
+      {options.map((opt) => (
+        <button
+          key={opt.key}
+          onClick={() => onChange(opt.key)}
+          className={`rounded-md px-2 py-1 text-[10px] font-medium transition-all ${
+            value === opt.key
+              ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+              : "text-muted-foreground"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const FinanceCharts = ({ transactions, customColumns, period, customRange }: Props) => {
   const { t } = useI18n();
 
-  // --- Metric options ---
-  const metricOptions = useMemo(() => {
-    const base = [
-      { key: "income" as MetricKey, label: t("tx.income"), color: "hsl(152, 60%, 50%)" },
-      { key: "expense" as MetricKey, label: t("tx.expense"), color: "hsl(0, 72%, 58%)" },
-    ];
-    const numericCols = customColumns
-      .filter((col) => col.column_type === "numeric")
-      .map((col, i) => ({
-        key: col.name as MetricKey,
-        label: col.name,
-        color: COLORS[(i + 2) % COLORS.length],
-      }));
-    return [...base, ...numericCols];
-  }, [customColumns, t]);
-
-  const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
-    new Set(["income", "expense"])
-  );
-
-  const toggleMetric = (key: MetricKey) => {
-    setSelectedMetrics((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        if (next.size > 1) next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
-
-  const activeMetrics = metricOptions.filter((m) => selectedMetrics.has(m.key));
-
-  // --- Time-series data based on period ---
-  const buckets = useMemo(() => getTimeBuckets(period, customRange), [period, customRange]);
-
-  const timeSeriesData = useMemo(() => {
-    return buckets.map((bucket) => {
-      const bucketTxs = transactions.filter((tx) => {
-        const d = parseISO(tx.transaction_date);
-        return isWithinInterval(d, { start: bucket.start, end: bucket.end });
-      });
-
-      const row: Record<string, string | number> = { name: bucket.label };
-      row.income = bucketTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
-      row.expense = bucketTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
-
-      for (const col of customColumns.filter((c) => c.column_type === "numeric")) {
-        row[col.name] = bucketTxs.reduce((s, tx) => {
-          const v = tx.custom_values?.[col.name];
-          return s + (v != null ? Number(v) : 0);
-        }, 0);
-      }
-      return row;
-    });
-  }, [transactions, customColumns, buckets]);
-
-  // --- Cumulative data ---
-  const cumulativeData = useMemo(() => {
-    const cumulative: Record<string, number> = {};
-    return timeSeriesData.map((row) => {
-      const cumRow: Record<string, string | number> = { name: row.name };
-      for (const m of metricOptions) {
-        cumulative[m.key] = (cumulative[m.key] || 0) + Number(row[m.key] || 0);
-        cumRow[m.key] = cumulative[m.key];
-      }
-      return cumRow;
-    });
-  }, [timeSeriesData, metricOptions]);
-
-  // --- Pie chart ---
-  const pieGroupOptions: { key: PieGroupKey; label: string }[] = useMemo(() => {
-    const base: { key: PieGroupKey; label: string }[] = [
+  const groupOptions: { key: GroupKey; label: string }[] = useMemo(() => {
+    const base: { key: GroupKey; label: string }[] = [
       { key: "category", label: t("tx.category") },
       { key: "type", label: t("tx.type") },
     ];
     const textCols = customColumns
       .filter((col) => col.column_type === "text")
-      .map((col) => ({ key: col.name as PieGroupKey, label: col.name }));
+      .map((col) => ({ key: col.name as GroupKey, label: col.name }));
     return [...base, ...textCols];
   }, [customColumns, t]);
 
-  const [pieGroupBy, setPieGroupBy] = useState<PieGroupKey>("category");
+  const [trendGroupBy, setTrendGroupBy] = useState<GroupKey>("type");
+  const [cumulativeGroupBy, setCumulativeGroupBy] = useState<GroupKey>("type");
+  const [pieGroupBy, setPieGroupBy] = useState<GroupKey>("category");
 
-  const categoryData = useMemo(() => {
+  const buckets = useMemo(() => getTimeBuckets(period, customRange), [period, customRange]);
+
+  // Build grouped time-series data for a given groupBy key
+  const buildGroupedData = (groupBy: GroupKey) => {
+    // Collect all unique group values
+    const allGroups = new Set<string>();
+    transactions.forEach((tx) => allGroups.add(getGroupValue(tx, groupBy, t)));
+    const groups = Array.from(allGroups).sort();
+
+    const data = buckets.map((bucket) => {
+      const bucketTxs = transactions.filter((tx) => {
+        const d = parseISO(tx.transaction_date);
+        return isWithinInterval(d, { start: bucket.start, end: bucket.end });
+      });
+      const row: Record<string, string | number> = { name: bucket.label };
+      for (const g of groups) {
+        row[g] = bucketTxs
+          .filter((tx) => getGroupValue(tx, groupBy, t) === g)
+          .reduce((s, tx) => s + Number(tx.amount), 0);
+      }
+      return row;
+    });
+
+    const series = groups.map((g, i) => ({
+      key: g,
+      color: COLORS[i % COLORS.length],
+    }));
+
+    return { data, series };
+  };
+
+  const trendData = useMemo(() => buildGroupedData(trendGroupBy), [transactions, trendGroupBy, buckets, t]);
+  const cumulativeRaw = useMemo(() => buildGroupedData(cumulativeGroupBy), [transactions, cumulativeGroupBy, buckets, t]);
+
+  const cumulativeData = useMemo(() => {
+    const cumulative: Record<string, number> = {};
+    const data = cumulativeRaw.data.map((row) => {
+      const cumRow: Record<string, string | number> = { name: row.name };
+      for (const s of cumulativeRaw.series) {
+        cumulative[s.key] = (cumulative[s.key] || 0) + Number(row[s.key] || 0);
+        cumRow[s.key] = cumulative[s.key];
+      }
+      return cumRow;
+    });
+    return { data, series: cumulativeRaw.series };
+  }, [cumulativeRaw]);
+
+  // Pie chart data
+  const pieData = useMemo(() => {
     const map: Record<string, number> = {};
     transactions.forEach((tx) => {
-      let groupValue: string;
-      if (pieGroupBy === "category") {
-        groupValue = tx.category;
-      } else if (pieGroupBy === "type") {
-        groupValue = tx.type === "income" ? t("tx.income") : t("tx.expense");
-      } else {
-        groupValue = String(tx.custom_values?.[pieGroupBy] || "N/A");
-      }
-      map[groupValue] = (map[groupValue] || 0) + Number(tx.amount);
+      const g = getGroupValue(tx, pieGroupBy, t);
+      map[g] = (map[g] || 0) + Number(tx.amount);
     });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
@@ -216,90 +198,77 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange }: Pro
 
   return (
     <div className="space-y-6">
-      {/* Metric selector */}
-      <div className="flex flex-wrap gap-2">
-        {metricOptions.map((m) => (
-          <button
-            key={m.key}
-            onClick={() => toggleMetric(m.key)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-              selectedMetrics.has(m.key)
-                ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                : "bg-muted/30 text-muted-foreground"
-            }`}
-          >
-            <div
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: m.color, opacity: selectedMetrics.has(m.key) ? 1 : 0.4 }}
-            />
-            {m.label}
-          </button>
-        ))}
-      </div>
-
       {/* Filled Area Chart - Trend */}
       <div className="glass-card p-4">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
+          <GroupSelector options={groupOptions} value={trendGroupBy} onChange={setTrendGroupBy} />
+        </div>
         <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={timeSeriesData}>
+          <AreaChart data={trendData.data}>
             <defs>
-              {activeMetrics.map((m) => (
-                <linearGradient key={m.key} id={`grad-${m.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={m.color} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={m.color} stopOpacity={0.02} />
+              {trendData.series.map((s) => (
+                <linearGradient key={s.key} id={`grad-trend-${s.key}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={s.color} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
                 </linearGradient>
               ))}
             </defs>
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
             <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
-            {activeMetrics.map((m) => (
-              <Area key={m.key} type="monotone" dataKey={m.key} stroke={m.color} strokeWidth={2} fill={`url(#grad-${m.key})`} name={m.label} />
+            {trendData.series.map((s) => (
+              <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.color} strokeWidth={2} fill={`url(#grad-trend-${s.key})`} name={s.key} />
             ))}
           </AreaChart>
         </ResponsiveContainer>
+        <div className="mt-2 flex flex-wrap justify-center gap-3">
+          {trendData.series.map((s) => (
+            <div key={s.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+              {s.key}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Bar Chart - Cumulative */}
       <div className="glass-card p-4">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.cumulative")}</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-medium text-muted-foreground">{t("chart.cumulative")}</h3>
+          <GroupSelector options={groupOptions} value={cumulativeGroupBy} onChange={setCumulativeGroupBy} />
+        </div>
         <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={cumulativeData} barGap={2}>
+          <BarChart data={cumulativeData.data} barGap={2}>
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
             <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
-            {activeMetrics.map((m) => (
-              <Bar key={m.key} dataKey={m.key} fill={m.color} radius={[4, 4, 0, 0]} name={m.label} />
+            {cumulativeData.series.map((s) => (
+              <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} name={s.key} />
             ))}
           </BarChart>
         </ResponsiveContainer>
+        <div className="mt-2 flex flex-wrap justify-center gap-3">
+          {cumulativeData.series.map((s) => (
+            <div key={s.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+              {s.key}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Pie Chart */}
-      {categoryData.length > 0 && (
+      {pieData.length > 0 && (
         <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-muted-foreground">{t("chart.expenseByCategory")}</h3>
-            <div className="flex gap-1">
-              {pieGroupOptions.map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => setPieGroupBy(opt.key)}
-                  className={`rounded-md px-2 py-1 text-[10px] font-medium transition-all ${
-                    pieGroupBy === opt.key
-                      ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+            <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
+            <GroupSelector options={groupOptions} value={pieGroupBy} onChange={setPieGroupBy} />
           </div>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
-                {categoryData.map((_, i) => (
+              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
+                {pieData.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
@@ -307,7 +276,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange }: Pro
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
-            {categoryData.map((c, i) => (
+            {pieData.map((c, i) => (
               <div key={c.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                 {c.name} <span className="text-foreground font-medium">${c.value.toLocaleString()}</span>
