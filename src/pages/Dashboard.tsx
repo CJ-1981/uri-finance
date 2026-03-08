@@ -68,7 +68,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-3">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             {activeProject && (
@@ -113,6 +113,9 @@ const Dashboard = () => {
             onJoin={joinProject}
           />
         </div>
+        {activeProject && (
+          <p className="text-[10px] text-muted-foreground truncate mt-1">{activeProject.name}</p>
+        )}
       </header>
 
       <main className="px-4 pt-4">
