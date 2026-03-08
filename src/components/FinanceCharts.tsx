@@ -207,6 +207,34 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
 
   return (
     <div className="space-y-6">
+      {/* Pie Chart */}
+      {pieData.length > 0 && (
+        <div className="glass-card p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
+            <GroupSelector options={groupOptions} value={pieGroupBy} onChange={setPieGroupBy} />
+          </div>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
+                {pieData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="mt-2 flex flex-wrap justify-center gap-3">
+            {pieData.map((c, i) => (
+              <div key={c.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                {c.name} <span className="text-foreground font-medium">{fmt(c.value)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Filled Area Chart - Trend */}
       <div className="glass-card p-4">
         <div className="flex items-center justify-between mb-4">
@@ -266,34 +294,6 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
           ))}
         </div>
       </div>
-
-      {/* Pie Chart */}
-      {pieData.length > 0 && (
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
-            <GroupSelector options={groupOptions} value={pieGroupBy} onChange={setPieGroupBy} />
-          </div>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
-                {pieData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
-            {pieData.map((c, i) => (
-              <div key={c.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                {c.name} <span className="text-foreground font-medium">{fmt(c.value)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
