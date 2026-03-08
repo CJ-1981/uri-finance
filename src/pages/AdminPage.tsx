@@ -266,25 +266,25 @@ const AdminPage = () => {
             </h2>
             <p className="text-xs text-muted-foreground">{t("admin.archiveDesc")}</p>
           </div>
-          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3 overflow-hidden">
-            <div className="flex gap-2 items-end">
-              <div className="space-y-1 flex-1 min-w-0">
-                <label className="text-xs text-muted-foreground">{t("admin.archiveFrom")}</label>
-                <Input
+          <div className="rounded-xl border border-border/50 bg-card p-3 space-y-2 overflow-hidden max-w-[280px]">
+            <div className="flex gap-1.5 items-end">
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <label className="text-[10px] text-muted-foreground">{t("admin.archiveFrom")}</label>
+                <input
                   type="date"
                   value={archiveFrom}
                   onChange={(e) => setArchiveFrom(e.target.value)}
-                  className="bg-background text-xs h-8 px-2 w-full"
+                  className="flex h-7 w-full rounded-md border border-input bg-background px-1.5 text-[11px] ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </div>
-              <span className="text-xs text-muted-foreground pb-1.5">~</span>
-              <div className="space-y-1 flex-1 min-w-0">
-                <label className="text-xs text-muted-foreground">{t("admin.archiveTo")}</label>
-                <Input
+              <span className="text-[10px] text-muted-foreground pb-1">~</span>
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <label className="text-[10px] text-muted-foreground">{t("admin.archiveTo")}</label>
+                <input
                   type="date"
                   value={archiveTo}
                   onChange={(e) => setArchiveTo(e.target.value)}
-                  className="bg-background text-xs h-8 px-2 w-full"
+                  className="flex h-7 w-full rounded-md border border-input bg-background px-1.5 text-[11px] ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               </div>
             </div>
@@ -292,9 +292,9 @@ const AdminPage = () => {
               size="sm"
               onClick={handleArchive}
               disabled={archiving || !archiveFrom || !archiveTo}
-              className="w-full"
+              className="w-full h-7 text-xs"
             >
-              <Archive className="h-4 w-4 mr-1" />
+              <Archive className="h-3.5 w-3.5 mr-1" />
               {archiving ? t("admin.archiving") : t("admin.archiveExportDelete")}
             </Button>
           </div>
