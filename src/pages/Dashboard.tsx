@@ -5,6 +5,7 @@ import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useCustomColumns } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
@@ -12,7 +13,7 @@ import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings2 } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings2, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
+  const { t, locale, setLocale } = useI18n();
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -57,6 +59,14 @@ const Dashboard = () => {
               )}
               </>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setLocale(locale === "en" ? "ko" : "en")}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Globe className="h-4 w-4" />
+            </Button>
             <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-muted-foreground hover:text-foreground">
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -73,9 +83,9 @@ const Dashboard = () => {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
               <BarChart3 className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h2 className="text-lg font-semibold text-foreground">Get Started</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t("dash.getStarted")}</h2>
             <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-              Create a project or join one with an invite code to start tracking finances together.
+              {t("dash.getStartedDesc")}
             </p>
           </div>
         ) : (
@@ -83,19 +93,19 @@ const Dashboard = () => {
             {/* Balance cards */}
             <div className="grid grid-cols-3 gap-2">
               <div className="glass-card p-3 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Balance</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.balance")}</p>
                 <p className={`mt-1 text-lg font-bold ${balance >= 0 ? "text-income" : "text-expense"}`}>
                   ${Math.abs(balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="glass-card p-3 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Income</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.income")}</p>
                 <p className="mt-1 text-lg font-bold text-income">
                   ${totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="glass-card p-3 text-center">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Expenses</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.expenses")}</p>
                 <p className="mt-1 text-lg font-bold text-expense">
                   ${totalExpense.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </p>
@@ -110,7 +120,7 @@ const Dashboard = () => {
                   view === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
               >
-                <List className="h-3.5 w-3.5" /> Transactions
+                <List className="h-3.5 w-3.5" /> {t("dash.transactions")}
               </button>
               <button
                 onClick={() => setView("charts")}
@@ -118,7 +128,7 @@ const Dashboard = () => {
                   view === "charts" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
               >
-                <BarChart3 className="h-3.5 w-3.5" /> Charts
+                <BarChart3 className="h-3.5 w-3.5" /> {t("dash.charts")}
               </button>
             </div>
 

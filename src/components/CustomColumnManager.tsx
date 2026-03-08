@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, X } from "lucide-react";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   columns: CustomColumn[];
@@ -13,6 +14,7 @@ interface Props {
 const CustomColumnManager = ({ columns, onAdd, onDelete }: Props) => {
   const [name, setName] = useState("");
   const [adding, setAdding] = useState(false);
+  const { t } = useI18n();
 
   const handleAdd = async () => {
     if (!name.trim()) return;
@@ -28,7 +30,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete }: Props) => {
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Column name (e.g. Tax, Discount)"
+          placeholder={t("cc.placeholder")}
           className="flex-1 bg-background"
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
@@ -37,7 +39,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete }: Props) => {
         </Button>
       </div>
       {columns.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No custom columns yet.</p>
+        <p className="text-xs text-muted-foreground">{t("cc.noColumns")}</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           {columns.map((col) => (

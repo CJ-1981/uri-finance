@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Settings2, Plus, X } from "lucide-react";
 import { Category } from "@/hooks/useCategories";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   categories: Category[];
@@ -15,6 +16,7 @@ interface Props {
 const CategoryContent = ({ categories, onAdd, onDelete }: Omit<Props, "inline">) => {
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
+  const { t } = useI18n();
 
   const handleAdd = async () => {
     if (!newName.trim()) return;
@@ -30,7 +32,7 @@ const CategoryContent = ({ categories, onAdd, onDelete }: Omit<Props, "inline">)
         <Input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder="New category name"
+          placeholder={t("cat.newPlaceholder")}
           className="bg-muted/50 border-border/50"
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
@@ -54,6 +56,7 @@ const CategoryContent = ({ categories, onAdd, onDelete }: Omit<Props, "inline">)
 
 const CategoryManager = ({ categories, onAdd, onDelete, inline }: Props) => {
   const [open, setOpen] = useState(false);
+  const { t } = useI18n();
 
   if (inline) {
     return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} />;
@@ -68,7 +71,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, inline }: Props) => {
       </SheetTrigger>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[70vh]">
         <SheetHeader>
-          <SheetTitle className="text-foreground">Manage Categories</SheetTitle>
+          <SheetTitle className="text-foreground">{t("cat.manageCategories")}</SheetTitle>
         </SheetHeader>
         <div className="mt-4">
           <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} />

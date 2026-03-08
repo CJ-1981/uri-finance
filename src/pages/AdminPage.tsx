@@ -4,6 +4,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useCategories } from "@/hooks/useCategories";
 import { useColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useCustomColumns } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ const AdminPage = () => {
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn } = useCustomColumns(activeProject?.id);
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [currency, setCurrency] = useState(activeProject?.currency || "USD");
   const [savingCurrency, setSavingCurrency] = useState(false);
@@ -34,17 +36,17 @@ const AdminPage = () => {
       .eq("id", activeProject.id);
     setSavingCurrency(false);
     if (error) {
-      toast.error("Failed to update currency");
+      toast.error(t("admin.currencyFailed"));
       return;
     }
-    toast.success("Currency updated");
+    toast.success(t("admin.currencyUpdated"));
     await fetchProjects();
   };
 
   if (!activeProject) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">No active project selected.</p>
+        <p className="text-muted-foreground">{t("admin.noProject")}</p>
       </div>
     );
   }
@@ -53,9 +55,9 @@ const AdminPage = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <ShieldCheck className="h-12 w-12 text-muted-foreground" />
-        <p className="text-muted-foreground text-sm">Only the project owner can access this page.</p>
+        <p className="text-muted-foreground text-sm">{t("admin.ownerOnly")}</p>
         <Button variant="outline" onClick={() => navigate("/")}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
+          <ArrowLeft className="h-4 w-4 mr-2" /> {t("admin.backToDashboard")}
         </Button>
       </div>
     );
@@ -69,22 +71,22 @@ const AdminPage = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-sm font-semibold text-foreground">Project Settings</h1>
+            <h1 className="text-sm font-semibold text-foreground">{t("admin.title")}</h1>
             <p className="text-xs text-muted-foreground">{activeProject.name}</p>
           </div>
         </div>
       </header>
 
       <main className="px-4 pt-6 max-w-lg mx-auto space-y-8">
-        {/* Column Headers Section */}
+        {/* Column Headers */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Column Headers</h2>
-              <p className="text-xs text-muted-foreground">Customize transaction column names for display and exports.</p>
+              <h2 className="text-sm font-semibold text-foreground">{t("admin.columnHeaders")}</h2>
+              <p className="text-xs text-muted-foreground">{t("admin.columnHeadersDesc")}</p>
             </div>
             <Button variant="outline" size="sm" onClick={resetHeaders} className="text-xs">
-              Reset
+              {t("admin.reset")}
             </Button>
           </div>
           <div className="grid gap-3 rounded-xl border border-border/50 bg-card p-4">
@@ -105,45 +107,40 @@ const AdminPage = () => {
         {/* Custom Numeric Columns */}
         <section className="space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Custom Numeric Columns</h2>
-            <p className="text-xs text-muted-foreground">Add extra numeric fields to transactions (e.g. Tax, Discount, Quantity).</p>
+            <h2 className="text-sm font-semibold text-foreground">{t("admin.customColumns")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.customColumnsDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
             <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} />
           </div>
         </section>
 
-        {/* Categories Section */}
+        {/* Categories */}
         <section className="space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Categories</h2>
-            <p className="text-xs text-muted-foreground">Manage transaction categories for this project.</p>
+            <h2 className="text-sm font-semibold text-foreground">{t("admin.categories")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.categoriesDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CategoryManager
-              categories={categories}
-              onAdd={addCategory}
-              onDelete={deleteCategory}
-              inline
-            />
+            <CategoryManager categories={categories} onAdd={addCategory} onDelete={deleteCategory} inline />
           </div>
         </section>
 
         {/* Project Info */}
         <section className="space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-foreground">Project Info</h2>
-            <p className="text-xs text-muted-foreground">Share the invite code with team members.</p>
+            <h2 className="text-sm font-semibold text-foreground">{t("admin.projectInfo")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.projectInfoDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
             <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground w-24">Invite Code</span>
+              <span className="text-xs text-muted-foreground w-24">{t("proj.inviteCode")}</span>
               <code className="flex-1 rounded-lg bg-muted px-3 py-2 text-sm font-mono text-foreground">
                 {activeProject.invite_code}
               </code>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground w-24">Currency</span>
+              <span className="text-xs text-muted-foreground w-24">{t("admin.currency")}</span>
               <Input
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}

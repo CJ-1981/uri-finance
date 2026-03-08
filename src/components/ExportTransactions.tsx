@@ -11,6 +11,7 @@ import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   transactions: Transaction[];
@@ -24,7 +25,7 @@ const formatAmount = (tx: Transaction) =>
 const formatDate = (tx: Transaction) =>
   format(parseISO(tx.transaction_date), "yyyy-MM-dd");
 
-const downloadFile = (content: string, filename: string, mime: string) => {
+const downloadFile = (content: string, filename: string, mime: string, successMsg: string) => {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -32,7 +33,7 @@ const downloadFile = (content: string, filename: string, mime: string) => {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-  toast.success(`Exported as ${filename}`);
+  toast.success(`${successMsg} ${filename}`);
 };
 
 const getCustomVal = (tx: Transaction, colName: string) => {
@@ -40,33 +41,29 @@ const getCustomVal = (tx: Transaction, colName: string) => {
   return val != null ? Number(val).toFixed(2) : "";
 };
 
-const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[]) => {
+const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
   const colHeaders = cols.map((c) => c.name).join(",");
   const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
-  const rows = transactions.map(
-    (tx) => {
-      const base = `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`;
-      const custom = cols.map((c) => getCustomVal(tx, c.name)).join(",");
-      return cols.length ? `${base},${custom}` : base;
-    }
-  );
-  downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv");
+  const rows = transactions.map((tx) => {
+    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`;
+    const custom = cols.map((c) => getCustomVal(tx, c.name)).join(",");
+    return cols.length ? `${base},${custom}` : base;
+  });
+  downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv", msg);
 };
 
-const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[]) => {
+const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
   const colTh = cols.map((c) => `<th>${c.name}</th>`).join("");
   const header = `<tr><th>${h.date}</th><th>${h.type}</th><th>${h.category}</th><th>${h.description}</th><th>${h.amount}</th>${colTh}</tr>`;
-  const rows = transactions
-    .map((tx) => {
-      const colTd = cols.map((c) => `<td>${getCustomVal(tx, c.name)}</td>`).join("");
-      return `<tr><td>${formatDate(tx)}</td><td>${tx.type}</td><td>${tx.category}</td><td>${tx.description || ""}</td><td>${formatAmount(tx)}</td>${colTd}</tr>`;
-    })
-    .join("");
+  const rows = transactions.map((tx) => {
+    const colTd = cols.map((c) => `<td>${getCustomVal(tx, c.name)}</td>`).join("");
+    return `<tr><td>${formatDate(tx)}</td><td>${tx.type}</td><td>${tx.category}</td><td>${tx.description || ""}</td><td>${formatAmount(tx)}</td>${colTd}</tr>`;
+  }).join("");
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>${header}${rows}</table></body></html>`;
-  downloadFile(html, "transactions.xls", "application/vnd.ms-excel");
+  downloadFile(html, "transactions.xls", "application/vnd.ms-excel", msg);
 };
 
-const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[]) => {
+const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
   const colH = cols.map((c) => ` ${c.name} |`).join("");
   const header = `| ${h.date} | ${h.type} | ${h.category} | ${h.description} | ${h.amount} |${colH}`;
   const colSep = cols.map(() => " ---: |").join("");
@@ -75,11 +72,15 @@ const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: Cus
     const colVals = cols.map((c) => ` ${getCustomVal(tx, c.name) || "-"} |`).join("");
     return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
   });
-  downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown");
+  downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);
 };
 
 const ExportTransactions = ({ transactions, headers, customColumns }: Props) => {
+  const { t } = useI18n();
+
   if (transactions.length === 0) return null;
+
+  const msg = t("export.success");
 
   return (
     <DropdownMenu>
@@ -89,14 +90,14 @@ const ExportTransactions = ({ transactions, headers, customColumns }: Props) => 
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => exportCSV(transactions, headers, customColumns)}>
-          Export as CSV
+        <DropdownMenuItem onClick={() => exportCSV(transactions, headers, customColumns, msg)}>
+          {t("export.csv")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportXLS(transactions, headers, customColumns)}>
-          Export as XLS
+        <DropdownMenuItem onClick={() => exportXLS(transactions, headers, customColumns, msg)}>
+          {t("export.xls")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, customColumns)}>
-          Export as Markdown
+        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, customColumns, msg)}>
+          {t("export.markdown")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

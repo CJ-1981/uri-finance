@@ -4,8 +4,9 @@ import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TrendingUp, ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/hooks/useI18n";
 
 const Auth = () => {
   const { user, loading } = useAuth();
@@ -14,11 +15,12 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { signIn, signUp } = useAuth();
+  const { t, locale, setLocale } = useI18n();
 
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">{t("auth.loading")}</div>
       </div>
     );
   }
@@ -36,34 +38,42 @@ const Auth = () => {
     if (error) {
       toast.error(error.message);
     } else if (!isLogin) {
-      toast.success("Account created! You're now signed in.");
+      toast.success(t("auth.accountCreated"));
     }
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6 gradient-dark">
+      {/* Language toggle */}
+      <button
+        onClick={() => setLocale(locale === "en" ? "ko" : "en")}
+        className="fixed top-4 right-4 z-50 rounded-lg bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+      >
+        {t("lang.label")}
+      </button>
+
       <div className="w-full max-w-sm animate-fade-in">
         <div className="mb-10 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl gradient-primary">
             <ArrowRightLeft className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            FinTrack
+            {t("auth.title")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Team finance tracking made simple
+            {t("auth.subtitle")}
           </p>
         </div>
 
         <div className="glass-card p-6">
           <h2 className="mb-6 text-lg font-semibold text-foreground">
-            {isLogin ? "Welcome back" : "Create account"}
+            {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-muted-foreground text-sm">
-                Email
+                {t("auth.email")}
               </Label>
               <Input
                 id="email"
@@ -78,7 +88,7 @@ const Auth = () => {
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-muted-foreground text-sm">
-                Password
+                {t("auth.password")}
               </Label>
               <Input
                 id="password"
@@ -97,7 +107,7 @@ const Auth = () => {
               disabled={submitting}
               className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
             >
-              {submitting ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+              {submitting ? t("auth.submitting") : isLogin ? t("auth.signIn") : t("auth.signUp")}
             </Button>
           </form>
 
@@ -106,7 +116,7 @@ const Auth = () => {
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              {isLogin ? t("auth.switchToSignUp") : t("auth.switchToSignIn")}
             </button>
           </div>
         </div>
