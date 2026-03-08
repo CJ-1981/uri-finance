@@ -160,7 +160,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory}>
