@@ -125,12 +125,17 @@ const NumberedSelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] p-1 max-h-60 overflow-y-auto"
+        className="w-[var(--radix-popover-trigger-width)] p-1"
         align="start"
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <div ref={listRef} role="listbox">
+        <div
+          ref={listRef}
+          role="listbox"
+          className="max-h-60 overflow-y-auto overscroll-contain"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {items.map((item, idx) => (
             <button
               key={item.value}
