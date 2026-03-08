@@ -20,6 +20,12 @@ const COLORS = [
   "hsl(40, 80%, 55%)",
   "hsl(320, 60%, 55%)",
   "hsl(0, 72%, 58%)",
+  "hsl(140, 50%, 45%)",
+  "hsl(25, 75%, 55%)",
+  "hsl(240, 55%, 58%)",
+  "hsl(60, 70%, 48%)",
+  "hsl(350, 65%, 52%)",
+  "hsl(180, 50%, 45%)",
 ];
 
 const TOOLTIP_STYLE = {
@@ -96,8 +102,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+      .sort((a, b) => b.value - a.value);
   }, [transactions]);
 
   if (transactions.length === 0) {
