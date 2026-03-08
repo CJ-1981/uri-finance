@@ -84,7 +84,7 @@ export const useTransactions = (projectId: string | undefined) => {
   const deleteTransaction = async (id: string) => {
     const { error } = await supabase
       .from("transactions")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);
     if (error) {
       toast.error("Failed to delete transaction");
