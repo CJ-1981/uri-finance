@@ -184,13 +184,16 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
           </span>
           {customColumns.map((col) => {
             const val = tx.custom_values?.[col.name];
+            const shouldMask = isViewer && col.masked;
             return (
               <span key={col.id} className="hidden sm:block w-24 text-right text-xs text-muted-foreground truncate shrink-0">
-                {val != null
-                  ? col.column_type === "numeric"
-                    ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    : String(val)
-                  : "—"}
+                {shouldMask
+                  ? "••••"
+                  : val != null
+                    ? col.column_type === "numeric"
+                      ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 })
+                      : String(val)
+                    : "—"}
               </span>
             );
           })}
