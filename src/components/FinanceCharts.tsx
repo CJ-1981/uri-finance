@@ -2,10 +2,8 @@ import { Transaction } from "@/hooks/useTransactions";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip,
-  PieChart, Pie, Cell, AreaChart, Area,
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
 } from "recharts";
-import { format, startOfMonth, subMonths } from "date-fns";
 import { useMemo, useState } from "react";
 
 interface Props {
@@ -36,64 +34,10 @@ const TOOLTIP_STYLE = {
   fontSize: 12,
 };
 
-type MetricKey = "income" | "expense" | string;
+type PieGroupKey = "category" | "type" | string;
 
 const FinanceCharts = ({ transactions, customColumns }: Props) => {
   const { t } = useI18n();
-
-  const metricOptions: { key: MetricKey; label: string; color: string }[] = useMemo(() => {
-    const base = [
-      { key: "income" as MetricKey, label: t("tx.income"), color: "hsl(152, 60%, 50%)" },
-      { key: "expense" as MetricKey, label: t("tx.expense"), color: "hsl(0, 72%, 58%)" },
-    ];
-    const custom = customColumns
-      .filter((col) => col.column_type === "numeric")
-      .map((col, i) => ({
-        key: col.name as MetricKey,
-        label: col.name,
-        color: COLORS[(i + 2) % COLORS.length],
-      }));
-    return [...base, ...custom];
-  }, [customColumns, t]);
-
-  const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
-    new Set(["income", "expense"])
-  );
-
-  const toggleMetric = (key: MetricKey) => {
-    setSelectedMetrics((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        if (next.size > 1) next.delete(key);
-      } else {
-        next.add(key);
-      }
-      return next;
-    });
-  };
-
-  const monthlyData = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => {
-      const month = startOfMonth(subMonths(new Date(), 5 - i));
-      const label = format(month, "MMM");
-      const monthStr = format(month, "yyyy-MM");
-      const monthTxs = transactions.filter((tx) => tx.transaction_date.startsWith(monthStr));
-
-      const row: Record<string, string | number> = { name: label };
-      row.income = monthTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
-      row.expense = monthTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
-
-      for (const col of customColumns.filter((c) => c.column_type === "numeric")) {
-        row[col.name] = monthTxs.reduce((s, tx) => {
-          const v = tx.custom_values?.[col.name];
-          return s + (v != null ? Number(v) : 0);
-        }, 0);
-      }
-      return row;
-    });
-  }, [transactions, customColumns]);
-
-  type PieGroupKey = "category" | "type" | string;
 
   const pieGroupOptions: { key: PieGroupKey; label: string }[] = useMemo(() => {
     const base: { key: PieGroupKey; label: string }[] = [
@@ -134,66 +78,8 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
     );
   }
 
-  const activeMetrics = metricOptions.filter((m) => selectedMetrics.has(m.key));
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {metricOptions.map((m) => (
-          <button
-            key={m.key}
-            onClick={() => toggleMetric(m.key)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-              selectedMetrics.has(m.key)
-                ? "bg-card text-foreground shadow-sm ring-1 ring-border"
-                : "bg-muted/30 text-muted-foreground"
-            }`}
-          >
-            <div
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: m.color, opacity: selectedMetrics.has(m.key) ? 1 : 0.4 }}
-            />
-            {m.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="glass-card p-4">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={monthlyData}>
-            <defs>
-              {activeMetrics.map((m) => (
-                <linearGradient key={m.key} id={`grad-${m.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={m.color} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={m.color} stopOpacity={0.02} />
-                </linearGradient>
-              ))}
-            </defs>
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
-            <YAxis hide />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
-            {activeMetrics.map((m) => (
-              <Area key={m.key} type="monotone" dataKey={m.key} stroke={m.color} strokeWidth={2} fill={`url(#grad-${m.key})`} name={m.label} />
-            ))}
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="glass-card p-4">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.comparison")}</h3>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={monthlyData} barGap={2}>
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
-            <YAxis hide />
-            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
-            {activeMetrics.map((m) => (
-              <Bar key={m.key} dataKey={m.key} fill={m.color} radius={[4, 4, 0, 0]} name={m.label} />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
       {categoryData.length > 0 && (
         <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-4">
