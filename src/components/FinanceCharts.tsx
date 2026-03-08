@@ -132,8 +132,8 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
     return [...base, ...textCols];
   }, [visibleColumns, t]);
 
-  const [trendGroupBy, setTrendGroupBy] = useState<GroupKey>("type");
-  const [cumulativeGroupBy, setCumulativeGroupBy] = useState<GroupKey>("type");
+  const [trendGroupBy, setTrendGroupBy] = useState<GroupKey>("category");
+  const [cumulativeGroupBy, setCumulativeGroupBy] = useState<GroupKey>("category");
   const [pieGroupBy, setPieGroupBy] = useState<GroupKey>("category");
 
   const buckets = useMemo(() => getTimeBuckets(period, customRange), [period, customRange]);

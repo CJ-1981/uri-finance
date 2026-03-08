@@ -12,10 +12,14 @@ import TrashManager from "@/components/TrashManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { Transaction } from "@/hooks/useTransactions";
+import { ColumnHeaders } from "@/hooks/useColumnHeaders";
+import { CustomColumn } from "@/hooks/useCustomColumns";
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -37,6 +41,9 @@ const AdminPage = () => {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [dbStats, setDbStats] = useState<any>(null);
   const [dbLoading, setDbLoading] = useState(false);
+  const [archiveFrom, setArchiveFrom] = useState("");
+  const [archiveTo, setArchiveTo] = useState("");
+  const [archiving, setArchiving] = useState(false);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
 
@@ -127,6 +134,72 @@ const AdminPage = () => {
     toast.success(t("proj.inviteCopied"));
   };
 
+  const handleArchive = async () => {
+    if (!activeProject || !archiveFrom || !archiveTo) return;
+    
+    // Fetch transactions in range
+    const { data: txs, error: fetchErr } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("project_id", activeProject.id)
+      .is("deleted_at", null)
+      .gte("transaction_date", archiveFrom)
+      .lte("transaction_date", archiveTo)
+      .order("transaction_date", { ascending: true });
+
+    if (fetchErr || !txs || txs.length === 0) {
+      toast.info(t("admin.archiveEmpty"));
+      return;
+    }
+
+    const confirmed = window.confirm(
+      t("admin.archiveConfirm").replace("{n}", String(txs.length))
+    );
+    if (!confirmed) return;
+
+    setArchiving(true);
+
+    // Export as CSV
+    const h = headers;
+    const cols = customColumns;
+    const colHeaders = cols.map((c) => c.name).join(",");
+    const csvHeader = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
+    const csvRows = txs.map((tx: any) => {
+      const fmtDate = tx.transaction_date;
+      const fmtAmt = `${tx.type === "income" ? "" : "-"}${Number(tx.amount).toFixed(2)}`;
+      const base = `${fmtDate},${tx.type},"${tx.category}","${tx.description || ""}",${fmtAmt}`;
+      const custom = cols.map((c) => {
+        const val = tx.custom_values?.[c.name];
+        return `"${val != null ? (c.column_type === "numeric" ? Number(val).toFixed(2) : String(val)) : ""}"`;
+      }).join(",");
+      return cols.length ? `${base},${custom}` : base;
+    });
+    const csvContent = [csvHeader, ...csvRows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `archive_${archiveFrom}_${archiveTo}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Soft-delete all archived transactions
+    const ids = txs.map((tx: any) => tx.id);
+    const batchSize = 50;
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = ids.slice(i, i + batchSize);
+      await supabase
+        .from("transactions")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("id", batch);
+    }
+
+    setArchiving(false);
+    setArchiveFrom("");
+    setArchiveTo("");
+    toast.success(t("admin.archiveSuccess").replace("{n}", String(txs.length)));
+  };
+
   if (!activeProject) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -173,6 +246,48 @@ const AdminPage = () => {
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
             <TrashManager projectId={activeProject.id} currency={activeProject.currency} />
+          </div>
+        </section>
+
+        {/* Archive */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Archive className="h-4 w-4" />
+              {t("admin.archive")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("admin.archiveDesc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">{t("admin.archiveFrom")}</label>
+                <Input
+                  type="date"
+                  value={archiveFrom}
+                  onChange={(e) => setArchiveFrom(e.target.value)}
+                  className="bg-background text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">{t("admin.archiveTo")}</label>
+                <Input
+                  type="date"
+                  value={archiveTo}
+                  onChange={(e) => setArchiveTo(e.target.value)}
+                  className="bg-background text-sm"
+                />
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleArchive}
+              disabled={archiving || !archiveFrom || !archiveTo}
+              className="w-full"
+            >
+              <Archive className="h-4 w-4 mr-1" />
+              {archiving ? t("admin.archiving") : t("admin.archiveExportDelete")}
+            </Button>
           </div>
         </section>
 

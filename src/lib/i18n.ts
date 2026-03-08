@@ -201,6 +201,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleteFailed": "Failed to permanently delete",
     "admin.deletedOn": "Deleted",
 
+    // Archive
+    "admin.archive": "Data Archive",
+    "admin.archiveDesc": "Export and remove transactions within a date range.",
+    "admin.archiveFrom": "From",
+    "admin.archiveTo": "To",
+    "admin.archiveExportDelete": "Export & Archive",
+    "admin.archiveConfirm": "This will export {n} transactions as CSV and soft-delete them. Continue?",
+    "admin.archiveSuccess": "{n} transactions archived",
+    "admin.archiveEmpty": "No transactions found in selected range.",
+    "admin.archiving": "Archiving...",
+
     // Lock
     "lock.title": "App Locked",
     "lock.enter": "Enter your PIN to unlock",
@@ -423,6 +434,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleted": "거래가 영구 삭제되었습니다",
     "admin.permDeleteFailed": "영구 삭제에 실패했습니다",
     "admin.deletedOn": "삭제일",
+
+    // Archive
+    "admin.archive": "데이터 아카이브",
+    "admin.archiveDesc": "기간을 지정하여 거래를 내보내고 삭제합니다.",
+    "admin.archiveFrom": "시작일",
+    "admin.archiveTo": "종료일",
+    "admin.archiveExportDelete": "내보내기 & 아카이브",
+    "admin.archiveConfirm": "{n}개의 거래를 CSV로 내보내고 삭제합니다. 계속하시겠습니까?",
+    "admin.archiveSuccess": "{n}개의 거래가 아카이브되었습니다",
+    "admin.archiveEmpty": "선택한 기간에 거래가 없습니다.",
+    "admin.archiving": "아카이브 중...",
 
     // Lock
     "lock.title": "앱 잠금",
