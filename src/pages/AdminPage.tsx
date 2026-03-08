@@ -23,7 +23,7 @@ const AdminPage = () => {
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn } = useCustomColumns(activeProject?.id);
-  const { members, invites, removeMember, banMember, createInvite, deleteInvite } = useProjectMembers(activeProject?.id);
+  const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
   const { t } = useI18n();
   const navigate = useNavigate();
   const [currency, setCurrency] = useState(activeProject?.currency || "USD");
