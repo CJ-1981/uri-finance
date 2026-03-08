@@ -71,7 +71,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 max-w-3xl mx-auto">
       {/* Selection toolbar */}
       <div className="flex items-center justify-between px-1">
         {selectMode ? (
@@ -108,24 +108,24 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground flex-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectMode(true)}
-                className="text-muted-foreground h-7 w-10 px-0 text-[10px] shrink-0 -ml-2"
-              >
-                <CheckSquare className="h-3.5 w-3.5" />
-              </Button>
-              <div className="flex-1 min-w-0 flex gap-2">
-                <span className="flex-1 truncate">{headers.description}</span>
-                <span className="hidden sm:block w-20 text-right">{headers.category}</span>
-              </div>
-              {customColumns.map((col) => (
-                <span key={col.id} className="hidden sm:block w-20 text-right">{col.name}</span>
-              ))}
-              <span className="w-24 text-right">{headers.amount}</span>
-            </div>
+          <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground w-full">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectMode(true)}
+              className="text-muted-foreground h-7 w-8 px-0 text-[10px] shrink-0"
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+            </Button>
+            {/* Icon spacer */}
+            <div className="w-10 shrink-0 hidden sm:block" />
+            <span className="flex-1 min-w-0 truncate">{headers.description}</span>
+            <span className="hidden sm:block w-24 text-right shrink-0">{headers.category}</span>
+            {customColumns.map((col) => (
+              <span key={col.id} className="hidden sm:block w-24 text-right shrink-0">{col.name}</span>
+            ))}
+            <span className="w-28 text-right shrink-0">{headers.amount}</span>
+          </div>
         )}
       </div>
 
@@ -178,10 +178,13 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
               {tx.category} · {format(parseISO(tx.transaction_date), "MMM d")}
             </p>
           </div>
+          <span className="hidden sm:block w-24 text-right text-xs text-muted-foreground truncate shrink-0">
+            {tx.category}
+          </span>
           {customColumns.map((col) => {
             const val = tx.custom_values?.[col.name];
             return (
-              <span key={col.id} className="hidden sm:block w-20 text-right text-xs text-muted-foreground truncate">
+              <span key={col.id} className="hidden sm:block w-24 text-right text-xs text-muted-foreground truncate shrink-0">
                 {val != null
                   ? col.column_type === "numeric"
                     ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 })
@@ -191,7 +194,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
             );
           })}
           <p
-            className={`text-sm font-semibold ${
+            className={`w-28 text-right text-sm font-semibold shrink-0 ${
               tx.type === "income" ? "text-income" : "text-expense"
             }`}
           >
