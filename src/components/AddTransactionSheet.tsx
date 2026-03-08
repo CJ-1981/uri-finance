@@ -155,6 +155,12 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     const currentIdx = stops.indexOf(document.activeElement as HTMLElement);
     e.preventDefault();
     if (e.shiftKey) {
+      if (currentIdx <= 0) {
+        // Jump to the sheet close button (X)
+        const closeBtn = form.closest('[role="dialog"]')?.querySelector<HTMLElement>('button[data-sheet-close]') ||
+          form.closest('[role="dialog"]')?.querySelector<HTMLElement>('button:has(> svg.lucide-x)');
+        if (closeBtn) { closeBtn.focus(); return; }
+      }
       const prev = currentIdx <= 0 ? stops.length - 1 : currentIdx - 1;
       stops[prev].focus();
     } else {
@@ -177,6 +183,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         </SheetHeader>
 
         <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
+          {/* Type toggle */}
           <div className="flex gap-2">
             <Button
               type="button"
@@ -206,6 +213,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </Button>
           </div>
 
+          {/* Amount */}
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
@@ -223,17 +231,70 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2 min-w-0">
-              <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-              <NumberedSelect
-                value={category}
-                onValueChange={setCategory}
-                items={categories.map((c) => ({ value: c.name, label: c.name }))}
-                showNumbers
-                className="bg-muted/50 border-border/50 min-w-0"
-              />
+          {/* Category */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
+            <NumberedSelect
+              value={category}
+              onValueChange={setCategory}
+              items={categories.map((c) => ({ value: c.name, label: c.name }))}
+              showNumbers
+              className="bg-muted/50 border-border/50 min-w-0"
+            />
+          </div>
+
+          {/* Custom columns (after category) */}
+          {customColumns.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              {customColumns.map((col) => (
+                <div key={col.id} className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
+                  {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 ? (
+                    <AutoSuggestInput
+                      value={customValues[col.name] || ""}
+                      onChange={(val) =>
+                        setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                      }
+                      suggestions={columnSuggestions[col.name]}
+                      placeholder=""
+                      className="bg-muted/50 border-border/50"
+                      data-tab-stop
+                    />
+                  ) : (
+                    <Input
+                      type="text"
+                      inputMode={col.column_type === "numeric" ? "decimal" : "text"}
+                      value={customValues[col.name] || ""}
+                      onChange={(e) => {
+                        const val = col.column_type === "numeric"
+                          ? e.target.value.replace(/[^0-9.]/g, "")
+                          : e.target.value;
+                        setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                      }}
+                      placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                      className="bg-muted/50 border-border/50"
+                      data-tab-stop
+                    />
+                  )}
+                </div>
+              ))}
             </div>
+          )}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-xs">{t("tx.descriptionOptional")}</Label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("tx.descriptionPlaceholder")}
+              className="bg-muted/50 border-border/50"
+              data-tab-stop
+            />
+          </div>
+
+          {/* Date & Currency (moved to last) */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
               <Popover>
@@ -274,54 +335,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">{t("tx.descriptionOptional")}</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("tx.descriptionPlaceholder")}
-              className="bg-muted/50 border-border/50"
-              data-tab-stop
-            />
-          </div>
-
-          {customColumns.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {customColumns.map((col) => (
-                <div key={col.id} className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
-                  {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 ? (
-                    <AutoSuggestInput
-                      value={customValues[col.name] || ""}
-                      onChange={(val) =>
-                        setCustomValues((prev) => ({ ...prev, [col.name]: val }))
-                      }
-                      suggestions={columnSuggestions[col.name]}
-                      placeholder=""
-                      className="bg-muted/50 border-border/50"
-                      data-tab-stop
-                    />
-                  ) : (
-                    <Input
-                      type="text"
-                      inputMode={col.column_type === "numeric" ? "decimal" : "text"}
-                      value={customValues[col.name] || ""}
-                      onChange={(e) => {
-                        const val = col.column_type === "numeric"
-                          ? e.target.value.replace(/[^0-9.]/g, "")
-                          : e.target.value;
-                        setCustomValues((prev) => ({ ...prev, [col.name]: val }));
-                      }}
-                      placeholder={col.column_type === "numeric" ? "0.00" : ""}
-                      className="bg-muted/50 border-border/50"
-                      data-tab-stop
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
+          {/* Action buttons */}
           <div className="flex gap-2">
             <Button
               type="button"
