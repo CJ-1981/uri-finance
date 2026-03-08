@@ -42,7 +42,9 @@ const Dashboard = () => {
             onJoin={joinProject}
           />
           <div className="flex items-center gap-1">
-            {activeProject && (
+           {activeProject && (
+              <>
+              <ExportTransactions transactions={transactions} />
               <CategoryManager
                 categories={categories}
                 onAdd={addCategory}
