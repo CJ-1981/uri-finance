@@ -87,6 +87,7 @@ const AutoSuggestInput = ({ value, onChange, suggestions, placeholder, disabled,
         className={className}
         inputMode={inputMode}
         autoComplete="off"
+        {...rest}
       />
       {showDropdown && (
         <ul
