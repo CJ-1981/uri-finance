@@ -108,7 +108,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number) => [`$${value.toLocaleString()}`, ""]} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "hsl(210, 20%, 92%)" }} labelStyle={{ color: "hsl(210, 20%, 92%)" }} formatter={(value: number) => [`$${value.toLocaleString()}`, ""]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
