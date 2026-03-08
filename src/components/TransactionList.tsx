@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 
 interface Props {
   transactions: Transaction[];
+  categories?: Category[];
   onSelect: (tx: Transaction) => void;
   onBulkDelete: (ids: string[]) => Promise<void>;
   onBulkEditOpen: (txs: Transaction[]) => void;
@@ -20,7 +21,7 @@ interface Props {
   isViewer?: boolean;
 }
 
-const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
+const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
