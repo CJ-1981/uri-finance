@@ -29,6 +29,15 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
 
+  // Build a map of category name -> icon for quick lookup
+  const categoryIconMap = useMemo(() => {
+    const map = new Map<string, string>();
+    categories?.forEach(cat => {
+      if (cat.icon) map.set(cat.name, cat.icon);
+    });
+    return map;
+  }, [categories]);
+
   // Determine which custom column names are masked (hidden from viewers)
   const maskedColumnNames = useMemo(() => {
     if (!isViewer) return new Set<string>();
