@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings2, Plus, X } from "lucide-react";
+import { Settings2, Plus, X, ChevronUp, ChevronDown } from "lucide-react";
 import { Category } from "@/hooks/useCategories";
 import { useI18n } from "@/hooks/useI18n";
 
@@ -11,10 +11,11 @@ interface Props {
   onAdd: (name: string, code?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onUpdateCode?: (id: string, code: string) => Promise<void>;
+  onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   inline?: boolean;
 }
 
-const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode }: Omit<Props, "inline">) => {
+const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onReorder }: Omit<Props, "inline">) => {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [adding, setAdding] = useState(false);
@@ -60,8 +61,26 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode }: Omit<Pro
         </Button>
       </div>
       <div className="space-y-1 max-h-[40vh] overflow-y-auto">
-        {categories.map((cat) => (
+        {categories.map((cat, idx) => (
           <div key={cat.id} className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5">
+            {onReorder && (
+              <div className="flex flex-col shrink-0">
+                <button
+                  onClick={() => onReorder(cat.id, "up")}
+                  disabled={idx === 0}
+                  className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+                >
+                  <ChevronUp className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={() => onReorder(cat.id, "down")}
+                  disabled={idx === categories.length - 1}
+                  className="text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </div>
+            )}
             {editingCodeId === cat.id ? (
               <Input
                 value={editCodeValue}
@@ -94,12 +113,12 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode }: Omit<Pro
   );
 };
 
-const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, inline }: Props) => {
+const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onReorder, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
   if (inline) {
-    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} />;
+    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onReorder={onReorder} />;
   }
 
   return (
@@ -114,7 +133,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, inline }: 
           <SheetTitle className="text-foreground">{t("cat.manageCategories")}</SheetTitle>
         </SheetHeader>
         <div className="mt-4">
-          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} />
+          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onReorder={onReorder} />
         </div>
       </SheetContent>
     </Sheet>

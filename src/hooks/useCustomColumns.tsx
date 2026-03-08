@@ -11,6 +11,7 @@ export interface CustomColumn {
   column_type: ColumnType;
   masked: boolean;
   required: boolean;
+  sort_order: number;
   suggestions: string[];
   created_at: string;
 }
@@ -26,6 +27,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
       .from("custom_columns")
       .select("*")
       .eq("project_id", projectId)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     setColumns((data as CustomColumn[]) || []);
     setLoading(false);
@@ -37,9 +39,10 @@ export const useCustomColumns = (projectId: string | undefined) => {
 
   const addColumn = async (name: string, columnType: ColumnType = "numeric") => {
     if (!projectId || !name.trim()) return;
+    const maxOrder = columns.length > 0 ? Math.max(...columns.map(c => c.sort_order)) : -1;
     const { error } = await supabase
       .from("custom_columns")
-      .insert({ project_id: projectId, name: name.trim(), column_type: columnType });
+      .insert({ project_id: projectId, name: name.trim(), column_type: columnType, sort_order: maxOrder + 1 } as any);
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Column already exists" : "Failed to add column");
       return;
@@ -95,5 +98,21 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  return { columns, loading, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, fetchColumns };
+  const reorderColumn = async (id: string, direction: "up" | "down") => {
+    const idx = columns.findIndex(c => c.id === id);
+    if (idx < 0) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= columns.length) return;
+
+    const current = columns[idx];
+    const swap = columns[swapIdx];
+
+    await Promise.all([
+      supabase.from("custom_columns").update({ sort_order: swap.sort_order } as any).eq("id", current.id),
+      supabase.from("custom_columns").update({ sort_order: current.sort_order } as any).eq("id", swap.id),
+    ]);
+    await fetchColumns();
+  };
+
+  return { columns, loading, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, fetchColumns };
 };
