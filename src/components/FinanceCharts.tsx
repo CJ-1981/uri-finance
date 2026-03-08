@@ -112,19 +112,25 @@ function GroupSelector({ options, value, onChange }: {
   );
 }
 
-const FinanceCharts = ({ transactions, customColumns, period, customRange }: Props) => {
+const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer }: Props) => {
   const { t } = useI18n();
+
+  // Filter out masked columns for viewers
+  const visibleColumns = useMemo(() =>
+    isViewer ? customColumns.filter((col) => !col.masked) : customColumns,
+    [customColumns, isViewer]
+  );
 
   const groupOptions: { key: GroupKey; label: string }[] = useMemo(() => {
     const base: { key: GroupKey; label: string }[] = [
       { key: "category", label: t("tx.category") },
       { key: "type", label: t("tx.type") },
     ];
-    const textCols = customColumns
+    const textCols = visibleColumns
       .filter((col) => col.column_type === "text")
       .map((col) => ({ key: col.name as GroupKey, label: col.name }));
     return [...base, ...textCols];
-  }, [customColumns, t]);
+  }, [visibleColumns, t]);
 
   const [trendGroupBy, setTrendGroupBy] = useState<GroupKey>("type");
   const [cumulativeGroupBy, setCumulativeGroupBy] = useState<GroupKey>("type");
