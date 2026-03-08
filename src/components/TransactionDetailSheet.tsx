@@ -168,6 +168,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("tx.descriptionPlaceholder")}
+              disabled={!isOwn}
               className="bg-muted/50 border-border/50"
             />
           </div>
