@@ -38,8 +38,8 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
       {formatted}
     </p>
   );
-};
 
+const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions } = useTransactions(activeProject?.id);
