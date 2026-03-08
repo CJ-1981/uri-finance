@@ -189,6 +189,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                       setCustomValues((prev) => ({ ...prev, [col.name]: val }));
                     }}
                     placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                    disabled={!isOwn}
                     className="bg-muted/50 border-border/50"
                   />
                 </div>
