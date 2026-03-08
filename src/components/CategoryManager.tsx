@@ -16,12 +16,14 @@ interface Props {
   inline?: boolean;
 }
 
-const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onReorder }: Omit<Props, "inline">) => {
+const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIcon, onReorder }: Omit<Props, "inline">) => {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [adding, setAdding] = useState(false);
   const [editingCodeId, setEditingCodeId] = useState<string | null>(null);
   const [editCodeValue, setEditCodeValue] = useState("");
+  const [editingIconId, setEditingIconId] = useState<string | null>(null);
+  const [editIconValue, setEditIconValue] = useState("");
   const { t } = useI18n();
 
   const handleAdd = async () => {
