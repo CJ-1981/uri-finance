@@ -47,7 +47,8 @@ const Dashboard = () => {
           <div className="flex items-center gap-1">
            {activeProject && (
               <>
-              <ExportTransactions transactions={transactions} />
+              <ExportTransactions transactions={transactions} headers={headers} />
+              <ColumnHeaderEditor headers={headers} onUpdate={updateHeader} onReset={resetHeaders} />
               <CategoryManager
                 categories={categories}
                 onAdd={addCategory}
