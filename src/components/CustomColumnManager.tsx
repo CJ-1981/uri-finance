@@ -132,6 +132,15 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
                     {col.masked ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
                 )}
+                {onToggleRequired && (
+                  <button
+                    onClick={() => onToggleRequired(col.id, !col.required)}
+                    className={`transition-colors ${col.required ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                    title={col.required ? (t("cc.requiredOn") || "Required") : (t("cc.requiredOff") || "Optional")}
+                  >
+                    <Asterisk className={`h-3.5 w-3.5 ${col.required ? "" : "opacity-40"}`} />
+                  </button>
+                )}
                 <button onClick={() => onDelete(col.id)} className="text-muted-foreground hover:text-destructive transition-colors">
                   <X className="h-3.5 w-3.5" />
                 </button>
