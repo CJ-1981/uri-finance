@@ -22,9 +22,31 @@ interface Props {
 const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+
+  // Filter transactions by search query matching any text field
+  const filteredTransactions = useMemo(() => {
+    if (!searchQuery.trim()) return transactions;
+    const q = searchQuery.toLowerCase();
+    return transactions.filter((tx) => {
+      if (tx.description?.toLowerCase().includes(q)) return true;
+      if (tx.category.toLowerCase().includes(q)) return true;
+      if (tx.type.toLowerCase().includes(q)) return true;
+      if (tx.currency?.toLowerCase().includes(q)) return true;
+      if (tx.transaction_date.includes(q)) return true;
+      if (String(tx.amount).includes(q)) return true;
+      // Search custom values
+      if (tx.custom_values) {
+        for (const val of Object.values(tx.custom_values)) {
+          if (String(val).toLowerCase().includes(q)) return true;
+        }
+      }
+      return false;
+    });
+  }, [transactions, searchQuery]);
 
   const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
 
