@@ -18,6 +18,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.inviteCode": "Invite Code",
     "auth.inviteCodePlaceholder": "Enter invite code from project creator",
     "auth.invalidInviteCode": "Invalid invite code. Please get one from a project creator.",
+    "auth.inviteEmailMismatch": "This invite code is assigned to a different email address.",
     "auth.loading": "Loading...",
 
     // Dashboard
@@ -115,6 +116,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.createInvite": "Create Invite",
     "admin.inviteLabel": "Label (optional)",
     "admin.inviteLabelPlaceholder": "e.g. For Pastor Kim",
+    "admin.inviteEmailPlaceholder": "Email address for this invite",
+    "admin.inviteEmailRequired": "Email address is required for invite codes",
     "admin.inviteCreated": "Invite code created!",
     "admin.inviteCreateFailed": "Failed to create invite",
     "admin.inviteDeleted": "Invite code deleted",
@@ -257,6 +260,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.inviteCode": "초대 코드",
     "auth.inviteCodePlaceholder": "프로젝트 생성자의 초대 코드를 입력하세요",
     "auth.invalidInviteCode": "유효하지 않은 초대 코드입니다. 프로젝트 생성자에게 문의하세요.",
+    "auth.inviteEmailMismatch": "이 초대 코드는 다른 이메일 주소에 할당되어 있습니다.",
     "auth.loading": "로딩 중...",
 
     // Dashboard
@@ -354,6 +358,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.createInvite": "초대 코드 생성",
     "admin.inviteLabel": "라벨 (선택사항)",
     "admin.inviteLabelPlaceholder": "예: 김목사님용",
+    "admin.inviteEmailPlaceholder": "초대할 이메일 주소",
+    "admin.inviteEmailRequired": "초대 코드에는 이메일 주소가 필요합니다",
     "admin.inviteCreated": "초대 코드가 생성되었습니다!",
     "admin.inviteCreateFailed": "초대 코드 생성에 실패했습니다",
     "admin.inviteDeleted": "초대 코드가 삭제되었습니다",

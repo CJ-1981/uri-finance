@@ -133,6 +133,18 @@ export const useProjects = () => {
 
     // New invite system
     const projectId = (invite as any).project_id;
+    const inviteEmail = (invite as any).email;
+    const inviteRole = (invite as any).role || "member";
+
+    // Validate email if invite is email-locked
+    if (inviteEmail) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userEmail = sessionData.session?.user?.email?.toLowerCase();
+      if (userEmail !== inviteEmail.toLowerCase()) {
+        toast.error("This invite code is assigned to a different email address.");
+        return;
+      }
+    }
 
     // Check if banned
     const { data: ban } = await supabase
@@ -153,10 +165,10 @@ export const useProjects = () => {
       .update({ used_by: user.id, used_at: new Date().toISOString() })
       .eq("id", (invite as any).id);
 
-    // Join project
+    // Join project with the assigned role
     const { error } = await supabase
       .from("project_members")
-      .insert({ project_id: projectId, user_id: user.id });
+      .insert({ project_id: projectId, user_id: user.id, role: inviteRole });
 
     if (error) {
       if (error.code === "23505") {

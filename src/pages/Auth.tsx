@@ -38,17 +38,43 @@ const Auth = () => {
       setSubmitting(false);
       if (error) toast.error(error.message);
     } else {
-      // Validate invite code first
-      const { data: project } = await supabase
-        .from("projects")
-        .select("id, name")
-        .eq("invite_code", inviteCode.trim())
+      // Try new invite system first
+      const { data: invite } = await supabase
+        .from("project_invites")
+        .select("*")
+        .eq("code", inviteCode.trim())
+        .is("used_by", null)
         .single();
 
-      if (!project) {
-        setSubmitting(false);
-        toast.error(t("auth.invalidInviteCode"));
-        return;
+      // Fallback to legacy invite_code on projects table
+      let projectId: string | null = null;
+      let inviteRole = "member";
+      let inviteId: string | null = null;
+
+      if (invite) {
+        // Validate email lock
+        const inviteEmail = (invite as any).email;
+        if (inviteEmail && inviteEmail.toLowerCase() !== email.trim().toLowerCase()) {
+          setSubmitting(false);
+          toast.error(t("auth.inviteEmailMismatch"));
+          return;
+        }
+        projectId = (invite as any).project_id;
+        inviteRole = (invite as any).role || "member";
+        inviteId = (invite as any).id;
+      } else {
+        const { data: project } = await supabase
+          .from("projects")
+          .select("id, name")
+          .eq("invite_code", inviteCode.trim())
+          .single();
+
+        if (!project) {
+          setSubmitting(false);
+          toast.error(t("auth.invalidInviteCode"));
+          return;
+        }
+        projectId = project.id;
       }
 
       // Create account
@@ -71,10 +97,17 @@ const Auth = () => {
       };
 
       const userId = await waitForUser();
-      if (userId) {
+      if (userId && projectId) {
+        // Mark invite as used if it's a new-style invite
+        if (inviteId) {
+          await supabase
+            .from("project_invites")
+            .update({ used_by: userId, used_at: new Date().toISOString() })
+            .eq("id", inviteId);
+        }
         await supabase
           .from("project_members")
-          .insert({ project_id: project.id, user_id: userId })
+          .insert({ project_id: projectId, user_id: userId, role: inviteRole })
           .select();
       }
 
