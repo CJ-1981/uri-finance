@@ -1,19 +1,66 @@
+import { useState } from "react";
 import { Transaction } from "@/hooks/useTransactions";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   transactions: Transaction[];
   onSelect: (tx: Transaction) => void;
+  onBulkDelete: (ids: string[]) => Promise<void>;
+  onBulkEditOpen: (txs: Transaction[]) => void;
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
 }
 
-const TransactionList = ({ transactions, onSelect, headers, customColumns }: Props) => {
+const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns }: Props) => {
   const { t } = useI18n();
+  const { user } = useAuth();
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+
+  const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
+
+  const toggleSelect = (id: string) => {
+    if (!ownTxIds.has(id)) return;
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    const selectableIds = transactions.slice(0, 20).filter((tx) => ownTxIds.has(tx.id)).map((tx) => tx.id);
+    if (selected.size === selectableIds.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(selectableIds));
+    }
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelected(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    setDeleting(true);
+    await onBulkDelete(Array.from(selected));
+    setDeleting(false);
+    exitSelectMode();
+  };
+
+  const handleBulkEdit = () => {
+    const selectedTxs = transactions.filter((tx) => selected.has(tx.id));
+    onBulkEditOpen(selectedTxs);
+  };
 
   if (transactions.length === 0) {
     return (
@@ -25,36 +72,108 @@ const TransactionList = ({ transactions, onSelect, headers, customColumns }: Pro
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-        <div className="w-10 shrink-0" />
-        <div className="flex-1 min-w-0 flex gap-2">
-          <span className="flex-1 truncate">{headers.description}</span>
-          <span className="hidden sm:block w-20 text-right">{headers.category}</span>
-        </div>
-        {customColumns.map((col) => (
-          <span key={col.id} className="hidden sm:block w-20 text-right">{col.name}</span>
-        ))}
-        <span className="w-24 text-right">{headers.amount}</span>
+      {/* Selection toolbar */}
+      <div className="flex items-center justify-between px-1">
+        {selectMode ? (
+          <div className="flex items-center gap-2 w-full animate-fade-in">
+            <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-muted-foreground h-8 px-2">
+              <X className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={toggleAll} className="text-muted-foreground h-8 px-2">
+              <CheckCheck className="h-4 w-4 mr-1" />
+              {t("tx.selectAll")}
+            </Button>
+            <span className="text-xs text-muted-foreground flex-1">
+              {t("tx.selected").replace("{n}", String(selected.size))}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkEdit}
+              disabled={selected.size === 0}
+              className="text-foreground h-8 px-2"
+            >
+              <Edit3 className="h-4 w-4 mr-1" />
+              {t("tx.bulkEdit")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBulkDelete}
+              disabled={selected.size === 0 || deleting}
+              className="text-destructive hover:text-destructive h-8 px-2"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              {t("tx.bulkDelete")}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground flex-1">
+              <div className="w-10 shrink-0" />
+              <div className="flex-1 min-w-0 flex gap-2">
+                <span className="flex-1 truncate">{headers.description}</span>
+                <span className="hidden sm:block w-20 text-right">{headers.category}</span>
+              </div>
+              {customColumns.map((col) => (
+                <span key={col.id} className="hidden sm:block w-20 text-right">{col.name}</span>
+              ))}
+              <span className="w-24 text-right">{headers.amount}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectMode(true)}
+              className="text-muted-foreground h-7 px-2 text-[10px]"
+            >
+              <CheckSquare className="h-3.5 w-3.5 mr-1" />
+              {t("tx.select")}
+            </Button>
+          </>
+        )}
       </div>
 
       {transactions.slice(0, 20).map((tx, i) => (
         <div
           key={tx.id}
-          onClick={() => onSelect(tx)}
-          className="flex items-center gap-3 rounded-xl bg-muted/30 px-4 py-3 animate-fade-in cursor-pointer active:scale-[0.98] transition-transform"
+          onClick={() => selectMode ? toggleSelect(tx.id) : onSelect(tx)}
+          onContextMenu={(e) => {
+            if (!selectMode && ownTxIds.has(tx.id)) {
+              e.preventDefault();
+              setSelectMode(true);
+              setSelected(new Set([tx.id]));
+            }
+          }}
+          className={`flex items-center gap-3 rounded-xl px-4 py-3 animate-fade-in cursor-pointer active:scale-[0.98] transition-all ${
+            selected.has(tx.id)
+              ? "bg-primary/10 ring-1 ring-primary/30"
+              : "bg-muted/30"
+          }`}
           style={{ animationDelay: `${i * 50}ms` }}
         >
-          <div
-            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-              tx.type === "income" ? "income-badge" : "expense-badge"
-            }`}
-          >
-            {tx.type === "income" ? (
-              <TrendingUp className="h-4 w-4" />
-            ) : (
-              <TrendingDown className="h-4 w-4" />
-            )}
-          </div>
+          {selectMode ? (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+              {!ownTxIds.has(tx.id) ? (
+                <div className="h-5 w-5 rounded border border-muted-foreground/20" />
+              ) : selected.has(tx.id) ? (
+                <CheckSquare className="h-5 w-5 text-primary" />
+              ) : (
+                <Square className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+          ) : (
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                tx.type === "income" ? "income-badge" : "expense-badge"
+              }`}
+            >
+              {tx.type === "income" ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
               {tx.description || tx.category}
