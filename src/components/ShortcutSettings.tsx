@@ -6,7 +6,7 @@ import { getShortcuts, saveShortcuts, ShortcutConfig } from "@/hooks/useKeyboard
 import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 
-type RecordingTarget = "addTransaction" | "addTransactionAlt";
+type RecordingTarget = keyof ShortcutConfig;
 
 const ShortcutSettings = () => {
   const { t } = useI18n();
