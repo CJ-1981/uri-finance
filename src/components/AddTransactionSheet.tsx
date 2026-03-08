@@ -14,6 +14,7 @@ import AutoSuggestInput from "@/components/AutoSuggestInput";
 interface Props {
   categories: Category[];
   customColumns: CustomColumn[];
+  transactions: Transaction[];
   onAdd: (tx: {
     type: "income" | "expense";
     amount: number;
