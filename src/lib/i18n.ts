@@ -340,8 +340,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.inviteUsed": "사용됨",
     "admin.inviteUnused": "사용 가능",
     "admin.owner": "소유자",
+    "admin.admin": "관리자",
     "admin.member": "멤버",
     "admin.banned": "이 프로젝트에서 차단되었습니다.",
+    "admin.promoteAdmin": "관리자로 승격",
+    "admin.demoteAdmin": "멤버로 강등",
+    "admin.promoted": "역할이 변경되었습니다",
+    "admin.promoteFailed": "역할 변경에 실패했습니다",
+    "admin.transferOwnership": "소유권 이전",
+    "admin.transferConfirm": "이 멤버에게 소유권을 이전하시겠습니까? 당신은 관리자가 됩니다.",
+    "admin.transferred": "소유권이 이전되었습니다",
+    "admin.transferFailed": "소유권 이전에 실패했습니다",
 
     // Custom columns
     "cc.placeholder": "열 이름 (예: 세금, 할인)",
