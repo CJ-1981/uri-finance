@@ -44,7 +44,7 @@ export const useTransactions = (projectId: string | undefined) => {
     category: string;
     description?: string;
     transaction_date?: string;
-    custom_values?: Record<string, number>;
+    custom_values?: Record<string, number | string>;
   }) => {
     if (!user || !projectId) return;
     const { error } = await supabase.from("transactions").insert({
