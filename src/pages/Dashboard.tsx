@@ -225,6 +225,7 @@ const Dashboard = () => {
               onUpdate={updateTransaction}
               onDelete={deleteTransaction}
               customColumns={customColumns}
+              isViewer={isViewer}
             />
 
             {/* Bulk edit sheet */}

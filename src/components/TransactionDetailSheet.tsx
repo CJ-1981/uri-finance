@@ -176,25 +176,34 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
           {customColumns.length > 0 && (
             <div className="grid grid-cols-2 gap-3">
-              {customColumns.map((col) => (
-                <div key={col.id} className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">{col.name}</Label>
-                  <Input
-                    type={col.column_type === "numeric" ? "text" : "text"}
-                    inputMode={col.column_type === "numeric" ? "decimal" : "text"}
-                    value={customValues[col.name] || ""}
-                    onChange={(e) => {
-                      const val = col.column_type === "numeric"
-                        ? e.target.value.replace(/[^0-9.]/g, "")
-                        : e.target.value;
-                      setCustomValues((prev) => ({ ...prev, [col.name]: val }));
-                    }}
-                    placeholder={col.column_type === "numeric" ? "0.00" : ""}
-                    disabled={!isOwn}
-                    className="bg-muted/50 border-border/50"
-                  />
-                </div>
-              ))}
+              {customColumns.map((col) => {
+                const shouldMask = isViewer && col.masked;
+                return (
+                  <div key={col.id} className="space-y-2">
+                    <Label className="text-muted-foreground text-xs">{col.name}</Label>
+                    {shouldMask ? (
+                      <div className="flex items-center h-10 rounded-md border border-input bg-muted/50 px-3 text-sm text-muted-foreground">
+                        ••••
+                      </div>
+                    ) : (
+                      <Input
+                        type={col.column_type === "numeric" ? "text" : "text"}
+                        inputMode={col.column_type === "numeric" ? "decimal" : "text"}
+                        value={customValues[col.name] || ""}
+                        onChange={(e) => {
+                          const val = col.column_type === "numeric"
+                            ? e.target.value.replace(/[^0-9.]/g, "")
+                            : e.target.value;
+                          setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                        }}
+                        placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                        disabled={!isOwn}
+                        className="bg-muted/50 border-border/50"
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
