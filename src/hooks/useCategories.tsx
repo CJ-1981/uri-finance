@@ -7,6 +7,7 @@ export interface Category {
   project_id: string;
   name: string;
   code: string;
+  sort_order: number;
   created_at: string;
 }
 
@@ -21,7 +22,8 @@ export const useCategories = (projectId: string | undefined) => {
       .from("project_categories")
       .select("*")
       .eq("project_id", projectId)
-      .order("name");
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
     setCategories((data as Category[]) || []);
     setLoading(false);
   };
@@ -32,9 +34,10 @@ export const useCategories = (projectId: string | undefined) => {
 
   const addCategory = async (name: string, code?: string) => {
     if (!projectId) return;
+    const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order)) : -1;
     const { error } = await supabase
       .from("project_categories")
-      .insert({ project_id: projectId, name: name.trim(), code: code?.trim() || "" });
+      .insert({ project_id: projectId, name: name.trim(), code: code?.trim() || "", sort_order: maxOrder + 1 });
     if (error) {
       if (error.code === "23505") {
         toast.error("Category already exists");
@@ -84,5 +87,21 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
-  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, fetchCategories };
+  const reorderCategory = async (id: string, direction: "up" | "down") => {
+    const idx = categories.findIndex(c => c.id === id);
+    if (idx < 0) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= categories.length) return;
+
+    const current = categories[idx];
+    const swap = categories[swapIdx];
+
+    await Promise.all([
+      supabase.from("project_categories").update({ sort_order: swap.sort_order } as any).eq("id", current.id),
+      supabase.from("project_categories").update({ sort_order: current.sort_order } as any).eq("id", swap.id),
+    ]);
+    await fetchCategories();
+  };
+
+  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, reorderCategory, fetchCategories };
 };
