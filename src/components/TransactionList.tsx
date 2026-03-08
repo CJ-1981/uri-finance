@@ -61,7 +61,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
   };
 
   const toggleAll = () => {
-    const selectableIds = transactions.slice(0, 20).filter((tx) => ownTxIds.has(tx.id)).map((tx) => tx.id);
+    const selectableIds = filteredTransactions.slice(0, 20).filter((tx) => ownTxIds.has(tx.id)).map((tx) => tx.id);
     if (selected.size === selectableIds.length) {
       setSelected(new Set());
     } else {
