@@ -93,13 +93,13 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer }: 
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => exportCSV(transactions, headers, customColumns, msg)}>
+        <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg)}>
           {t("export.csv")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportXLS(transactions, headers, customColumns, msg)}>
+        <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg)}>
           {t("export.xls")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, customColumns, msg)}>
+        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg)}>
           {t("export.markdown")}
         </DropdownMenuItem>
       </DropdownMenuContent>
