@@ -249,6 +249,48 @@ const AdminPage = () => {
           </div>
         </section>
 
+        {/* Archive */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Archive className="h-4 w-4" />
+              {t("admin.archive")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("admin.archiveDesc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">{t("admin.archiveFrom")}</label>
+                <Input
+                  type="date"
+                  value={archiveFrom}
+                  onChange={(e) => setArchiveFrom(e.target.value)}
+                  className="bg-background text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">{t("admin.archiveTo")}</label>
+                <Input
+                  type="date"
+                  value={archiveTo}
+                  onChange={(e) => setArchiveTo(e.target.value)}
+                  className="bg-background text-sm"
+                />
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleArchive}
+              disabled={archiving || !archiveFrom || !archiveTo}
+              className="w-full"
+            >
+              <Archive className="h-4 w-4 mr-1" />
+              {archiving ? t("admin.archiving") : t("admin.archiveExportDelete")}
+            </Button>
+          </div>
+        </section>
+
         {/* Members */}
         <section className="space-y-4">
           <div>
