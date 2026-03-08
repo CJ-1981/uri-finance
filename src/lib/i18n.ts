@@ -278,6 +278,23 @@ export const translations: Record<Locale, Record<string, string>> = {
     "shortcut.hint": "Press these keys on the dashboard to quickly perform actions.",
     "shortcut.arrowHint": "Arrow keys (← →) navigate between transactions in the detail view.",
 
+    // Cash Calculator
+    "cash.title": "Cash Counter",
+    "cash.denomination": "Denom",
+    "cash.named": "Named",
+    "cash.anon": "Anonymous",
+    "cash.bills": "Bills",
+    "cash.coins": "Coins",
+    "cash.namedTotal": "Named Total",
+    "cash.anonTotal": "Anonymous Total",
+    "cash.grandTotal": "Grand Total",
+    "cash.subtotalNamed": "Named Sub",
+    "cash.subtotalAnon": "Anon Sub",
+    "cash.clearAll": "Clear All",
+    "cash.export": "Export MD",
+    "cash.cleared": "All counts cleared",
+    "cash.exported": "Markdown exported",
+
     // Language
     "lang.label": "EN",
   },
