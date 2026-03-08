@@ -108,14 +108,14 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "hsl(210, 20%, 92%)" }} labelStyle={{ color: "hsl(210, 20%, 92%)" }} formatter={(value: number) => [`$${value.toLocaleString()}`, ""]} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "hsl(210, 20%, 92%)" }} labelStyle={{ color: "hsl(210, 20%, 92%)" }} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             {categoryData.map((c, i) => (
               <div key={c.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                {c.name}
+                {c.name} <span className="text-foreground font-medium">${c.value.toLocaleString()}</span>
               </div>
             ))}
           </div>
