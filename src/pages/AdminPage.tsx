@@ -41,6 +41,9 @@ const AdminPage = () => {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [dbStats, setDbStats] = useState<any>(null);
   const [dbLoading, setDbLoading] = useState(false);
+  const [archiveFrom, setArchiveFrom] = useState("");
+  const [archiveTo, setArchiveTo] = useState("");
+  const [archiving, setArchiving] = useState(false);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
 
