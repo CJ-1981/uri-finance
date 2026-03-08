@@ -174,7 +174,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             />
           </div>
 
-          {customColumns.length > 0 && (
+          {customColumns.filter(col => !(isViewer && col.masked)).length > 0 && (
             <div className="grid grid-cols-2 gap-3">
               {customColumns.map((col) => {
                 const shouldMask = isViewer && col.masked;
