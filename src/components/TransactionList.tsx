@@ -24,9 +24,14 @@ interface Props {
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
-const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
+export interface TransactionListHandle {
+  focusSearch: () => void;
+}
+
+const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }, ref) => {
   const { t } = useI18n();
   const { user } = useAuth();
+  const searchRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
