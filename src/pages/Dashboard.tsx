@@ -141,7 +141,30 @@ const Dashboard = () => {
           </div>
         </div>
         {activeProject && (
-          <p className="text-[10px] text-muted-foreground truncate mt-1">{activeProject.name}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-[10px] text-muted-foreground truncate flex-1">{activeProject.name}</p>
+            {realOwner && (
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Eye className="h-3 w-3 text-muted-foreground" />
+                {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
+                  const active = isSimulating ? simulatedRole === r : (r === "owner");
+                  return (
+                    <button
+                      key={r}
+                      onClick={() => setSimulatedRole(r === "owner" ? null : r)}
+                      className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-all ${
+                        active
+                          ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {t(`admin.${r}`)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
       </header>
 
