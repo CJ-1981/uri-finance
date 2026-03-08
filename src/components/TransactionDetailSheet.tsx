@@ -197,34 +197,36 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             </div>
           )}
 
-          <div className="flex gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="h-12 px-4">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
-                  <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          {isOwn && (
+            <div className="flex gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="h-12 px-4">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-            >
-              <Save className="h-4 w-4 mr-1" />
-              {saving ? t("tx.saving") : t("tx.saveChanges")}
-            </Button>
-          </div>
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+              >
+                <Save className="h-4 w-4 mr-1" />
+                {saving ? t("tx.saving") : t("tx.saveChanges")}
+              </Button>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
