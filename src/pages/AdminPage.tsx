@@ -12,11 +12,14 @@ import TrashManager from "@/components/TrashManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parse, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
@@ -266,26 +269,64 @@ const AdminPage = () => {
             </h2>
             <p className="text-xs text-muted-foreground">{t("admin.archiveDesc")}</p>
           </div>
-          <div className="rounded-xl border border-border/50 bg-card p-3 space-y-2 overflow-hidden max-w-full sm:max-w-[320px]">
-            <div className="flex gap-1.5 items-end">
-              <div className="space-y-0.5 flex-1 min-w-0">
+          <div className="rounded-xl border border-border/50 bg-card p-3 space-y-2 overflow-hidden max-w-full sm:max-w-[400px]">
+            <div className="flex gap-2 items-end">
+              <div className="space-y-1 flex-1 min-w-0">
                 <label className="text-[10px] text-muted-foreground">{t("admin.archiveFrom")}</label>
-                <input
-                  type="date"
-                  value={archiveFrom}
-                  onChange={(e) => setArchiveFrom(e.target.value)}
-                  className="flex h-7 w-full rounded-md border border-input bg-background px-1.5 text-[11px] ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-9 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-2.5",
+                        !archiveFrom && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate text-xs">
+                        {archiveFrom ? format(parse(archiveFrom, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Start date"}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={archiveFrom ? parse(archiveFrom, "yyyy-MM-dd", new Date()) : undefined}
+                      onSelect={(d) => d && setArchiveFrom(format(d, "yyyy-MM-dd"))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
-              <span className="text-[10px] text-muted-foreground pb-1">~</span>
-              <div className="space-y-0.5 flex-1 min-w-0">
+              <span className="text-xs text-muted-foreground pb-2">~</span>
+              <div className="space-y-1 flex-1 min-w-0">
                 <label className="text-[10px] text-muted-foreground">{t("admin.archiveTo")}</label>
-                <input
-                  type="date"
-                  value={archiveTo}
-                  onChange={(e) => setArchiveTo(e.target.value)}
-                  className="flex h-7 w-full rounded-md border border-input bg-background px-1.5 text-[11px] ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full h-9 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-2.5",
+                        !archiveTo && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-1.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate text-xs">
+                        {archiveTo ? format(parse(archiveTo, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "End date"}
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={archiveTo ? parse(archiveTo, "yyyy-MM-dd", new Date()) : undefined}
+                      onSelect={(d) => d && setArchiveTo(format(d, "yyyy-MM-dd"))}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <Button
