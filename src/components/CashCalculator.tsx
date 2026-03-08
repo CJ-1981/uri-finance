@@ -112,19 +112,19 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
   }
 
   const updateCount = useCallback((denom: string, column: "named" | "anon", delta: number) => {
-    setCounts((prev) => {
+    setCountsAndCache((prev) => {
       const current = prev[denom]?.[column] ?? 0;
       const newVal = Math.max(0, current + delta);
       return { ...prev, [denom]: { ...prev[denom], [column]: newVal } };
     });
-  }, []);
+  }, [setCountsAndCache]);
 
   const setCount = useCallback((denom: string, column: "named" | "anon", value: number) => {
-    setCounts((prev) => ({
+    setCountsAndCache((prev) => ({
       ...prev,
       [denom]: { ...prev[denom], [column]: Math.max(0, value) },
     }));
-  }, []);
+  }, [setCountsAndCache]);
 
   const totals = useMemo(() => {
     let named = 0;
