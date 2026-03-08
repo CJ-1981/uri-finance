@@ -364,6 +364,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cc.numeric": "숫자",
     "cc.text": "텍스트",
     "cc.noColumns": "사용자 정의 열이 없습니다.",
+    "cc.maskedOn": "뷰어에게 숨김 (클릭하여 표시)",
+    "cc.maskedOff": "뷰어에게 표시 (클릭하여 숨김)",
     "cc.added": "열이 추가되었습니다",
     "cc.duplicate": "이미 존재하는 열입니다",
     "cc.addFailed": "열 추가에 실패했습니다",
