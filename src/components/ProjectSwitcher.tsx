@@ -53,9 +53,9 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <button className="flex items-center gap-2 rounded-xl bg-muted/50 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-          {active?.name || t("proj.selectProject")}
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        <button className="flex items-center gap-2 rounded-xl bg-muted/50 px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors max-w-[160px] shrink-0">
+          <span className="truncate">{active?.name || t("proj.selectProject")}</span>
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[80vh] overflow-y-auto">
