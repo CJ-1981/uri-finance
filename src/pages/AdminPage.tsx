@@ -267,23 +267,24 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.archiveDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-3 overflow-hidden">
-            <div className="flex flex-col gap-3">
-              <div className="space-y-1">
+            <div className="flex gap-2 items-end">
+              <div className="space-y-1 flex-1 min-w-0">
                 <label className="text-xs text-muted-foreground">{t("admin.archiveFrom")}</label>
                 <Input
                   type="date"
                   value={archiveFrom}
                   onChange={(e) => setArchiveFrom(e.target.value)}
-                  className="bg-background text-xs w-full min-w-0 max-w-full h-8 px-2"
+                  className="bg-background text-xs h-8 px-2 w-full"
                 />
               </div>
-              <div className="space-y-1">
+              <span className="text-xs text-muted-foreground pb-1.5">~</span>
+              <div className="space-y-1 flex-1 min-w-0">
                 <label className="text-xs text-muted-foreground">{t("admin.archiveTo")}</label>
                 <Input
                   type="date"
                   value={archiveTo}
                   onChange={(e) => setArchiveTo(e.target.value)}
-                  className="bg-background text-xs w-full min-w-0 max-w-full h-8 px-2"
+                  className="bg-background text-xs h-8 px-2 w-full"
                 />
               </div>
             </div>
