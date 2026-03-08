@@ -26,7 +26,7 @@ interface Props {
   customColumns: CustomColumn[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values">>) => Promise<void>;
+  onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   isViewer?: boolean;
   /** For multi-edit: full list of selected transactions */
