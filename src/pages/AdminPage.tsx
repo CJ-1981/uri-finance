@@ -244,10 +244,31 @@ const AdminPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-sm font-semibold text-foreground">{t("admin.title")}</h1>
             <p className="text-xs text-muted-foreground">{activeProject.name}</p>
           </div>
+          {realOwner && (
+            <div className="flex items-center gap-0.5 shrink-0">
+              <Eye className="h-3 w-3 text-muted-foreground mr-0.5" />
+              {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
+                const active = isSimulating ? simulatedRole === r : (r === "owner");
+                return (
+                  <button
+                    key={r}
+                    onClick={() => setSimulatedRole(r === "owner" ? null : r)}
+                    className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-all ${
+                      active
+                        ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {t(`admin.${r}`)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </header>
 
