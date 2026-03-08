@@ -562,7 +562,7 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.categoriesDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CategoryManager categories={categories} onAdd={addCategory} onDelete={deleteCategory} onUpdateCode={updateCategoryCode} onUpdateIcon={updateCategoryIcon} onReorder={reorderCategory} inline />
+            <CategoryManager categories={categories} onAdd={addCategory} onDelete={deleteCategory} onUpdateCode={updateCategoryCode} onUpdateIcon={updateCategoryIcon} onReorderAll={reorderCategories} inline />
           </div>
         </section>
 
