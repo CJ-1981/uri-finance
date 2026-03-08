@@ -19,6 +19,18 @@ const AppLockGate = ({ children }: { children: React.ReactNode }) => {
   const hasPin = !!localStorage.getItem("app_lock_pin");
   const [locked, setLocked] = useState(hasPin);
 
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") return;
+      // Re-lock when coming back if PIN is set
+      if (localStorage.getItem("app_lock_pin")) {
+        setLocked(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
   if (locked && hasPin) {
     return <LockScreen onUnlock={() => setLocked(false)} />;
   }
