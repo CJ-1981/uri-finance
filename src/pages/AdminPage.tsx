@@ -359,7 +359,7 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.customColumnsDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} />
+            <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} onToggleMasked={toggleMasked} />
           </div>
         </section>
 
