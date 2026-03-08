@@ -369,6 +369,20 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleteFailed": "영구 삭제에 실패했습니다",
     "admin.deletedOn": "삭제일",
 
+    // Lock
+    "lock.title": "앱 잠금",
+    "lock.enter": "PIN을 입력하여 잠금 해제",
+    "lock.wrong": "잘못된 PIN입니다. 다시 시도하세요",
+    "lock.setupTitle": "잠금 PIN 설정",
+    "lock.setupEnter": "4자리 PIN을 입력하세요",
+    "lock.setupConfirm": "PIN을 다시 입력하세요",
+    "lock.mismatch": "PIN이 일치하지 않습니다. 다시 시도하세요.",
+    "lock.pinSet": "잠금 PIN이 설정되었습니다!",
+    "lock.pinRemoved": "잠금 PIN이 제거되었습니다",
+    "lock.enable": "앱 잠금 활성화",
+    "lock.disable": "앱 잠금 해제",
+    "lock.changePIN": "PIN 변경",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "페이지를 찾을 수 없습니다",
