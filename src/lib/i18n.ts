@@ -201,6 +201,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.descriptionOptional": "설명 (선택사항)",
     "tx.descriptionPlaceholder": "어디에 사용했나요?",
     "tx.adding": "추가 중...",
+    "tx.addAndContinue": "추가 후 계속",
     "tx.saving": "저장 중...",
     "tx.saveChanges": "변경사항 저장",
     "tx.deleteTitle": "거래를 삭제하시겠습니까?",

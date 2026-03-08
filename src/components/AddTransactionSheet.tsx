@@ -33,8 +33,13 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
+    setAmount("");
+    setDescription("");
+    setCustomValues({});
+  };
+
+  const doSubmit = async () => {
     if (!amount || Number(amount) <= 0) return;
     setSubmitting(true);
 
@@ -58,10 +63,23 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
       custom_values: Object.keys(cv).length > 0 ? cv : undefined,
     });
     setSubmitting(false);
-    setAmount("");
-    setDescription("");
-    setCustomValues({});
-    setOpen(false);
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const ok = await doSubmit();
+    if (ok) {
+      resetForm();
+      setOpen(false);
+    }
+  };
+
+  const handleAddAndContinue = async () => {
+    const ok = await doSubmit();
+    if (ok) {
+      resetForm();
+    }
   };
 
   return (
