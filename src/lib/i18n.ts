@@ -343,6 +343,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbError": "데이터베이스 통계를 불러오지 못했습니다",
     "admin.dbTables": "테이블",
 
+    // Trash
+    "admin.trash": "삭제된 거래",
+    "admin.trashDesc": "실수로 삭제된 거래를 복원할 수 있습니다.",
+    "admin.trashEmpty": "삭제된 거래가 없습니다.",
+    "admin.restore": "복원",
+    "admin.restored": "거래가 복원되었습니다!",
+    "admin.restoreFailed": "거래 복원에 실패했습니다",
+    "admin.permDelete": "영구 삭제",
+    "admin.permDeleted": "거래가 영구 삭제되었습니다",
+    "admin.permDeleteFailed": "영구 삭제에 실패했습니다",
+    "admin.deletedOn": "삭제일",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "페이지를 찾을 수 없습니다",
