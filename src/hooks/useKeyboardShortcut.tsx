@@ -4,20 +4,14 @@ const STORAGE_KEY = "keyboard_shortcuts";
 
 export interface ShortcutConfig {
   addTransaction: string;
-  prevTransaction: string;
-  nextTransaction: string;
 }
 
 const DEFAULT_SHORTCUTS: ShortcutConfig = {
   addTransaction: "n",
-  prevTransaction: "k",
-  nextTransaction: "j",
 };
 
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   addTransaction: "shortcut.addTransaction",
-  prevTransaction: "shortcut.prevTransaction",
-  nextTransaction: "shortcut.nextTransaction",
 };
 
 export const getShortcuts = (): ShortcutConfig => {
