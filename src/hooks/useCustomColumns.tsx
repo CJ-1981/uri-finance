@@ -9,6 +9,7 @@ export interface CustomColumn {
   project_id: string;
   name: string;
   column_type: ColumnType;
+  masked: boolean;
   created_at: string;
 }
 
@@ -55,5 +56,17 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  return { columns, loading, addColumn, deleteColumn, fetchColumns };
+  const toggleMasked = async (id: string, masked: boolean) => {
+    const { error } = await supabase
+      .from("custom_columns")
+      .update({ masked })
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update column");
+      return;
+    }
+    await fetchColumns();
+  };
+
+  return { columns, loading, addColumn, deleteColumn, toggleMasked, fetchColumns };
 };
