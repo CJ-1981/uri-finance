@@ -97,6 +97,34 @@ export const useTransactions = (projectId: string | undefined) => {
     await fetchTransactions();
   };
 
+  const bulkAddTransactions = async (txs: Array<{
+    type: "income" | "expense";
+    amount: number;
+    category: string;
+    description?: string;
+    transaction_date?: string;
+    currency?: string;
+  }>) => {
+    if (!user || !projectId) return;
+    const rows = txs.map((tx) => ({
+      project_id: projectId,
+      user_id: user.id,
+      type: tx.type,
+      amount: tx.amount,
+      category: tx.category,
+      description: tx.description || null,
+      transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
+      custom_values: {},
+      currency: tx.currency || "USD",
+    }));
+    const { error } = await supabase.from("transactions").insert(rows);
+    if (error) {
+      toast.error("Failed to import transactions");
+      return;
+    }
+    await fetchTransactions();
+  };
+
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + Number(t.amount), 0);
