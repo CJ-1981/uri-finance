@@ -139,7 +139,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={setCategory} disabled={!isOwn}>
                 <SelectTrigger className="bg-muted/50 border-border/50">
                   <SelectValue />
                 </SelectTrigger>
