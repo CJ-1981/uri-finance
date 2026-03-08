@@ -51,10 +51,9 @@ const AdminPage = () => {
   const [archiveTo, setArchiveTo] = useState("");
   const [archiving, setArchiving] = useState(false);
 
-  const isOwner = activeProject && user && activeProject.owner_id === user.id;
+  const realOwner = activeProject && user && activeProject.owner_id === user.id;
   const { role: userRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const isAdmin = userRole === "admin";
-  const realOwner = activeProject && user && activeProject.owner_id === user.id;
   const isOwner = (!isSimulating && realOwner) || false;
   const canAccess = isOwner || isAdmin;
 
