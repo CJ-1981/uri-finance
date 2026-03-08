@@ -12,10 +12,14 @@ import TrashManager from "@/components/TrashManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { Transaction } from "@/hooks/useTransactions";
+import { ColumnHeaders } from "@/hooks/useColumnHeaders";
+import { CustomColumn } from "@/hooks/useCustomColumns";
 
 const AdminPage = () => {
   const { user } = useAuth();
