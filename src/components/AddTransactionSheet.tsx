@@ -11,10 +11,13 @@ import { Transaction } from "@/hooks/useTransactions";
 import { useI18n } from "@/hooks/useI18n";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
+
 interface Props {
   categories: Category[];
   customColumns: CustomColumn[];
   transactions: Transaction[];
+  projectCurrency?: string;
   onAdd: (tx: {
     type: "income" | "expense";
     amount: number;
@@ -22,6 +25,7 @@ interface Props {
     description?: string;
     transaction_date?: string;
     custom_values?: Record<string, number | string>;
+    currency?: string;
   }) => Promise<void>;
 }
 
