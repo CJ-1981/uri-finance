@@ -43,6 +43,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
