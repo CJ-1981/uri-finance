@@ -62,9 +62,29 @@ const Dashboard = () => {
   );
   const balance = totalIncome - totalExpense;
 
+  const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
     setDetailOpen(true);
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    for (const id of ids) {
+      await deleteTransaction(id);
+    }
+  };
+
+  const handleBulkEditOpen = (txs: Transaction[]) => {
+    setBulkEditTxs(txs);
+    setBulkEditOpen(true);
+  };
+
+  const handleBulkUpdate = async (ids: string[], updates: Partial<Pick<Transaction, "type" | "category">>) => {
+    for (const id of ids) {
+      await updateTransaction(id, updates);
+    }
   };
 
   return (
