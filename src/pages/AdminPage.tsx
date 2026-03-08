@@ -114,12 +114,18 @@ const AdminPage = () => {
   };
 
   const handleCreateInvite = async () => {
+    if (!inviteEmail.trim()) {
+      toast.error(t("admin.inviteEmailRequired"));
+      return;
+    }
     setCreatingInvite(true);
-    const ok = await createInvite(inviteLabel);
+    const ok = await createInvite(inviteLabel, inviteEmail, inviteRole);
     setCreatingInvite(false);
     if (ok) {
       toast.success(t("admin.inviteCreated"));
       setInviteLabel("");
+      setInviteEmail("");
+      setInviteRole("member");
     } else {
       toast.error(t("admin.inviteCreateFailed"));
     }
