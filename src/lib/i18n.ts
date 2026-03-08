@@ -277,6 +277,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "shortcut.save": "Save",
     "shortcut.saved": "Shortcut saved",
     "shortcut.hint": "Press these keys on the dashboard to quickly perform actions.",
+    "shortcut.tabList": "Transactions Tab",
+    "shortcut.tabCharts": "Charts Tab",
+    "shortcut.tabCash": "Cash Counter Tab",
 
     // Cash Calculator
     "cash.title": "Cash Counter",
