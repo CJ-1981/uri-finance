@@ -321,6 +321,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "period.from": "시작일",
     "period.to": "종료일",
 
+    // Database
+    "admin.dbStats": "데이터베이스 상태",
+    "admin.dbStatsDesc": "저장 공간 사용량 및 테이블 크기를 확인합니다.",
+    "admin.dbSize": "전체 크기",
+    "admin.dbMaxSize": "최대 용량 (500 MB)",
+    "admin.dbRows": "행",
+    "admin.dbLoading": "통계 로딩 중...",
+    "admin.dbError": "데이터베이스 통계를 불러오지 못했습니다",
+    "admin.dbTables": "테이블",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "페이지를 찾을 수 없습니다",
