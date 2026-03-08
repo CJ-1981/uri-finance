@@ -64,6 +64,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.selectAll": "All",
     "tx.selected": "{n} selected",
     "tx.bulkDelete": "Delete",
+    "tx.page": "page",
     "tx.bulkEdit": "Edit",
     "tx.bulkEditTitle": "Edit {n} transactions",
     "tx.bulkEditDesc": "Changes will apply to all selected transactions. Leave fields empty to keep current values.",
