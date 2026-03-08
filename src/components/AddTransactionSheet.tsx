@@ -29,13 +29,14 @@ interface Props {
   }) => Promise<void>;
 }
 
-const AddTransactionSheet = ({ categories, customColumns, transactions, onAdd }: Props) => {
+const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, onAdd }: Props) => {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [currency, setCurrency] = useState(projectCurrency || "USD");
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
