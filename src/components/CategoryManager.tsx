@@ -105,6 +105,36 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
                 {cat.code || "—"}
               </button>
             )}
+            {editingIconId === cat.id ? (
+              <Input
+                value={editIconValue}
+                onChange={(e) => setEditIconValue(e.target.value)}
+                onBlur={() => {
+                  if (onUpdateIcon) onUpdateIcon(cat.id, editIconValue);
+                  setEditingIconId(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (onUpdateIcon) onUpdateIcon(cat.id, editIconValue);
+                    setEditingIconId(null);
+                  }
+                }}
+                className="w-10 h-6 text-center text-sm bg-background border-border/50 px-1"
+                autoFocus
+                placeholder="😀"
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  setEditingIconId(cat.id);
+                  setEditIconValue(cat.icon || "");
+                }}
+                className="text-base w-6 h-6 flex items-center justify-center rounded hover:bg-muted transition-colors shrink-0"
+                title="Set emoji icon"
+              >
+                {cat.icon || "·"}
+              </button>
+            )}
             <span className="text-sm text-foreground flex-1 min-w-0 truncate">{cat.name}</span>
             <button onClick={() => onDelete(cat.id)} className="text-muted-foreground hover:text-expense transition-colors p-1 shrink-0">
               <X className="h-3.5 w-3.5" />
