@@ -251,7 +251,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
           <BarChart data={cumulativeData.data} barGap={2}>
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
-            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
             {cumulativeData.series.map((s) => (
               <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} name={s.key} />
             ))}
