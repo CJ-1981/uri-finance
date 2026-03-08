@@ -77,11 +77,12 @@ const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: Cus
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);
 };
 
-const ExportTransactions = ({ transactions, headers, customColumns }: Props) => {
+const ExportTransactions = ({ transactions, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
 
   if (transactions.length === 0) return null;
 
+  const visibleCols = isViewer ? customColumns.filter((c) => !c.masked) : customColumns;
   const msg = t("export.success");
 
   return (
