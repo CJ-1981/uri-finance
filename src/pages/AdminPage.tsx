@@ -266,7 +266,8 @@ const AdminPage = () => {
         </section>
         )}
 
-        {/* Archive */}
+        {/* Archive - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -346,6 +347,7 @@ const AdminPage = () => {
             </Button>
           </div>
         </section>
+        )}
 
         {/* Members */}
         <section className="space-y-4">
