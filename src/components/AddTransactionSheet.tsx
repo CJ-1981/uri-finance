@@ -38,10 +38,15 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
     if (!amount || Number(amount) <= 0) return;
     setSubmitting(true);
 
-    const cv: Record<string, number> = {};
+    const cv: Record<string, number | string> = {};
     for (const col of customColumns) {
       const val = customValues[col.name];
-      if (val && !isNaN(Number(val))) cv[col.name] = Number(val);
+      if (!val) continue;
+      if (col.column_type === "numeric") {
+        if (!isNaN(Number(val))) cv[col.name] = Number(val);
+      } else {
+        cv[col.name] = val;
+      }
     }
 
     await onAdd({
