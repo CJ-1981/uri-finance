@@ -1,0 +1,244 @@
+export type Locale = "en" | "ko";
+
+export const translations: Record<Locale, Record<string, string>> = {
+  en: {
+    // Auth
+    "auth.title": "FinTrack",
+    "auth.subtitle": "Team finance tracking made simple",
+    "auth.welcomeBack": "Welcome back",
+    "auth.createAccount": "Create account",
+    "auth.email": "Email",
+    "auth.password": "Password",
+    "auth.signIn": "Sign In",
+    "auth.signUp": "Create Account",
+    "auth.submitting": "Please wait...",
+    "auth.switchToSignUp": "Don't have an account? Sign up",
+    "auth.switchToSignIn": "Already have an account? Sign in",
+    "auth.accountCreated": "Account created! You're now signed in.",
+    "auth.loading": "Loading...",
+
+    // Dashboard
+    "dash.balance": "Balance",
+    "dash.income": "Income",
+    "dash.expenses": "Expenses",
+    "dash.transactions": "Transactions",
+    "dash.charts": "Charts",
+    "dash.getStarted": "Get Started",
+    "dash.getStartedDesc": "Create a project or join one with an invite code to start tracking finances together.",
+
+    // Transaction list
+    "tx.noTransactions": "No transactions yet. Tap + to add one.",
+    "tx.addTransaction": "Add Transaction",
+    "tx.editTransaction": "Edit Transaction",
+    "tx.income": "Income",
+    "tx.expense": "Expense",
+    "tx.amount": "Amount",
+    "tx.category": "Category",
+    "tx.date": "Date",
+    "tx.description": "Description",
+    "tx.descriptionOptional": "Description (optional)",
+    "tx.descriptionPlaceholder": "What was this for?",
+    "tx.adding": "Adding...",
+    "tx.saving": "Saving...",
+    "tx.saveChanges": "Save Changes",
+    "tx.deleteTitle": "Delete transaction?",
+    "tx.deleteDesc": "This action cannot be undone.",
+    "tx.cancel": "Cancel",
+    "tx.delete": "Delete",
+    "tx.added": "Transaction added!",
+    "tx.updated": "Transaction updated!",
+    "tx.deleted": "Transaction deleted",
+    "tx.addFailed": "Failed to add transaction",
+    "tx.updateFailed": "Failed to update transaction",
+    "tx.deleteFailed": "Failed to delete transaction",
+
+    // Projects
+    "proj.projects": "Projects",
+    "proj.selectProject": "Select Project",
+    "proj.myProjects": "My Projects",
+    "proj.createNew": "Create New",
+    "proj.join": "Join",
+    "proj.noProjects": "No projects yet. Create one or join with an invite code.",
+    "proj.shareInvite": "Share this invite code so others can join:",
+    "proj.inviteCopied": "Invite code copied!",
+    "proj.projectName": "Project Name",
+    "proj.projectNamePlaceholder": "e.g. Household Budget",
+    "proj.descriptionOptional": "Description (optional)",
+    "proj.descriptionPlaceholder": "What is this project for?",
+    "proj.createProject": "Create Project",
+    "proj.inviteCode": "Invite Code",
+    "proj.enterInviteCode": "Enter invite code",
+    "proj.joinProject": "Join Project",
+
+    // Admin
+    "admin.title": "Project Settings",
+    "admin.noProject": "No active project selected.",
+    "admin.ownerOnly": "Only the project owner can access this page.",
+    "admin.backToDashboard": "Back to Dashboard",
+    "admin.columnHeaders": "Column Headers",
+    "admin.columnHeadersDesc": "Customize transaction column names for display and exports.",
+    "admin.reset": "Reset",
+    "admin.customColumns": "Custom Numeric Columns",
+    "admin.customColumnsDesc": "Add extra numeric fields to transactions (e.g. Tax, Discount, Quantity).",
+    "admin.categories": "Categories",
+    "admin.categoriesDesc": "Manage transaction categories for this project.",
+    "admin.projectInfo": "Project Info",
+    "admin.projectInfoDesc": "Share the invite code with team members.",
+    "admin.currency": "Currency",
+    "admin.currencyUpdated": "Currency updated",
+    "admin.currencyFailed": "Failed to update currency",
+
+    // Custom columns
+    "cc.placeholder": "Column name (e.g. Tax, Discount)",
+    "cc.noColumns": "No custom columns yet.",
+    "cc.added": "Column added",
+    "cc.duplicate": "Column already exists",
+    "cc.addFailed": "Failed to add column",
+    "cc.removed": "Column removed",
+    "cc.removeFailed": "Failed to delete column",
+
+    // Categories
+    "cat.newPlaceholder": "New category name",
+    "cat.manageCategories": "Manage Categories",
+
+    // Export
+    "export.csv": "Export as CSV",
+    "export.xls": "Export as XLS",
+    "export.markdown": "Export as Markdown",
+    "export.success": "Exported as",
+
+    // Charts
+    "chart.trend": "Trend (6 months)",
+    "chart.comparison": "Comparison (6 months)",
+    "chart.expenseByCategory": "Expense by Category",
+    "chart.addToSee": "Add transactions to see charts",
+
+    // 404
+    "notFound.title": "404",
+    "notFound.message": "Oops! Page not found",
+    "notFound.return": "Return to Home",
+
+    // Language
+    "lang.label": "EN",
+  },
+  ko: {
+    // Auth
+    "auth.title": "FinTrack",
+    "auth.subtitle": "팀 재무 관리를 간편하게",
+    "auth.welcomeBack": "다시 오신 것을 환영합니다",
+    "auth.createAccount": "계정 만들기",
+    "auth.email": "이메일",
+    "auth.password": "비밀번호",
+    "auth.signIn": "로그인",
+    "auth.signUp": "계정 만들기",
+    "auth.submitting": "잠시만 기다려주세요...",
+    "auth.switchToSignUp": "계정이 없으신가요? 회원가입",
+    "auth.switchToSignIn": "이미 계정이 있으신가요? 로그인",
+    "auth.accountCreated": "계정이 생성되었습니다! 로그인되었습니다.",
+    "auth.loading": "로딩 중...",
+
+    // Dashboard
+    "dash.balance": "잔액",
+    "dash.income": "수입",
+    "dash.expenses": "지출",
+    "dash.transactions": "거래 내역",
+    "dash.charts": "차트",
+    "dash.getStarted": "시작하기",
+    "dash.getStartedDesc": "프로젝트를 만들거나 초대 코드로 참여하여 함께 재무를 관리하세요.",
+
+    // Transaction list
+    "tx.noTransactions": "거래 내역이 없습니다. +를 눌러 추가하세요.",
+    "tx.addTransaction": "거래 추가",
+    "tx.editTransaction": "거래 수정",
+    "tx.income": "수입",
+    "tx.expense": "지출",
+    "tx.amount": "금액",
+    "tx.category": "카테고리",
+    "tx.date": "날짜",
+    "tx.description": "설명",
+    "tx.descriptionOptional": "설명 (선택사항)",
+    "tx.descriptionPlaceholder": "어디에 사용했나요?",
+    "tx.adding": "추가 중...",
+    "tx.saving": "저장 중...",
+    "tx.saveChanges": "변경사항 저장",
+    "tx.deleteTitle": "거래를 삭제하시겠습니까?",
+    "tx.deleteDesc": "이 작업은 되돌릴 수 없습니다.",
+    "tx.cancel": "취소",
+    "tx.delete": "삭제",
+    "tx.added": "거래가 추가되었습니다!",
+    "tx.updated": "거래가 수정되었습니다!",
+    "tx.deleted": "거래가 삭제되었습니다",
+    "tx.addFailed": "거래 추가에 실패했습니다",
+    "tx.updateFailed": "거래 수정에 실패했습니다",
+    "tx.deleteFailed": "거래 삭제에 실패했습니다",
+
+    // Projects
+    "proj.projects": "프로젝트",
+    "proj.selectProject": "프로젝트 선택",
+    "proj.myProjects": "내 프로젝트",
+    "proj.createNew": "새로 만들기",
+    "proj.join": "참여하기",
+    "proj.noProjects": "프로젝트가 없습니다. 새로 만들거나 초대 코드로 참여하세요.",
+    "proj.shareInvite": "이 초대 코드를 공유하여 다른 사람을 초대하세요:",
+    "proj.inviteCopied": "초대 코드가 복사되었습니다!",
+    "proj.projectName": "프로젝트 이름",
+    "proj.projectNamePlaceholder": "예: 가계부",
+    "proj.descriptionOptional": "설명 (선택사항)",
+    "proj.descriptionPlaceholder": "이 프로젝트는 무엇을 위한 것인가요?",
+    "proj.createProject": "프로젝트 만들기",
+    "proj.inviteCode": "초대 코드",
+    "proj.enterInviteCode": "초대 코드 입력",
+    "proj.joinProject": "프로젝트 참여",
+
+    // Admin
+    "admin.title": "프로젝트 설정",
+    "admin.noProject": "선택된 프로젝트가 없습니다.",
+    "admin.ownerOnly": "프로젝트 소유자만 접근할 수 있습니다.",
+    "admin.backToDashboard": "대시보드로 돌아가기",
+    "admin.columnHeaders": "열 이름",
+    "admin.columnHeadersDesc": "표시 및 내보내기에 사용할 거래 열 이름을 설정하세요.",
+    "admin.reset": "초기화",
+    "admin.customColumns": "사용자 정의 숫자 열",
+    "admin.customColumnsDesc": "거래에 추가 숫자 필드를 추가하세요 (예: 세금, 할인, 수량).",
+    "admin.categories": "카테고리",
+    "admin.categoriesDesc": "이 프로젝트의 거래 카테고리를 관리하세요.",
+    "admin.projectInfo": "프로젝트 정보",
+    "admin.projectInfoDesc": "팀원들에게 초대 코드를 공유하세요.",
+    "admin.currency": "통화",
+    "admin.currencyUpdated": "통화가 변경되었습니다",
+    "admin.currencyFailed": "통화 변경에 실패했습니다",
+
+    // Custom columns
+    "cc.placeholder": "열 이름 (예: 세금, 할인)",
+    "cc.noColumns": "사용자 정의 열이 없습니다.",
+    "cc.added": "열이 추가되었습니다",
+    "cc.duplicate": "이미 존재하는 열입니다",
+    "cc.addFailed": "열 추가에 실패했습니다",
+    "cc.removed": "열이 삭제되었습니다",
+    "cc.removeFailed": "열 삭제에 실패했습니다",
+
+    // Categories
+    "cat.newPlaceholder": "새 카테고리 이름",
+    "cat.manageCategories": "카테고리 관리",
+
+    // Export
+    "export.csv": "CSV로 내보내기",
+    "export.xls": "XLS로 내보내기",
+    "export.markdown": "Markdown으로 내보내기",
+    "export.success": "내보내기 완료:",
+
+    // Charts
+    "chart.trend": "추이 (6개월)",
+    "chart.comparison": "비교 (6개월)",
+    "chart.expenseByCategory": "카테고리별 지출",
+    "chart.addToSee": "차트를 보려면 거래를 추가하세요",
+
+    // 404
+    "notFound.title": "404",
+    "notFound.message": "페이지를 찾을 수 없습니다",
+    "notFound.return": "홈으로 돌아가기",
+
+    // Language
+    "lang.label": "한국어",
+  },
+};
