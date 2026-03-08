@@ -152,6 +152,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "period.from": "From",
     "period.to": "To",
 
+    // Database
+    "admin.dbStats": "Database Status",
+    "admin.dbStatsDesc": "Monitor storage usage and table sizes.",
+    "admin.dbSize": "Total Size",
+    "admin.dbMaxSize": "Max Size (500 MB)",
+    "admin.dbRows": "rows",
+    "admin.dbLoading": "Loading stats...",
+    "admin.dbError": "Failed to load database stats",
+    "admin.dbTables": "Tables",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
