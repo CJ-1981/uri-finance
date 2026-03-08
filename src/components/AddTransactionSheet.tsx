@@ -291,6 +291,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                       suggestions={columnSuggestions[col.name]}
                       placeholder=""
                       className="bg-muted/50 border-border/50"
+                      data-tab-stop
                     />
                   ) : (
                     <Input
@@ -305,6 +306,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                       }}
                       placeholder={col.column_type === "numeric" ? "0.00" : ""}
                       className="bg-muted/50 border-border/50"
+                      data-tab-stop
                     />
                   )}
                 </div>

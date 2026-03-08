@@ -10,9 +10,10 @@ interface Props {
   disabled?: boolean;
   className?: string;
   inputMode?: "text" | "decimal";
+  [key: `data-${string}`]: unknown;
 }
 
-const AutoSuggestInput = ({ value, onChange, suggestions, placeholder, disabled, className, inputMode }: Props) => {
+const AutoSuggestInput = ({ value, onChange, suggestions, placeholder, disabled, className, inputMode, ...rest }: Props) => {
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -86,6 +87,7 @@ const AutoSuggestInput = ({ value, onChange, suggestions, placeholder, disabled,
         className={className}
         inputMode={inputMode}
         autoComplete="off"
+        {...rest}
       />
       {showDropdown && (
         <ul
