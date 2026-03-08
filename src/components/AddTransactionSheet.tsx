@@ -160,7 +160,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory}>
@@ -182,6 +182,19 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 onChange={(e) => setDate(e.target.value)}
                 className="bg-muted/50 border-border/50"
               />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
+              <Select value={currency} onValueChange={setCurrency}>
+                <SelectTrigger className="bg-muted/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

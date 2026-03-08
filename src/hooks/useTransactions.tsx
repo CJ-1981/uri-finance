@@ -48,6 +48,7 @@ export const useTransactions = (projectId: string | undefined) => {
     description?: string;
     transaction_date?: string;
     custom_values?: Record<string, number | string>;
+    currency?: string;
   }) => {
     if (!user || !projectId) return;
     const { error } = await supabase.from("transactions").insert({
@@ -59,6 +60,7 @@ export const useTransactions = (projectId: string | undefined) => {
       description: tx.description || null,
       transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
       custom_values: tx.custom_values || {},
+      currency: tx.currency || "USD",
     });
 
     if (error) {
