@@ -19,12 +19,14 @@ const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, totalIncome, totalExpense, balance } = useTransactions(activeProject?.id);
-  const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
-  const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
+  const { categories } = useCategories(activeProject?.id);
+  const { headers } = useColumnHeaders(activeProject?.id);
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const isOwner = activeProject && user && activeProject.owner_id === user.id;
 
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
