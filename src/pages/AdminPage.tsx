@@ -223,7 +223,7 @@ const AdminPage = () => {
     );
   }
 
-  if (!isOwner) {
+  if (!canAccess) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <ShieldCheck className="h-12 w-12 text-muted-foreground" />
