@@ -5,16 +5,25 @@ const STORAGE_KEY = "keyboard_shortcuts";
 export interface ShortcutConfig {
   addTransaction: string;
   addTransactionAlt: string;
+  tabList: string;
+  tabCharts: string;
+  tabCash: string;
 }
 
 const DEFAULT_SHORTCUTS: ShortcutConfig = {
   addTransaction: "n",
   addTransactionAlt: "",
+  tabList: "1",
+  tabCharts: "2",
+  tabCash: "3",
 };
 
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   addTransaction: "shortcut.addTransaction",
   addTransactionAlt: "shortcut.addTransactionAlt",
+  tabList: "shortcut.tabList",
+  tabCharts: "shortcut.tabCharts",
+  tabCash: "shortcut.tabCash",
 };
 
 export const getShortcuts = (): ShortcutConfig => {

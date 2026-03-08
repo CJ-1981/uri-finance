@@ -62,13 +62,24 @@ const Dashboard = () => {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
   const [addTxOpen, setAddTxOpen] = useState(false);
+  const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const txListRef = useRef<TransactionListHandle>(null);
 
   const openAddTx = useCallback(() => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
 
-  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer, "addTransactionAlt");
+  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen;
+
+  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
+
+  const goToList = useCallback(() => setView("list"), []);
+  const goToCharts = useCallback(() => setView("charts"), []);
+  const goToCash = useCallback(() => setView("cash"), []);
+  useKeyboardShortcut("tabList", goToList, !!activeProject && noModalOpen);
+  useKeyboardShortcut("tabCharts", goToCharts, !!activeProject && noModalOpen);
+  useKeyboardShortcut("tabCash", goToCash, !!activeProject && noModalOpen);
 
   // "/" shortcut to focus search
   useEffect(() => {
@@ -152,8 +163,6 @@ const Dashboard = () => {
   }, [view, activeProject, detailOpen, visibleTxs, selectedTx]);
 
 
-  const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
-  const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);

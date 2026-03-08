@@ -6,7 +6,7 @@ import { getShortcuts, saveShortcuts, ShortcutConfig } from "@/hooks/useKeyboard
 import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 
-type RecordingTarget = "addTransaction" | "addTransactionAlt";
+type RecordingTarget = keyof ShortcutConfig;
 
 const ShortcutSettings = () => {
   const { t } = useI18n();
@@ -38,7 +38,7 @@ const ShortcutSettings = () => {
     setOpen(false);
   };
 
-  const renderKeyButton = (target: RecordingTarget, value: string, placeholder: string) => (
+  const renderKeyButton = (target: RecordingTarget, value: string) => (
     <div className="flex gap-1">
       <button
         onClick={() => setRecordingKey(target)}
@@ -52,11 +52,11 @@ const ShortcutSettings = () => {
           ? t("shortcut.pressKey")
           : value
             ? value.toUpperCase()
-            : placeholder}
+            : t("shortcut.clickToSet")}
       </button>
-      {target === "addTransactionAlt" && value && (
+      {value && (
         <button
-          onClick={() => setShortcuts((prev) => ({ ...prev, addTransactionAlt: "" }))}
+          onClick={() => setShortcuts((prev) => ({ ...prev, [target]: "" }))}
           className="h-9 w-9 rounded-md border border-input bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-3.5 w-3.5" />
@@ -83,12 +83,27 @@ const ShortcutSettings = () => {
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t("shortcut.addTransaction")}</label>
-            {renderKeyButton("addTransaction", shortcuts.addTransaction, "—")}
+            {renderKeyButton("addTransaction", shortcuts.addTransaction)}
           </div>
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t("shortcut.addTransactionAlt")}</label>
-            {renderKeyButton("addTransactionAlt", shortcuts.addTransactionAlt, t("shortcut.clickToSet"))}
+            {renderKeyButton("addTransactionAlt", shortcuts.addTransactionAlt)}
+          </div>
+
+          <div className="border-t border-border/50 pt-3 space-y-2">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.tabList")}</label>
+              {renderKeyButton("tabList", shortcuts.tabList)}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.tabCharts")}</label>
+              {renderKeyButton("tabCharts", shortcuts.tabCharts)}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.tabCash")}</label>
+              {renderKeyButton("tabCash", shortcuts.tabCash)}
+            </div>
           </div>
 
           <p className="text-[10px] text-muted-foreground">{t("shortcut.hint")}</p>
