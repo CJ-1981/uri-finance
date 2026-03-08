@@ -9,10 +9,10 @@ interface Props {
   categories: Category[];
   onAdd: (name: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  inline?: boolean;
 }
 
-const CategoryManager = ({ categories, onAdd, onDelete }: Props) => {
-  const [open, setOpen] = useState(false);
+const CategoryContent = ({ categories, onAdd, onDelete }: Omit<Props, "inline">) => {
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
 
@@ -25,6 +25,41 @@ const CategoryManager = ({ categories, onAdd, onDelete }: Props) => {
   };
 
   return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <Input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="New category name"
+          className="bg-muted/50 border-border/50"
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+        />
+        <Button size="icon" onClick={handleAdd} disabled={adding || !newName.trim()} className="shrink-0 gradient-primary">
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="space-y-1 max-h-[40vh] overflow-y-auto">
+        {categories.map((cat) => (
+          <div key={cat.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2.5">
+            <span className="text-sm text-foreground">{cat.name}</span>
+            <button onClick={() => onDelete(cat.id)} className="text-muted-foreground hover:text-expense transition-colors p-1">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const CategoryManager = ({ categories, onAdd, onDelete, inline }: Props) => {
+  const [open, setOpen] = useState(false);
+
+  if (inline) {
+    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} />;
+  }
+
+  return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
@@ -35,39 +70,8 @@ const CategoryManager = ({ categories, onAdd, onDelete }: Props) => {
         <SheetHeader>
           <SheetTitle className="text-foreground">Manage Categories</SheetTitle>
         </SheetHeader>
-
-        <div className="mt-4 space-y-3">
-          {/* Add new */}
-          <div className="flex gap-2">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="New category name"
-              className="bg-muted/50 border-border/50"
-              onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            />
-            <Button size="icon" onClick={handleAdd} disabled={adding || !newName.trim()} className="shrink-0 gradient-primary">
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* List */}
-          <div className="space-y-1 max-h-[40vh] overflow-y-auto">
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2.5"
-              >
-                <span className="text-sm text-foreground">{cat.name}</span>
-                <button
-                  onClick={() => onDelete(cat.id)}
-                  className="text-muted-foreground hover:text-expense transition-colors p-1"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
+        <div className="mt-4">
+          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} />
         </div>
       </SheetContent>
     </Sheet>
