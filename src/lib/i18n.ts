@@ -575,6 +575,23 @@ export const translations: Record<Locale, Record<string, string>> = {
     "shortcut.hint": "대시보드에서 이 키를 눌러 빠르게 작업을 수행합니다.",
     "shortcut.arrowHint": "상세 보기에서 화살표 키(← →)로 거래 간 이동할 수 있습니다.",
 
+    // Cash Calculator
+    "cash.title": "현금 계산기",
+    "cash.denomination": "단위",
+    "cash.named": "기명",
+    "cash.anon": "익명",
+    "cash.bills": "지폐",
+    "cash.coins": "동전",
+    "cash.namedTotal": "기명 합계",
+    "cash.anonTotal": "익명 합계",
+    "cash.grandTotal": "총 합계",
+    "cash.subtotalNamed": "기명 소계",
+    "cash.subtotalAnon": "익명 소계",
+    "cash.clearAll": "초기화",
+    "cash.export": "마크다운 내보내기",
+    "cash.cleared": "모든 수량이 초기화되었습니다",
+    "cash.exported": "마크다운이 내보내기되었습니다",
+
     // Language
     "lang.label": "한국어",
   },
