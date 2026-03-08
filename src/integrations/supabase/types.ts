@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_columns: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_columns_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_categories: {
         Row: {
           created_at: string
@@ -113,6 +142,7 @@ export type Database = {
           amount: number
           category: string
           created_at: string
+          custom_values: Json | null
           description: string | null
           id: string
           project_id: string
@@ -124,6 +154,7 @@ export type Database = {
           amount: number
           category?: string
           created_at?: string
+          custom_values?: Json | null
           description?: string | null
           id?: string
           project_id: string
@@ -135,6 +166,7 @@ export type Database = {
           amount?: number
           category?: string
           created_at?: string
+          custom_values?: Json | null
           description?: string | null
           id?: string
           project_id?: string

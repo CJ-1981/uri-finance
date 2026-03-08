@@ -2,8 +2,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useCategories } from "@/hooks/useCategories";
 import { useColumnHeaders } from "@/hooks/useColumnHeaders";
+import { useCustomColumns } from "@/hooks/useCustomColumns";
 import CategoryManager from "@/components/CategoryManager";
-import ColumnHeaderEditor from "@/components/ColumnHeaderEditor";
+import CustomColumnManager from "@/components/CustomColumnManager";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +14,7 @@ const AdminPage = () => {
   const { projects, activeProject } = useProjects();
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
+  const { columns: customColumns, addColumn, deleteColumn } = useCustomColumns(activeProject?.id);
   const navigate = useNavigate();
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
@@ -75,6 +77,17 @@ const AdminPage = () => {
                 />
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Custom Numeric Columns */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Custom Numeric Columns</h2>
+            <p className="text-xs text-muted-foreground">Add extra numeric fields to transactions (e.g. Tax, Discount, Quantity).</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4">
+            <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} />
           </div>
         </section>
 

@@ -13,6 +13,7 @@ export interface Transaction {
   description: string | null;
   transaction_date: string;
   created_at: string;
+  custom_values: Record<string, number> | null;
 }
 
 export const useTransactions = (projectId: string | undefined) => {
@@ -43,6 +44,7 @@ export const useTransactions = (projectId: string | undefined) => {
     category: string;
     description?: string;
     transaction_date?: string;
+    custom_values?: Record<string, number>;
   }) => {
     if (!user || !projectId) return;
     const { error } = await supabase.from("transactions").insert({
@@ -53,6 +55,7 @@ export const useTransactions = (projectId: string | undefined) => {
       category: tx.category,
       description: tx.description || null,
       transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
+      custom_values: tx.custom_values || {},
     });
 
     if (error) {
@@ -63,7 +66,7 @@ export const useTransactions = (projectId: string | undefined) => {
     await fetchTransactions();
   };
 
-  const updateTransaction = async (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date">>) => {
+  const updateTransaction = async (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values">>) => {
     const { error } = await supabase
       .from("transactions")
       .update(updates)
