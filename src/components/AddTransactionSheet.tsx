@@ -143,8 +143,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <div className="flex gap-2">
             <button
               type="button"
+              tabIndex={1}
               onClick={() => setType("income")}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 type === "income"
                   ? "income-badge ring-1 ring-income/30"
                   : "bg-muted text-muted-foreground"
@@ -154,8 +155,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </button>
             <button
               type="button"
+              tabIndex={2}
               onClick={() => setType("expense")}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 type === "expense"
                   ? "expense-badge ring-1 ring-expense/30"
                   : "bg-muted text-muted-foreground"
@@ -289,14 +291,14 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               disabled={submitting}
               onClick={handleAddAndContinue}
               variant="outline"
-              className="flex-1 font-semibold h-12"
+              className="flex-1 font-semibold h-12 focus-visible:ring-2 focus-visible:ring-primary"
             >
               {submitting ? t("tx.adding") : t("tx.addAndContinue")}
             </Button>
             <Button
               type="submit"
               disabled={submitting}
-              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 focus-visible:ring-2 focus-visible:ring-primary"
             >
               {submitting ? t("tx.adding") : t("tx.addTransaction")}
             </Button>
