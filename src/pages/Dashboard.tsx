@@ -23,6 +23,22 @@ import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+const getAmountFontSize = (text: string) => {
+  const len = text.length;
+  if (len <= 10) return "text-lg";
+  if (len <= 13) return "text-base";
+  if (len <= 16) return "text-sm";
+  return "text-xs";
+};
+
+const AmountText = ({ value, currency, className }: { value: number; currency: string; className?: string }) => {
+  const formatted = `${currency} ${value.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+  return (
+    <p className={`mt-1 font-bold ${getAmountFontSize(formatted)} ${className || ""}`}>
+      {formatted}
+    </p>
+  );
+};
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -259,21 +275,15 @@ const Dashboard = () => {
             <div className="grid grid-cols-3 gap-2">
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.balance")}</p>
-                <p className={`mt-1 text-lg font-bold ${balance >= 0 ? "text-income" : "text-expense"}`}>
-                  {projectCurrency} {Math.abs(balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
+                <AmountText value={Math.abs(balance)} currency={projectCurrency} className={balance >= 0 ? "text-income" : "text-expense"} />
               </div>
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.income")}</p>
-                <p className="mt-1 text-lg font-bold text-income">
-                  {projectCurrency} {totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
+                <AmountText value={totalIncome} currency={projectCurrency} className="text-income" />
               </div>
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.expenses")}</p>
-                <p className="mt-1 text-lg font-bold text-expense">
-                  {projectCurrency} {totalExpense.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </p>
+                <AmountText value={totalExpense} currency={projectCurrency} className="text-expense" />
               </div>
             </div>
 
