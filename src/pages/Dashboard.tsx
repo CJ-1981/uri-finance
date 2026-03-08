@@ -55,15 +55,36 @@ const Dashboard = () => {
     [transactions, period, customRange]
   );
 
-  const totalIncome = useMemo(
-    () => filtered.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0),
-    [filtered]
-  );
-  const totalExpense = useMemo(
-    () => filtered.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0),
-    [filtered]
-  );
+  const projectCurrency = activeProject?.currency || "USD";
+
+  // Group filtered transactions by currency
+  const currencyTotals = useMemo(() => {
+    const map: Record<string, { income: number; expense: number }> = {};
+    filtered.forEach((tx) => {
+      const cur = tx.currency || projectCurrency;
+      if (!map[cur]) map[cur] = { income: 0, expense: 0 };
+      if (tx.type === "income") map[cur].income += Number(tx.amount);
+      else map[cur].expense += Number(tx.amount);
+    });
+    return map;
+  }, [filtered, projectCurrency]);
+
+  // Primary currency totals for the main balance card
+  const totalIncome = currencyTotals[projectCurrency]?.income || 0;
+  const totalExpense = currencyTotals[projectCurrency]?.expense || 0;
   const balance = totalIncome - totalExpense;
+
+  // Other currencies
+  const otherCurrencies = useMemo(
+    () => Object.keys(currencyTotals).filter((c) => c !== projectCurrency).sort(),
+    [currencyTotals, projectCurrency]
+  );
+
+  // Filter chart transactions to project currency only
+  const chartTransactions = useMemo(
+    () => filtered.filter((tx) => (tx.currency || projectCurrency) === projectCurrency),
+    [filtered, projectCurrency]
+  );
 
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
