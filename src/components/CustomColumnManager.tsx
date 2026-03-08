@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Hash, Type, EyeOff, Eye, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, X, Hash, Type, EyeOff, Eye, FileText, ChevronDown, ChevronUp, Asterisk } from "lucide-react";
 import { CustomColumn, ColumnType } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 
@@ -11,6 +11,7 @@ interface Props {
   onAdd: (name: string, type: ColumnType) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
+  onToggleRequired?: (id: string, required: boolean) => Promise<void>;
   onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
 }
 
