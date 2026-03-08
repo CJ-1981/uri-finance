@@ -204,7 +204,7 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={filtered} onSelect={handleSelectTx} headers={headers} customColumns={customColumns} />
+              <TransactionList transactions={filtered} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} />
             ) : (
               <FinanceCharts transactions={filtered} customColumns={customColumns} />
             )}
@@ -221,6 +221,15 @@ const Dashboard = () => {
               onUpdate={updateTransaction}
               onDelete={deleteTransaction}
               customColumns={customColumns}
+            />
+
+            {/* Bulk edit sheet */}
+            <BulkEditSheet
+              transactions={bulkEditTxs}
+              categories={categories}
+              open={bulkEditOpen}
+              onOpenChange={setBulkEditOpen}
+              onBulkUpdate={handleBulkUpdate}
             />
           </div>
         )}
