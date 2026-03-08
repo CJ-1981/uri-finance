@@ -357,6 +357,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.createInvite": "초대 코드 생성",
     "admin.inviteLabel": "라벨 (선택사항)",
     "admin.inviteLabelPlaceholder": "예: 김목사님용",
+    "admin.inviteEmailPlaceholder": "초대할 이메일 주소",
+    "admin.inviteEmailRequired": "초대 코드에는 이메일 주소가 필요합니다",
     "admin.inviteCreated": "초대 코드가 생성되었습니다!",
     "admin.inviteCreateFailed": "초대 코드 생성에 실패했습니다",
     "admin.inviteDeleted": "초대 코드가 삭제되었습니다",
