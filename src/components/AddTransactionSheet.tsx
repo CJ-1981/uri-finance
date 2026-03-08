@@ -25,7 +25,7 @@ interface Props {
   }) => Promise<void>;
 }
 
-const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
+const AddTransactionSheet = ({ categories, customColumns, transactions, onAdd }: Props) => {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -35,6 +35,21 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
+
+  // Build suggestion lists per text column: imported + historical
+  const columnSuggestions = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const col of customColumns) {
+      if (col.column_type !== "text") continue;
+      const set = new Set<string>(col.suggestions || []);
+      for (const tx of transactions) {
+        const v = tx.custom_values?.[col.name];
+        if (typeof v === "string" && v.trim()) set.add(v.trim());
+      }
+      map[col.name] = Array.from(set).sort((a, b) => a.localeCompare(b));
+    }
+    return map;
+  }, [customColumns, transactions]);
 
   const resetForm = () => {
     setAmount("");
