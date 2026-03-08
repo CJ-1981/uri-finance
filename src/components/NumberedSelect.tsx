@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NumberedSelectProps {
   value: string;
@@ -29,6 +30,7 @@ const NumberedSelect = ({
   const [highlightIdx, setHighlightIdx] = useState(-1);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const selectedLabel = items.find((i) => i.value === value)?.label ?? placeholder;
 
@@ -36,7 +38,6 @@ const NumberedSelect = ({
     (val: string) => {
       onValueChange(val);
       setOpen(false);
-      // Return focus to trigger after selection
       setTimeout(() => triggerRef.current?.focus(), 0);
     },
     [onValueChange]
@@ -61,7 +62,6 @@ const NumberedSelect = ({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (!open) {
-        // Open on Enter/Space/ArrowDown
         if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
           e.preventDefault();
           setOpen(true);
@@ -90,8 +90,7 @@ const NumberedSelect = ({
           triggerRef.current?.focus();
           break;
         default:
-          // Number key shortcut (1-9, 0)
-          if (showNumbers && /^[0-9]$/.test(e.key)) {
+          if (showNumbers && !isMobile && /^[0-9]$/.test(e.key)) {
             e.preventDefault();
             const idx = keyToIndex(e.key);
             if (idx >= 0 && idx < items.length) {
@@ -101,9 +100,88 @@ const NumberedSelect = ({
           break;
       }
     },
-    [open, highlightIdx, items, select, showNumbers]
+    [open, highlightIdx, items, select, showNumbers, isMobile]
   );
 
+  const displayNumbers = showNumbers && !isMobile;
+
+  const renderItems = () =>
+    items.map((item, idx) => (
+      <button
+        key={item.value}
+        type="button"
+        role="option"
+        aria-selected={item.value === value}
+        className={cn(
+          "w-full flex items-center gap-2 rounded-sm px-3 py-2.5 text-sm cursor-pointer outline-none transition-colors",
+          isMobile && "py-3 text-base",
+          idx === highlightIdx && !isMobile && "bg-accent text-accent-foreground",
+          item.value === value && "font-medium"
+        )}
+        onMouseEnter={() => !isMobile && setHighlightIdx(idx)}
+        onClick={() => select(item.value)}
+      >
+        {displayNumbers && idx < 10 && (
+          <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
+            {indexToKey(idx)}
+          </span>
+        )}
+        <span className="truncate flex-1 text-left">{item.label}</span>
+        {item.value === value && (
+          <Check className="h-4 w-4 shrink-0 text-primary" />
+        )}
+      </button>
+    ));
+
+  // Mobile: use a bottom sheet style overlay instead of Popover
+  if (isMobile) {
+    return (
+      <>
+        <Button
+          ref={triggerRef}
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          data-tab-stop
+          onClick={() => setOpen(true)}
+          className={cn("w-full h-10 justify-between font-normal", className)}
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+
+        {open && (
+          <div
+            className="fixed inset-0 z-50 flex flex-col"
+            onClick={() => setOpen(false)}
+          >
+            {/* Backdrop */}
+            <div className="flex-1 bg-black/50" />
+            {/* Bottom sheet */}
+            <div
+              className="bg-popover border-t border-border rounded-t-xl max-h-[60vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-center py-2">
+                <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+              </div>
+              <div
+                ref={listRef}
+                role="listbox"
+                className="overflow-y-auto flex-1 pb-safe px-1 pb-4"
+                style={{ WebkitOverflowScrolling: "touch" }}
+              >
+                {renderItems()}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Desktop: use Popover
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -115,10 +193,7 @@ const NumberedSelect = ({
           aria-expanded={open}
           data-tab-stop
           onKeyDown={handleKeyDown}
-          className={cn(
-            "w-full h-10 justify-between font-normal",
-            className
-          )}
+          className={cn("w-full h-10 justify-between font-normal", className)}
         >
           <span className="truncate">{selectedLabel}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -134,30 +209,8 @@ const NumberedSelect = ({
           ref={listRef}
           role="listbox"
           className="max-h-60 overflow-y-auto overscroll-contain"
-          style={{ WebkitOverflowScrolling: "touch" }}
         >
-          {items.map((item, idx) => (
-            <button
-              key={item.value}
-              type="button"
-              role="option"
-              aria-selected={item.value === value}
-              className={cn(
-                "w-full flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm cursor-pointer outline-none transition-colors",
-                idx === highlightIdx && "bg-accent text-accent-foreground",
-                item.value === value && idx !== highlightIdx && "font-medium"
-              )}
-              onMouseEnter={() => setHighlightIdx(idx)}
-              onClick={() => select(item.value)}
-            >
-              {showNumbers && idx < 10 && (
-                <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
-                  {indexToKey(idx)}
-                </span>
-              )}
-              <span className="truncate">{item.label}</span>
-            </button>
-          ))}
+          {renderItems()}
         </div>
       </PopoverContent>
     </Popover>
