@@ -113,7 +113,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectMode(true)}
-                className="text-muted-foreground h-7 w-10 px-0 text-[10px] shrink-0"
+                className="text-muted-foreground h-7 w-10 px-0 text-[10px] shrink-0 -ml-2"
               >
                 <CheckSquare className="h-3.5 w-3.5" />
               </Button>
