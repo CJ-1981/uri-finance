@@ -150,6 +150,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cc.addFailed": "Failed to add column",
     "cc.removed": "Column removed",
     "cc.removeFailed": "Failed to delete column",
+    "cc.manageSuggestions": "Manage suggestions",
+    "cc.suggestionsHint": "Enter one suggestion per line. These will appear as auto-complete options.",
+    "cc.suggestionsPlaceholder": "John\nJane\nBob",
+    "cc.saveSuggestions": "Save",
+    "cc.suggestionsUpdated": "Suggestions updated",
 
     // Categories
     "cat.newPlaceholder": "New category name",
