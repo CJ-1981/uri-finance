@@ -435,6 +435,17 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleteFailed": "영구 삭제에 실패했습니다",
     "admin.deletedOn": "삭제일",
 
+    // Archive
+    "admin.archive": "데이터 아카이브",
+    "admin.archiveDesc": "기간을 지정하여 거래를 내보내고 삭제합니다.",
+    "admin.archiveFrom": "시작일",
+    "admin.archiveTo": "종료일",
+    "admin.archiveExportDelete": "내보내기 & 아카이브",
+    "admin.archiveConfirm": "{n}개의 거래를 CSV로 내보내고 삭제합니다. 계속하시겠습니까?",
+    "admin.archiveSuccess": "{n}개의 거래가 아카이브되었습니다",
+    "admin.archiveEmpty": "선택한 기간에 거래가 없습니다.",
+    "admin.archiving": "아카이브 중...",
+
     // Lock
     "lock.title": "앱 잠금",
     "lock.enter": "PIN을 입력하여 잠금 해제",
