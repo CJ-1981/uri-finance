@@ -6,13 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { format, parse } from "date-fns";
+import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
+
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
 interface Props {
   transaction: Transaction | null;
@@ -20,7 +26,7 @@ interface Props {
   customColumns: CustomColumn[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values">>) => Promise<void>;
+  onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   isViewer?: boolean;
   /** For multi-edit: full list of selected transactions */
@@ -37,6 +43,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
@@ -72,6 +79,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     setCategory(tx.category);
     setDescription(tx.description || "");
     setDate(tx.transaction_date);
+    setCurrency(tx.currency || "USD");
     const cv: Record<string, string> = {};
     if (tx.custom_values) {
       for (const [k, v] of Object.entries(tx.custom_values)) {
@@ -111,6 +119,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
       description: description || null,
       transaction_date: date,
       custom_values: cv,
+      currency,
     });
     setSaving(false);
 
@@ -231,11 +240,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-3 overflow-hidden">
+            <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory} disabled={!isOwn}>
-                <SelectTrigger className="bg-muted/50 border-border/50">
+                <SelectTrigger className="bg-muted/50 border-border/50 min-w-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,15 +254,47 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                disabled={!isOwn}
-                className="bg-muted/50 border-border/50"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={!isOwn}
+                    className={cn(
+                      "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-sm">
+                      {date ? format(parse(date, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Pick date"}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
+                    onSelect={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
+              <Select value={currency} onValueChange={setCurrency} disabled={!isOwn}>
+                <SelectTrigger className="bg-muted/50 border-border/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURRENCIES.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
