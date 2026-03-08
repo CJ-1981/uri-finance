@@ -135,6 +135,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.transferConfirm": "Are you sure you want to transfer ownership to this member? You will become an admin.",
     "admin.transferred": "Ownership transferred",
     "admin.transferFailed": "Failed to transfer ownership",
+    "admin.simulating": "Simulating as {role}",
 
     // Custom columns
     "cc.placeholder": "Column name (e.g. Tax, Discount)",
