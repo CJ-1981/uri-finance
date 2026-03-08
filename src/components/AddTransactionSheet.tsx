@@ -42,7 +42,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     setInternalOpen(v);
     onExternalOpenChange?.(v);
   };
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const [type, setType] = useState<"income" | "expense">("income");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
