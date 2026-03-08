@@ -3,7 +3,10 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
+  AreaChart, Area, XAxis, YAxis,
+  BarChart, Bar,
 } from "recharts";
+import { format, startOfMonth, subMonths } from "date-fns";
 import { useMemo, useState } from "react";
 
 interface Props {
@@ -35,11 +38,84 @@ const TOOLTIP_STYLE = {
   padding: "8px 12px",
 };
 
+const ITEM_STYLE = { color: "hsl(210, 20%, 92%)" };
+
 type PieGroupKey = "category" | "type" | string;
+type MetricKey = "income" | "expense" | string;
 
 const FinanceCharts = ({ transactions, customColumns }: Props) => {
   const { t } = useI18n();
 
+  // --- Metric options for area/bar charts ---
+  const metricOptions = useMemo(() => {
+    const base = [
+      { key: "income" as MetricKey, label: t("tx.income"), color: "hsl(152, 60%, 50%)" },
+      { key: "expense" as MetricKey, label: t("tx.expense"), color: "hsl(0, 72%, 58%)" },
+    ];
+    const custom = customColumns
+      .filter((col) => col.column_type === "numeric")
+      .map((col, i) => ({
+        key: col.name as MetricKey,
+        label: col.name,
+        color: COLORS[(i + 2) % COLORS.length],
+      }));
+    return [...base, ...custom];
+  }, [customColumns, t]);
+
+  const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
+    new Set(["income", "expense"])
+  );
+
+  const toggleMetric = (key: MetricKey) => {
+    setSelectedMetrics((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        if (next.size > 1) next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const activeMetrics = metricOptions.filter((m) => selectedMetrics.has(m.key));
+
+  // --- Monthly data ---
+  const monthlyData = useMemo(() => {
+    return Array.from({ length: 6 }, (_, i) => {
+      const month = startOfMonth(subMonths(new Date(), 5 - i));
+      const label = format(month, "MMM");
+      const monthStr = format(month, "yyyy-MM");
+      const monthTxs = transactions.filter((tx) => tx.transaction_date.startsWith(monthStr));
+
+      const row: Record<string, string | number> = { name: label };
+      row.income = monthTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
+      row.expense = monthTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
+
+      for (const col of customColumns.filter((c) => c.column_type === "numeric")) {
+        row[col.name] = monthTxs.reduce((s, tx) => {
+          const v = tx.custom_values?.[col.name];
+          return s + (v != null ? Number(v) : 0);
+        }, 0);
+      }
+      return row;
+    });
+  }, [transactions, customColumns]);
+
+  // --- Cumulative data ---
+  const cumulativeData = useMemo(() => {
+    const cumulative: Record<string, number> = {};
+    return monthlyData.map((row) => {
+      const cumRow: Record<string, string | number> = { name: row.name };
+      for (const m of metricOptions) {
+        cumulative[m.key] = (cumulative[m.key] || 0) + Number(row[m.key] || 0);
+        cumRow[m.key] = cumulative[m.key];
+      }
+      return cumRow;
+    });
+  }, [monthlyData, metricOptions]);
+
+  // --- Pie chart state ---
   const pieGroupOptions: { key: PieGroupKey; label: string }[] = useMemo(() => {
     const base: { key: PieGroupKey; label: string }[] = [
       { key: "category", label: t("tx.category") },
@@ -81,6 +157,66 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
 
   return (
     <div className="space-y-6">
+      {/* Metric selector */}
+      <div className="flex flex-wrap gap-2">
+        {metricOptions.map((m) => (
+          <button
+            key={m.key}
+            onClick={() => toggleMetric(m.key)}
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              selectedMetrics.has(m.key)
+                ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+                : "bg-muted/30 text-muted-foreground"
+            }`}
+          >
+            <div
+              className="h-2.5 w-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: m.color, opacity: selectedMetrics.has(m.key) ? 1 : 0.4 }}
+            />
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filled Area Chart - Trend */}
+      <div className="glass-card p-4">
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={monthlyData}>
+            <defs>
+              {activeMetrics.map((m) => (
+                <linearGradient key={m.key} id={`grad-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={m.color} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={m.color} stopOpacity={0.02} />
+                </linearGradient>
+              ))}
+            </defs>
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
+            <YAxis hide />
+            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+            {activeMetrics.map((m) => (
+              <Area key={m.key} type="monotone" dataKey={m.key} stroke={m.color} strokeWidth={2} fill={`url(#grad-${m.key})`} name={m.label} />
+            ))}
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Bar Chart - Cumulative */}
+      <div className="glass-card p-4">
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.cumulative")}</h3>
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={cumulativeData} barGap={2}>
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
+            <YAxis hide />
+            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+            {activeMetrics.map((m) => (
+              <Bar key={m.key} dataKey={m.key} fill={m.color} radius={[4, 4, 0, 0]} name={m.label} />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Pie Chart */}
       {categoryData.length > 0 && (
         <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-4">
@@ -108,7 +244,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "hsl(210, 20%, 92%)" }} labelStyle={{ color: "hsl(210, 20%, 92%)" }} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
