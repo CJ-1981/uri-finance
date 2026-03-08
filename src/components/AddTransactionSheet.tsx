@@ -187,12 +187,31 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </div>
             <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="bg-muted/50 border-border/50 min-w-0 w-full px-1 pr-0.5 text-xs [&::-webkit-calendar-picker-indicator]:w-3 [&::-webkit-calendar-picker-indicator]:h-3 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:mr-0 [&::-webkit-date-and-time-value]:text-left"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-sm">
+                      {date ? format(parse(date, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Pick date"}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
+                    onSelect={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
