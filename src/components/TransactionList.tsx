@@ -86,6 +86,21 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
     return filteredTransactions.slice(start, start + pageSize);
   }, [filteredTransactions, safePage, pageSize]);
 
+  // Sum of selected transactions grouped by currency
+  const selectedSummary = useMemo(() => {
+    if (!selectMode || selected.size === 0) return null;
+    const sums = new Map<string, { income: number; expense: number }>();
+    for (const tx of filteredTransactions) {
+      if (!selected.has(tx.id)) continue;
+      const cur = tx.currency || "USD";
+      const entry = sums.get(cur) || { income: 0, expense: 0 };
+      if (tx.type === "income") entry.income += Number(tx.amount);
+      else entry.expense += Number(tx.amount);
+      sums.set(cur, entry);
+    }
+    return sums;
+  }, [selectMode, selected, filteredTransactions]);
+
   const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
 
   const toggleSelect = (id: string) => {
