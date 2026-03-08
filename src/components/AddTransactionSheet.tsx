@@ -138,23 +138,20 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     const form = formRef.current;
     if (!form) return;
 
-    const focusable = Array.from(
-      form.querySelectorAll<HTMLElement>(
-        'button:not([disabled]):not([data-radix-collection-item]), input:not([disabled]), [role="combobox"]:not([disabled])'
-      )
-    ).filter((el) => el.offsetParent !== null);
+    const stops = Array.from(
+      form.querySelectorAll<HTMLElement>('[data-tab-stop]')
+    ).filter((el) => el.offsetParent !== null && !el.hasAttribute('disabled'));
 
-    if (focusable.length === 0) return;
+    if (stops.length === 0) return;
 
-    const currentIdx = focusable.indexOf(document.activeElement as HTMLElement);
+    const currentIdx = stops.indexOf(document.activeElement as HTMLElement);
+    e.preventDefault();
     if (e.shiftKey) {
-      e.preventDefault();
-      const prev = currentIdx <= 0 ? focusable.length - 1 : currentIdx - 1;
-      focusable[prev].focus();
+      const prev = currentIdx <= 0 ? stops.length - 1 : currentIdx - 1;
+      stops[prev].focus();
     } else {
-      e.preventDefault();
-      const next = currentIdx >= focusable.length - 1 ? 0 : currentIdx + 1;
-      focusable[next].focus();
+      const next = currentIdx >= stops.length - 1 ? 0 : currentIdx + 1;
+      stops[next].focus();
     }
   }, []);
 
