@@ -126,7 +126,7 @@ const Dashboard = () => {
             {view === "list" ? (
               <TransactionList transactions={transactions} onSelect={handleSelectTx} headers={headers} customColumns={customColumns} />
             ) : (
-              <FinanceCharts transactions={transactions} />
+              <FinanceCharts transactions={transactions} customColumns={customColumns} />
             )}
 
             {/* FAB */}
