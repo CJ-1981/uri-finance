@@ -236,6 +236,26 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lock.disable": "Remove App Lock",
     "lock.changePIN": "Change PIN",
 
+    // Import
+    "import.title": "Import Transactions",
+    "import.desc": "Upload a CSV file with transaction data. Required columns: type, amount. Optional: category, description, date, currency.",
+    "import.selectFile": "Select CSV file",
+    "import.formatTitle": "Expected CSV format:",
+    "import.noData": "CSV file is empty or has no data rows",
+    "import.missingColumns": "CSV must have 'type' and 'amount' columns in the header",
+    "import.valid": "{n} valid",
+    "import.failed": "{n} failed",
+    "import.failedEntries": "Failed entries:",
+    "import.line": "Row",
+    "import.errType": "Type must be 'income' or 'expense'",
+    "import.errAmount": "Amount must be a positive number",
+    "import.errCategory": "Unknown category: {v}",
+    "import.errDate": "Invalid date format",
+    "import.errCurrency": "Unknown currency: {v}",
+    "import.importBtn": "Import {n} transactions",
+    "import.importing": "Importing...",
+    "import.success": "{n} transactions imported!",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
