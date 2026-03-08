@@ -146,7 +146,7 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
   );
 };
 
-const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onReorder, inline }: Props) => {
+const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIcon, onReorder, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
