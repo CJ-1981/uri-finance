@@ -95,5 +95,5 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  return { columns, loading, addColumn, deleteColumn, toggleMasked, updateSuggestions, fetchColumns };
+  return { columns, loading, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, fetchColumns };
 };
