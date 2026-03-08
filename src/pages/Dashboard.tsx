@@ -14,7 +14,7 @@ import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings2, Globe } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 
@@ -73,7 +73,7 @@ const Dashboard = () => {
               <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} />
               {isOwner && (
                 <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
-                  <Settings2 className="h-4 w-4" />
+                  <Settings className="h-4 w-4" />
                 </Button>
               )}
               </>
