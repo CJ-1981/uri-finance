@@ -122,7 +122,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
             <div className="w-10 shrink-0 hidden sm:block" />
             <span className="flex-1 min-w-0 truncate">{headers.description}</span>
             <span className="hidden sm:block w-24 text-right shrink-0">{headers.category}</span>
-            {customColumns.map((col) => (
+            {customColumns.filter(col => !(isViewer && col.masked)).map((col) => (
               <span key={col.id} className="hidden sm:block w-24 text-right shrink-0">{col.name}</span>
             ))}
             <span className="w-28 text-right shrink-0">{headers.amount}</span>
