@@ -83,12 +83,27 @@ const ShortcutSettings = () => {
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t("shortcut.addTransaction")}</label>
-            {renderKeyButton("addTransaction", shortcuts.addTransaction, "—")}
+            {renderKeyButton("addTransaction", shortcuts.addTransaction)}
           </div>
 
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t("shortcut.addTransactionAlt")}</label>
-            {renderKeyButton("addTransactionAlt", shortcuts.addTransactionAlt, t("shortcut.clickToSet"))}
+            {renderKeyButton("addTransactionAlt", shortcuts.addTransactionAlt)}
+          </div>
+
+          <div className="border-t border-border/50 pt-3 space-y-2">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.tabList")}</label>
+              {renderKeyButton("tabList", shortcuts.tabList)}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.tabCharts")}</label>
+              {renderKeyButton("tabCharts", shortcuts.tabCharts)}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.tabCash")}</label>
+              {renderKeyButton("tabCash", shortcuts.tabCash)}
+            </div>
           </div>
 
           <p className="text-[10px] text-muted-foreground">{t("shortcut.hint")}</p>
