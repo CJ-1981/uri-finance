@@ -17,6 +17,7 @@ interface Props {
   transactions: Transaction[];
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
+  isViewer?: boolean;
 }
 
 const formatAmount = (tx: Transaction) =>
