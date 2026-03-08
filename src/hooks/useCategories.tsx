@@ -109,9 +109,13 @@ export const useCategories = (projectId: string | undefined) => {
     const current = categories[idx];
     const swap = categories[swapIdx];
 
+    // Use index-based values to handle cases where sort_order values are identical
+    const currentOrder = current.sort_order !== swap.sort_order ? current.sort_order : idx;
+    const swapOrder = current.sort_order !== swap.sort_order ? swap.sort_order : swapIdx;
+
     await Promise.all([
-      supabase.from("project_categories").update({ sort_order: swap.sort_order } as any).eq("id", current.id),
-      supabase.from("project_categories").update({ sort_order: current.sort_order } as any).eq("id", swap.id),
+      supabase.from("project_categories").update({ sort_order: swapOrder } as any).eq("id", current.id),
+      supabase.from("project_categories").update({ sort_order: currentOrder } as any).eq("id", swap.id),
     ]);
     await fetchCategories();
   };
