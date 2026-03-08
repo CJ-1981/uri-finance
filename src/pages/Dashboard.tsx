@@ -8,13 +8,12 @@ import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
-import CategoryManager from "@/components/CategoryManager";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
-import ColumnHeaderEditor from "@/components/ColumnHeaderEditor";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings2 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
