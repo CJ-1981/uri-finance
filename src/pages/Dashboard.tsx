@@ -17,6 +17,8 @@ import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/componen
 import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye } from "lucide-react";
+import ShortcutSettings from "@/components/ShortcutSettings";
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
