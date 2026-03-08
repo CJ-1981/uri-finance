@@ -32,7 +32,10 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(25);
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const saved = localStorage.getItem("tx_page_size");
+    return saved ? Number(saved) : 25;
+  });
 
   const categoryIconMap = useMemo(() => {
     const map = new Map<string, string>();
