@@ -29,6 +29,7 @@ const Dashboard = () => {
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
+  const { isViewer } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
