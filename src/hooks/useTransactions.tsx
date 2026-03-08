@@ -72,7 +72,7 @@ export const useTransactions = (projectId: string | undefined) => {
     await fetchTransactions();
   };
 
-  const updateTransaction = async (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values">>) => {
+  const updateTransaction = async (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>) => {
     const { error } = await supabase
       .from("transactions")
       .update(updates)

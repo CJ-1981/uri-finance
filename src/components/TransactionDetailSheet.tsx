@@ -119,6 +119,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
       description: description || null,
       transaction_date: date,
       custom_values: cv,
+      currency,
     });
     setSaving(false);
 
