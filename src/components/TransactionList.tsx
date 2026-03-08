@@ -215,10 +215,14 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
           ) : (
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                tx.type === "income" ? "income-badge" : "expense-badge"
+                categoryIconMap.has(tx.category)
+                  ? "bg-muted/50"
+                  : tx.type === "income" ? "income-badge" : "expense-badge"
               }`}
             >
-              {tx.type === "income" ? (
+              {categoryIconMap.has(tx.category) ? (
+                <span className="text-lg">{categoryIconMap.get(tx.category)}</span>
+              ) : tx.type === "income" ? (
                 <TrendingUp className="h-4 w-4" />
               ) : (
                 <TrendingDown className="h-4 w-4" />
