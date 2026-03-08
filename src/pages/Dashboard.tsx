@@ -39,7 +39,8 @@ const Dashboard = () => {
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const isOwner = !isSimulating && activeProject && user && activeProject.owner_id === user.id;
+  const realOwner = activeProject && user && activeProject.owner_id === user.id;
+  const isOwner = !isSimulating && realOwner;
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
 
