@@ -273,6 +273,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("tx.descriptionPlaceholder")}
               className="bg-muted/50 border-border/50"
+              data-tab-stop
             />
           </div>
 
