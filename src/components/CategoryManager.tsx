@@ -11,6 +11,7 @@ interface Props {
   onAdd: (name: string, code?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onUpdateCode?: (id: string, code: string) => Promise<void>;
+  onUpdateIcon?: (id: string, icon: string) => Promise<void>;
   onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   inline?: boolean;
 }
