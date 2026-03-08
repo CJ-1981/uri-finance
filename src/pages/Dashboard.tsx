@@ -68,7 +68,16 @@ const Dashboard = () => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
 
-  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer, "addTransactionAlt");
+  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen;
+
+  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
+
+  const goToList = useCallback(() => setView("list"), []);
+  const goToCharts = useCallback(() => setView("charts"), []);
+  const goToCash = useCallback(() => setView("cash"), []);
+  useKeyboardShortcut("tabList", goToList, !!activeProject && noModalOpen);
+  useKeyboardShortcut("tabCharts", goToCharts, !!activeProject && noModalOpen);
+  useKeyboardShortcut("tabCash", goToCash, !!activeProject && noModalOpen);
 
   // "/" shortcut to focus search
   useEffect(() => {
