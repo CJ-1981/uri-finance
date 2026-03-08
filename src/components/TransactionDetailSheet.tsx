@@ -42,6 +42,22 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   const isOwn = !isViewer && transaction?.user_id === user?.id;
 
+  // Build suggestion lists per text column
+  const columnSuggestions = useMemo(() => {
+    const txList = allTransactions || [];
+    const map: Record<string, string[]> = {};
+    for (const col of customColumns) {
+      if (col.column_type !== "text") continue;
+      const set = new Set<string>(col.suggestions || []);
+      for (const tx of txList) {
+        const v = tx.custom_values?.[col.name];
+        if (typeof v === "string" && v.trim()) set.add(v.trim());
+      }
+      map[col.name] = Array.from(set).sort((a, b) => a.localeCompare(b));
+    }
+    return map;
+  }, [customColumns, allTransactions]);
+
   const currentIndex = transactionList && transaction
     ? transactionList.findIndex((tx) => tx.id === transaction.id)
     : -1;
