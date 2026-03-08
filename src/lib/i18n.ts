@@ -143,6 +143,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.transferred": "Ownership transferred",
     "admin.transferFailed": "Failed to transfer ownership",
     "admin.simulating": "Simulating as {role}",
+    "admin.save": "Save",
+    "admin.saving": "Saving...",
 
     // Custom columns
     "cc.placeholder": "Column name (e.g. Tax, Discount)",
@@ -445,6 +447,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.transferred": "소유권이 이전되었습니다",
     "admin.transferFailed": "소유권 이전에 실패했습니다",
     "admin.simulating": "{role}(으)로 시뮬레이션 중",
+    "admin.save": "저장",
+    "admin.saving": "저장 중...",
 
     // Custom columns
     "cc.placeholder": "열 이름 (예: 세금, 할인)",
