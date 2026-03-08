@@ -327,6 +327,14 @@ const Dashboard = () => {
               >
                 <BarChart3 className="h-3.5 w-3.5" /> {t("dash.charts")}
               </button>
+              <button
+                onClick={() => setView("cash")}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
+                  view === "cash" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                }`}
+              >
+                <Calculator className="h-3.5 w-3.5" /> {t("cash.title")}
+              </button>
             </div>
 
             {/* Content */}
