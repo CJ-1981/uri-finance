@@ -568,13 +568,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Shortcuts
     "shortcut.title": "키보드 단축키",
     "shortcut.addTransaction": "거래 추가",
-    "shortcut.prevTransaction": "이전 거래",
-    "shortcut.nextTransaction": "다음 거래",
+    "shortcut.addTransactionAlt": "대체 키 (다국어)",
+    "shortcut.clickToSet": "클릭하여 설정",
     "shortcut.pressKey": "키를 누르세요...",
     "shortcut.save": "저장",
     "shortcut.saved": "단축키가 저장되었습니다",
     "shortcut.hint": "대시보드에서 이 키를 눌러 빠르게 작업을 수행합니다.",
-    "shortcut.arrowHint": "상세 보기에서 화살표 키(← →)로 거래 간 이동할 수 있습니다.",
 
     // Cash Calculator
     "cash.title": "현금 계산기",
