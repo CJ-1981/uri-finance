@@ -83,18 +83,21 @@ export type Database = {
       }
       project_categories: {
         Row: {
+          code: string
           created_at: string
           id: string
           name: string
           project_id: string
         }
         Insert: {
+          code?: string
           created_at?: string
           id?: string
           name: string
           project_id: string
         }
         Update: {
+          code?: string
           created_at?: string
           id?: string
           name?: string

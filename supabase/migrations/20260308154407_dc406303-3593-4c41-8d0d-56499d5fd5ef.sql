@@ -1,0 +1,1 @@
+ALTER TABLE public.project_categories ADD COLUMN code text DEFAULT '' NOT NULL;
