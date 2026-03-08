@@ -363,6 +363,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.selectAll": "전체",
     "tx.selected": "{n}개 선택됨",
     "tx.bulkDelete": "삭제",
+    "tx.page": "페이지",
     "tx.bulkEdit": "수정",
     "tx.bulkEditTitle": "{n}개 거래 수정",
     "tx.bulkEditDesc": "변경사항이 선택된 모든 거래에 적용됩니다. 빈 필드는 현재 값을 유지합니다.",
