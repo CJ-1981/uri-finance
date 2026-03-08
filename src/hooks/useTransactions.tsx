@@ -15,6 +15,7 @@ export interface Transaction {
   created_at: string;
   custom_values: Record<string, number | string> | null;
   deleted_at: string | null;
+  currency: string;
 }
 
 export const useTransactions = (projectId: string | undefined) => {
