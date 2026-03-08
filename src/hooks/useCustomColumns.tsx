@@ -107,9 +107,12 @@ export const useCustomColumns = (projectId: string | undefined) => {
     const current = columns[idx];
     const swap = columns[swapIdx];
 
+    const currentOrder = current.sort_order !== swap.sort_order ? current.sort_order : idx;
+    const swapOrder = current.sort_order !== swap.sort_order ? swap.sort_order : swapIdx;
+
     await Promise.all([
-      supabase.from("custom_columns").update({ sort_order: swap.sort_order } as any).eq("id", current.id),
-      supabase.from("custom_columns").update({ sort_order: current.sort_order } as any).eq("id", swap.id),
+      supabase.from("custom_columns").update({ sort_order: swapOrder } as any).eq("id", current.id),
+      supabase.from("custom_columns").update({ sort_order: currentOrder } as any).eq("id", swap.id),
     ]);
     await fetchColumns();
   };
