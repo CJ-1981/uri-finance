@@ -65,13 +65,13 @@ const ShortcutSettings = () => {
                     : "border-input bg-muted/50 text-foreground"
                 }`}
               >
-                {recordingKey === action ? t("shortcut.pressKey") : shortcuts[action].toUpperCase()}
+                {recordingKey === action ? t("shortcut.pressKey") : (shortcuts[action as keyof ShortcutConfig] as string).toUpperCase()}
               </button>
             </div>
           ))}
 
           <p className="text-[10px] text-muted-foreground">{t("shortcut.hint")}</p>
-          <p className="text-[10px] text-muted-foreground">{t("shortcut.arrowHint")}</p>
+          
 
           <Button size="sm" onClick={handleSave} disabled={!!recordingKey} className="w-full">
             {t("shortcut.save")}

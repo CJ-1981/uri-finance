@@ -4,20 +4,14 @@ const STORAGE_KEY = "keyboard_shortcuts";
 
 export interface ShortcutConfig {
   addTransaction: string;
-  prevTransaction: string;
-  nextTransaction: string;
 }
 
 const DEFAULT_SHORTCUTS: ShortcutConfig = {
   addTransaction: "n",
-  prevTransaction: "k",
-  nextTransaction: "j",
 };
 
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   addTransaction: "shortcut.addTransaction",
-  prevTransaction: "shortcut.prevTransaction",
-  nextTransaction: "shortcut.nextTransaction",
 };
 
 export const getShortcuts = (): ShortcutConfig => {
@@ -66,32 +60,4 @@ export const useKeyboardShortcut = (
   }, [key, callback, enabled]);
 
   return key;
-};
-
-/**
- * Hook for arrow-key navigation inside detail sheets.
- * Listens for ArrowLeft/ArrowRight when no input is focused.
- */
-export const useArrowNavigation = (
-  onPrev: () => void,
-  onNext: () => void,
-  enabled = true
-) => {
-  useEffect(() => {
-    if (!enabled) return;
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        onPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        onNext();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onPrev, onNext, enabled]);
 };
