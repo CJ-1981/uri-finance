@@ -561,7 +561,7 @@ const AdminPage = () => {
               <h2 className="text-sm font-semibold text-foreground">{t("admin.columnHeaders")}</h2>
               <p className="text-xs text-muted-foreground">{t("admin.columnHeadersDesc")}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={resetHeaders} className="text-xs">
+           <Button variant="outline" size="sm" onClick={resetHeaders} className="text-xs">
               {t("admin.reset")}
             </Button>
           </div>
@@ -570,13 +570,18 @@ const AdminPage = () => {
               <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
                 <label className="text-xs text-muted-foreground capitalize shrink-0 sm:w-20">{key}</label>
                 <input
-                  value={headers[key]}
-                  onChange={(e) => updateHeader(key, e.target.value)}
+                  value={draft[key]}
+                  onChange={(e) => updateDraft(key, e.target.value)}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
                 />
               </div>
             ))}
+            {dirty && (
+              <Button size="sm" onClick={saveHeaders} disabled={saving} className="mt-1 w-fit">
+                {saving ? t("admin.saving") || "Saving..." : t("admin.save") || "Save"}
+              </Button>
+            )}
           </div>
         </section>
         )}
