@@ -148,9 +148,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "export.success": "Exported as",
 
     // Charts
-    "chart.trend": "Trend (6 months)",
-    "chart.comparison": "Comparison (6 months)",
-    "chart.cumulative": "Cumulative (6 months)",
+    "chart.trend": "Trend",
+    "chart.comparison": "Comparison",
+    "chart.cumulative": "Cumulative",
     "chart.expenseByCategory": "Expense by Category",
     "chart.addToSee": "Add transactions to see charts",
 
