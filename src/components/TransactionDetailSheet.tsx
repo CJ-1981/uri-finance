@@ -168,11 +168,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 <div key={col.id} className="space-y-2">
                   <Label className="text-muted-foreground text-xs">{col.name}</Label>
                   <Input
-                    type="number"
-                    step="0.01"
+                    type={col.column_type === "numeric" ? "number" : "text"}
+                    step={col.column_type === "numeric" ? "0.01" : undefined}
                     value={customValues[col.name] || ""}
                     onChange={(e) => setCustomValues((prev) => ({ ...prev, [col.name]: e.target.value }))}
-                    placeholder="0.00"
+                    placeholder={col.column_type === "numeric" ? "0.00" : ""}
                     className="bg-muted/50 border-border/50"
                   />
                 </div>
