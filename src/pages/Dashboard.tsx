@@ -36,6 +36,14 @@ const Dashboard = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
+
+  const handleRemovePin = () => {
+    localStorage.removeItem("app_lock_pin");
+    setHasPin(false);
+    toast.success(t("lock.pinRemoved"));
+  };
 
   // Filter transactions by selected period
   const filtered = useMemo(
