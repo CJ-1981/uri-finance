@@ -173,7 +173,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <Button
               type="button"
               variant="ghost"
-              tabIndex={0}
+              data-tab-stop
               onClick={() => setType("income")}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "income"
@@ -186,7 +186,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <Button
               type="button"
               variant="ghost"
-              tabIndex={0}
+              data-tab-stop
               onClick={() => setType("expense")}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "expense"
