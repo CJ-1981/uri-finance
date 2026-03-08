@@ -12,6 +12,7 @@ import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
+import ImportTransactions from "@/components/ImportTransactions";
 import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
 import PinSetupDialog from "@/components/PinSetupDialog";
@@ -25,7 +26,7 @@ import { toast } from "sonner";
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction } = useTransactions(activeProject?.id);
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
@@ -127,6 +128,9 @@ const Dashboard = () => {
             {activeProject && (
               <>
               <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} isViewer={isViewer} />
+              {!isViewer && (
+                <ImportTransactions categories={categories} projectCurrency={projectCurrency} onImport={bulkAddTransactions} />
+              )}
               {isOwner && (
                 <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
                   <Settings className="h-4 w-4" />
