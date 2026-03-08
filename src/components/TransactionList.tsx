@@ -137,7 +137,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
           key={tx.id}
           onClick={() => selectMode ? toggleSelect(tx.id) : onSelect(tx)}
           onContextMenu={(e) => {
-            if (!selectMode && ownTxIds.has(tx.id)) {
+            if (!isViewer && !selectMode && ownTxIds.has(tx.id)) {
               e.preventDefault();
               setSelectMode(true);
               setSelected(new Set([tx.id]));
