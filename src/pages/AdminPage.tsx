@@ -528,8 +528,10 @@ const AdminPage = () => {
             )}
           </div>
         </section>
+        )}
 
-        {/* Column Headers */}
+        {/* Column Headers - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
