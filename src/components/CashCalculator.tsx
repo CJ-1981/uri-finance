@@ -57,6 +57,7 @@ function formatDenom(value: number, currency: string): string {
 
 interface CashCalculatorProps {
   currency: string;
+  targetAmount?: number;
 }
 
 type Counts = Record<string, { named: number; anon: number }>;
@@ -84,7 +85,7 @@ function saveCacheCounts(counts: Counts, currency: string) {
   localStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, currency, counts }));
 }
 
-const CashCalculator = ({ currency }: CashCalculatorProps) => {
+const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => {
   const { t } = useI18n();
   const denoms = DENOMINATIONS[currency] || DEFAULT_DENOMS;
   const allDenoms = [...denoms.bills, ...denoms.coins];
@@ -293,6 +294,38 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
             ({t("cash.bills")}: {(totals.namedBills + totals.anonBills).toLocaleString("en-US", { minimumFractionDigits: 2 })}, {t("cash.coins")}: {(totals.namedCoins + totals.anonCoins).toLocaleString("en-US", { minimumFractionDigits: 2 })})
           </div>
         </div>
+
+        {/* Target amount & gap */}
+        {targetAmount > 0 && (() => {
+          const gap = totals.total - targetAmount;
+          const isMatch = Math.abs(gap) < 0.005;
+          const isExcess = gap > 0.005;
+          const statusLabel = isMatch ? t("cash.matching") : isExcess ? t("cash.excess") : t("cash.deficit");
+          const statusColor = isMatch ? "text-income" : isExcess ? "text-primary" : "text-expense";
+          const bgColor = isMatch ? "bg-income/10" : isExcess ? "bg-primary/10" : "bg-expense/10";
+          const borderColor = isMatch ? "border-income/30" : isExcess ? "border-primary/30" : "border-expense/30";
+          return (
+            <>
+              <div className="border-t border-border/30 pt-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{t("cash.target")}</span>
+                  <span className="font-semibold text-foreground">
+                    {currency} {targetAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              <div className={`rounded-lg border ${borderColor} ${bgColor} px-3 py-2`}>
+                <div className="flex justify-between items-center">
+                  <span className={`text-xs font-bold ${statusColor}`}>{statusLabel}</span>
+                  <span className={`text-sm font-bold ${statusColor}`}>
+                    {isMatch ? "—" : `${isExcess ? "+" : "−"} ${currency} ${Math.abs(gap).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+                  </span>
+                </div>
+              </div>
+            </>
+          );
+        })()}
       </div>
 
       {/* Actions */}
