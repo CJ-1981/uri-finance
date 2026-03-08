@@ -3,8 +3,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import NumberedSelect from "@/components/NumberedSelect";
 import { Calendar } from "@/components/ui/calendar";
 import { Plus, TrendingUp, TrendingDown, CalendarIcon } from "lucide-react";
 import { format, parse } from "date-fns";
