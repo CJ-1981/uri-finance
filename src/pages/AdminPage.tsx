@@ -283,7 +283,7 @@ const AdminPage = () => {
                   type="date"
                   value={archiveTo}
                   onChange={(e) => setArchiveTo(e.target.value)}
-                  className="bg-background text-sm w-full min-w-0 max-w-full"
+                  className="bg-background text-xs w-full min-w-0 max-w-full h-8 px-2"
                 />
               </div>
             </div>
