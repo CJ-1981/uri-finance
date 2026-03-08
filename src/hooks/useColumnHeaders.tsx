@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 export interface ColumnHeaders {
   date: string;
@@ -21,7 +21,7 @@ const STORAGE_KEY_PREFIX = "tx-col-headers-";
 export const useColumnHeaders = (projectId: string | undefined) => {
   const storageKey = projectId ? `${STORAGE_KEY_PREFIX}${projectId}` : null;
 
-  const [headers, setHeaders] = useState<ColumnHeaders>(() => {
+  const loadHeaders = useCallback((): ColumnHeaders => {
     if (!storageKey) return DEFAULT_HEADERS;
     try {
       const stored = localStorage.getItem(storageKey);
@@ -29,7 +29,14 @@ export const useColumnHeaders = (projectId: string | undefined) => {
     } catch {
       return DEFAULT_HEADERS;
     }
-  });
+  }, [storageKey]);
+
+  const [headers, setHeaders] = useState<ColumnHeaders>(loadHeaders);
+
+  // Re-sync when projectId (storageKey) changes
+  useEffect(() => {
+    setHeaders(loadHeaders());
+  }, [loadHeaders]);
 
   const updateHeader = useCallback(
     (key: keyof ColumnHeaders, value: string) => {
