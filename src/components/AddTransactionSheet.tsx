@@ -134,7 +134,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <Plus className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] flex flex-col">
+        <div className="px-6 overflow-y-auto flex-1 pb-8">
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
         </SheetHeader>
@@ -308,6 +309,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </Button>
           </div>
         </form>
+        </div>
       </SheetContent>
     </Sheet>
   );
