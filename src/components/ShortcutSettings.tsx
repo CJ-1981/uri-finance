@@ -65,7 +65,7 @@ const ShortcutSettings = () => {
                     : "border-input bg-muted/50 text-foreground"
                 }`}
               >
-                {recordingKey === action ? t("shortcut.pressKey") : shortcuts[action].toUpperCase()}
+                {recordingKey === action ? t("shortcut.pressKey") : (shortcuts[action as keyof ShortcutConfig] as string).toUpperCase()}
               </button>
             </div>
           ))}
