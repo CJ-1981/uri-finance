@@ -13,7 +13,7 @@ export interface Transaction {
   description: string | null;
   transaction_date: string;
   created_at: string;
-  custom_values: Record<string, number> | null;
+  custom_values: Record<string, number | string> | null;
 }
 
 export const useTransactions = (projectId: string | undefined) => {
