@@ -36,9 +36,10 @@ const downloadFile = (content: string, filename: string, mime: string, successMs
   toast.success(`${successMsg} ${filename}`);
 };
 
-const getCustomVal = (tx: Transaction, colName: string) => {
-  const val = tx.custom_values?.[colName];
-  return val != null ? Number(val).toFixed(2) : "";
+const getCustomVal = (tx: Transaction, col: CustomColumn) => {
+  const val = tx.custom_values?.[col.name];
+  if (val == null) return "";
+  return col.column_type === "numeric" ? Number(val).toFixed(2) : String(val);
 };
 
 const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
