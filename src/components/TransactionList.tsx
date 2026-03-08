@@ -158,8 +158,9 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
           onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
           onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); searchRef.current?.blur(); } }}
           placeholder={t("tx.search") || "Search transactions..."}
-          className="pl-8 h-8 text-sm bg-muted/30 border-border/50"
+          className="pl-8 pr-10 h-8 text-sm bg-muted/30 border-border/50"
         />
+        <kbd className="absolute right-3.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 items-center rounded border border-border/50 bg-muted/50 px-1.5 text-[10px] font-mono text-muted-foreground">/</kbd>
       </div>
 
       {/* Selection toolbar */}
