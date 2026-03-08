@@ -75,7 +75,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
     <div className="space-y-2 max-w-3xl mx-auto">
       {/* Selection toolbar */}
       <div className="flex items-center justify-between px-1">
-        {selectMode ? (
+        {!isViewer && selectMode ? (
           <div className="flex items-center gap-2 w-full animate-fade-in">
             <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-muted-foreground h-8 px-2">
               <X className="h-4 w-4" />
@@ -110,14 +110,16 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
           </div>
         ) : (
           <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground w-full">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectMode(true)}
-              className="text-muted-foreground h-7 w-8 px-0 text-[10px] shrink-0"
-            >
-              <CheckSquare className="h-3.5 w-3.5" />
-            </Button>
+            {!isViewer && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectMode(true)}
+                className="text-muted-foreground h-7 w-8 px-0 text-[10px] shrink-0"
+              >
+                <CheckSquare className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {/* Icon spacer */}
             <div className="w-10 shrink-0 hidden sm:block" />
             <span className="flex-1 min-w-0 truncate">{headers.description}</span>
@@ -135,7 +137,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
           key={tx.id}
           onClick={() => selectMode ? toggleSelect(tx.id) : onSelect(tx)}
           onContextMenu={(e) => {
-            if (!selectMode && ownTxIds.has(tx.id)) {
+            if (!isViewer && !selectMode && ownTxIds.has(tx.id)) {
               e.preventDefault();
               setSelectMode(true);
               setSelected(new Set([tx.id]));

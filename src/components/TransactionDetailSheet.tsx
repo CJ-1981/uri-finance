@@ -34,7 +34,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
 
-  const isOwn = transaction?.user_id === user?.id;
+  const isOwn = !isViewer && transaction?.user_id === user?.id;
 
   const resetForm = () => {
     if (transaction) {
