@@ -19,6 +19,7 @@ interface Props {
   customColumns: CustomColumn[];
   period: PeriodKey;
   customRange: DateRange;
+  isViewer?: boolean;
 }
 
 const COLORS = [
