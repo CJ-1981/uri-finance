@@ -44,6 +44,13 @@ const Dashboard = () => {
   const isOwner = !isSimulating && realOwner;
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
+  const [addTxOpen, setAddTxOpen] = useState(false);
+
+  const openAddTx = useCallback(() => {
+    if (activeProject && !isViewer) setAddTxOpen(true);
+  }, [activeProject, isViewer]);
+
+  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer);
 
   const handleRemovePin = () => {
     localStorage.removeItem("app_lock_pin");
