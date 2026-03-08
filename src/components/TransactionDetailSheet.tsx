@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useArrowNavigation } from "@/hooks/useKeyboardShortcut";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -138,17 +139,20 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     }
   };
 
-  const goPrev = () => {
+  const goPrev = useCallback(() => {
     if (hasPrev && transactionList && onNavigate) {
       onNavigate(transactionList[currentIndex - 1]);
     }
-  };
+  }, [hasPrev, transactionList, onNavigate, currentIndex]);
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     if (hasNext && transactionList && onNavigate) {
       onNavigate(transactionList[currentIndex + 1]);
     }
-  };
+  }, [hasNext, transactionList, onNavigate, currentIndex]);
+
+  // Arrow key navigation in multi-edit mode
+  useArrowNavigation(goPrev, goNext, open && totalCount > 1);
 
   if (!transaction) return null;
 

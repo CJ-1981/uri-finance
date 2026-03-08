@@ -52,6 +52,7 @@ const Dashboard = () => {
 
   useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer);
 
+
   const handleRemovePin = () => {
     localStorage.removeItem("app_lock_pin");
     setHasPin(false);
@@ -94,6 +95,32 @@ const Dashboard = () => {
     () => filtered.filter((tx) => (tx.currency || projectCurrency) === projectCurrency),
     [filtered, projectCurrency]
   );
+
+  // j/k to navigate and open transactions in list view
+  const visibleTxs = filtered.slice(0, 20);
+
+  const goNextTx = useCallback(() => {
+    if (view !== "list" || !activeProject || detailOpen) return;
+    const currentIdx = selectedTx ? visibleTxs.findIndex(tx => tx.id === selectedTx.id) : -1;
+    const nextIdx = Math.min(currentIdx + 1, visibleTxs.length - 1);
+    if (visibleTxs[nextIdx]) {
+      setSelectedTx(visibleTxs[nextIdx]);
+      setDetailOpen(true);
+    }
+  }, [view, activeProject, detailOpen, visibleTxs, selectedTx]);
+
+  const goPrevTx = useCallback(() => {
+    if (view !== "list" || !activeProject || detailOpen) return;
+    const currentIdx = selectedTx ? visibleTxs.findIndex(tx => tx.id === selectedTx.id) : visibleTxs.length;
+    const prevIdx = Math.max(currentIdx - 1, 0);
+    if (visibleTxs[prevIdx]) {
+      setSelectedTx(visibleTxs[prevIdx]);
+      setDetailOpen(true);
+    }
+  }, [view, activeProject, detailOpen, visibleTxs, selectedTx]);
+
+  useKeyboardShortcut("nextTransaction", goNextTx, !!activeProject && view === "list" && !detailOpen);
+  useKeyboardShortcut("prevTransaction", goPrevTx, !!activeProject && view === "list" && !detailOpen);
 
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
