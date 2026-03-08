@@ -196,7 +196,24 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
 
       {categoryData.length > 0 && (
         <div className="glass-card p-4">
-          <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.expenseByCategory")}</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-muted-foreground">{t("chart.expenseByCategory")}</h3>
+            <div className="flex gap-1">
+              {pieGroupOptions.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setPieGroupBy(opt.key)}
+                  className={`rounded-md px-2 py-1 text-[10px] font-medium transition-all ${
+                    pieGroupBy === opt.key
+                      ? "bg-card text-foreground shadow-sm ring-1 ring-border"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
