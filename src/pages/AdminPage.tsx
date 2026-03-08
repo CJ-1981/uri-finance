@@ -12,7 +12,7 @@ import TrashManager from "@/components/TrashManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,10 +23,15 @@ const AdminPage = () => {
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn } = useCustomColumns(activeProject?.id);
-  const { members, invites, removeMember, banMember, createInvite, deleteInvite } = useProjectMembers(activeProject?.id);
+  const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
   const { t } = useI18n();
   const navigate = useNavigate();
   const [currency, setCurrency] = useState(activeProject?.currency || "USD");
+  
+  // Sync currency when activeProject updates
+  useEffect(() => {
+    if (activeProject?.currency) setCurrency(activeProject.currency);
+  }, [activeProject?.currency]);
   const [savingCurrency, setSavingCurrency] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [creatingInvite, setCreatingInvite] = useState(false);
@@ -74,6 +79,27 @@ const AdminPage = () => {
     const ok = await banMember(userId, memberId);
     if (ok) toast.success(t("admin.memberBanned"));
     else toast.error(t("admin.removeFailed"));
+  };
+
+  const handleToggleAdmin = async (memberId: string, currentRole: string) => {
+    const newRole = currentRole === "admin" ? "member" : "admin";
+    const ok = await updateMemberRole(memberId, newRole);
+    if (ok) toast.success(t("admin.promoted"));
+    else toast.error(t("admin.promoteFailed"));
+  };
+
+  const handleTransferOwnership = async (newOwnerId: string) => {
+    if (!user || !activeProject) return;
+    const confirmed = window.confirm(t("admin.transferConfirm"));
+    if (!confirmed) return;
+    const ok = await transferOwnership(newOwnerId, user.id);
+    if (ok) {
+      toast.success(t("admin.transferred"));
+      await fetchProjects();
+      navigate("/");
+    } else {
+      toast.error(t("admin.transferFailed"));
+    }
   };
 
   const handleCreateInvite = async () => {
@@ -161,18 +187,44 @@ const AdminPage = () => {
               members.map((m) => {
                 const isSelf = m.user_id === user?.id;
                 const isOwnerMember = m.user_id === activeProject.owner_id;
+                const isAdmin = m.role === "admin";
+                const roleLabel = isOwnerMember
+                  ? t("admin.owner")
+                  : isAdmin
+                  ? t("admin.admin")
+                  : t("admin.member");
                 return (
                   <div key={m.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-foreground truncate font-mono">
                         {m.user_id.slice(0, 8)}…
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {isOwnerMember ? t("admin.owner") : t("admin.member")}
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        {isOwnerMember && <Crown className="h-3 w-3 text-amber-500" />}
+                        {isAdmin && <Shield className="h-3 w-3 text-primary" />}
+                        {roleLabel}
                       </p>
                     </div>
                     {!isSelf && !isOwnerMember && (
                       <div className="flex gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => handleToggleAdmin(m.id, m.role)}
+                          title={isAdmin ? t("admin.demoteAdmin") : t("admin.promoteAdmin")}
+                        >
+                          <Shield className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-amber-500"
+                          onClick={() => handleTransferOwnership(m.user_id)}
+                          title={t("admin.transferOwnership")}
+                        >
+                          <Crown className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
