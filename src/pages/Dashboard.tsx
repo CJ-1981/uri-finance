@@ -208,7 +208,7 @@ const Dashboard = () => {
             {view === "list" ? (
               <TransactionList transactions={filtered} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} />
             ) : (
-              <FinanceCharts transactions={filtered} customColumns={customColumns} />
+              <FinanceCharts transactions={filtered} customColumns={customColumns} period={period} customRange={customRange} />
             )}
 
             {/* FAB */}

@@ -1,32 +1,31 @@
 import { Transaction } from "@/hooks/useTransactions";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
+import { PeriodKey, DateRange } from "@/components/PeriodSelector";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   AreaChart, Area, XAxis, YAxis,
   BarChart, Bar,
 } from "recharts";
-import { format, startOfMonth, subMonths } from "date-fns";
+import {
+  format, startOfDay, startOfWeek, startOfMonth,
+  eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval,
+  subMonths, subDays, endOfDay, parseISO, isWithinInterval,
+} from "date-fns";
 import { useMemo, useState } from "react";
 
 interface Props {
   transactions: Transaction[];
   customColumns: CustomColumn[];
+  period: PeriodKey;
+  customRange: DateRange;
 }
 
 const COLORS = [
-  "hsl(168, 60%, 48%)",
-  "hsl(200, 60%, 50%)",
-  "hsl(280, 60%, 60%)",
-  "hsl(40, 80%, 55%)",
-  "hsl(320, 60%, 55%)",
-  "hsl(0, 72%, 58%)",
-  "hsl(140, 50%, 45%)",
-  "hsl(25, 75%, 55%)",
-  "hsl(240, 55%, 58%)",
-  "hsl(60, 70%, 48%)",
-  "hsl(350, 65%, 52%)",
-  "hsl(180, 50%, 45%)",
+  "hsl(168, 60%, 48%)", "hsl(200, 60%, 50%)", "hsl(280, 60%, 60%)",
+  "hsl(40, 80%, 55%)", "hsl(320, 60%, 55%)", "hsl(0, 72%, 58%)",
+  "hsl(140, 50%, 45%)", "hsl(25, 75%, 55%)", "hsl(240, 55%, 58%)",
+  "hsl(60, 70%, 48%)", "hsl(350, 65%, 52%)", "hsl(180, 50%, 45%)",
 ];
 
 const TOOLTIP_STYLE = {
@@ -43,23 +42,81 @@ const ITEM_STYLE = { color: "hsl(210, 20%, 92%)" };
 type PieGroupKey = "category" | "type" | string;
 type MetricKey = "income" | "expense" | string;
 
-const FinanceCharts = ({ transactions, customColumns }: Props) => {
+/** Determine time buckets based on period */
+function getTimeBuckets(period: PeriodKey, customRange: DateRange) {
+  const now = new Date();
+  let start: Date;
+  let end: Date = endOfDay(now);
+
+  switch (period) {
+    case "today":
+      start = startOfDay(now);
+      break;
+    case "week":
+      start = startOfDay(subDays(now, 7));
+      break;
+    case "month":
+      start = startOfDay(subMonths(now, 1));
+      break;
+    case "sixMonths":
+      start = startOfDay(subMonths(now, 6));
+      break;
+    case "custom":
+      start = customRange.from ? startOfDay(customRange.from) : startOfDay(subMonths(now, 6));
+      end = customRange.to ? endOfDay(customRange.to) : end;
+      break;
+    case "all":
+    default:
+      start = startOfDay(subMonths(now, 12));
+      break;
+  }
+
+  const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 1) {
+    // Single day — no meaningful chart buckets, just show 1 bucket
+    return [{ start, end, label: format(start, "MMM d") }];
+  } else if (diffDays <= 14) {
+    // Daily buckets
+    return eachDayOfInterval({ start, end }).map((d) => ({
+      start: startOfDay(d),
+      end: endOfDay(d),
+      label: format(d, "MMM d"),
+    }));
+  } else if (diffDays <= 90) {
+    // Weekly buckets
+    return eachWeekOfInterval({ start, end }).map((d) => ({
+      start: startOfWeek(d),
+      end: endOfDay(new Date(Math.min(startOfWeek(new Date(d.getTime() + 7 * 24 * 60 * 60 * 1000)).getTime() - 1, end.getTime()))),
+      label: format(d, "MMM d"),
+    }));
+  } else {
+    // Monthly buckets
+    return eachMonthOfInterval({ start, end }).map((d) => ({
+      start: startOfMonth(d),
+      end: endOfDay(new Date(Math.min(startOfMonth(new Date(d.getFullYear(), d.getMonth() + 1, 1)).getTime() - 1, end.getTime()))),
+      label: format(d, "MMM yyyy"),
+    }));
+  }
+}
+
+const FinanceCharts = ({ transactions, customColumns, period, customRange }: Props) => {
   const { t } = useI18n();
 
-  // --- Metric options for area/bar charts ---
+  // --- Metric options ---
   const metricOptions = useMemo(() => {
     const base = [
       { key: "income" as MetricKey, label: t("tx.income"), color: "hsl(152, 60%, 50%)" },
       { key: "expense" as MetricKey, label: t("tx.expense"), color: "hsl(0, 72%, 58%)" },
     ];
-    const custom = customColumns
+    const numericCols = customColumns
       .filter((col) => col.column_type === "numeric")
       .map((col, i) => ({
         key: col.name as MetricKey,
         label: col.name,
         color: COLORS[(i + 2) % COLORS.length],
       }));
-    return [...base, ...custom];
+    return [...base, ...numericCols];
   }, [customColumns, t]);
 
   const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
@@ -80,32 +137,34 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
 
   const activeMetrics = metricOptions.filter((m) => selectedMetrics.has(m.key));
 
-  // --- Monthly data ---
-  const monthlyData = useMemo(() => {
-    return Array.from({ length: 6 }, (_, i) => {
-      const month = startOfMonth(subMonths(new Date(), 5 - i));
-      const label = format(month, "MMM");
-      const monthStr = format(month, "yyyy-MM");
-      const monthTxs = transactions.filter((tx) => tx.transaction_date.startsWith(monthStr));
+  // --- Time-series data based on period ---
+  const buckets = useMemo(() => getTimeBuckets(period, customRange), [period, customRange]);
 
-      const row: Record<string, string | number> = { name: label };
-      row.income = monthTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
-      row.expense = monthTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
+  const timeSeriesData = useMemo(() => {
+    return buckets.map((bucket) => {
+      const bucketTxs = transactions.filter((tx) => {
+        const d = parseISO(tx.transaction_date);
+        return isWithinInterval(d, { start: bucket.start, end: bucket.end });
+      });
+
+      const row: Record<string, string | number> = { name: bucket.label };
+      row.income = bucketTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
+      row.expense = bucketTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
 
       for (const col of customColumns.filter((c) => c.column_type === "numeric")) {
-        row[col.name] = monthTxs.reduce((s, tx) => {
+        row[col.name] = bucketTxs.reduce((s, tx) => {
           const v = tx.custom_values?.[col.name];
           return s + (v != null ? Number(v) : 0);
         }, 0);
       }
       return row;
     });
-  }, [transactions, customColumns]);
+  }, [transactions, customColumns, buckets]);
 
   // --- Cumulative data ---
   const cumulativeData = useMemo(() => {
     const cumulative: Record<string, number> = {};
-    return monthlyData.map((row) => {
+    return timeSeriesData.map((row) => {
       const cumRow: Record<string, string | number> = { name: row.name };
       for (const m of metricOptions) {
         cumulative[m.key] = (cumulative[m.key] || 0) + Number(row[m.key] || 0);
@@ -113,9 +172,9 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       }
       return cumRow;
     });
-  }, [monthlyData, metricOptions]);
+  }, [timeSeriesData, metricOptions]);
 
-  // --- Pie chart state ---
+  // --- Pie chart ---
   const pieGroupOptions: { key: PieGroupKey; label: string }[] = useMemo(() => {
     const base: { key: PieGroupKey; label: string }[] = [
       { key: "category", label: t("tx.category") },
@@ -182,7 +241,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       <div className="glass-card p-4">
         <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
         <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={monthlyData}>
+          <AreaChart data={timeSeriesData}>
             <defs>
               {activeMetrics.map((m) => (
                 <linearGradient key={m.key} id={`grad-${m.key}`} x1="0" y1="0" x2="0" y2="1">
