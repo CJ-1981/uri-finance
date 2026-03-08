@@ -155,6 +155,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     const target = (e.target as HTMLElement).closest?.('[data-tab-stop]') as HTMLElement | null;
     const currentIdx = target ? stops.indexOf(target) : -1;
     e.preventDefault();
+    e.stopPropagation();
     if (e.shiftKey) {
       const prev = currentIdx <= 0 ? stops.length - 1 : currentIdx - 1;
       stops[prev].focus();
