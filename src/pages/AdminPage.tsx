@@ -81,8 +81,10 @@ const AdminPage = () => {
     else toast.error(t("admin.removeFailed"));
   };
 
-  const handleToggleAdmin = async (memberId: string, currentRole: string) => {
-    const newRole = currentRole === "admin" ? "member" : "admin";
+  const handleCycleRole = async (memberId: string, currentRole: string) => {
+    const roleOrder = ["member", "viewer", "admin"];
+    const currentIdx = roleOrder.indexOf(currentRole);
+    const newRole = roleOrder[(currentIdx + 1) % roleOrder.length];
     const ok = await updateMemberRole(memberId, newRole);
     if (ok) toast.success(t("admin.promoted"));
     else toast.error(t("admin.promoteFailed"));
