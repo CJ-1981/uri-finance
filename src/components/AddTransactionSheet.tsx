@@ -75,6 +75,15 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const doSubmit = async () => {
     if (!amount || Number(amount) <= 0) return;
+
+    // Validate required custom columns
+    for (const col of customColumns) {
+      if (col.required && !customValues[col.name]?.trim()) {
+        toast.error(`${col.name} is required`);
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     const cv: Record<string, number | string> = {};
