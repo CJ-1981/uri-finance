@@ -35,6 +35,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.editTransaction": "Edit Transaction",
     "tx.income": "Income",
     "tx.expense": "Expense",
+    "tx.type": "Type",
     "tx.amount": "Amount",
     "tx.category": "Category",
     "tx.date": "Date",
