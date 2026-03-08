@@ -127,18 +127,25 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
   }, [setCountsAndCache]);
 
   const totals = useMemo(() => {
-    let named = 0;
-    let anon = 0;
+    let namedBills = 0, namedCoins = 0, anonBills = 0, anonCoins = 0;
     allDenoms.forEach((d) => {
       const key = d.toString();
       const c = counts[key];
       if (c) {
-        named += d * c.named;
-        anon += d * c.anon;
+        const isBillDenom = denoms.bills.includes(d);
+        if (isBillDenom) {
+          namedBills += d * c.named;
+          anonBills += d * c.anon;
+        } else {
+          namedCoins += d * c.named;
+          anonCoins += d * c.anon;
+        }
       }
     });
-    return { named, anon, total: named + anon };
-  }, [counts, allDenoms]);
+    const named = namedBills + namedCoins;
+    const anon = anonBills + anonCoins;
+    return { named, anon, total: named + anon, namedBills, namedCoins, anonBills, anonCoins };
+  }, [counts, allDenoms, denoms.bills]);
 
   const clearAll = () => {
     const init: Counts = {};
@@ -167,12 +174,18 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
       }
     });
 
+    const fmt = (v: number) => v.toLocaleString("en-US", { minimumFractionDigits: 2 });
+    const billLabel = t("cash.bills");
+    const coinLabel = t("cash.coins");
+
     lines.push("");
-    lines.push(`**${t("cash.namedTotal")}:** ${currency} ${totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push(`**${t("cash.namedTotal")}:** ${currency} ${fmt(totals.named)} (${billLabel}: ${fmt(totals.namedBills)}, ${coinLabel}: ${fmt(totals.namedCoins)})`);
     lines.push("");
-    lines.push(`**${t("cash.anonTotal")}:** ${currency} ${totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push(`**${t("cash.anonTotal")}:** ${currency} ${fmt(totals.anon)} (${billLabel}: ${fmt(totals.anonBills)}, ${coinLabel}: ${fmt(totals.anonCoins)})`);
     lines.push("");
-    lines.push(`**${t("cash.grandTotal")}:** ${currency} ${totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    const totalBills = totals.namedBills + totals.anonBills;
+    const totalCoins = totals.namedCoins + totals.anonCoins;
+    lines.push(`**${t("cash.grandTotal")}:** ${currency} ${fmt(totals.total)} (${billLabel}: ${fmt(totalBills)}, ${coinLabel}: ${fmt(totalCoins)})`);
     return lines.join("\n");
   };
 
@@ -247,23 +260,38 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
 
       {/* Totals */}
       <div className="glass-card p-3 space-y-1.5">
-        <div className="flex justify-between text-xs">
-          <span className="text-muted-foreground">{t("cash.namedTotal")}</span>
-          <span className="font-bold text-income">
-            {currency} {totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-          </span>
+        <div className="space-y-0.5">
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">{t("cash.namedTotal")}</span>
+            <span className="font-bold text-income">
+              {currency} {totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          <div className="flex justify-end text-[10px] text-muted-foreground/70">
+            ({t("cash.bills")}: {totals.namedBills.toLocaleString("en-US", { minimumFractionDigits: 2 })}, {t("cash.coins")}: {totals.namedCoins.toLocaleString("en-US", { minimumFractionDigits: 2 })})
+          </div>
         </div>
-        <div className="flex justify-between text-xs">
-          <span className="text-muted-foreground">{t("cash.anonTotal")}</span>
-          <span className="font-bold text-income">
-            {currency} {totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-          </span>
+        <div className="space-y-0.5">
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">{t("cash.anonTotal")}</span>
+            <span className="font-bold text-income">
+              {currency} {totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          <div className="flex justify-end text-[10px] text-muted-foreground/70">
+            ({t("cash.bills")}: {totals.anonBills.toLocaleString("en-US", { minimumFractionDigits: 2 })}, {t("cash.coins")}: {totals.anonCoins.toLocaleString("en-US", { minimumFractionDigits: 2 })})
+          </div>
         </div>
-        <div className="border-t border-border/30 pt-1.5 flex justify-between text-sm">
-          <span className="font-semibold">{t("cash.grandTotal")}</span>
-          <span className="font-bold text-foreground">
-            {currency} {totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-          </span>
+        <div className="border-t border-border/30 pt-1.5 space-y-0.5">
+          <div className="flex justify-between text-sm">
+            <span className="font-semibold">{t("cash.grandTotal")}</span>
+            <span className="font-bold text-foreground">
+              {currency} {totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          <div className="flex justify-end text-[10px] text-muted-foreground/70">
+            ({t("cash.bills")}: {(totals.namedBills + totals.anonBills).toLocaleString("en-US", { minimumFractionDigits: 2 })}, {t("cash.coins")}: {(totals.namedCoins + totals.anonCoins).toLocaleString("en-US", { minimumFractionDigits: 2 })})
+          </div>
         </div>
       </div>
 
