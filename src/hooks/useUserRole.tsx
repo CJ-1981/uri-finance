@@ -7,6 +7,7 @@ export type UserRole = "owner" | "admin" | "member" | "viewer";
 export const useUserRole = (projectId?: string) => {
   const { user } = useAuth();
   const [role, setRole] = useState<UserRole>("member");
+  const [simulatedRole, setSimulatedRole] = useState<UserRole | null>(null);
 
   useEffect(() => {
     if (!projectId || !user) return;
@@ -22,7 +23,14 @@ export const useUserRole = (projectId?: string) => {
     fetch();
   }, [projectId, user]);
 
-  const isViewer = role === "viewer";
+  // Reset simulation when project changes
+  useEffect(() => {
+    setSimulatedRole(null);
+  }, [projectId]);
 
-  return { role, isViewer };
+  const effectiveRole = simulatedRole ?? role;
+  const isViewer = effectiveRole === "viewer";
+  const isSimulating = simulatedRole !== null;
+
+  return { role, effectiveRole, isViewer, isSimulating, simulatedRole, setSimulatedRole };
 };
