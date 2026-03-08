@@ -60,15 +60,8 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-3">
         <div className="flex items-center justify-between">
-          <ProjectSwitcher
-            projects={projects}
-            active={activeProject}
-            onSelect={setActiveProject}
-            onCreate={createProject}
-            onJoin={joinProject}
-          />
           <div className="flex items-center gap-1">
-           {activeProject && (
+            {activeProject && (
               <>
               <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} />
               {isOwner && (
@@ -93,6 +86,13 @@ const Dashboard = () => {
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
+          <ProjectSwitcher
+            projects={projects}
+            active={activeProject}
+            onSelect={setActiveProject}
+            onCreate={createProject}
+            onJoin={joinProject}
+          />
         </div>
       </header>
 
