@@ -156,6 +156,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
+                disabled={!isOwn}
                 className="bg-muted/50 border-border/50"
               />
             </div>
