@@ -142,6 +142,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cc.numeric": "Numeric",
     "cc.text": "Text",
     "cc.noColumns": "No custom columns yet.",
+    "cc.maskedOn": "Hidden from viewers (click to show)",
+    "cc.maskedOff": "Visible to viewers (click to hide)",
     "cc.added": "Column added",
     "cc.duplicate": "Column already exists",
     "cc.addFailed": "Failed to add column",
