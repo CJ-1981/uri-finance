@@ -118,11 +118,13 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9.]/g, "");
+                setAmount(v);
+              }}
               className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
             />
           </div>
