@@ -70,6 +70,18 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
+  const toggleRequired = async (id: string, required: boolean) => {
+    const { error } = await supabase
+      .from("custom_columns")
+      .update({ required } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update column");
+      return;
+    }
+    await fetchColumns();
+  };
+
   const updateSuggestions = async (id: string, suggestions: string[]) => {
     const { error } = await supabase
       .from("custom_columns")
