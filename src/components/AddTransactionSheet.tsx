@@ -123,11 +123,13 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9.]/g, "");
+                setAmount(v);
+              }}
               placeholder="0.00"
               required
               className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
@@ -175,10 +177,15 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
                 <div key={col.id} className="space-y-2">
                   <Label className="text-muted-foreground text-xs">{col.name}</Label>
                   <Input
-                    type={col.column_type === "numeric" ? "number" : "text"}
-                    step={col.column_type === "numeric" ? "0.01" : undefined}
+                    type={col.column_type === "numeric" ? "text" : "text"}
+                    inputMode={col.column_type === "numeric" ? "decimal" : "text"}
                     value={customValues[col.name] || ""}
-                    onChange={(e) => setCustomValues((prev) => ({ ...prev, [col.name]: e.target.value }))}
+                    onChange={(e) => {
+                      const val = col.column_type === "numeric"
+                        ? e.target.value.replace(/[^0-9.]/g, "")
+                        : e.target.value;
+                      setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                    }}
                     placeholder={col.column_type === "numeric" ? "0.00" : ""}
                     className="bg-muted/50 border-border/50"
                   />
