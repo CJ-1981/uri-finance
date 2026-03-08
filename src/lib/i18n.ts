@@ -261,6 +261,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     "notFound.message": "Oops! Page not found",
     "notFound.return": "Return to Home",
 
+    // Shortcuts
+    "shortcut.title": "Keyboard Shortcuts",
+    "shortcut.addTransaction": "Add Transaction",
+    "shortcut.pressKey": "Press a key...",
+    "shortcut.save": "Save",
+    "shortcut.saved": "Shortcut saved",
+    "shortcut.hint": "Press this key on the dashboard to quickly open the add transaction form.",
+
     // Language
     "lang.label": "EN",
   },
