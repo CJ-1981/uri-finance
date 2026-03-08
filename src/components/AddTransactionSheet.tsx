@@ -152,15 +152,12 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
     if (stops.length === 0) return;
 
-    const currentIdx = stops.indexOf(document.activeElement as HTMLElement);
+    const active = document.activeElement as HTMLElement;
+    const currentIdx = stops.indexOf(active) === -1
+      ? stops.findIndex(s => s.contains(active) || active.contains(s))
+      : stops.indexOf(active);
     e.preventDefault();
     if (e.shiftKey) {
-      if (currentIdx === 0) {
-        // From first stop, jump to the sheet close button (X)
-        const closeBtn = form.closest('[role="dialog"]')?.querySelector<HTMLElement>('button[data-sheet-close]') ||
-          form.closest('[role="dialog"]')?.querySelector<HTMLElement>('button:has(> svg.lucide-x)');
-        if (closeBtn) { closeBtn.focus(); return; }
-      }
       const prev = currentIdx <= 0 ? stops.length - 1 : currentIdx - 1;
       stops[prev].focus();
     } else {
