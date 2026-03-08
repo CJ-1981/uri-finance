@@ -155,8 +155,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     const currentIdx = stops.indexOf(document.activeElement as HTMLElement);
     e.preventDefault();
     if (e.shiftKey) {
-      if (currentIdx <= 0) {
-        // Jump to the sheet close button (X)
+      if (currentIdx === 0) {
+        // From first stop, jump to the sheet close button (X)
         const closeBtn = form.closest('[role="dialog"]')?.querySelector<HTMLElement>('button[data-sheet-close]') ||
           form.closest('[role="dialog"]')?.querySelector<HTMLElement>('button:has(> svg.lucide-x)');
         if (closeBtn) { closeBtn.focus(); return; }
