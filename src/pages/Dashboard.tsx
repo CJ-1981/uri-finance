@@ -84,6 +84,15 @@ const Dashboard = () => {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => hasPin ? handleRemovePin() : setPinDialogOpen(true)}
+              className="text-muted-foreground hover:text-foreground"
+              title={hasPin ? t("lock.disable") : t("lock.enable")}
+            >
+              {hasPin ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setLocale(locale === "en" ? "ko" : "en")}
               className="text-muted-foreground hover:text-foreground"
             >
