@@ -62,6 +62,7 @@ const Dashboard = () => {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
   const [addTxOpen, setAddTxOpen] = useState(false);
+  const txListRef = useRef<TransactionListHandle>(null);
 
   const openAddTx = useCallback(() => {
     if (activeProject && !isViewer) setAddTxOpen(true);
@@ -69,6 +70,20 @@ const Dashboard = () => {
 
   useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer, "addTransactionAlt");
 
+  // "/" shortcut to focus search
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        if ((e.target as HTMLElement)?.isContentEditable) return;
+        e.preventDefault();
+        txListRef.current?.focusSearch();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const handleRemovePin = () => {
     localStorage.removeItem("app_lock_pin");
