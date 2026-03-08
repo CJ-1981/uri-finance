@@ -301,9 +301,9 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
           const isMatch = Math.abs(gap) < 0.005;
           const isExcess = gap > 0.005;
           const statusLabel = isMatch ? t("cash.matching") : isExcess ? t("cash.excess") : t("cash.deficit");
-          const statusColor = isMatch ? "text-income" : isExcess ? "text-primary" : "text-expense";
-          const bgColor = isMatch ? "bg-income/10" : isExcess ? "bg-primary/10" : "bg-expense/10";
-          const borderColor = isMatch ? "border-income/30" : isExcess ? "border-primary/30" : "border-expense/30";
+          const statusColor = isMatch ? "text-income" : isExcess ? "text-blue-500" : "text-expense";
+          const bgColor = isMatch ? "bg-income/10" : isExcess ? "bg-blue-500/10" : "bg-expense/10";
+          const borderColor = isMatch ? "border-income/30" : isExcess ? "border-blue-500/30" : "border-expense/30";
           return (
             <>
               <div className="border-t border-border/30 pt-1.5">
