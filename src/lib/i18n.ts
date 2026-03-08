@@ -271,7 +271,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.bulkNoChange": "변경 없음",
     "tx.bulkType": "유형",
     "tx.bulkApply": "{n}개 항목에 적용",
-    "tx.deleteFailed": "거래 삭제에 실패했습니다",
 
     // Projects
     "proj.projects": "프로젝트",
