@@ -92,6 +92,13 @@ const Dashboard = () => {
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
+            <ProjectSwitcher
+              projects={projects}
+              active={activeProject}
+              onSelect={setActiveProject}
+              onCreate={createProject}
+              onJoin={joinProject}
+            />
             {activeProject && (
               <>
               <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} />
@@ -102,6 +109,8 @@ const Dashboard = () => {
               )}
               </>
             )}
+          </div>
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -126,13 +135,6 @@ const Dashboard = () => {
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
-          <ProjectSwitcher
-            projects={projects}
-            active={activeProject}
-            onSelect={setActiveProject}
-            onCreate={createProject}
-            onJoin={joinProject}
-          />
         </div>
         {activeProject && (
           <p className="text-[10px] text-muted-foreground truncate mt-1">{activeProject.name}</p>
