@@ -266,7 +266,7 @@ const AdminPage = () => {
             </h2>
             <p className="text-xs text-muted-foreground">{t("admin.archiveDesc")}</p>
           </div>
-          <div className="rounded-xl border border-border/50 bg-card p-3 space-y-2 overflow-hidden max-w-[280px]">
+          <div className="rounded-xl border border-border/50 bg-card p-3 space-y-2 overflow-hidden max-w-full sm:max-w-[320px]">
             <div className="flex gap-1.5 items-end">
               <div className="space-y-0.5 flex-1 min-w-0">
                 <label className="text-[10px] text-muted-foreground">{t("admin.archiveFrom")}</label>
