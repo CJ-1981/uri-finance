@@ -580,7 +580,8 @@ const AdminPage = () => {
           </div>
         </section>
 
-        {/* Project Info */}
+        {/* Project Info - Owner only */}
+        {isOwner && (<>
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.projectInfo")}</h2>
