@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
+import { useColumnHeaders } from "@/hooks/useColumnHeaders";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
@@ -10,6 +11,7 @@ import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import CategoryManager from "@/components/CategoryManager";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
+import ColumnHeaderEditor from "@/components/ColumnHeaderEditor";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -19,6 +21,7 @@ const Dashboard = () => {
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, totalIncome, totalExpense, balance } = useTransactions(activeProject?.id);
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
+  const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -44,7 +47,8 @@ const Dashboard = () => {
           <div className="flex items-center gap-1">
            {activeProject && (
               <>
-              <ExportTransactions transactions={transactions} />
+              <ExportTransactions transactions={transactions} headers={headers} />
+              <ColumnHeaderEditor headers={headers} onUpdate={updateHeader} onReset={resetHeaders} />
               <CategoryManager
                 categories={categories}
                 onAdd={addCategory}
@@ -119,7 +123,7 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={transactions} onSelect={handleSelectTx} />
+              <TransactionList transactions={transactions} onSelect={handleSelectTx} headers={headers} />
             ) : (
               <FinanceCharts transactions={transactions} />
             )}
