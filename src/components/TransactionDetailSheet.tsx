@@ -20,6 +20,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values">>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  isViewer?: boolean;
 }
 
 const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete }: Props) => {
