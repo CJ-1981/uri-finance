@@ -27,7 +27,7 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 const AdminPage = () => {
   const { user } = useAuth();
   const { projects, activeProject, fetchProjects } = useProjects();
-  const { categories, addCategory, deleteCategory, updateCategoryCode, reorderCategory } = useCategories(activeProject?.id);
+  const { categories, addCategory, deleteCategory, updateCategoryCode, updateCategoryIcon, reorderCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn } = useCustomColumns(activeProject?.id);
   const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
