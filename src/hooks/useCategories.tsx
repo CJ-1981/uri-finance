@@ -120,5 +120,13 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
-  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, fetchCategories };
+  const reorderCategories = async (orderedIds: string[]) => {
+    const updates = orderedIds.map((id, index) =>
+      supabase.from("project_categories").update({ sort_order: index } as any).eq("id", id)
+    );
+    await Promise.all(updates);
+    await fetchCategories();
+  };
+
+  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, fetchCategories };
 };

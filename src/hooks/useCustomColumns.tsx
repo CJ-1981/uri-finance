@@ -117,5 +117,13 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  return { columns, loading, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, fetchColumns };
+  const reorderColumns = async (orderedIds: string[]) => {
+    const updates = orderedIds.map((id, index) =>
+      supabase.from("custom_columns").update({ sort_order: index } as any).eq("id", id)
+    );
+    await Promise.all(updates);
+    await fetchColumns();
+  };
+
+  return { columns, loading, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, fetchColumns };
 };
