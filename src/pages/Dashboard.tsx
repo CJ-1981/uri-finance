@@ -241,25 +241,21 @@ const Dashboard = () => {
             {/* FAB - hidden for viewers */}
             {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} />}
 
-            {/* Detail sheet */}
+            {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet
               transaction={selectedTx}
               categories={categories}
               open={detailOpen}
-              onOpenChange={setDetailOpen}
+              onOpenChange={(v) => {
+                setDetailOpen(v);
+                if (!v) setBulkEditTxs([]);
+              }}
               onUpdate={updateTransaction}
               onDelete={deleteTransaction}
               customColumns={customColumns}
               isViewer={isViewer}
-            />
-
-            {/* Bulk edit sheet */}
-            <BulkEditSheet
-              transactions={bulkEditTxs}
-              categories={categories}
-              open={bulkEditOpen}
-              onOpenChange={setBulkEditOpen}
-              onBulkUpdate={handleBulkUpdate}
+              transactionList={bulkEditTxs.length > 0 ? bulkEditTxs : undefined}
+              onNavigate={handleNavigateTx}
             />
           </div>
         )}
