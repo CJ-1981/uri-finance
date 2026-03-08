@@ -77,7 +77,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       row.income = monthTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
       row.expense = monthTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
 
-      for (const col of customColumns) {
+      for (const col of customColumns.filter((c) => c.column_type === "numeric")) {
         row[col.name] = monthTxs.reduce((s, tx) => {
           const v = tx.custom_values?.[col.name];
           return s + (v != null ? Number(v) : 0);
