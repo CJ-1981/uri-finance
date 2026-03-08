@@ -365,7 +365,7 @@ const Dashboard = () => {
             ) : view === "charts" ? (
               <FinanceCharts transactions={chartTransactions} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} projectCurrency={projectCurrency} />
             ) : (
-              <CashCalculator currency={projectCurrency} />
+              <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
             )}
 
             {/* FAB - hidden for viewers */}

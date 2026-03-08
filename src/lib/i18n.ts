@@ -610,6 +610,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cash.exported": "마크다운이 내보내기되었습니다",
     "cash.copy": "복사",
     "cash.copied": "클립보드에 복사되었습니다",
+    "cash.target": "목표 (수입)",
+    "cash.matching": "일치",
+    "cash.excess": "초과",
+    "cash.deficit": "부족",
+    "cash.gap": "차이",
 
     // Language
     "lang.label": "한국어",
