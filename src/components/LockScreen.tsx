@@ -1,19 +1,54 @@
 import { useState, useEffect, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
-import { Lock, Delete, Fingerprint } from "lucide-react";
+import { Lock, Delete, ShieldAlert } from "lucide-react";
 
 interface LockScreenProps {
   onUnlock: () => void;
 }
 
 const PIN_LENGTH = 4;
+const MAX_FREE_ATTEMPTS = 3;
+const LOCK_STORAGE_KEY = "app_lock_state";
+
+const getBlockDuration = (failCount: number): number => {
+  // After 3 free attempts: 15s, 30s, 60s, 120s, 300s...
+  const extra = failCount - MAX_FREE_ATTEMPTS;
+  if (extra <= 0) return 0;
+  return Math.min(15 * Math.pow(2, extra - 1), 600) * 1000;
+};
+
+const loadLockState = () => {
+  try {
+    const raw = localStorage.getItem(LOCK_STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as { failCount: number; blockedUntil: number };
+  } catch {}
+  return { failCount: 0, blockedUntil: 0 };
+};
+
+const saveLockState = (state: { failCount: number; blockedUntil: number }) => {
+  localStorage.setItem(LOCK_STORAGE_KEY, JSON.stringify(state));
+};
 
 const LockScreen = ({ onUnlock }: LockScreenProps) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
+  const [lockState, setLockState] = useState(loadLockState);
+  const [remainingMs, setRemainingMs] = useState(0);
   const { t } = useI18n();
 
   const storedHash = localStorage.getItem("app_lock_pin");
+  const isBlocked = remainingMs > 0;
+
+  // Countdown timer
+  useEffect(() => {
+    const tick = () => {
+      const diff = lockState.blockedUntil - Date.now();
+      setRemainingMs(diff > 0 ? diff : 0);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lockState.blockedUntil]);
 
   const hashPin = async (value: string) => {
     const encoded = new TextEncoder().encode(value);
@@ -25,6 +60,7 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
 
   const handleDigit = useCallback(
     (digit: string) => {
+      if (isBlocked) return;
       if (pin.length >= PIN_LENGTH) return;
       const next = pin + digit;
       setPin(next);
@@ -33,18 +69,31 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
       if (next.length === PIN_LENGTH) {
         hashPin(next).then((hash) => {
           if (hash === storedHash) {
+            // Reset on success
+            const cleared = { failCount: 0, blockedUntil: 0 };
+            saveLockState(cleared);
+            setLockState(cleared);
             onUnlock();
           } else {
+            const newCount = lockState.failCount + 1;
+            const blockMs = getBlockDuration(newCount);
+            const newState = {
+              failCount: newCount,
+              blockedUntil: blockMs > 0 ? Date.now() + blockMs : 0,
+            };
+            saveLockState(newState);
+            setLockState(newState);
             setError(true);
             setTimeout(() => setPin(""), 400);
           }
         });
       }
     },
-    [pin, storedHash, onUnlock]
+    [pin, storedHash, onUnlock, isBlocked, lockState.failCount]
   );
 
   const handleDelete = () => {
+    if (isBlocked) return;
     setPin((p) => p.slice(0, -1));
     setError(false);
   };
@@ -58,19 +107,38 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
     return () => window.removeEventListener("keydown", handler);
   }, [handleDigit]);
 
+  const formatTime = (ms: number) => {
+    const s = Math.ceil(ms / 1000);
+    const min = Math.floor(s / 60);
+    const sec = s % 60;
+    return min > 0 ? `${min}:${sec.toString().padStart(2, "0")}` : `${sec}s`;
+  };
+
   const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 
+  const statusMessage = isBlocked
+    ? `${t("lock.blocked")} ${formatTime(remainingMs)}`
+    : error
+    ? lockState.failCount >= MAX_FREE_ATTEMPTS
+      ? t("lock.wrong")
+      : `${t("lock.wrong")} (${lockState.failCount}/${MAX_FREE_ATTEMPTS})`
+    : t("lock.enter");
+
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-300 ${error ? "bg-destructive/10" : "bg-background"}`}>
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-300 ${error || isBlocked ? "bg-destructive/10" : "bg-background"}`}>
       <div className="flex flex-col items-center gap-8 animate-fade-in">
-        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 ${error ? "bg-destructive/20 animate-pulse-red" : "bg-primary/10"}`}>
-          <Lock className={`h-8 w-8 transition-colors duration-300 ${error ? "text-destructive" : "text-primary"}`} />
+        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 ${error || isBlocked ? "bg-destructive/20 animate-pulse-red" : "bg-primary/10"}`}>
+          {isBlocked ? (
+            <ShieldAlert className="h-8 w-8 text-destructive" />
+          ) : (
+            <Lock className={`h-8 w-8 transition-colors duration-300 ${error ? "text-destructive" : "text-primary"}`} />
+          )}
         </div>
 
         <div className="text-center">
           <h1 className="text-xl font-bold text-foreground">{t("lock.title")}</h1>
-          <p className={`mt-1 text-sm transition-colors duration-200 ${error ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-            {error ? t("lock.wrong") : t("lock.enter")}
+          <p className={`mt-1 text-sm transition-colors duration-200 ${error || isBlocked ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+            {statusMessage}
           </p>
         </div>
 
@@ -84,6 +152,8 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
                   ? "border-destructive bg-destructive animate-dot-pop"
                   : i < pin.length
                   ? "border-primary bg-primary animate-dot-pop"
+                  : isBlocked
+                  ? "border-muted-foreground/10 bg-transparent"
                   : "border-muted-foreground/30 bg-transparent"
               }`}
               style={error ? { animationDelay: `${i * 60}ms` } : undefined}
@@ -100,7 +170,8 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
                 <button
                   key={i}
                   onClick={handleDelete}
-                  className="flex h-16 w-16 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors"
+                  disabled={isBlocked}
+                  className="flex h-16 w-16 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
                 >
                   <Delete className="h-5 w-5" />
                 </button>
@@ -109,7 +180,8 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
               <button
                 key={i}
                 onClick={() => handleDigit(d)}
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/50 text-xl font-semibold text-foreground hover:bg-muted transition-colors active:scale-95"
+                disabled={isBlocked}
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/50 text-xl font-semibold text-foreground hover:bg-muted transition-colors active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
               >
                 {d}
               </button>
