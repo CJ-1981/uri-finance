@@ -32,6 +32,8 @@ const AdminPage = () => {
   const [dbStats, setDbStats] = useState<any>(null);
   const [dbLoading, setDbLoading] = useState(false);
 
+  const isOwner = activeProject && user && activeProject.owner_id === user.id;
+
   const DB_MAX_BYTES = 500 * 1024 * 1024; // 500 MB
 
   useEffect(() => {
@@ -44,8 +46,6 @@ const AdminPage = () => {
     };
     fetchStats();
   }, [isOwner]);
-
-  const isOwner = activeProject && user && activeProject.owner_id === user.id;
 
   const handleCurrencyChange = async () => {
     if (!activeProject || !currency.trim()) return;
