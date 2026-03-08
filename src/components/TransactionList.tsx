@@ -279,7 +279,7 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
       {filteredTransactions.length > 0 && (
         <div className="flex items-center justify-between px-2 pt-2 pb-1">
           <div className="flex items-center gap-2">
-            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(0); }}>
+            <Select value={String(pageSize)} onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}>
               <SelectTrigger className="h-7 w-[70px] text-xs bg-muted/30 border-border/50">
                 <SelectValue />
               </SelectTrigger>
