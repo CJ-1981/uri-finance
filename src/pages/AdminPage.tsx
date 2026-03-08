@@ -134,6 +134,20 @@ const AdminPage = () => {
       </header>
 
       <main className="px-4 pt-6 max-w-lg mx-auto space-y-8">
+        {/* Deleted Transactions (Trash) */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Trash2 className="h-4 w-4" />
+              {t("admin.trash")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("admin.trashDesc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4">
+            <TrashManager projectId={activeProject.id} currency={activeProject.currency} />
+          </div>
+        </section>
+
         {/* Members */}
         <section className="space-y-4">
           <div>
