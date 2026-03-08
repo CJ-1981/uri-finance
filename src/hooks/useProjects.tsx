@@ -34,7 +34,12 @@ export const useProjects = () => {
         .in("id", ids)
         .order("created_at", { ascending: false });
       setProjects((data as Project[]) || []);
-      if (data && data.length > 0 && !activeProject) {
+      // Update activeProject with fresh data if it exists
+      if (data && activeProject) {
+        const updated = data.find((p) => p.id === activeProject.id);
+        if (updated) setActiveProject(updated as Project);
+        else if (data.length > 0) setActiveProject(data[0] as Project);
+      } else if (data && data.length > 0 && !activeProject) {
         setActiveProject(data[0] as Project);
       }
     } else {
