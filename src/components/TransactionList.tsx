@@ -109,6 +109,15 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
           </div>
         ) : (
           <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectMode(true)}
+              className="text-muted-foreground h-7 px-2 text-[10px]"
+            >
+              <CheckSquare className="h-3.5 w-3.5 mr-1" />
+              {t("tx.select")}
+            </Button>
             <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground flex-1">
               <div className="w-10 shrink-0" />
               <div className="flex-1 min-w-0 flex gap-2">
@@ -120,15 +129,6 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
               ))}
               <span className="w-24 text-right">{headers.amount}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectMode(true)}
-              className="text-muted-foreground h-7 px-2 text-[10px]"
-            >
-              <CheckSquare className="h-3.5 w-3.5 mr-1" />
-              {t("tx.select")}
-            </Button>
           </>
         )}
       </div>
