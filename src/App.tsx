@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,8 +11,19 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
+import LockScreen from "@/components/LockScreen";
 
 const queryClient = new QueryClient();
+
+const AppLockGate = ({ children }: { children: React.ReactNode }) => {
+  const hasPin = !!localStorage.getItem("app_lock_pin");
+  const [locked, setLocked] = useState(hasPin);
+
+  if (locked && hasPin) {
+    return <LockScreen onUnlock={() => setLocked(false)} />;
+  }
+  return <>{children}</>;
+};
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
@@ -21,14 +33,16 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <AppLockGate>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/admin" element={<AdminPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </AppLockGate>
           </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>

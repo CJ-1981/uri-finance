@@ -13,10 +13,12 @@ import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
+import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
