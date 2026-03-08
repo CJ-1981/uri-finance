@@ -8,24 +8,25 @@ import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
-import CategoryManager from "@/components/CategoryManager";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
-import ColumnHeaderEditor from "@/components/ColumnHeaderEditor";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings2 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, totalIncome, totalExpense, balance } = useTransactions(activeProject?.id);
-  const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
-  const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
+  const { categories } = useCategories(activeProject?.id);
+  const { headers } = useColumnHeaders(activeProject?.id);
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const isOwner = activeProject && user && activeProject.owner_id === user.id;
 
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
@@ -48,12 +49,11 @@ const Dashboard = () => {
            {activeProject && (
               <>
               <ExportTransactions transactions={transactions} headers={headers} />
-              <ColumnHeaderEditor headers={headers} onUpdate={updateHeader} onReset={resetHeaders} />
-              <CategoryManager
-                categories={categories}
-                onAdd={addCategory}
-                onDelete={deleteCategory}
-              />
+              {isOwner && (
+                <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              )}
               </>
             )}
             <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-muted-foreground hover:text-foreground">
