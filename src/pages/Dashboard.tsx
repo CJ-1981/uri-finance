@@ -123,7 +123,7 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={transactions} onSelect={handleSelectTx} />
+              <TransactionList transactions={transactions} onSelect={handleSelectTx} headers={headers} />
             ) : (
               <FinanceCharts transactions={transactions} />
             )}
