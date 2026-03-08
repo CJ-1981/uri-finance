@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
+import AutoSuggestInput from "@/components/AutoSuggestInput";
 
 interface Props {
   transaction: Transaction | null;
@@ -24,9 +25,11 @@ interface Props {
   /** For multi-edit: full list of selected transactions */
   transactionList?: Transaction[];
   onNavigate?: (tx: Transaction) => void;
+  /** All transactions for historical suggestions */
+  allTransactions?: Transaction[];
 }
 
-const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate }: Props) => {
+const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions }: Props) => {
   const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -38,6 +41,22 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const { t } = useI18n();
 
   const isOwn = !isViewer && transaction?.user_id === user?.id;
+
+  // Build suggestion lists per text column
+  const columnSuggestions = useMemo(() => {
+    const txList = allTransactions || [];
+    const map: Record<string, string[]> = {};
+    for (const col of customColumns) {
+      if (col.column_type !== "text") continue;
+      const set = new Set<string>(col.suggestions || []);
+      for (const tx of txList) {
+        const v = tx.custom_values?.[col.name];
+        if (typeof v === "string" && v.trim()) set.add(v.trim());
+      }
+      map[col.name] = Array.from(set).sort((a, b) => a.localeCompare(b));
+    }
+    return map;
+  }, [customColumns, allTransactions]);
 
   const currentIndex = transactionList && transaction
     ? transactionList.findIndex((tx) => tx.id === transaction.id)
@@ -250,20 +269,32 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               {visibleCustomCols.map((col) => (
                   <div key={col.id} className="space-y-2">
                     <Label className="text-muted-foreground text-xs">{col.name}</Label>
-                    <Input
-                      type={col.column_type === "numeric" ? "text" : "text"}
-                      inputMode={col.column_type === "numeric" ? "decimal" : "text"}
-                      value={customValues[col.name] || ""}
-                      onChange={(e) => {
-                        const val = col.column_type === "numeric"
-                          ? e.target.value.replace(/[^0-9.]/g, "")
-                          : e.target.value;
-                        setCustomValues((prev) => ({ ...prev, [col.name]: val }));
-                      }}
-                      placeholder={col.column_type === "numeric" ? "0.00" : ""}
-                      disabled={!isOwn}
-                      className="bg-muted/50 border-border/50"
-                    />
+                    {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
+                      <AutoSuggestInput
+                        value={customValues[col.name] || ""}
+                        onChange={(val) =>
+                          setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                        }
+                        suggestions={columnSuggestions[col.name]}
+                        placeholder=""
+                        className="bg-muted/50 border-border/50"
+                      />
+                    ) : (
+                      <Input
+                        type="text"
+                        inputMode={col.column_type === "numeric" ? "decimal" : "text"}
+                        value={customValues[col.name] || ""}
+                        onChange={(e) => {
+                          const val = col.column_type === "numeric"
+                            ? e.target.value.replace(/[^0-9.]/g, "")
+                            : e.target.value;
+                          setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                        }}
+                        placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                        disabled={!isOwn}
+                        className="bg-muted/50 border-border/50"
+                      />
+                    )}
                   </div>
               ))}
             </div>

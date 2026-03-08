@@ -239,7 +239,7 @@ const Dashboard = () => {
             )}
 
             {/* FAB - hidden for viewers */}
-            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} />}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} />}
 
             {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet
@@ -256,6 +256,7 @@ const Dashboard = () => {
               isViewer={isViewer}
               transactionList={bulkEditTxs.length > 0 ? bulkEditTxs : undefined}
               onNavigate={handleNavigateTx}
+              allTransactions={transactions}
             />
           </div>
         )}

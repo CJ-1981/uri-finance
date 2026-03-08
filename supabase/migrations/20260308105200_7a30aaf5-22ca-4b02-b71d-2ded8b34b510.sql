@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_columns ADD COLUMN suggestions text[] NOT NULL DEFAULT '{}'::text[];

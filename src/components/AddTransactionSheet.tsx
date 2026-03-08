@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { Transaction } from "@/hooks/useTransactions";
 import { useI18n } from "@/hooks/useI18n";
+import AutoSuggestInput from "@/components/AutoSuggestInput";
 
 interface Props {
   categories: Category[];
   customColumns: CustomColumn[];
+  transactions: Transaction[];
   onAdd: (tx: {
     type: "income" | "expense";
     amount: number;
@@ -22,7 +25,7 @@ interface Props {
   }) => Promise<void>;
 }
 
-const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
+const AddTransactionSheet = ({ categories, customColumns, transactions, onAdd }: Props) => {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -32,6 +35,21 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
+
+  // Build suggestion lists per text column: imported + historical
+  const columnSuggestions = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const col of customColumns) {
+      if (col.column_type !== "text") continue;
+      const set = new Set<string>(col.suggestions || []);
+      for (const tx of transactions) {
+        const v = tx.custom_values?.[col.name];
+        if (typeof v === "string" && v.trim()) set.add(v.trim());
+      }
+      map[col.name] = Array.from(set).sort((a, b) => a.localeCompare(b));
+    }
+    return map;
+  }, [customColumns, transactions]);
 
   const resetForm = () => {
     setAmount("");
@@ -176,19 +194,31 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
               {customColumns.map((col) => (
                 <div key={col.id} className="space-y-2">
                   <Label className="text-muted-foreground text-xs">{col.name}</Label>
-                  <Input
-                    type={col.column_type === "numeric" ? "text" : "text"}
-                    inputMode={col.column_type === "numeric" ? "decimal" : "text"}
-                    value={customValues[col.name] || ""}
-                    onChange={(e) => {
-                      const val = col.column_type === "numeric"
-                        ? e.target.value.replace(/[^0-9.]/g, "")
-                        : e.target.value;
-                      setCustomValues((prev) => ({ ...prev, [col.name]: val }));
-                    }}
-                    placeholder={col.column_type === "numeric" ? "0.00" : ""}
-                    className="bg-muted/50 border-border/50"
-                  />
+                  {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 ? (
+                    <AutoSuggestInput
+                      value={customValues[col.name] || ""}
+                      onChange={(val) =>
+                        setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                      }
+                      suggestions={columnSuggestions[col.name]}
+                      placeholder=""
+                      className="bg-muted/50 border-border/50"
+                    />
+                  ) : (
+                    <Input
+                      type="text"
+                      inputMode={col.column_type === "numeric" ? "decimal" : "text"}
+                      value={customValues[col.name] || ""}
+                      onChange={(e) => {
+                        const val = col.column_type === "numeric"
+                          ? e.target.value.replace(/[^0-9.]/g, "")
+                          : e.target.value;
+                        setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                      }}
+                      placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                      className="bg-muted/50 border-border/50"
+                    />
+                  )}
                 </div>
               ))}
             </div>
