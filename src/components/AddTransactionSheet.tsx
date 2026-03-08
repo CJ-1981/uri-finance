@@ -18,6 +18,8 @@ interface Props {
   customColumns: CustomColumn[];
   transactions: Transaction[];
   projectCurrency?: string;
+  externalOpen?: boolean;
+  onExternalOpenChange?: (open: boolean) => void;
   onAdd: (tx: {
     type: "income" | "expense";
     amount: number;
