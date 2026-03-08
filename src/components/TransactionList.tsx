@@ -201,7 +201,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
               tx.type === "income" ? "text-income" : "text-expense"
             }`}
           >
-            {tx.type === "income" ? "+" : "-"}${Number(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            {tx.type === "income" ? "+" : "-"}{Number(tx.amount).toLocaleString("en-US", { style: "currency", currency: tx.currency || "USD" })}
           </p>
         </div>
       ))}
