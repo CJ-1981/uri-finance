@@ -30,11 +30,11 @@ export const useCategories = (projectId: string | undefined) => {
     fetchCategories();
   }, [projectId]);
 
-  const addCategory = async (name: string) => {
+  const addCategory = async (name: string, code?: string) => {
     if (!projectId) return;
     const { error } = await supabase
       .from("project_categories")
-      .insert({ project_id: projectId, name: name.trim() });
+      .insert({ project_id: projectId, name: name.trim(), code: code?.trim() || "" });
     if (error) {
       if (error.code === "23505") {
         toast.error("Category already exists");
