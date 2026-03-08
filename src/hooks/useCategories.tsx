@@ -7,6 +7,7 @@ export interface Category {
   project_id: string;
   name: string;
   code: string;
+  icon: string;
   sort_order: number;
   created_at: string;
 }
