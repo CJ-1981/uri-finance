@@ -16,7 +16,8 @@ import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
 import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator } from "lucide-react";
+import CashCalculator from "@/components/CashCalculator";
 import ShortcutSettings from "@/components/ShortcutSettings";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { UserRole } from "@/hooks/useUserRole";
@@ -49,7 +50,7 @@ const Dashboard = () => {
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
   const { isViewer, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
-  const [view, setView] = useState<"list" | "charts">("list");
+  const [view, setView] = useState<"list" | "charts" | "cash">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("all");
@@ -326,13 +327,23 @@ const Dashboard = () => {
               >
                 <BarChart3 className="h-3.5 w-3.5" /> {t("dash.charts")}
               </button>
+              <button
+                onClick={() => setView("cash")}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
+                  view === "cash" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                }`}
+              >
+                <Calculator className="h-3.5 w-3.5" /> {t("cash.title")}
+              </button>
             </div>
 
             {/* Content */}
             {view === "list" ? (
               <TransactionList transactions={filtered} categories={categories} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} isViewer={isViewer} />
-            ) : (
+            ) : view === "charts" ? (
               <FinanceCharts transactions={chartTransactions} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} projectCurrency={projectCurrency} />
+            ) : (
+              <CashCalculator currency={projectCurrency} />
             )}
 
             {/* FAB - hidden for viewers */}

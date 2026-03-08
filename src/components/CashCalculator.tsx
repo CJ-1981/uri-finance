@@ -1,0 +1,323 @@
+import { useState, useMemo, useCallback } from "react";
+import { useI18n } from "@/hooks/useI18n";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Minus, Plus, Trash2, FileText } from "lucide-react";
+import { toast } from "sonner";
+
+// Currency denomination configs
+const DENOMINATIONS: Record<string, { bills: number[]; coins: number[] }> = {
+  USD: {
+    bills: [100, 50, 20, 10, 5, 2, 1],
+    coins: [0.25, 0.10, 0.05, 0.01],
+  },
+  KRW: {
+    bills: [50000, 10000, 5000, 1000],
+    coins: [500, 100, 50, 10],
+  },
+  EUR: {
+    bills: [500, 200, 100, 50, 20, 10, 5],
+    coins: [2, 1, 0.50, 0.20, 0.10, 0.05, 0.02, 0.01],
+  },
+  GBP: {
+    bills: [50, 20, 10, 5],
+    coins: [2, 1, 0.50, 0.20, 0.10, 0.05, 0.02, 0.01],
+  },
+  JPY: {
+    bills: [10000, 5000, 2000, 1000],
+    coins: [500, 100, 50, 10, 5, 1],
+  },
+  CNY: {
+    bills: [100, 50, 20, 10, 5, 1],
+    coins: [0.50, 0.10],
+  },
+  CAD: {
+    bills: [100, 50, 20, 10, 5],
+    coins: [2, 1, 0.25, 0.10, 0.05],
+  },
+  AUD: {
+    bills: [100, 50, 20, 10, 5],
+    coins: [2, 1, 0.50, 0.20, 0.10, 0.05],
+  },
+};
+
+const DEFAULT_DENOMS = {
+  bills: [100, 50, 20, 10, 5, 1],
+  coins: [0.50, 0.25, 0.10, 0.05, 0.01],
+};
+
+function formatDenom(value: number, currency: string): string {
+  if (value >= 1) return value.toLocaleString();
+  // For coins < 1, show as cents/pence etc.
+  if (currency === "USD" || currency === "CAD" || currency === "AUD") return `${Math.round(value * 100)}¢`;
+  if (currency === "GBP") return `${Math.round(value * 100)}p`;
+  if (currency === "EUR") return `${Math.round(value * 100)}c`;
+  return value.toString();
+}
+
+interface CashCalculatorProps {
+  currency: string;
+}
+
+type Counts = Record<string, { named: number; anon: number }>;
+
+const CashCalculator = ({ currency }: CashCalculatorProps) => {
+  const { t } = useI18n();
+  const denoms = DENOMINATIONS[currency] || DEFAULT_DENOMS;
+  const allDenoms = [...denoms.bills, ...denoms.coins];
+
+  const [counts, setCounts] = useState<Counts>(() => {
+    const init: Counts = {};
+    allDenoms.forEach((d) => {
+      init[d.toString()] = { named: 0, anon: 0 };
+    });
+    return init;
+  });
+
+  // Reset counts when currency changes
+  const denomKey = allDenoms.join(",");
+  const [prevDenomKey, setPrevDenomKey] = useState(denomKey);
+  if (denomKey !== prevDenomKey) {
+    const init: Counts = {};
+    allDenoms.forEach((d) => {
+      init[d.toString()] = { named: 0, anon: 0 };
+    });
+    setCounts(init);
+    setPrevDenomKey(denomKey);
+  }
+
+  const updateCount = useCallback((denom: string, column: "named" | "anon", delta: number) => {
+    setCounts((prev) => {
+      const current = prev[denom]?.[column] ?? 0;
+      const newVal = Math.max(0, current + delta);
+      return { ...prev, [denom]: { ...prev[denom], [column]: newVal } };
+    });
+  }, []);
+
+  const setCount = useCallback((denom: string, column: "named" | "anon", value: number) => {
+    setCounts((prev) => ({
+      ...prev,
+      [denom]: { ...prev[denom], [column]: Math.max(0, value) },
+    }));
+  }, []);
+
+  const totals = useMemo(() => {
+    let named = 0;
+    let anon = 0;
+    allDenoms.forEach((d) => {
+      const key = d.toString();
+      const c = counts[key];
+      if (c) {
+        named += d * c.named;
+        anon += d * c.anon;
+      }
+    });
+    return { named, anon, total: named + anon };
+  }, [counts, allDenoms]);
+
+  const clearAll = () => {
+    const init: Counts = {};
+    allDenoms.forEach((d) => {
+      init[d.toString()] = { named: 0, anon: 0 };
+    });
+    setCounts(init);
+    toast.success(t("cash.cleared"));
+  };
+
+  const exportMarkdown = () => {
+    const lines: string[] = [];
+    lines.push(`# ${t("cash.title")} - ${currency}`);
+    lines.push("");
+    lines.push(`| ${t("cash.denomination")} | ${t("cash.named")} | ${t("cash.subtotalNamed")} | ${t("cash.anon")} | ${t("cash.subtotalAnon")} |`);
+    lines.push("|---:|---:|---:|---:|---:|");
+
+    allDenoms.forEach((d) => {
+      const key = d.toString();
+      const c = counts[key] || { named: 0, anon: 0 };
+      if (c.named > 0 || c.anon > 0) {
+        const namedSub = (d * c.named).toLocaleString("en-US", { minimumFractionDigits: 2 });
+        const anonSub = (d * c.anon).toLocaleString("en-US", { minimumFractionDigits: 2 });
+        lines.push(
+          `| ${formatDenom(d, currency)} | ${c.named} | ${currency} ${namedSub} | ${c.anon} | ${currency} ${anonSub} |`
+        );
+      }
+    });
+
+    lines.push("");
+    lines.push(`**${t("cash.namedTotal")}:** ${currency} ${totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push(`**${t("cash.anonTotal")}:** ${currency} ${totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    lines.push(`**${t("cash.grandTotal")}:** ${currency} ${totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cash-count-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(t("cash.exported"));
+  };
+
+  const isBill = (d: number) => denoms.bills.includes(d);
+
+  return (
+    <div className="space-y-3">
+      {/* Header row */}
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background z-10 py-1.5 border-b border-border/30">
+        <div className="text-center">{t("cash.denomination")}</div>
+        <div className="text-center">{t("cash.named")}</div>
+        <div className="text-center">{t("cash.anon")}</div>
+      </div>
+
+      {/* Bills section */}
+      {denoms.bills.length > 0 && (
+        <div className="space-y-0.5">
+          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1">
+            {t("cash.bills")}
+          </p>
+          {denoms.bills.map((d) => (
+            <DenomRow
+              key={`bill-${d}`}
+              denom={d}
+              label={formatDenom(d, currency)}
+              counts={counts[d.toString()] || { named: 0, anon: 0 }}
+              onUpdate={updateCount}
+              onSet={setCount}
+              isBill
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Coins section */}
+      {denoms.coins.length > 0 && (
+        <div className="space-y-0.5">
+          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1">
+            {t("cash.coins")}
+          </p>
+          {denoms.coins.map((d) => (
+            <DenomRow
+              key={`coin-${d}`}
+              denom={d}
+              label={formatDenom(d, currency)}
+              counts={counts[d.toString()] || { named: 0, anon: 0 }}
+              onUpdate={updateCount}
+              onSet={setCount}
+              isBill={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Totals */}
+      <div className="glass-card p-3 space-y-1.5">
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{t("cash.namedTotal")}</span>
+          <span className="font-bold text-income">
+            {currency} {totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{t("cash.anonTotal")}</span>
+          <span className="font-bold text-income">
+            {currency} {totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+        <div className="border-t border-border/30 pt-1.5 flex justify-between text-sm">
+          <span className="font-semibold">{t("cash.grandTotal")}</span>
+          <span className="font-bold text-foreground">
+            {currency} {totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 pb-4">
+        <Button variant="outline" className="flex-1 text-xs" onClick={clearAll}>
+          <Trash2 className="h-3.5 w-3.5 mr-1" />
+          {t("cash.clearAll")}
+        </Button>
+        <Button variant="default" className="flex-1 text-xs" onClick={exportMarkdown}>
+          <FileText className="h-3.5 w-3.5 mr-1" />
+          {t("cash.export")}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+interface DenomRowProps {
+  denom: number;
+  label: string;
+  counts: { named: number; anon: number };
+  onUpdate: (denom: string, column: "named" | "anon", delta: number) => void;
+  onSet: (denom: string, column: "named" | "anon", value: number) => void;
+  isBill: boolean;
+}
+
+const DenomRow = ({ denom, label, counts, onUpdate, onSet, isBill: isBillType }: DenomRowProps) => {
+  const key = denom.toString();
+
+  return (
+    <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 items-center py-0.5">
+      {/* Denomination label */}
+      <div className="flex items-center justify-center">
+        <span className={`text-xs font-mono font-semibold ${isBillType ? "text-foreground" : "text-muted-foreground"}`}>
+          {label}
+        </span>
+      </div>
+
+      {/* Named column */}
+      <CounterCell
+        value={counts.named}
+        onChange={(v) => onSet(key, "named", v)}
+        onIncrement={() => onUpdate(key, "named", 1)}
+        onDecrement={() => onUpdate(key, "named", -1)}
+      />
+
+      {/* Anon column */}
+      <CounterCell
+        value={counts.anon}
+        onChange={(v) => onSet(key, "anon", v)}
+        onIncrement={() => onUpdate(key, "anon", 1)}
+        onDecrement={() => onUpdate(key, "anon", -1)}
+      />
+    </div>
+  );
+};
+
+interface CounterCellProps {
+  value: number;
+  onChange: (v: number) => void;
+  onIncrement: () => void;
+  onDecrement: () => void;
+}
+
+const CounterCell = ({ value, onChange, onIncrement, onDecrement }: CounterCellProps) => (
+  <div className="flex items-center gap-0.5 justify-center">
+    <button
+      type="button"
+      onClick={onDecrement}
+      className="h-6 w-6 flex items-center justify-center rounded bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+    >
+      <Minus className="h-3 w-3" />
+    </button>
+    <Input
+      type="number"
+      inputMode="numeric"
+      min={0}
+      value={value || ""}
+      onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+      className="h-6 w-10 text-center text-xs px-0.5 border-border/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+    />
+    <button
+      type="button"
+      onClick={onIncrement}
+      className="h-6 w-6 flex items-center justify-center rounded bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+    >
+      <Plus className="h-3 w-3" />
+    </button>
+  </div>
+);
+
+export default CashCalculator;
