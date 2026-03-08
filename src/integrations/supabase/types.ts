@@ -22,6 +22,7 @@ export type Database = {
           masked: boolean
           name: string
           project_id: string
+          required: boolean
           suggestions: string[]
         }
         Insert: {
@@ -31,6 +32,7 @@ export type Database = {
           masked?: boolean
           name: string
           project_id: string
+          required?: boolean
           suggestions?: string[]
         }
         Update: {
@@ -40,6 +42,7 @@ export type Database = {
           masked?: boolean
           name?: string
           project_id?: string
+          required?: boolean
           suggestions?: string[]
         }
         Relationships: [

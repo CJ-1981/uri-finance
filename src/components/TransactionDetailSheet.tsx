@@ -16,6 +16,7 @@ import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
+import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
@@ -101,6 +102,15 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   const handleSave = async () => {
     if (!transaction || !amount || Number(amount) <= 0) return;
+
+    // Validate required custom columns
+    for (const col of customColumns) {
+      if (col.required && !customValues[col.name]?.trim()) {
+        toast.error(`${col.name} is required`);
+        return;
+      }
+    }
+
     setSaving(true);
     const cv: Record<string, number | string> = {};
     for (const col of customColumns) {
@@ -313,7 +323,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             <div className="grid grid-cols-2 gap-3">
               {visibleCustomCols.map((col) => (
                   <div key={col.id} className="space-y-2">
-                    <Label className="text-muted-foreground text-xs">{col.name}</Label>
+                    <Label className="text-muted-foreground text-xs">{col.name}{col.required && <span className="text-destructive ml-0.5">*</span>}</Label>
                     {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
                       <AutoSuggestInput
                         value={customValues[col.name] || ""}

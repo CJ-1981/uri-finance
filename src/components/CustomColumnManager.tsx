@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Hash, Type, EyeOff, Eye, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, X, Hash, Type, EyeOff, Eye, FileText, ChevronDown, ChevronUp, Asterisk } from "lucide-react";
 import { CustomColumn, ColumnType } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 
@@ -11,10 +11,11 @@ interface Props {
   onAdd: (name: string, type: ColumnType) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
+  onToggleRequired?: (id: string, required: boolean) => Promise<void>;
   onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
 }
 
-const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onUpdateSuggestions }: Props) => {
+const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggleRequired, onUpdateSuggestions }: Props) => {
   const [name, setName] = useState("");
   const [colType, setColType] = useState<ColumnType>("numeric");
   const [adding, setAdding] = useState(false);
@@ -129,6 +130,15 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onUpdat
                     title={col.masked ? t("cc.maskedOn") : t("cc.maskedOff")}
                   >
                     {col.masked ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                )}
+                {onToggleRequired && (
+                  <button
+                    onClick={() => onToggleRequired(col.id, !col.required)}
+                    className={`transition-colors ${col.required ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+                    title={col.required ? (t("cc.requiredOn") || "Required") : (t("cc.requiredOff") || "Optional")}
+                  >
+                    <Asterisk className={`h-3.5 w-3.5 ${col.required ? "" : "opacity-40"}`} />
                   </button>
                 )}
                 <button onClick={() => onDelete(col.id)} className="text-muted-foreground hover:text-destructive transition-colors">
