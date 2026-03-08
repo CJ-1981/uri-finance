@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, FileText } from "lucide-react";
+import { Minus, Plus, Trash2, FileText, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 // Currency denomination configs
