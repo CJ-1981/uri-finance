@@ -334,13 +334,13 @@ interface CounterCellProps {
 }
 
 const CounterCell = ({ value, onChange, onIncrement, onDecrement }: CounterCellProps) => (
-  <div className="flex items-center gap-0.5 justify-center">
+  <div className="flex items-center gap-1 justify-center">
     <button
       type="button"
       onClick={onDecrement}
-      className="h-6 w-6 flex items-center justify-center rounded bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+      className="h-9 w-9 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
     >
-      <Minus className="h-3 w-3" />
+      <Minus className="h-4 w-4" />
     </button>
     <Input
       type="number"
@@ -348,14 +348,14 @@ const CounterCell = ({ value, onChange, onIncrement, onDecrement }: CounterCellP
       min={0}
       value={value || ""}
       onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-      className="h-6 w-10 text-center text-xs px-0.5 border-border/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="h-8 w-12 text-center text-sm px-0.5 border-border/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
     />
     <button
       type="button"
       onClick={onIncrement}
-      className="h-6 w-6 flex items-center justify-center rounded bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+      className="h-9 w-9 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
     >
-      <Plus className="h-3 w-3" />
+      <Plus className="h-4 w-4" />
     </button>
   </div>
 );
