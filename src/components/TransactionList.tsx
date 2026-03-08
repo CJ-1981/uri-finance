@@ -1,13 +1,15 @@
 import { Transaction } from "@/hooks/useTransactions";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 
 interface Props {
   transactions: Transaction[];
   onSelect: (tx: Transaction) => void;
+  headers: ColumnHeaders;
 }
 
-const TransactionList = ({ transactions, onSelect }: Props) => {
+const TransactionList = ({ transactions, onSelect, headers }: Props) => {
   if (transactions.length === 0) {
     return (
       <div className="py-12 text-center text-muted-foreground text-sm">
@@ -18,6 +20,16 @@ const TransactionList = ({ transactions, onSelect }: Props) => {
 
   return (
     <div className="space-y-2">
+      {/* Column header row */}
+      <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <div className="w-10 shrink-0" />
+        <div className="flex-1 min-w-0 flex gap-2">
+          <span className="flex-1 truncate">{headers.description}</span>
+          <span className="hidden sm:block w-20 text-right">{headers.category}</span>
+        </div>
+        <span className="w-24 text-right">{headers.amount}</span>
+      </div>
+
       {transactions.slice(0, 20).map((tx, i) => (
         <div
           key={tx.id}

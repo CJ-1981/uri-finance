@@ -9,9 +9,11 @@ import {
 import { Download } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 
 interface Props {
   transactions: Transaction[];
+  headers: ColumnHeaders;
 }
 
 const formatAmount = (tx: Transaction) =>
@@ -31,8 +33,8 @@ const downloadFile = (content: string, filename: string, mime: string) => {
   toast.success(`Exported as ${filename}`);
 };
 
-const exportCSV = (transactions: Transaction[]) => {
-  const header = "Date,Type,Category,Description,Amount";
+const exportCSV = (transactions: Transaction[], h: ColumnHeaders) => {
+  const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}`;
   const rows = transactions.map(
     (tx) =>
       `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`
@@ -40,8 +42,8 @@ const exportCSV = (transactions: Transaction[]) => {
   downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv");
 };
 
-const exportXLS = (transactions: Transaction[]) => {
-  const header = "<tr><th>Date</th><th>Type</th><th>Category</th><th>Description</th><th>Amount</th></tr>";
+const exportXLS = (transactions: Transaction[], h: ColumnHeaders) => {
+  const header = `<tr><th>${h.date}</th><th>${h.type}</th><th>${h.category}</th><th>${h.description}</th><th>${h.amount}</th></tr>`;
   const rows = transactions
     .map(
       (tx) =>
@@ -52,8 +54,8 @@ const exportXLS = (transactions: Transaction[]) => {
   downloadFile(html, "transactions.xls", "application/vnd.ms-excel");
 };
 
-const exportMarkdown = (transactions: Transaction[]) => {
-  const header = "| Date | Type | Category | Description | Amount |";
+const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders) => {
+  const header = `| ${h.date} | ${h.type} | ${h.category} | ${h.description} | ${h.amount} |`;
   const sep = "| --- | --- | --- | --- | ---: |";
   const rows = transactions.map(
     (tx) =>
@@ -62,7 +64,7 @@ const exportMarkdown = (transactions: Transaction[]) => {
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown");
 };
 
-const ExportTransactions = ({ transactions }: Props) => {
+const ExportTransactions = ({ transactions, headers }: Props) => {
   if (transactions.length === 0) return null;
 
   return (
@@ -73,13 +75,13 @@ const ExportTransactions = ({ transactions }: Props) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => exportCSV(transactions)}>
+        <DropdownMenuItem onClick={() => exportCSV(transactions, headers)}>
           Export as CSV
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportXLS(transactions)}>
+        <DropdownMenuItem onClick={() => exportXLS(transactions, headers)}>
           Export as XLS
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportMarkdown(transactions)}>
+        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers)}>
           Export as Markdown
         </DropdownMenuItem>
       </DropdownMenuContent>
