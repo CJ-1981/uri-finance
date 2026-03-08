@@ -27,6 +27,11 @@ const AdminPage = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [currency, setCurrency] = useState(activeProject?.currency || "USD");
+  
+  // Sync currency when activeProject updates
+  useEffect(() => {
+    if (activeProject?.currency) setCurrency(activeProject.currency);
+  }, [activeProject?.currency]);
   const [savingCurrency, setSavingCurrency] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
   const [creatingInvite, setCreatingInvite] = useState(false);
