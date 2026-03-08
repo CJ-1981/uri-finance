@@ -113,8 +113,9 @@ function GroupSelector({ options, value, onChange }: {
   );
 }
 
-const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer }: Props) => {
+const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer, projectCurrency = "USD" }: Props) => {
   const { t } = useI18n();
+  const fmt = (value: number) => `${projectCurrency} ${value.toLocaleString()}`;
 
   // Filter out masked columns for viewers
   const visibleColumns = useMemo(() =>
