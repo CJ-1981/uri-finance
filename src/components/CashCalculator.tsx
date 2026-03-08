@@ -124,22 +124,21 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
     toast.success(t("cash.cleared"));
   };
 
-  const exportMarkdown = () => {
+  const buildMarkdown = () => {
+    const today = new Date().toISOString().slice(0, 10);
     const lines: string[] = [];
-    lines.push(`# ${t("cash.title")} - ${currency}`);
+    lines.push(`# ${t("cash.title")} - ${today}`);
     lines.push("");
-    lines.push(`| ${t("cash.denomination")} | ${t("cash.named")} | ${t("cash.subtotalNamed")} | ${t("cash.anon")} | ${t("cash.subtotalAnon")} |`);
-    lines.push("|---:|---:|---:|---:|---:|");
+    lines.push(`Currency: ${currency}`);
+    lines.push("");
+    lines.push(`| ${t("cash.denomination")} | ${t("cash.named")} | ${t("cash.anon")} |`);
+    lines.push("|---:|---:|---:|");
 
     allDenoms.forEach((d) => {
       const key = d.toString();
       const c = counts[key] || { named: 0, anon: 0 };
       if (c.named > 0 || c.anon > 0) {
-        const namedSub = (d * c.named).toLocaleString("en-US", { minimumFractionDigits: 2 });
-        const anonSub = (d * c.anon).toLocaleString("en-US", { minimumFractionDigits: 2 });
-        lines.push(
-          `| ${formatDenom(d, currency)} | ${c.named} | ${currency} ${namedSub} | ${c.anon} | ${currency} ${anonSub} |`
-        );
+        lines.push(`| ${formatDenom(d, currency)} | ${c.named} | ${c.anon} |`);
       }
     });
 
@@ -147,8 +146,12 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
     lines.push(`**${t("cash.namedTotal")}:** ${currency} ${totals.named.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
     lines.push(`**${t("cash.anonTotal")}:** ${currency} ${totals.anon.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
     lines.push(`**${t("cash.grandTotal")}:** ${currency} ${totals.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}`);
+    return lines.join("\n");
+  };
 
-    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+  const exportMarkdown = () => {
+    const md = buildMarkdown();
+    const blob = new Blob([md], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -156,6 +159,12 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
     a.click();
     URL.revokeObjectURL(url);
     toast.success(t("cash.exported"));
+  };
+
+  const copyMarkdown = async () => {
+    const md = buildMarkdown();
+    await navigator.clipboard.writeText(md);
+    toast.success(t("cash.copied"));
   };
 
   const isBill = (d: number) => denoms.bills.includes(d);
