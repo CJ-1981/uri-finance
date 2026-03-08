@@ -23,6 +23,7 @@ export type Database = {
           name: string
           project_id: string
           required: boolean
+          sort_order: number
           suggestions: string[]
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           name: string
           project_id: string
           required?: boolean
+          sort_order?: number
           suggestions?: string[]
         }
         Update: {
@@ -43,6 +45,7 @@ export type Database = {
           name?: string
           project_id?: string
           required?: boolean
+          sort_order?: number
           suggestions?: string[]
         }
         Relationships: [
@@ -91,6 +94,7 @@ export type Database = {
           id: string
           name: string
           project_id: string
+          sort_order: number
         }
         Insert: {
           code?: string
@@ -98,6 +102,7 @@ export type Database = {
           id?: string
           name: string
           project_id: string
+          sort_order?: number
         }
         Update: {
           code?: string
@@ -105,6 +110,7 @@ export type Database = {
           id?: string
           name?: string
           project_id?: string
+          sort_order?: number
         }
         Relationships: [
           {
