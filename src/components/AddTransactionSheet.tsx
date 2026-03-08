@@ -232,6 +232,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    data-tab-stop
                     className={cn(
                       "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
                       !date && "text-muted-foreground"
