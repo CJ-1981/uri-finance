@@ -178,6 +178,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lock.title": "App Locked",
     "lock.enter": "Enter your PIN to unlock",
     "lock.wrong": "Wrong PIN, try again",
+    "lock.blocked": "Too many attempts. Try again in",
     "lock.setupTitle": "Set Lock PIN",
     "lock.setupEnter": "Enter a 4-digit PIN",
     "lock.setupConfirm": "Confirm your PIN",
