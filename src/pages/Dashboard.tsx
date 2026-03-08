@@ -67,7 +67,7 @@ const Dashboard = () => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
 
-  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer);
+  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer, "addTransactionAlt");
 
 
   const handleRemovePin = () => {
