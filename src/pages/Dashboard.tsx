@@ -163,8 +163,6 @@ const Dashboard = () => {
   }, [view, activeProject, detailOpen, visibleTxs, selectedTx]);
 
 
-  const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
-  const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
