@@ -62,6 +62,8 @@ const Dashboard = () => {
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
   const [addTxOpen, setAddTxOpen] = useState(false);
+  const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const txListRef = useRef<TransactionListHandle>(null);
 
   const openAddTx = useCallback(() => {
