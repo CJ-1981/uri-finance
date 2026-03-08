@@ -141,6 +141,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
           ref={searchRef}
           value={searchQuery}
           onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
+          onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); searchRef.current?.blur(); } }}
           placeholder={t("tx.search") || "Search transactions..."}
           className="pl-8 h-8 text-sm bg-muted/30 border-border/50"
         />
