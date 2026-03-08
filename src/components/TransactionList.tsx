@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Transaction } from "@/hooks/useTransactions";
+import { Category } from "@/hooks/useCategories";
 import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
@@ -11,6 +12,7 @@ import { Input } from "@/components/ui/input";
 
 interface Props {
   transactions: Transaction[];
+  categories?: Category[];
   onSelect: (tx: Transaction) => void;
   onBulkDelete: (ids: string[]) => Promise<void>;
   onBulkEditOpen: (txs: Transaction[]) => void;
@@ -19,13 +21,22 @@ interface Props {
   isViewer?: boolean;
 }
 
-const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
+const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+
+  // Build a map of category name -> icon for quick lookup
+  const categoryIconMap = useMemo(() => {
+    const map = new Map<string, string>();
+    categories?.forEach(cat => {
+      if (cat.icon) map.set(cat.name, cat.icon);
+    });
+    return map;
+  }, [categories]);
 
   // Determine which custom column names are masked (hidden from viewers)
   const maskedColumnNames = useMemo(() => {
@@ -204,10 +215,14 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
           ) : (
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                tx.type === "income" ? "income-badge" : "expense-badge"
+                categoryIconMap.has(tx.category)
+                  ? "bg-muted/50"
+                  : tx.type === "income" ? "income-badge" : "expense-badge"
               }`}
             >
-              {tx.type === "income" ? (
+              {categoryIconMap.has(tx.category) ? (
+                <span className="text-lg">{categoryIconMap.get(tx.category)}</span>
+              ) : tx.type === "income" ? (
                 <TrendingUp className="h-4 w-4" />
               ) : (
                 <TrendingDown className="h-4 w-4" />

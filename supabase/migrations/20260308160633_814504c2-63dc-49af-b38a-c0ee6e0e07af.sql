@@ -1,0 +1,1 @@
+ALTER TABLE public.project_categories ADD COLUMN icon text NOT NULL DEFAULT '';

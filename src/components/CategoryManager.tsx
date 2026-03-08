@@ -11,16 +11,19 @@ interface Props {
   onAdd: (name: string, code?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onUpdateCode?: (id: string, code: string) => Promise<void>;
+  onUpdateIcon?: (id: string, icon: string) => Promise<void>;
   onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   inline?: boolean;
 }
 
-const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onReorder }: Omit<Props, "inline">) => {
+const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIcon, onReorder }: Omit<Props, "inline">) => {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [adding, setAdding] = useState(false);
   const [editingCodeId, setEditingCodeId] = useState<string | null>(null);
   const [editCodeValue, setEditCodeValue] = useState("");
+  const [editingIconId, setEditingIconId] = useState<string | null>(null);
+  const [editIconValue, setEditIconValue] = useState("");
   const { t } = useI18n();
 
   const handleAdd = async () => {
@@ -102,6 +105,36 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onReorder 
                 {cat.code || "—"}
               </button>
             )}
+            {editingIconId === cat.id ? (
+              <Input
+                value={editIconValue}
+                onChange={(e) => setEditIconValue(e.target.value)}
+                onBlur={() => {
+                  if (onUpdateIcon) onUpdateIcon(cat.id, editIconValue);
+                  setEditingIconId(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (onUpdateIcon) onUpdateIcon(cat.id, editIconValue);
+                    setEditingIconId(null);
+                  }
+                }}
+                className="w-10 h-6 text-center text-sm bg-background border-border/50 px-1"
+                autoFocus
+                placeholder="😀"
+              />
+            ) : (
+              <button
+                onClick={() => {
+                  setEditingIconId(cat.id);
+                  setEditIconValue(cat.icon || "");
+                }}
+                className="text-base w-6 h-6 flex items-center justify-center rounded hover:bg-muted transition-colors shrink-0"
+                title="Set emoji icon"
+              >
+                {cat.icon || "·"}
+              </button>
+            )}
             <span className="text-sm text-foreground flex-1 min-w-0 truncate">{cat.name}</span>
             <button onClick={() => onDelete(cat.id)} className="text-muted-foreground hover:text-expense transition-colors p-1 shrink-0">
               <X className="h-3.5 w-3.5" />
@@ -113,12 +146,12 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onReorder 
   );
 };
 
-const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onReorder, inline }: Props) => {
+const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIcon, onReorder, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
   if (inline) {
-    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onReorder={onReorder} />;
+    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorder={onReorder} />;
   }
 
   return (
@@ -133,7 +166,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onReorder,
           <SheetTitle className="text-foreground">{t("cat.manageCategories")}</SheetTitle>
         </SheetHeader>
         <div className="mt-4">
-          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onReorder={onReorder} />
+          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorder={onReorder} />
         </div>
       </SheetContent>
     </Sheet>
