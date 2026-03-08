@@ -113,6 +113,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "chart.expenseByCategory": "Expense by Category",
     "chart.addToSee": "Add transactions to see charts",
 
+    // Period
+    "period.today": "Today",
+    "period.week": "1 Week",
+    "period.month": "1 Month",
+    "period.sixMonths": "6 Months",
+    "period.all": "All",
+    "period.custom": "Custom",
+    "period.from": "From",
+    "period.to": "To",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
@@ -232,6 +242,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     "chart.comparison": "비교 (6개월)",
     "chart.expenseByCategory": "카테고리별 지출",
     "chart.addToSee": "차트를 보려면 거래를 추가하세요",
+
+    // Period
+    "period.today": "오늘",
+    "period.week": "1주일",
+    "period.month": "1개월",
+    "period.sixMonths": "6개월",
+    "period.all": "전체",
+    "period.custom": "기간 설정",
+    "period.from": "시작일",
+    "period.to": "종료일",
 
     // 404
     "notFound.title": "404",

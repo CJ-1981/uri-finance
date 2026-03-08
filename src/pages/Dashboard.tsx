@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
@@ -12,6 +12,7 @@ import TransactionList from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
+import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon, Settings2, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -20,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, totalIncome, totalExpense, balance } = useTransactions(activeProject?.id);
+  const { transactions, addTransaction, updateTransaction, deleteTransaction } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
@@ -28,9 +29,27 @@ const Dashboard = () => {
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [period, setPeriod] = useState<PeriodKey>("all");
+  const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+
+  // Filter transactions by selected period
+  const filtered = useMemo(
+    () => filterByPeriod(transactions, period, customRange),
+    [transactions, period, customRange]
+  );
+
+  const totalIncome = useMemo(
+    () => filtered.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0),
+    [filtered]
+  );
+  const totalExpense = useMemo(
+    () => filtered.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0),
+    [filtered]
+  );
+  const balance = totalIncome - totalExpense;
 
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
@@ -51,7 +70,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-1">
            {activeProject && (
               <>
-              <ExportTransactions transactions={transactions} headers={headers} customColumns={customColumns} />
+              <ExportTransactions transactions={filtered} headers={headers} customColumns={customColumns} />
               {isOwner && (
                 <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
                   <Settings2 className="h-4 w-4" />
@@ -90,6 +109,14 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="animate-fade-in space-y-4">
+            {/* Period selector */}
+            <PeriodSelector
+              period={period}
+              onPeriodChange={setPeriod}
+              customRange={customRange}
+              onCustomRangeChange={setCustomRange}
+            />
+
             {/* Balance cards */}
             <div className="grid grid-cols-3 gap-2">
               <div className="glass-card p-3 text-center">
@@ -134,9 +161,9 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={transactions} onSelect={handleSelectTx} headers={headers} customColumns={customColumns} />
+              <TransactionList transactions={filtered} onSelect={handleSelectTx} headers={headers} customColumns={customColumns} />
             ) : (
-              <FinanceCharts transactions={transactions} customColumns={customColumns} />
+              <FinanceCharts transactions={filtered} customColumns={customColumns} />
             )}
 
             {/* FAB */}
