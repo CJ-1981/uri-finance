@@ -38,6 +38,8 @@ const AdminPage = () => {
   }, [activeProject?.currency]);
   const [savingCurrency, setSavingCurrency] = useState(false);
   const [inviteLabel, setInviteLabel] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [dbStats, setDbStats] = useState<any>(null);
   const [dbLoading, setDbLoading] = useState(false);
