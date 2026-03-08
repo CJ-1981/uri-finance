@@ -290,16 +290,13 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           {/* Category */}
           <div className="space-y-2 min-w-0">
             <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-            <Select value={category} onValueChange={setCategory} disabled={!isOwn}>
-              <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50 min-w-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NumberedSelect
+              value={category}
+              onValueChange={setCategory}
+              items={categories.map((c) => ({ value: c.name, label: c.name }))}
+              showNumbers
+              className="bg-muted/50 border-border/50 min-w-0"
+            />
           </div>
 
           {/* Custom columns (after category) */}
