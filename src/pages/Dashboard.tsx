@@ -9,7 +9,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useI18n } from "@/hooks/useI18n";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
-import TransactionList from "@/components/TransactionList";
+import TransactionList, { TransactionListHandle } from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
