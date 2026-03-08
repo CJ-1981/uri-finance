@@ -174,6 +174,20 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleteFailed": "Failed to permanently delete",
     "admin.deletedOn": "Deleted",
 
+    // Lock
+    "lock.title": "App Locked",
+    "lock.enter": "Enter your PIN to unlock",
+    "lock.wrong": "Wrong PIN, try again",
+    "lock.setupTitle": "Set Lock PIN",
+    "lock.setupEnter": "Enter a 4-digit PIN",
+    "lock.setupConfirm": "Confirm your PIN",
+    "lock.mismatch": "PINs didn't match. Try again.",
+    "lock.pinSet": "Lock PIN set successfully!",
+    "lock.pinRemoved": "Lock PIN removed",
+    "lock.enable": "Enable App Lock",
+    "lock.disable": "Remove App Lock",
+    "lock.changePIN": "Change PIN",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
