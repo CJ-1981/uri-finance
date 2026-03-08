@@ -105,5 +105,50 @@ export const useProjectMembers = (projectId?: string) => {
     return true;
   };
 
-  return { members, invites, loading, removeMember, banMember, createInvite, deleteInvite, fetchMembers, fetchInvites };
+  const updateMemberRole = async (memberId: string, role: string) => {
+    const { error } = await supabase
+      .from("project_members")
+      .update({ role })
+      .eq("id", memberId);
+    if (error) return false;
+    await fetchMembers();
+    return true;
+  };
+
+  const transferOwnership = async (newOwnerId: string, currentOwnerId: string) => {
+    if (!projectId) return false;
+    // Update project owner
+    const { error: projError } = await supabase
+      .from("projects")
+      .update({ owner_id: newOwnerId })
+      .eq("id", projectId);
+    if (projError) return false;
+
+    // Update member roles: new owner gets "owner", old owner gets "admin"
+    const { data: newOwnerMember } = await supabase
+      .from("project_members")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("user_id", newOwnerId)
+      .single();
+
+    const { data: oldOwnerMember } = await supabase
+      .from("project_members")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("user_id", currentOwnerId)
+      .single();
+
+    if (newOwnerMember) {
+      await supabase.from("project_members").update({ role: "owner" }).eq("id", newOwnerMember.id);
+    }
+    if (oldOwnerMember) {
+      await supabase.from("project_members").update({ role: "admin" }).eq("id", oldOwnerMember.id);
+    }
+
+    await fetchMembers();
+    return true;
+  };
+
+  return { members, invites, loading, removeMember, banMember, createInvite, deleteInvite, fetchMembers, fetchInvites, updateMemberRole, transferOwnership };
 };
