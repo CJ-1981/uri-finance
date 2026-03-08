@@ -176,7 +176,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
         </SheetHeader>
 
-        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleTabKey} className="mt-4 space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
           <div className="flex gap-2">
             <Button
               type="button"
