@@ -61,45 +61,70 @@ interface CashCalculatorProps {
 
 type Counts = Record<string, { named: number; anon: number }>;
 
+const CACHE_KEY = "cash_calculator_counts";
+
+function loadCachedCounts(allDenoms: number[]): Counts {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const today = new Date().toISOString().slice(0, 10);
+      if (parsed.date === today && parsed.currency) {
+        return parsed.counts;
+      }
+    }
+  } catch {}
+  const init: Counts = {};
+  allDenoms.forEach((d) => { init[d.toString()] = { named: 0, anon: 0 }; });
+  return init;
+}
+
+function saveCacheCounts(counts: Counts, currency: string) {
+  const today = new Date().toISOString().slice(0, 10);
+  localStorage.setItem(CACHE_KEY, JSON.stringify({ date: today, currency, counts }));
+}
+
 const CashCalculator = ({ currency }: CashCalculatorProps) => {
   const { t } = useI18n();
   const denoms = DENOMINATIONS[currency] || DEFAULT_DENOMS;
   const allDenoms = [...denoms.bills, ...denoms.coins];
 
-  const [counts, setCounts] = useState<Counts>(() => {
-    const init: Counts = {};
-    allDenoms.forEach((d) => {
-      init[d.toString()] = { named: 0, anon: 0 };
+  const [counts, setCounts] = useState<Counts>(() => loadCachedCounts(allDenoms));
+
+  // Persist to localStorage on every change
+  const setCountsAndCache = useCallback((updater: Counts | ((prev: Counts) => Counts)) => {
+    setCounts((prev) => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveCacheCounts(next, currency);
+      return next;
     });
-    return init;
-  });
+  }, [currency]);
 
   // Reset counts when currency changes
   const denomKey = allDenoms.join(",");
   const [prevDenomKey, setPrevDenomKey] = useState(denomKey);
   if (denomKey !== prevDenomKey) {
     const init: Counts = {};
-    allDenoms.forEach((d) => {
-      init[d.toString()] = { named: 0, anon: 0 };
-    });
+    allDenoms.forEach((d) => { init[d.toString()] = { named: 0, anon: 0 }; });
     setCounts(init);
+    saveCacheCounts(init, currency);
     setPrevDenomKey(denomKey);
   }
 
   const updateCount = useCallback((denom: string, column: "named" | "anon", delta: number) => {
-    setCounts((prev) => {
+    setCountsAndCache((prev) => {
       const current = prev[denom]?.[column] ?? 0;
       const newVal = Math.max(0, current + delta);
       return { ...prev, [denom]: { ...prev[denom], [column]: newVal } };
     });
-  }, []);
+  }, [setCountsAndCache]);
 
   const setCount = useCallback((denom: string, column: "named" | "anon", value: number) => {
-    setCounts((prev) => ({
+    setCountsAndCache((prev) => ({
       ...prev,
       [denom]: { ...prev[denom], [column]: Math.max(0, value) },
     }));
-  }, []);
+  }, [setCountsAndCache]);
 
   const totals = useMemo(() => {
     let named = 0;
@@ -120,7 +145,7 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
     allDenoms.forEach((d) => {
       init[d.toString()] = { named: 0, anon: 0 };
     });
-    setCounts(init);
+    setCountsAndCache(init);
     toast.success(t("cash.cleared"));
   };
 
