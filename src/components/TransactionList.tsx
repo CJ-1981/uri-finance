@@ -18,7 +18,7 @@ interface Props {
   isViewer?: boolean;
 }
 
-const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns }: Props) => {
+const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
   const { user } = useAuth();
   const [selectMode, setSelectMode] = useState(false);
