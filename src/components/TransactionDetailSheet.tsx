@@ -170,8 +170,6 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     }
   }, [hasNext, transactionList, onNavigate, currentIndex]);
 
-  // Arrow key navigation in multi-edit mode
-  useArrowNavigation(goPrev, goNext, open && totalCount > 1);
 
   if (!transaction) return null;
 
