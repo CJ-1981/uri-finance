@@ -69,5 +69,18 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  return { columns, loading, addColumn, deleteColumn, toggleMasked, fetchColumns };
+  const updateSuggestions = async (id: string, suggestions: string[]) => {
+    const { error } = await supabase
+      .from("custom_columns")
+      .update({ suggestions } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update suggestions");
+      return;
+    }
+    toast.success("Suggestions updated");
+    await fetchColumns();
+  };
+
+  return { columns, loading, addColumn, deleteColumn, toggleMasked, updateSuggestions, fetchColumns };
 };
