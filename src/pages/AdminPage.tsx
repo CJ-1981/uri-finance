@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useCategories } from "@/hooks/useCategories";
@@ -6,18 +7,39 @@ import { useCustomColumns } from "@/hooks/useCustomColumns";
 import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, ShieldCheck, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AdminPage = () => {
   const { user } = useAuth();
-  const { projects, activeProject } = useProjects();
+  const { projects, activeProject, fetchProjects } = useProjects();
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn } = useCustomColumns(activeProject?.id);
   const navigate = useNavigate();
+  const [currency, setCurrency] = useState(activeProject?.currency || "USD");
+  const [savingCurrency, setSavingCurrency] = useState(false);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+
+  const handleCurrencyChange = async () => {
+    if (!activeProject || !currency.trim()) return;
+    setSavingCurrency(true);
+    const { error } = await supabase
+      .from("projects")
+      .update({ currency: currency.trim().toUpperCase() })
+      .eq("id", activeProject.id);
+    setSavingCurrency(false);
+    if (error) {
+      toast.error("Failed to update currency");
+      return;
+    }
+    toast.success("Currency updated");
+    await fetchProjects();
+  };
 
   if (!activeProject) {
     return (
@@ -122,7 +144,21 @@ const AdminPage = () => {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground w-24">Currency</span>
-              <span className="text-sm text-foreground">{activeProject.currency}</span>
+              <Input
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="flex-1 bg-background text-sm uppercase"
+                maxLength={5}
+                placeholder="USD"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCurrencyChange}
+                disabled={savingCurrency || currency.trim().toUpperCase() === activeProject.currency}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </section>
