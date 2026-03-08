@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X, Hash, Type, EyeOff, Eye } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, X, Hash, Type, EyeOff, Eye, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { CustomColumn, ColumnType } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 
@@ -10,12 +11,15 @@ interface Props {
   onAdd: (name: string, type: ColumnType) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
+  onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
 }
 
-const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked }: Props) => {
+const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onUpdateSuggestions }: Props) => {
   const [name, setName] = useState("");
   const [colType, setColType] = useState<ColumnType>("numeric");
   const [adding, setAdding] = useState(false);
+  const [expandedCol, setExpandedCol] = useState<string | null>(null);
+  const [suggestionsText, setSuggestionsText] = useState<Record<string, string>>({});
   const { t } = useI18n();
 
   const handleAdd = async () => {
@@ -24,6 +28,32 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked }: Props
     await onAdd(name.trim(), colType);
     setName("");
     setAdding(false);
+  };
+
+  const toggleExpand = (col: CustomColumn) => {
+    if (expandedCol === col.id) {
+      setExpandedCol(null);
+    } else {
+      setExpandedCol(col.id);
+      // Initialize textarea with existing suggestions
+      if (!suggestionsText[col.id]) {
+        setSuggestionsText((prev) => ({
+          ...prev,
+          [col.id]: (col.suggestions || []).join("\n"),
+        }));
+      }
+    }
+  };
+
+  const handleSaveSuggestions = async (colId: string) => {
+    if (!onUpdateSuggestions) return;
+    const text = suggestionsText[colId] || "";
+    const entries = text
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    await onUpdateSuggestions(colId, entries);
+    setExpandedCol(null);
   };
 
   return (
@@ -65,30 +95,67 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked }: Props
       {columns.length === 0 ? (
         <p className="text-xs text-muted-foreground">{t("cc.noColumns")}</p>
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-2">
           {columns.map((col) => (
-            <div
-              key={col.id}
-              className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground"
-            >
-              {col.column_type === "numeric" ? (
-                <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
-              ) : (
-                <Type className="h-3 w-3 text-muted-foreground shrink-0" />
-              )}
-              {col.name}
-              {onToggleMasked && (
-                <button
-                  onClick={() => onToggleMasked(col.id, !col.masked)}
-                  className={`transition-colors ${col.masked ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}`}
-                  title={col.masked ? t("cc.maskedOn") : t("cc.maskedOff")}
-                >
-                  {col.masked ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            <div key={col.id} className="space-y-1">
+              <div className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground">
+                {col.column_type === "numeric" ? (
+                  <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+                ) : (
+                  <Type className="h-3 w-3 text-muted-foreground shrink-0" />
+                )}
+                <span className="flex-1">{col.name}</span>
+                {col.column_type === "text" && onUpdateSuggestions && (
+                  <button
+                    onClick={() => toggleExpand(col)}
+                    className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5"
+                    title={t("cc.manageSuggestions")}
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    {(col.suggestions || []).length > 0 && (
+                      <span className="text-[10px] tabular-nums">{col.suggestions.length}</span>
+                    )}
+                    {expandedCol === col.id ? (
+                      <ChevronUp className="h-3 w-3" />
+                    ) : (
+                      <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                )}
+                {onToggleMasked && (
+                  <button
+                    onClick={() => onToggleMasked(col.id, !col.masked)}
+                    className={`transition-colors ${col.masked ? "text-amber-500" : "text-muted-foreground hover:text-amber-500"}`}
+                    title={col.masked ? t("cc.maskedOn") : t("cc.maskedOff")}
+                  >
+                    {col.masked ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                )}
+                <button onClick={() => onDelete(col.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                  <X className="h-3.5 w-3.5" />
                 </button>
+              </div>
+              {expandedCol === col.id && (
+                <div className="ml-2 space-y-1.5">
+                  <p className="text-[11px] text-muted-foreground">{t("cc.suggestionsHint")}</p>
+                  <Textarea
+                    value={suggestionsText[col.id] || ""}
+                    onChange={(e) =>
+                      setSuggestionsText((prev) => ({ ...prev, [col.id]: e.target.value }))
+                    }
+                    placeholder={t("cc.suggestionsPlaceholder")}
+                    className="bg-background text-xs min-h-[80px]"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-7"
+                    onClick={() => handleSaveSuggestions(col.id)}
+                  >
+                    {t("cc.saveSuggestions")}
+                  </Button>
+                </div>
               )}
-              <button onClick={() => onDelete(col.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                <X className="h-3.5 w-3.5" />
-              </button>
             </div>
           ))}
         </div>
