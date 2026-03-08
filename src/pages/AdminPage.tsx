@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useCategories } from "@/hooks/useCategories";
@@ -6,8 +7,11 @@ import { useCustomColumns } from "@/hooks/useCustomColumns";
 import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, ShieldCheck, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const AdminPage = () => {
   const { user } = useAuth();
