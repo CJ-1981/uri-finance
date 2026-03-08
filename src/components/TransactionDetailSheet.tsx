@@ -169,6 +169,40 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     }
   }, [hasNext, transactionList, onNavigate, currentIndex]);
 
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Ctrl+Enter or Cmd+Enter → save
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleSave();
+      return;
+    }
+
+    if (e.key !== "Tab") return;
+    if (document.querySelector('[data-radix-popper-content-wrapper]')) return;
+
+    const container = formRef.current;
+    if (!container) return;
+
+    const stops = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-tab-stop]')
+    ).filter((el) => el.offsetParent !== null && !el.hasAttribute('disabled'));
+
+    if (stops.length === 0) return;
+
+    const target = (e.target as HTMLElement).closest?.('[data-tab-stop]') as HTMLElement | null;
+    const currentIdx = target ? stops.indexOf(target) : -1;
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.shiftKey) {
+      const prev = currentIdx <= 0 ? stops.length - 1 : currentIdx - 1;
+      stops[prev].focus();
+    } else {
+      const next = currentIdx < 0 || currentIdx >= stops.length - 1 ? 0 : currentIdx + 1;
+      stops[next].focus();
+    }
+  }, [handleSave]);
 
   if (!transaction) return null;
 
@@ -208,10 +242,12 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           </div>
         </SheetHeader>
 
-        <div className="mt-4 space-y-4">
+        <div ref={formRef} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
+          {/* Type toggle */}
           <div className="flex gap-2">
             <button
               type="button"
+              data-tab-stop
               onClick={() => isOwn && setType("income")}
               disabled={!isOwn}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
@@ -222,6 +258,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             </button>
             <button
               type="button"
+              data-tab-stop
               onClick={() => isOwn && setType("expense")}
               disabled={!isOwn}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
@@ -232,11 +269,13 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             </button>
           </div>
 
+          {/* Amount */}
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
               type="text"
               inputMode="decimal"
+              data-tab-stop
               value={amount}
               onChange={(e) => {
                 const v = e.target.value.replace(/[^0-9.]/g, "");
@@ -247,26 +286,82 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3 overflow-hidden">
-            <div className="space-y-2 min-w-0">
-              <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-              <Select value={category} onValueChange={setCategory} disabled={!isOwn}>
-                <SelectTrigger className="bg-muted/50 border-border/50 min-w-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Category */}
+          <div className="space-y-2 min-w-0">
+            <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
+            <Select value={category} onValueChange={setCategory} disabled={!isOwn}>
+              <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50 min-w-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Custom columns (after category) */}
+          {visibleCustomCols.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+              {visibleCustomCols.map((col) => (
+                  <div key={col.id} className="space-y-2">
+                    <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
+                    {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
+                      <AutoSuggestInput
+                        value={customValues[col.name] || ""}
+                        onChange={(val) =>
+                          setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                        }
+                        suggestions={columnSuggestions[col.name]}
+                        placeholder=""
+                        className="bg-muted/50 border-border/50"
+                        data-tab-stop
+                      />
+                    ) : (
+                      <Input
+                        type="text"
+                        inputMode={col.column_type === "numeric" ? "decimal" : "text"}
+                        data-tab-stop
+                        value={customValues[col.name] || ""}
+                        onChange={(e) => {
+                          const val = col.column_type === "numeric"
+                            ? e.target.value.replace(/[^0-9.]/g, "")
+                            : e.target.value;
+                          setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                        }}
+                        placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                        disabled={!isOwn}
+                        className="bg-muted/50 border-border/50"
+                      />
+                    )}
+                  </div>
+              ))}
             </div>
+          )}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-xs">{t("tx.description")}</Label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("tx.descriptionPlaceholder")}
+              disabled={!isOwn}
+              data-tab-stop
+              className="bg-muted/50 border-border/50"
+            />
+          </div>
+
+          {/* Date & Currency (last before buttons) */}
+          <div className="grid grid-cols-2 gap-3 overflow-hidden">
             <div className="space-y-2 min-w-0">
               <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    data-tab-stop
                     disabled={!isOwn}
                     className={cn(
                       "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
@@ -293,7 +388,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
               <Select value={currency} onValueChange={setCurrency} disabled={!isOwn}>
-                <SelectTrigger className="bg-muted/50 border-border/50">
+                <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -305,58 +400,12 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">{t("tx.description")}</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("tx.descriptionPlaceholder")}
-              disabled={!isOwn}
-              className="bg-muted/50 border-border/50"
-            />
-          </div>
-
-          {visibleCustomCols.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {visibleCustomCols.map((col) => (
-                  <div key={col.id} className="space-y-2">
-                    <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
-                    {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
-                      <AutoSuggestInput
-                        value={customValues[col.name] || ""}
-                        onChange={(val) =>
-                          setCustomValues((prev) => ({ ...prev, [col.name]: val }))
-                        }
-                        suggestions={columnSuggestions[col.name]}
-                        placeholder=""
-                        className="bg-muted/50 border-border/50"
-                      />
-                    ) : (
-                      <Input
-                        type="text"
-                        inputMode={col.column_type === "numeric" ? "decimal" : "text"}
-                        value={customValues[col.name] || ""}
-                        onChange={(e) => {
-                          const val = col.column_type === "numeric"
-                            ? e.target.value.replace(/[^0-9.]/g, "")
-                            : e.target.value;
-                          setCustomValues((prev) => ({ ...prev, [col.name]: val }));
-                        }}
-                        placeholder={col.column_type === "numeric" ? "0.00" : ""}
-                        disabled={!isOwn}
-                        className="bg-muted/50 border-border/50"
-                      />
-                    )}
-                  </div>
-              ))}
-            </div>
-          )}
-
+          {/* Action buttons */}
           {isOwn && (
             <div className="flex gap-2">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="h-12 px-4">
+                  <Button variant="destructive" data-tab-stop className="h-12 px-4">
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </AlertDialogTrigger>
@@ -375,6 +424,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               <Button
                 onClick={handleSave}
                 disabled={saving}
+                data-tab-stop
                 className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
               >
                 <Save className="h-4 w-4 mr-1" />
