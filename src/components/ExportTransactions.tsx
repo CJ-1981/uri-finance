@@ -10,10 +10,12 @@ import { Download } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
+import { CustomColumn } from "@/hooks/useCustomColumns";
 
 interface Props {
   transactions: Transaction[];
   headers: ColumnHeaders;
+  customColumns: CustomColumn[];
 }
 
 const formatAmount = (tx: Transaction) =>
@@ -33,38 +35,50 @@ const downloadFile = (content: string, filename: string, mime: string) => {
   toast.success(`Exported as ${filename}`);
 };
 
-const exportCSV = (transactions: Transaction[], h: ColumnHeaders) => {
-  const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}`;
+const getCustomVal = (tx: Transaction, colName: string) => {
+  const val = tx.custom_values?.[colName];
+  return val != null ? Number(val).toFixed(2) : "";
+};
+
+const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[]) => {
+  const colHeaders = cols.map((c) => c.name).join(",");
+  const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
   const rows = transactions.map(
-    (tx) =>
-      `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`
+    (tx) => {
+      const base = `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`;
+      const custom = cols.map((c) => getCustomVal(tx, c.name)).join(",");
+      return cols.length ? `${base},${custom}` : base;
+    }
   );
   downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv");
 };
 
-const exportXLS = (transactions: Transaction[], h: ColumnHeaders) => {
-  const header = `<tr><th>${h.date}</th><th>${h.type}</th><th>${h.category}</th><th>${h.description}</th><th>${h.amount}</th></tr>`;
+const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[]) => {
+  const colTh = cols.map((c) => `<th>${c.name}</th>`).join("");
+  const header = `<tr><th>${h.date}</th><th>${h.type}</th><th>${h.category}</th><th>${h.description}</th><th>${h.amount}</th>${colTh}</tr>`;
   const rows = transactions
-    .map(
-      (tx) =>
-        `<tr><td>${formatDate(tx)}</td><td>${tx.type}</td><td>${tx.category}</td><td>${tx.description || ""}</td><td>${formatAmount(tx)}</td></tr>`
-    )
+    .map((tx) => {
+      const colTd = cols.map((c) => `<td>${getCustomVal(tx, c.name)}</td>`).join("");
+      return `<tr><td>${formatDate(tx)}</td><td>${tx.type}</td><td>${tx.category}</td><td>${tx.description || ""}</td><td>${formatAmount(tx)}</td>${colTd}</tr>`;
+    })
     .join("");
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>${header}${rows}</table></body></html>`;
   downloadFile(html, "transactions.xls", "application/vnd.ms-excel");
 };
 
-const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders) => {
-  const header = `| ${h.date} | ${h.type} | ${h.category} | ${h.description} | ${h.amount} |`;
-  const sep = "| --- | --- | --- | --- | ---: |";
-  const rows = transactions.map(
-    (tx) =>
-      `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${tx.description || "-"} | ${formatAmount(tx)} |`
-  );
+const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[]) => {
+  const colH = cols.map((c) => ` ${c.name} |`).join("");
+  const header = `| ${h.date} | ${h.type} | ${h.category} | ${h.description} | ${h.amount} |${colH}`;
+  const colSep = cols.map(() => " ---: |").join("");
+  const sep = `| --- | --- | --- | --- | ---: |${colSep}`;
+  const rows = transactions.map((tx) => {
+    const colVals = cols.map((c) => ` ${getCustomVal(tx, c.name) || "-"} |`).join("");
+    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
+  });
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown");
 };
 
-const ExportTransactions = ({ transactions, headers }: Props) => {
+const ExportTransactions = ({ transactions, headers, customColumns }: Props) => {
   if (transactions.length === 0) return null;
 
   return (
@@ -75,13 +89,13 @@ const ExportTransactions = ({ transactions, headers }: Props) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => exportCSV(transactions, headers)}>
+        <DropdownMenuItem onClick={() => exportCSV(transactions, headers, customColumns)}>
           Export as CSV
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportXLS(transactions, headers)}>
+        <DropdownMenuItem onClick={() => exportXLS(transactions, headers, customColumns)}>
           Export as XLS
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers)}>
+        <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, customColumns)}>
           Export as Markdown
         </DropdownMenuItem>
       </DropdownMenuContent>

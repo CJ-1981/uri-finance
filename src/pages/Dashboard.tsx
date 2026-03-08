@@ -4,6 +4,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { useColumnHeaders } from "@/hooks/useColumnHeaders";
+import { useCustomColumns } from "@/hooks/useCustomColumns";
 import ProjectSwitcher from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList from "@/components/TransactionList";
@@ -21,6 +22,7 @@ const Dashboard = () => {
   const { transactions, addTransaction, updateTransaction, deleteTransaction, totalIncome, totalExpense, balance } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
+  const { columns: customColumns } = useCustomColumns(activeProject?.id);
   const [view, setView] = useState<"list" | "charts">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -35,7 +37,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-3">
         <div className="flex items-center justify-between">
           <ProjectSwitcher
@@ -48,7 +49,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-1">
            {activeProject && (
               <>
-              <ExportTransactions transactions={transactions} headers={headers} />
+              <ExportTransactions transactions={transactions} headers={headers} customColumns={customColumns} />
               {isOwner && (
                 <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
                   <Settings2 className="h-4 w-4" />
@@ -123,13 +124,13 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList transactions={transactions} onSelect={handleSelectTx} headers={headers} />
+              <TransactionList transactions={transactions} onSelect={handleSelectTx} headers={headers} customColumns={customColumns} />
             ) : (
               <FinanceCharts transactions={transactions} />
             )}
 
             {/* FAB */}
-            <AddTransactionSheet categories={categories} onAdd={addTransaction} />
+            <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} />
 
             {/* Detail sheet */}
             <TransactionDetailSheet
@@ -139,6 +140,7 @@ const Dashboard = () => {
               onOpenChange={setDetailOpen}
               onUpdate={updateTransaction}
               onDelete={deleteTransaction}
+              customColumns={customColumns}
             />
           </div>
         )}

@@ -2,14 +2,16 @@ import { Transaction } from "@/hooks/useTransactions";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
+import { CustomColumn } from "@/hooks/useCustomColumns";
 
 interface Props {
   transactions: Transaction[];
   onSelect: (tx: Transaction) => void;
   headers: ColumnHeaders;
+  customColumns: CustomColumn[];
 }
 
-const TransactionList = ({ transactions, onSelect, headers }: Props) => {
+const TransactionList = ({ transactions, onSelect, headers, customColumns }: Props) => {
   if (transactions.length === 0) {
     return (
       <div className="py-12 text-center text-muted-foreground text-sm">
@@ -27,6 +29,9 @@ const TransactionList = ({ transactions, onSelect, headers }: Props) => {
           <span className="flex-1 truncate">{headers.description}</span>
           <span className="hidden sm:block w-20 text-right">{headers.category}</span>
         </div>
+        {customColumns.map((col) => (
+          <span key={col.id} className="hidden sm:block w-20 text-right">{col.name}</span>
+        ))}
         <span className="w-24 text-right">{headers.amount}</span>
       </div>
 
@@ -56,6 +61,14 @@ const TransactionList = ({ transactions, onSelect, headers }: Props) => {
               {tx.category} · {format(parseISO(tx.transaction_date), "MMM d")}
             </p>
           </div>
+          {customColumns.map((col) => {
+            const val = tx.custom_values?.[col.name];
+            return (
+              <span key={col.id} className="hidden sm:block w-20 text-right text-xs text-muted-foreground">
+                {val != null ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 }) : "—"}
+              </span>
+            );
+          })}
           <p
             className={`text-sm font-semibold ${
               tx.type === "income" ? "text-income" : "text-expense"
