@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useImperativeHandle, forwardRef } from "react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight } from "lucide-react";
@@ -24,9 +24,15 @@ interface Props {
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
-const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
+export interface TransactionListHandle {
+  focusSearch: () => void;
+}
+
+const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }, ref) => {
   const { t } = useI18n();
   const { user } = useAuth();
+  const searchRef = useRef<HTMLInputElement>(null);
+  useImperativeHandle(ref, () => ({ focusSearch: () => searchRef.current?.focus() }));
   const [searchQuery, setSearchQuery] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -132,6 +138,7 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
       <div className="relative px-1">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
+          ref={searchRef}
           value={searchQuery}
           onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
           placeholder={t("tx.search") || "Search transactions..."}
@@ -318,6 +325,6 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
       )}
     </div>
   );
-};
+});
 
 export default TransactionList;

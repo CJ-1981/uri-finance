@@ -129,7 +129,15 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const formRef = useRef<HTMLFormElement>(null);
 
-  const handleTabKey = useCallback((e: React.KeyboardEvent) => {
+  const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
+    // Ctrl+Enter or Cmd+Enter → submit
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      formRef.current?.requestSubmit();
+      return;
+    }
+
+    // Tab management
     if (e.key !== "Tab") return;
 
     // Don't intercept Tab when a popover/dropdown is open
@@ -168,7 +176,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
         </SheetHeader>
 
-        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleTabKey} className="mt-4 space-y-4">
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
           <div className="flex gap-2">
             <Button
               type="button"
