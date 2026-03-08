@@ -652,7 +652,7 @@ const AdminPage = () => {
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <div className="flex justify-between">
               <span>{t("admin.buildTime") || "Build Time"}</span>
-              <span className="font-mono">{(() => { try { return format(new Date((globalThis as any).__BUILD_TIME__ || new Date()), "yyyy-MM-dd HH:mm:ss"); } catch { return "N/A"; } })()}</span>
+              <span className="font-mono">{(() => { try { return format(new Date(__BUILD_TIME__), "yyyy-MM-dd HH:mm:ss"); } catch { return "N/A"; } })()}</span>
             </div>
             <div className="flex justify-between">
               <span>{t("admin.buildMode") || "Mode"}</span>
