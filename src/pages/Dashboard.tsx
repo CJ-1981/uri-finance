@@ -122,6 +122,7 @@ const Dashboard = () => {
   useKeyboardShortcut("nextTransaction", goNextTx, !!activeProject && view === "list" && !detailOpen);
   useKeyboardShortcut("prevTransaction", goPrevTx, !!activeProject && view === "list" && !detailOpen);
 
+  const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
 
   const handleSelectTx = (tx: Transaction) => {
