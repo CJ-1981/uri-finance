@@ -131,14 +131,18 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const handleTabKey = useCallback((e: React.KeyboardEvent) => {
     if (e.key !== "Tab") return;
+
+    // Don't intercept Tab when a popover/dropdown is open
+    if (document.querySelector('[data-radix-popper-content-wrapper]')) return;
+
     const form = formRef.current;
     if (!form) return;
 
     const focusable = Array.from(
       form.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+        'button:not([disabled]):not([data-radix-collection-item]), input:not([disabled]), [role="combobox"]:not([disabled])'
       )
-    ).filter((el) => el.offsetParent !== null); // visible only
+    ).filter((el) => el.offsetParent !== null);
 
     if (focusable.length === 0) return;
 
