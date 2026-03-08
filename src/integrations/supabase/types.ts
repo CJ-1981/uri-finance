@@ -216,6 +216,7 @@ export type Database = {
           category: string
           created_at: string
           custom_values: Json | null
+          deleted_at: string | null
           description: string | null
           id: string
           project_id: string
@@ -228,6 +229,7 @@ export type Database = {
           category?: string
           created_at?: string
           custom_values?: Json | null
+          deleted_at?: string | null
           description?: string | null
           id?: string
           project_id: string
@@ -240,6 +242,7 @@ export type Database = {
           category?: string
           created_at?: string
           custom_values?: Json | null
+          deleted_at?: string | null
           description?: string | null
           id?: string
           project_id?: string
