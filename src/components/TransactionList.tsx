@@ -166,7 +166,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
         )}
       </div>
 
-      {transactions.slice(0, 20).map((tx, i) => (
+      {filteredTransactions.slice(0, 20).map((tx, i) => (
         <div
           key={tx.id}
           onClick={() => selectMode ? toggleSelect(tx.id) : onSelect(tx)}
