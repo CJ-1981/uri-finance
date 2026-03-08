@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, TrendingDown, Trash2, Save } from "lucide-react";
+import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight } from "lucide-react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
@@ -21,9 +21,12 @@ interface Props {
   onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values">>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   isViewer?: boolean;
+  /** For multi-edit: full list of selected transactions */
+  transactionList?: Transaction[];
+  onNavigate?: (tx: Transaction) => void;
 }
 
-const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer }: Props) => {
+const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate }: Props) => {
   const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -36,25 +39,35 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   const isOwn = !isViewer && transaction?.user_id === user?.id;
 
-  const resetForm = () => {
-    if (transaction) {
-      setType(transaction.type);
-      setAmount(String(transaction.amount));
-      setCategory(transaction.category);
-      setDescription(transaction.description || "");
-      setDate(transaction.transaction_date);
-      const cv: Record<string, string> = {};
-      if (transaction.custom_values) {
-        for (const [k, v] of Object.entries(transaction.custom_values)) {
-          cv[k] = String(v);
-        }
+  const currentIndex = transactionList && transaction
+    ? transactionList.findIndex((tx) => tx.id === transaction.id)
+    : -1;
+  const hasPrev = transactionList && currentIndex > 0;
+  const hasNext = transactionList && currentIndex >= 0 && currentIndex < transactionList.length - 1;
+  const totalCount = transactionList?.length ?? 0;
+
+  const loadTransaction = useCallback((tx: Transaction) => {
+    setType(tx.type);
+    setAmount(String(tx.amount));
+    setCategory(tx.category);
+    setDescription(tx.description || "");
+    setDate(tx.transaction_date);
+    const cv: Record<string, string> = {};
+    if (tx.custom_values) {
+      for (const [k, v] of Object.entries(tx.custom_values)) {
+        cv[k] = String(v);
       }
-      setCustomValues(cv);
     }
-  };
+    setCustomValues(cv);
+  }, []);
+
+  // Load form when transaction changes
+  useEffect(() => {
+    if (open && transaction) loadTransaction(transaction);
+  }, [open, transaction, loadTransaction]);
 
   const handleOpenChange = (val: boolean) => {
-    if (val && transaction) resetForm();
+    if (val && transaction) loadTransaction(transaction);
     onOpenChange(val);
   };
 
@@ -80,22 +93,80 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
       custom_values: cv,
     });
     setSaving(false);
-    onOpenChange(false);
+
+    // In multi-edit mode, auto-advance to next; otherwise close
+    if (transactionList && hasNext && onNavigate) {
+      onNavigate(transactionList[currentIndex + 1]);
+    } else {
+      onOpenChange(false);
+    }
   };
 
   const handleDelete = async () => {
     if (!transaction) return;
     await onDelete(transaction.id);
-    onOpenChange(false);
+    // In multi-edit, advance to next or prev; otherwise close
+    if (transactionList && onNavigate) {
+      if (hasNext) {
+        onNavigate(transactionList[currentIndex + 1]);
+      } else if (hasPrev) {
+        onNavigate(transactionList[currentIndex - 1]);
+      } else {
+        onOpenChange(false);
+      }
+    } else {
+      onOpenChange(false);
+    }
+  };
+
+  const goPrev = () => {
+    if (hasPrev && transactionList && onNavigate) {
+      onNavigate(transactionList[currentIndex - 1]);
+    }
+  };
+
+  const goNext = () => {
+    if (hasNext && transactionList && onNavigate) {
+      onNavigate(transactionList[currentIndex + 1]);
+    }
   };
 
   if (!transaction) return null;
+
+  const visibleCustomCols = customColumns.filter(col => !(isViewer && col.masked));
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
+            {totalCount > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={goPrev}
+                  disabled={!hasPrev}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
+                  {currentIndex + 1}/{totalCount}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={goNext}
+                  disabled={!hasNext}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
@@ -174,9 +245,9 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             />
           </div>
 
-          {customColumns.filter(col => !(isViewer && col.masked)).length > 0 && (
+          {visibleCustomCols.length > 0 && (
             <div className="grid grid-cols-2 gap-3">
-              {customColumns.filter(col => !(isViewer && col.masked)).map((col) => (
+              {visibleCustomCols.map((col) => (
                   <div key={col.id} className="space-y-2">
                     <Label className="text-muted-foreground text-xs">{col.name}</Label>
                     <Input
