@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useImperativeHandle, forwardRef } from "react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight } from "lucide-react";
