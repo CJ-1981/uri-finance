@@ -9,6 +9,7 @@ import { TrendingUp, TrendingDown, Trash2, Save } from "lucide-react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   transaction: Transaction | null;
@@ -28,6 +29,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [date, setDate] = useState("");
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const { t } = useI18n();
 
   const resetForm = () => {
     if (transaction) {
@@ -54,13 +56,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const handleSave = async () => {
     if (!transaction || !amount || Number(amount) <= 0) return;
     setSaving(true);
-
     const cv: Record<string, number> = {};
     for (const col of customColumns) {
       const val = customValues[col.name];
       if (val && !isNaN(Number(val))) cv[col.name] = Number(val);
     }
-
     await onUpdate(transaction.id, {
       type,
       amount: Number(amount),
@@ -85,7 +85,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-foreground">Edit Transaction</SheetTitle>
+          <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
@@ -94,28 +94,24 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               type="button"
               onClick={() => setType("income")}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
-                type === "income"
-                  ? "income-badge ring-1 ring-income/30"
-                  : "bg-muted text-muted-foreground"
+                type === "income" ? "income-badge ring-1 ring-income/30" : "bg-muted text-muted-foreground"
               }`}
             >
-              <TrendingUp className="h-4 w-4" /> Income
+              <TrendingUp className="h-4 w-4" /> {t("tx.income")}
             </button>
             <button
               type="button"
               onClick={() => setType("expense")}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
-                type === "expense"
-                  ? "expense-badge ring-1 ring-expense/30"
-                  : "bg-muted text-muted-foreground"
+                type === "expense" ? "expense-badge ring-1 ring-expense/30" : "bg-muted text-muted-foreground"
               }`}
             >
-              <TrendingDown className="h-4 w-4" /> Expense
+              <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
             </button>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">Amount</Label>
+            <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
               type="number"
               step="0.01"
@@ -128,7 +124,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Category</Label>
+              <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="bg-muted/50 border-border/50">
                   <SelectValue />
@@ -141,7 +137,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Date</Label>
+              <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
               <Input
                 type="date"
                 value={date}
@@ -152,16 +148,15 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           </div>
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">Description</Label>
+            <Label className="text-muted-foreground text-xs">{t("tx.description")}</Label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What was this for?"
+              placeholder={t("tx.descriptionPlaceholder")}
               className="bg-muted/50 border-border/50"
             />
           </div>
 
-          {/* Custom numeric columns */}
           {customColumns.length > 0 && (
             <div className="grid grid-cols-2 gap-3">
               {customColumns.map((col) => (
@@ -189,12 +184,12 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
-                  <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                  <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -205,7 +200,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
             >
               <Save className="h-4 w-4 mr-1" />
-              {saving ? "Saving..." : "Save Changes"}
+              {saving ? t("tx.saving") : t("tx.saveChanges")}
             </Button>
           </div>
         </div>

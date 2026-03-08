@@ -1,10 +1,11 @@
 import { Transaction } from "@/hooks/useTransactions";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip,
   PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
-import { format, parseISO, startOfMonth, subMonths } from "date-fns";
+import { format, startOfMonth, subMonths } from "date-fns";
 import { useMemo, useState } from "react";
 
 interface Props {
@@ -32,11 +33,12 @@ const TOOLTIP_STYLE = {
 type MetricKey = "income" | "expense" | string;
 
 const FinanceCharts = ({ transactions, customColumns }: Props) => {
-  // Available metrics: income, expense + custom columns
+  const { t } = useI18n();
+
   const metricOptions: { key: MetricKey; label: string; color: string }[] = useMemo(() => {
     const base = [
-      { key: "income" as MetricKey, label: "Income", color: "hsl(152, 60%, 50%)" },
-      { key: "expense" as MetricKey, label: "Expense", color: "hsl(0, 72%, 58%)" },
+      { key: "income" as MetricKey, label: t("tx.income"), color: "hsl(152, 60%, 50%)" },
+      { key: "expense" as MetricKey, label: t("tx.expense"), color: "hsl(0, 72%, 58%)" },
     ];
     const custom = customColumns.map((col, i) => ({
       key: col.name as MetricKey,
@@ -44,7 +46,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       color: COLORS[(i + 2) % COLORS.length],
     }));
     return [...base, ...custom];
-  }, [customColumns]);
+  }, [customColumns, t]);
 
   const [selectedMetrics, setSelectedMetrics] = useState<Set<MetricKey>>(
     new Set(["income", "expense"])
@@ -67,26 +69,18 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
       const month = startOfMonth(subMonths(new Date(), 5 - i));
       const label = format(month, "MMM");
       const monthStr = format(month, "yyyy-MM");
-      const monthTxs = transactions.filter((t) => t.transaction_date.startsWith(monthStr));
+      const monthTxs = transactions.filter((tx) => tx.transaction_date.startsWith(monthStr));
 
       const row: Record<string, string | number> = { name: label };
+      row.income = monthTxs.filter((tx) => tx.type === "income").reduce((s, tx) => s + Number(tx.amount), 0);
+      row.expense = monthTxs.filter((tx) => tx.type === "expense").reduce((s, tx) => s + Number(tx.amount), 0);
 
-      row.income = monthTxs
-        .filter((t) => t.type === "income")
-        .reduce((s, t) => s + Number(t.amount), 0);
-
-      row.expense = monthTxs
-        .filter((t) => t.type === "expense")
-        .reduce((s, t) => s + Number(t.amount), 0);
-
-      // Custom column aggregates
       for (const col of customColumns) {
-        row[col.name] = monthTxs.reduce((s, t) => {
-          const v = t.custom_values?.[col.name];
+        row[col.name] = monthTxs.reduce((s, tx) => {
+          const v = tx.custom_values?.[col.name];
           return s + (v != null ? Number(v) : 0);
         }, 0);
       }
-
       return row;
     });
   }, [transactions, customColumns]);
@@ -94,9 +88,9 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
     transactions
-      .filter((t) => t.type === "expense")
-      .forEach((t) => {
-        map[t.category] = (map[t.category] || 0) + Number(t.amount);
+      .filter((tx) => tx.type === "expense")
+      .forEach((tx) => {
+        map[tx.category] = (map[tx.category] || 0) + Number(tx.amount);
       });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
@@ -107,7 +101,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
   if (transactions.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground text-sm">
-        Add transactions to see charts
+        {t("chart.addToSee")}
       </div>
     );
   }
@@ -116,7 +110,6 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
 
   return (
     <div className="space-y-6">
-      {/* Metric selector chips */}
       <div className="flex flex-wrap gap-2">
         {metricOptions.map((m) => (
           <button
@@ -137,11 +130,8 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
         ))}
       </div>
 
-      {/* Filled area chart */}
       <div className="glass-card p-4">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">
-          Trend (6 months)
-        </h3>
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={monthlyData}>
             <defs>
@@ -152,48 +142,23 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
                 </linearGradient>
               ))}
             </defs>
-            <XAxis
-              dataKey="name"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }}
-            />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
-            <Tooltip
-              contentStyle={TOOLTIP_STYLE}
-              formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]}
-            />
+            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
             {activeMetrics.map((m) => (
-              <Area
-                key={m.key}
-                type="monotone"
-                dataKey={m.key}
-                stroke={m.color}
-                strokeWidth={2}
-                fill={`url(#grad-${m.key})`}
-                name={m.label}
-              />
+              <Area key={m.key} type="monotone" dataKey={m.key} stroke={m.color} strokeWidth={2} fill={`url(#grad-${m.key})`} name={m.label} />
             ))}
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Monthly bar chart */}
       <div className="glass-card p-4">
-        <h3 className="mb-4 text-sm font-medium text-muted-foreground">Comparison (6 months)</h3>
+        <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.comparison")}</h3>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={monthlyData} barGap={2}>
-            <XAxis
-              dataKey="name"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }}
-            />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
-            <Tooltip
-              contentStyle={TOOLTIP_STYLE}
-              formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]}
-            />
+            <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]} />
             {activeMetrics.map((m) => (
               <Bar key={m.key} dataKey={m.key} fill={m.color} radius={[4, 4, 0, 0]} name={m.label} />
             ))}
@@ -201,29 +166,17 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Category pie */}
       {categoryData.length > 0 && (
         <div className="glass-card p-4">
-          <h3 className="mb-4 text-sm font-medium text-muted-foreground">Expense by Category</h3>
+          <h3 className="mb-4 text-sm font-medium text-muted-foreground">{t("chart.expenseByCategory")}</h3>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={75}
-                dataKey="value"
-                strokeWidth={0}
-              >
+              <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
                 {categoryData.map((_, i) => (
                   <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={TOOLTIP_STYLE}
-                formatter={(value: number) => [`$${value.toLocaleString()}`, ""]}
-              />
+              <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number) => [`$${value.toLocaleString()}`, ""]} />
             </PieChart>
           </ResponsiveContainer>
           <div className="mt-2 flex flex-wrap justify-center gap-3">

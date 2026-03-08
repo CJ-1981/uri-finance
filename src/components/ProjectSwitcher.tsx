@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, Plus, UserPlus, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   projects: Project[];
@@ -22,6 +23,7 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
   const [desc, setDesc] = useState("");
   const [code, setCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const { t } = useI18n();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
     if (!active) return;
     navigator.clipboard.writeText(active.invite_code);
     setCopied(true);
-    toast.success("Invite code copied!");
+    toast.success(t("proj.inviteCopied"));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -52,26 +54,29 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <button className="flex items-center gap-2 rounded-xl bg-muted/50 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-          {active?.name || "Select Project"}
+          {active?.name || t("proj.selectProject")}
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[80vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-foreground">Projects</SheetTitle>
+          <SheetTitle className="text-foreground">{t("proj.projects")}</SheetTitle>
         </SheetHeader>
 
-        {/* Tab buttons */}
         <div className="mt-4 flex gap-2">
-          {(["list", "create", "join"] as const).map((t) => (
+          {([
+            { key: "list" as const, label: t("proj.myProjects") },
+            { key: "create" as const, label: t("proj.createNew") },
+            { key: "join" as const, label: t("proj.join") },
+          ]).map(({ key, label }) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={key}
+              onClick={() => setTab(key)}
               className={`flex-1 rounded-lg py-2 text-xs font-medium transition-all ${
-                tab === t ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                tab === key ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
               }`}
             >
-              {t === "list" ? "My Projects" : t === "create" ? "Create New" : "Join"}
+              {label}
             </button>
           ))}
         </div>
@@ -81,7 +86,7 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
             <div className="space-y-2">
               {projects.length === 0 ? (
                 <p className="py-8 text-center text-sm text-muted-foreground">
-                  No projects yet. Create one or join with an invite code.
+                  {t("proj.noProjects")}
                 </p>
               ) : (
                 projects.map((p) => (
@@ -102,11 +107,10 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
                 ))
               )}
 
-              {/* Invite code display */}
               {active && (
                 <div className="mt-4 rounded-xl bg-muted/30 p-4">
                   <p className="text-xs text-muted-foreground mb-2">
-                    Share this invite code so others can join:
+                    {t("proj.shareInvite")}
                   </p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 rounded-lg bg-muted px-3 py-2 text-sm font-mono text-primary">
@@ -129,26 +133,26 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
           {tab === "create" && (
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-muted-foreground text-xs">Project Name</Label>
+                <Label className="text-muted-foreground text-xs">{t("proj.projectName")}</Label>
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Household Budget"
+                  placeholder={t("proj.projectNamePlaceholder")}
                   required
                   className="bg-muted/50 border-border/50"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-muted-foreground text-xs">Description (optional)</Label>
+                <Label className="text-muted-foreground text-xs">{t("proj.descriptionOptional")}</Label>
                 <Input
                   value={desc}
                   onChange={(e) => setDesc(e.target.value)}
-                  placeholder="What is this project for?"
+                  placeholder={t("proj.descriptionPlaceholder")}
                   className="bg-muted/50 border-border/50"
                 />
               </div>
               <Button type="submit" className="w-full gradient-primary font-semibold text-primary-foreground">
-                <Plus className="mr-2 h-4 w-4" /> Create Project
+                <Plus className="mr-2 h-4 w-4" /> {t("proj.createProject")}
               </Button>
             </form>
           )}
@@ -156,17 +160,17 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
           {tab === "join" && (
             <form onSubmit={handleJoin} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-muted-foreground text-xs">Invite Code</Label>
+                <Label className="text-muted-foreground text-xs">{t("proj.inviteCode")}</Label>
                 <Input
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  placeholder="Enter invite code"
+                  placeholder={t("proj.enterInviteCode")}
                   required
                   className="bg-muted/50 border-border/50 font-mono"
                 />
               </div>
               <Button type="submit" className="w-full gradient-primary font-semibold text-primary-foreground">
-                <UserPlus className="mr-2 h-4 w-4" /> Join Project
+                <UserPlus className="mr-2 h-4 w-4" /> {t("proj.joinProject")}
               </Button>
             </form>
           )}

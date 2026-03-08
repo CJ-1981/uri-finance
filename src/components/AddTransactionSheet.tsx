@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, TrendingUp, TrendingDown } from "lucide-react";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   categories: Category[];
@@ -30,6 +31,7 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const { t } = useI18n();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +68,7 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
       </SheetTrigger>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-foreground">Add Transaction</SheetTitle>
+          <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -80,7 +82,7 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
                   : "bg-muted text-muted-foreground"
               }`}
             >
-              <TrendingUp className="h-4 w-4" /> Income
+              <TrendingUp className="h-4 w-4" /> {t("tx.income")}
             </button>
             <button
               type="button"
@@ -91,12 +93,12 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
                   : "bg-muted text-muted-foreground"
               }`}
             >
-              <TrendingDown className="h-4 w-4" /> Expense
+              <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
             </button>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">Amount</Label>
+            <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
               type="number"
               step="0.01"
@@ -111,7 +113,7 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Category</Label>
+              <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="bg-muted/50 border-border/50">
                   <SelectValue />
@@ -124,7 +126,7 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">Date</Label>
+              <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
               <Input
                 type="date"
                 value={date}
@@ -135,16 +137,15 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">Description (optional)</Label>
+            <Label className="text-muted-foreground text-xs">{t("tx.descriptionOptional")}</Label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What was this for?"
+              placeholder={t("tx.descriptionPlaceholder")}
               className="bg-muted/50 border-border/50"
             />
           </div>
 
-          {/* Custom numeric columns */}
           {customColumns.length > 0 && (
             <div className="grid grid-cols-2 gap-3">
               {customColumns.map((col) => (
@@ -168,7 +169,7 @@ const AddTransactionSheet = ({ categories, customColumns, onAdd }: Props) => {
             disabled={submitting}
             className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
           >
-            {submitting ? "Adding..." : "Add Transaction"}
+            {submitting ? t("tx.adding") : t("tx.addTransaction")}
           </Button>
         </form>
       </SheetContent>

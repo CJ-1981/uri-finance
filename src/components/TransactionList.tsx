@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   transactions: Transaction[];
@@ -12,17 +13,18 @@ interface Props {
 }
 
 const TransactionList = ({ transactions, onSelect, headers, customColumns }: Props) => {
+  const { t } = useI18n();
+
   if (transactions.length === 0) {
     return (
       <div className="py-12 text-center text-muted-foreground text-sm">
-        No transactions yet. Tap + to add one.
+        {t("tx.noTransactions")}
       </div>
     );
   }
 
   return (
     <div className="space-y-2">
-      {/* Column header row */}
       <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
         <div className="w-10 shrink-0" />
         <div className="flex-1 min-w-0 flex gap-2">
