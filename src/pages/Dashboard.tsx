@@ -201,6 +201,7 @@ const Dashboard = () => {
           </div>
         )}
       </main>
+      <PinSetupDialog open={pinDialogOpen} onOpenChange={setPinDialogOpen} onComplete={() => setHasPin(true)} />
     </div>
   );
 };
