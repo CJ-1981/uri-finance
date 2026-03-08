@@ -250,7 +250,8 @@ const AdminPage = () => {
       </header>
 
       <main className="px-4 pt-6 max-w-lg mx-auto space-y-8">
-        {/* Deleted Transactions (Trash) */}
+        {/* Deleted Transactions (Trash) - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -263,6 +264,7 @@ const AdminPage = () => {
             <TrashManager projectId={activeProject.id} currency={activeProject.currency} />
           </div>
         </section>
+        )}
 
         {/* Archive */}
         <section className="space-y-4">
