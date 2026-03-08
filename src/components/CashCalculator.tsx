@@ -268,17 +268,17 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pb-4">
-        <Button variant="outline" className="flex-1 text-xs" onClick={clearAll}>
-          <Trash2 className="h-3.5 w-3.5 mr-1" />
+      <div className="flex gap-1.5 pb-4">
+        <Button variant="outline" className="flex-1 text-[10px] leading-tight whitespace-normal h-auto py-2 px-2" onClick={clearAll}>
+          <Trash2 className="h-3.5 w-3.5 mr-0.5 shrink-0" />
           {t("cash.clearAll")}
         </Button>
-        <Button variant="outline" className="flex-1 text-xs" onClick={copyMarkdown}>
-          <Copy className="h-3.5 w-3.5 mr-1" />
+        <Button variant="outline" className="flex-1 text-[10px] leading-tight whitespace-normal h-auto py-2 px-2" onClick={copyMarkdown}>
+          <Copy className="h-3.5 w-3.5 mr-0.5 shrink-0" />
           {t("cash.copy")}
         </Button>
-        <Button variant="default" className="flex-1 text-xs" onClick={exportMarkdown}>
-          <FileText className="h-3.5 w-3.5 mr-1" />
+        <Button variant="default" className="flex-1 text-[10px] leading-tight whitespace-normal h-auto py-2 px-2" onClick={exportMarkdown}>
+          <FileText className="h-3.5 w-3.5 mr-0.5 shrink-0" />
           {t("cash.export")}
         </Button>
       </div>
