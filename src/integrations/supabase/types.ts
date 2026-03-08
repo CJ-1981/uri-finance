@@ -46,6 +46,35 @@ export type Database = {
           },
         ]
       }
+      project_bans: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_bans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_categories: {
         Row: {
           created_at: string
@@ -68,6 +97,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "project_categories_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_invites: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          id: string
+          label: string | null
+          project_id: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          label?: string | null
+          project_id: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string | null
+          project_id?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_invites_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"

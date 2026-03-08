@@ -72,20 +72,86 @@ export const useProjects = () => {
 
   const joinProject = async (inviteCode: string) => {
     if (!user) return;
-    const { data: project } = await supabase
-      .from("projects")
+
+    // Look up invite code in project_invites table
+    const { data: invite } = await supabase
+      .from("project_invites")
       .select("*")
-      .eq("invite_code", inviteCode.trim())
+      .eq("code", inviteCode.trim())
+      .is("used_by", null)
       .single();
 
-    if (!project) {
-      toast.error("Invalid invite code");
+    if (!invite) {
+      // Fallback: try legacy invite_code on projects table
+      const { data: project } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("invite_code", inviteCode.trim())
+        .single();
+
+      if (!project) {
+        toast.error("Invalid or already used invite code");
+        return;
+      }
+
+      // Check if banned
+      const { data: ban } = await supabase
+        .from("project_bans")
+        .select("id")
+        .eq("project_id", project.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (ban) {
+        toast.error("You have been banned from this project.");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("project_members")
+        .insert({ project_id: project.id, user_id: user.id });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast.info("You're already a member of this project");
+        } else {
+          toast.error("Failed to join project");
+        }
+        return;
+      }
+
+      toast.success(`Joined "${project.name}"!`);
+      await fetchProjects();
+      setActiveProject(project as Project);
       return;
     }
 
+    // New invite system
+    const projectId = (invite as any).project_id;
+
+    // Check if banned
+    const { data: ban } = await supabase
+      .from("project_bans")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (ban) {
+      toast.error("You have been banned from this project.");
+      return;
+    }
+
+    // Mark invite as used
+    await supabase
+      .from("project_invites")
+      .update({ used_by: user.id, used_at: new Date().toISOString() })
+      .eq("id", (invite as any).id);
+
+    // Join project
     const { error } = await supabase
       .from("project_members")
-      .insert({ project_id: project.id, user_id: user.id });
+      .insert({ project_id: projectId, user_id: user.id });
 
     if (error) {
       if (error.code === "23505") {
@@ -96,9 +162,16 @@ export const useProjects = () => {
       return;
     }
 
-    toast.success(`Joined "${project.name}"!`);
+    // Get project info for toast
+    const { data: project } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("id", projectId)
+      .single();
+
+    toast.success(`Joined "${project?.name}"!`);
     await fetchProjects();
-    setActiveProject(project as Project);
+    if (project) setActiveProject(project as Project);
   };
 
   return { projects, loading, activeProject, setActiveProject, createProject, joinProject, fetchProjects };
