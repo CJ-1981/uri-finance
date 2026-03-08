@@ -180,7 +180,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="bg-muted/50 border-border/50"
+                className="bg-muted/50 border-border/50 min-w-0 w-full"
               />
             </div>
             <div className="space-y-2">
