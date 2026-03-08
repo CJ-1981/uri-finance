@@ -91,12 +91,12 @@ const AdminPage = () => {
           </div>
           <div className="grid gap-3 rounded-xl border border-border/50 bg-card p-4">
             {(["date", "type", "category", "description", "amount"] as const).map((key) => (
-              <div key={key} className="flex items-center gap-3">
-                <label className="w-24 text-xs text-muted-foreground capitalize">{key}</label>
+              <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                <label className="text-xs text-muted-foreground capitalize shrink-0 sm:w-20">{key}</label>
                 <input
                   value={headers[key]}
                   onChange={(e) => updateHeader(key, e.target.value)}
-                  className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
                 />
               </div>
