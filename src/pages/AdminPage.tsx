@@ -144,7 +144,21 @@ const AdminPage = () => {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground w-24">Currency</span>
-              <span className="text-sm text-foreground">{activeProject.currency}</span>
+              <Input
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="flex-1 bg-background text-sm uppercase"
+                maxLength={5}
+                placeholder="USD"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCurrencyChange}
+                disabled={savingCurrency || currency.trim().toUpperCase() === activeProject.currency}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </section>
