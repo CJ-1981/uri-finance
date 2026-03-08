@@ -532,6 +532,14 @@ export const translations: Record<Locale, Record<string, string>> = {
     "notFound.message": "페이지를 찾을 수 없습니다",
     "notFound.return": "홈으로 돌아가기",
 
+    // Shortcuts
+    "shortcut.title": "키보드 단축키",
+    "shortcut.addTransaction": "거래 추가",
+    "shortcut.pressKey": "키를 누르세요...",
+    "shortcut.save": "저장",
+    "shortcut.saved": "단축키가 저장되었습니다",
+    "shortcut.hint": "대시보드에서 이 키를 누르면 거래 추가 폼이 빠르게 열립니다.",
+
     // Language
     "lang.label": "한국어",
   },

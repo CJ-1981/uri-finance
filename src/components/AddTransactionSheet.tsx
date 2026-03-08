@@ -31,8 +31,13 @@ interface Props {
   }) => Promise<void>;
 }
 
-const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, onAdd }: Props) => {
-  const [open, setOpen] = useState(false);
+const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd }: Props) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = (v: boolean) => {
+    setInternalOpen(v);
+    onExternalOpenChange?.(v);
+  };
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
