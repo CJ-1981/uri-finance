@@ -134,6 +134,72 @@ const AdminPage = () => {
     toast.success(t("proj.inviteCopied"));
   };
 
+  const handleArchive = async () => {
+    if (!activeProject || !archiveFrom || !archiveTo) return;
+    
+    // Fetch transactions in range
+    const { data: txs, error: fetchErr } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("project_id", activeProject.id)
+      .is("deleted_at", null)
+      .gte("transaction_date", archiveFrom)
+      .lte("transaction_date", archiveTo)
+      .order("transaction_date", { ascending: true });
+
+    if (fetchErr || !txs || txs.length === 0) {
+      toast.info(t("admin.archiveEmpty"));
+      return;
+    }
+
+    const confirmed = window.confirm(
+      t("admin.archiveConfirm").replace("{n}", String(txs.length))
+    );
+    if (!confirmed) return;
+
+    setArchiving(true);
+
+    // Export as CSV
+    const h = headers;
+    const cols = customColumns;
+    const colHeaders = cols.map((c) => c.name).join(",");
+    const csvHeader = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
+    const csvRows = txs.map((tx: any) => {
+      const fmtDate = tx.transaction_date;
+      const fmtAmt = `${tx.type === "income" ? "" : "-"}${Number(tx.amount).toFixed(2)}`;
+      const base = `${fmtDate},${tx.type},"${tx.category}","${tx.description || ""}",${fmtAmt}`;
+      const custom = cols.map((c) => {
+        const val = tx.custom_values?.[c.name];
+        return `"${val != null ? (c.column_type === "numeric" ? Number(val).toFixed(2) : String(val)) : ""}"`;
+      }).join(",");
+      return cols.length ? `${base},${custom}` : base;
+    });
+    const csvContent = [csvHeader, ...csvRows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `archive_${archiveFrom}_${archiveTo}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Soft-delete all archived transactions
+    const ids = txs.map((tx: any) => tx.id);
+    const batchSize = 50;
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = ids.slice(i, i + batchSize);
+      await supabase
+        .from("transactions")
+        .update({ deleted_at: new Date().toISOString() })
+        .in("id", batch);
+    }
+
+    setArchiving(false);
+    setArchiveFrom("");
+    setArchiveTo("");
+    toast.success(t("admin.archiveSuccess").replace("{n}", String(txs.length)));
+  };
+
   if (!activeProject) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
