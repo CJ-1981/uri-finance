@@ -127,18 +127,25 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
   }, [setCountsAndCache]);
 
   const totals = useMemo(() => {
-    let named = 0;
-    let anon = 0;
+    let namedBills = 0, namedCoins = 0, anonBills = 0, anonCoins = 0;
     allDenoms.forEach((d) => {
       const key = d.toString();
       const c = counts[key];
       if (c) {
-        named += d * c.named;
-        anon += d * c.anon;
+        const isBillDenom = denoms.bills.includes(d);
+        if (isBillDenom) {
+          namedBills += d * c.named;
+          anonBills += d * c.anon;
+        } else {
+          namedCoins += d * c.named;
+          anonCoins += d * c.anon;
+        }
       }
     });
-    return { named, anon, total: named + anon };
-  }, [counts, allDenoms]);
+    const named = namedBills + namedCoins;
+    const anon = anonBills + anonCoins;
+    return { named, anon, total: named + anon, namedBills, namedCoins, anonBills, anonCoins };
+  }, [counts, allDenoms, denoms.bills]);
 
   const clearAll = () => {
     const init: Counts = {};
