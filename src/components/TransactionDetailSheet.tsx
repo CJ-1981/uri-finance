@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ interface Props {
 }
 
 const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete }: Props) => {
+  const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
@@ -30,6 +32,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
+
+  const isOwn = transaction?.user_id === user?.id;
 
   const resetForm = () => {
     if (transaction) {
@@ -97,19 +101,21 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setType("income")}
+              onClick={() => isOwn && setType("income")}
+              disabled={!isOwn}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "income" ? "income-badge ring-1 ring-income/30" : "bg-muted text-muted-foreground"
-              }`}
+              } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <TrendingUp className="h-4 w-4" /> {t("tx.income")}
             </button>
             <button
               type="button"
-              onClick={() => setType("expense")}
+              onClick={() => isOwn && setType("expense")}
+              disabled={!isOwn}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "expense" ? "expense-badge ring-1 ring-expense/30" : "bg-muted text-muted-foreground"
-              }`}
+              } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
             </button>
@@ -125,6 +131,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 const v = e.target.value.replace(/[^0-9.]/g, "");
                 setAmount(v);
               }}
+              disabled={!isOwn}
               className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
             />
           </div>
@@ -132,7 +139,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={setCategory} disabled={!isOwn}>
                 <SelectTrigger className="bg-muted/50 border-border/50">
                   <SelectValue />
                 </SelectTrigger>
@@ -149,6 +156,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
+                disabled={!isOwn}
                 className="bg-muted/50 border-border/50"
               />
             </div>
@@ -160,6 +168,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("tx.descriptionPlaceholder")}
+              disabled={!isOwn}
               className="bg-muted/50 border-border/50"
             />
           </div>
@@ -180,6 +189,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                       setCustomValues((prev) => ({ ...prev, [col.name]: val }));
                     }}
                     placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                    disabled={!isOwn}
                     className="bg-muted/50 border-border/50"
                   />
                 </div>
@@ -187,34 +197,36 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             </div>
           )}
 
-          <div className="flex gap-2">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="h-12 px-4">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
-                  <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          {isOwn && (
+            <div className="flex gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="h-12 px-4">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
+                    <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
 
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-            >
-              <Save className="h-4 w-4 mr-1" />
-              {saving ? t("tx.saving") : t("tx.saveChanges")}
-            </Button>
-          </div>
+              <Button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+              >
+                <Save className="h-4 w-4 mr-1" />
+                {saving ? t("tx.saving") : t("tx.saveChanges")}
+              </Button>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
