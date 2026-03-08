@@ -152,16 +152,14 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
     if (stops.length === 0) return;
 
-    const active = document.activeElement as HTMLElement;
-    const currentIdx = stops.indexOf(active) === -1
-      ? stops.findIndex(s => s.contains(active) || active.contains(s))
-      : stops.indexOf(active);
+    const target = (e.target as HTMLElement).closest?.('[data-tab-stop]') as HTMLElement | null;
+    const currentIdx = target ? stops.indexOf(target) : -1;
     e.preventDefault();
     if (e.shiftKey) {
       const prev = currentIdx <= 0 ? stops.length - 1 : currentIdx - 1;
       stops[prev].focus();
     } else {
-      const next = currentIdx >= stops.length - 1 ? 0 : currentIdx + 1;
+      const next = currentIdx < 0 || currentIdx >= stops.length - 1 ? 0 : currentIdx + 1;
       stops[next].focus();
     }
   }, []);
