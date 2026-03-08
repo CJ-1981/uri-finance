@@ -556,6 +556,7 @@ const AdminPage = () => {
             ))}
           </div>
         </section>
+        )}
 
         {/* Custom Columns */}
         <section className="space-y-4">
