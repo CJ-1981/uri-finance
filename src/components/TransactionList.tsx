@@ -32,6 +32,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
   const { t } = useI18n();
   const { user } = useAuth();
   const searchRef = useRef<HTMLInputElement>(null);
+  useImperativeHandle(ref, () => ({ focusSearch: () => searchRef.current?.focus() }));
   const [searchQuery, setSearchQuery] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
