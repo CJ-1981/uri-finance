@@ -339,6 +339,35 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
           </div>
         </div>
       )}
+      {/* Floating sum popup for multi-select */}
+      {selectedSummary && selectedSummary.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-card border border-border shadow-lg rounded-2xl px-5 py-3 animate-fade-in">
+          <div className="flex items-center gap-4 text-sm">
+            <span className="text-muted-foreground font-medium">{selected.size} selected</span>
+            <div className="h-4 w-px bg-border" />
+            {Array.from(selectedSummary.entries()).map(([cur, { income, expense }]) => {
+              const net = income - expense;
+              return (
+                <div key={cur} className="flex items-center gap-3 tabular-nums">
+                  {income > 0 && (
+                    <span className="text-income font-semibold">
+                      +{income.toLocaleString("en-US", { style: "currency", currency: cur })}
+                    </span>
+                  )}
+                  {expense > 0 && (
+                    <span className="text-expense font-semibold">
+                      -{expense.toLocaleString("en-US", { style: "currency", currency: cur })}
+                    </span>
+                  )}
+                  <span className={`font-bold ${net >= 0 ? "text-income" : "text-expense"}`}>
+                    = {net.toLocaleString("en-US", { style: "currency", currency: cur })}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
