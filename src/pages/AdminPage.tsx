@@ -15,13 +15,31 @@ import { toast } from "sonner";
 
 const AdminPage = () => {
   const { user } = useAuth();
-  const { projects, activeProject } = useProjects();
+  const { projects, activeProject, fetchProjects } = useProjects();
   const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn } = useCustomColumns(activeProject?.id);
   const navigate = useNavigate();
+  const [currency, setCurrency] = useState(activeProject?.currency || "USD");
+  const [savingCurrency, setSavingCurrency] = useState(false);
 
   const isOwner = activeProject && user && activeProject.owner_id === user.id;
+
+  const handleCurrencyChange = async () => {
+    if (!activeProject || !currency.trim()) return;
+    setSavingCurrency(true);
+    const { error } = await supabase
+      .from("projects")
+      .update({ currency: currency.trim().toUpperCase() })
+      .eq("id", activeProject.id);
+    setSavingCurrency(false);
+    if (error) {
+      toast.error("Failed to update currency");
+      return;
+    }
+    toast.success("Currency updated");
+    await fetchProjects();
+  };
 
   if (!activeProject) {
     return (
