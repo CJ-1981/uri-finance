@@ -18,6 +18,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.inviteCode": "Invite Code",
     "auth.inviteCodePlaceholder": "Enter invite code from project creator",
     "auth.invalidInviteCode": "Invalid invite code. Please get one from a project creator.",
+    "auth.inviteEmailMismatch": "This invite code is assigned to a different email address.",
     "auth.loading": "Loading...",
 
     // Dashboard
