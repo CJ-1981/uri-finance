@@ -79,6 +79,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     setCategory(tx.category);
     setDescription(tx.description || "");
     setDate(tx.transaction_date);
+    setCurrency(tx.currency || "USD");
     const cv: Record<string, string> = {};
     if (tx.custom_values) {
       for (const [k, v] of Object.entries(tx.custom_values)) {
