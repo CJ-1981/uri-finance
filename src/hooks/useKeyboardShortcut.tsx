@@ -61,31 +61,3 @@ export const useKeyboardShortcut = (
 
   return key;
 };
-
-/**
- * Hook for arrow-key navigation inside detail sheets.
- * Listens for ArrowLeft/ArrowRight when no input is focused.
- */
-export const useArrowNavigation = (
-  onPrev: () => void,
-  onNext: () => void,
-  enabled = true
-) => {
-  useEffect(() => {
-    if (!enabled) return;
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        onPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        onNext();
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onPrev, onNext, enabled]);
-};
