@@ -32,7 +32,10 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(25);
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const saved = localStorage.getItem("tx_page_size");
+    return saved ? Number(saved) : 25;
+  });
 
   const categoryIconMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -276,7 +279,7 @@ const TransactionList = ({ transactions, categories, onSelect, onBulkDelete, onB
       {filteredTransactions.length > 0 && (
         <div className="flex items-center justify-between px-2 pt-2 pb-1">
           <div className="flex items-center gap-2">
-            <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setPage(0); }}>
+            <Select value={String(pageSize)} onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}>
               <SelectTrigger className="h-7 w-[70px] text-xs bg-muted/30 border-border/50">
                 <SelectValue />
               </SelectTrigger>
