@@ -190,10 +190,13 @@ const AdminPage = () => {
                 const isSelf = m.user_id === user?.id;
                 const isOwnerMember = m.user_id === activeProject.owner_id;
                 const isAdmin = m.role === "admin";
+                const isViewer = m.role === "viewer";
                 const roleLabel = isOwnerMember
                   ? t("admin.owner")
                   : isAdmin
                   ? t("admin.admin")
+                  : isViewer
+                  ? t("admin.viewer")
                   : t("admin.member");
                 return (
                   <div key={m.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
