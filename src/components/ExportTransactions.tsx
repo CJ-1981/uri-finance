@@ -57,7 +57,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   const colTh = cols.map((c) => `<th>${c.name}</th>`).join("");
   const header = `<tr><th>${h.date}</th><th>${h.type}</th><th>${h.category}</th><th>${h.description}</th><th>${h.amount}</th>${colTh}</tr>`;
   const rows = transactions.map((tx) => {
-    const colTd = cols.map((c) => `<td>${getCustomVal(tx, c.name)}</td>`).join("");
+    const colTd = cols.map((c) => `<td>${getCustomVal(tx, c)}</td>`).join("");
     return `<tr><td>${formatDate(tx)}</td><td>${tx.type}</td><td>${tx.category}</td><td>${tx.description || ""}</td><td>${formatAmount(tx)}</td>${colTd}</tr>`;
   }).join("");
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>${header}${rows}</table></body></html>`;
