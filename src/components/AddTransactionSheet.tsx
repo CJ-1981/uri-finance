@@ -252,7 +252,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <div className="grid grid-cols-2 gap-3">
               {customColumns.map((col) => (
                 <div key={col.id} className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">{col.name}</Label>
+                  <Label className="text-muted-foreground text-xs">{col.name}{col.required && <span className="text-destructive ml-0.5">*</span>}</Label>
                   {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 ? (
                     <AutoSuggestInput
                       value={customValues[col.name] || ""}
