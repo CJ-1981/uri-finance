@@ -13,6 +13,7 @@ import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { Transaction } from "@/hooks/useTransactions";
 import { useI18n } from "@/hooks/useI18n";
+import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
