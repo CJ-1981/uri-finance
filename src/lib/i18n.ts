@@ -32,6 +32,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Transaction list
     "tx.noTransactions": "No transactions yet. Tap + to add one.",
+    "tx.search": "Search transactions...",
     "tx.addTransaction": "Add Transaction",
     "tx.editTransaction": "Edit Transaction",
     "tx.income": "Income",
@@ -306,6 +307,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Transaction list
     "tx.noTransactions": "거래 내역이 없습니다. +를 눌러 추가하세요.",
+    "tx.search": "거래 검색...",
     "tx.addTransaction": "거래 추가",
     "tx.editTransaction": "거래 수정",
     "tx.income": "수입",

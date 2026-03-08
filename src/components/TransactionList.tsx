@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Transaction } from "@/hooks/useTransactions";
-import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   transactions: Transaction[];
@@ -21,9 +22,31 @@ interface Props {
 const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }: Props) => {
   const { t } = useI18n();
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+
+  // Filter transactions by search query matching any text field
+  const filteredTransactions = useMemo(() => {
+    if (!searchQuery.trim()) return transactions;
+    const q = searchQuery.toLowerCase();
+    return transactions.filter((tx) => {
+      if (tx.description?.toLowerCase().includes(q)) return true;
+      if (tx.category.toLowerCase().includes(q)) return true;
+      if (tx.type.toLowerCase().includes(q)) return true;
+      if (tx.currency?.toLowerCase().includes(q)) return true;
+      if (tx.transaction_date.includes(q)) return true;
+      if (String(tx.amount).includes(q)) return true;
+      // Search custom values
+      if (tx.custom_values) {
+        for (const val of Object.values(tx.custom_values)) {
+          if (String(val).toLowerCase().includes(q)) return true;
+        }
+      }
+      return false;
+    });
+  }, [transactions, searchQuery]);
 
   const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
 
@@ -38,7 +61,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
   };
 
   const toggleAll = () => {
-    const selectableIds = transactions.slice(0, 20).filter((tx) => ownTxIds.has(tx.id)).map((tx) => tx.id);
+    const selectableIds = filteredTransactions.slice(0, 20).filter((tx) => ownTxIds.has(tx.id)).map((tx) => tx.id);
     if (selected.size === selectableIds.length) {
       setSelected(new Set());
     } else {
@@ -59,7 +82,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
   };
 
   const handleBulkEdit = () => {
-    const selectedTxs = transactions.filter((tx) => selected.has(tx.id));
+    const selectedTxs = filteredTransactions.filter((tx) => selected.has(tx.id));
     onBulkEditOpen(selectedTxs);
   };
 
@@ -73,6 +96,17 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
 
   return (
     <div className="space-y-2 max-w-3xl mx-auto">
+      {/* Search */}
+      <div className="relative px-1">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("tx.search") || "Search transactions..."}
+          className="pl-8 h-8 text-sm bg-muted/30 border-border/50"
+        />
+      </div>
+
       {/* Selection toolbar */}
       <div className="flex items-center justify-between px-1">
         {!isViewer && selectMode ? (
@@ -132,7 +166,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
         )}
       </div>
 
-      {transactions.slice(0, 20).map((tx, i) => (
+      {filteredTransactions.slice(0, 20).map((tx, i) => (
         <div
           key={tx.id}
           onClick={() => selectMode ? toggleSelect(tx.id) : onSelect(tx)}
