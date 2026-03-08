@@ -27,6 +27,12 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
 
+  // Determine which custom column names are masked (hidden from viewers)
+  const maskedColumnNames = useMemo(() => {
+    if (!isViewer) return new Set<string>();
+    return new Set(customColumns.filter(col => col.masked).map(col => col.name));
+  }, [customColumns, isViewer]);
+
   // Filter transactions by search query matching any text field
   const filteredTransactions = useMemo(() => {
     if (!searchQuery.trim()) return transactions;
@@ -38,15 +44,16 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
       if (tx.currency?.toLowerCase().includes(q)) return true;
       if (tx.transaction_date.includes(q)) return true;
       if (String(tx.amount).includes(q)) return true;
-      // Search custom values
+      // Search custom values — skip masked columns for viewers
       if (tx.custom_values) {
-        for (const val of Object.values(tx.custom_values)) {
+        for (const [key, val] of Object.entries(tx.custom_values)) {
+          if (maskedColumnNames.has(key)) continue;
           if (String(val).toLowerCase().includes(q)) return true;
         }
       }
       return false;
     });
-  }, [transactions, searchQuery]);
+  }, [transactions, searchQuery, maskedColumnNames]);
 
   const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
 
