@@ -256,6 +256,7 @@ const Dashboard = () => {
               isViewer={isViewer}
               transactionList={bulkEditTxs.length > 0 ? bulkEditTxs : undefined}
               onNavigate={handleNavigateTx}
+              allTransactions={transactions}
             />
           </div>
         )}

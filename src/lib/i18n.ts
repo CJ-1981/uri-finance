@@ -389,6 +389,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cc.addFailed": "열 추가에 실패했습니다",
     "cc.removed": "열이 삭제되었습니다",
     "cc.removeFailed": "열 삭제에 실패했습니다",
+    "cc.manageSuggestions": "자동완성 관리",
+    "cc.suggestionsHint": "한 줄에 하나씩 입력하세요. 거래 입력 시 자동완성으로 표시됩니다.",
+    "cc.suggestionsPlaceholder": "홍길동\n김철수\n이영희",
+    "cc.saveSuggestions": "저장",
+    "cc.suggestionsUpdated": "자동완성 데이터가 업데이트되었습니다",
 
     // Categories
     "cat.newPlaceholder": "새 카테고리 이름",
