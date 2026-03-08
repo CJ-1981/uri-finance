@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { UserRole } from "@/hooks/useUserRole";
 
 const AdminPage = () => {
   const { user } = useAuth();
@@ -51,9 +52,10 @@ const AdminPage = () => {
   const [archiveTo, setArchiveTo] = useState("");
   const [archiving, setArchiving] = useState(false);
 
-  const isOwner = activeProject && user && activeProject.owner_id === user.id;
-  const { role: userRole } = useUserRole(activeProject?.id);
+  const realOwner = activeProject && user && activeProject.owner_id === user.id;
+  const { role: userRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const isAdmin = userRole === "admin";
+  const isOwner = (!isSimulating && realOwner) || false;
   const canAccess = isOwner || isAdmin;
 
   const DB_MAX_BYTES = 500 * 1024 * 1024; // 500 MB
@@ -242,10 +244,31 @@ const AdminPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-sm font-semibold text-foreground">{t("admin.title")}</h1>
             <p className="text-xs text-muted-foreground">{activeProject.name}</p>
           </div>
+          {realOwner && (
+            <div className="flex items-center gap-0.5 shrink-0">
+              <Eye className="h-3 w-3 text-muted-foreground mr-0.5" />
+              {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
+                const active = isSimulating ? simulatedRole === r : (r === "owner");
+                return (
+                  <button
+                    key={r}
+                    onClick={() => setSimulatedRole(r === "owner" ? null : r)}
+                    className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-all ${
+                      active
+                        ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {t(`admin.${r}`)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </header>
 
