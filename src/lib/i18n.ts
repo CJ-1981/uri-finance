@@ -163,6 +163,8 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Categories
     "cat.newPlaceholder": "New category name",
+    "cat.codePlaceholder": "Code",
+    "cat.editCode": "Edit code",
     "cat.manageCategories": "Manage Categories",
 
     // Export
@@ -438,6 +440,8 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Categories
     "cat.newPlaceholder": "새 카테고리 이름",
+    "cat.codePlaceholder": "코드",
+    "cat.editCode": "코드 수정",
     "cat.manageCategories": "카테고리 관리",
 
     // Export

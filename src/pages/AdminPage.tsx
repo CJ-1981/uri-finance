@@ -27,7 +27,7 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 const AdminPage = () => {
   const { user } = useAuth();
   const { projects, activeProject, fetchProjects } = useProjects();
-  const { categories, addCategory, deleteCategory } = useCategories(activeProject?.id);
+  const { categories, addCategory, deleteCategory, updateCategoryCode } = useCategories(activeProject?.id);
   const { headers, updateHeader, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn, toggleMasked, updateSuggestions } = useCustomColumns(activeProject?.id);
   const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
@@ -562,7 +562,7 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.categoriesDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CategoryManager categories={categories} onAdd={addCategory} onDelete={deleteCategory} inline />
+            <CategoryManager categories={categories} onAdd={addCategory} onDelete={deleteCategory} onUpdateCode={updateCategoryCode} inline />
           </div>
         </section>
 

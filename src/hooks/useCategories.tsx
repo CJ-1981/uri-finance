@@ -6,6 +6,7 @@ export interface Category {
   id: string;
   project_id: string;
   name: string;
+  code: string;
   created_at: string;
 }
 
@@ -29,11 +30,11 @@ export const useCategories = (projectId: string | undefined) => {
     fetchCategories();
   }, [projectId]);
 
-  const addCategory = async (name: string) => {
+  const addCategory = async (name: string, code?: string) => {
     if (!projectId) return;
     const { error } = await supabase
       .from("project_categories")
-      .insert({ project_id: projectId, name: name.trim() });
+      .insert({ project_id: projectId, name: name.trim(), code: code?.trim() || "" });
     if (error) {
       if (error.code === "23505") {
         toast.error("Category already exists");
@@ -71,5 +72,17 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
-  return { categories, loading, addCategory, deleteCategory, renameCategory, fetchCategories };
+  const updateCategoryCode = async (id: string, code: string) => {
+    const { error } = await supabase
+      .from("project_categories")
+      .update({ code: code.trim() })
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update code");
+      return;
+    }
+    await fetchCategories();
+  };
+
+  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, fetchCategories };
 };
