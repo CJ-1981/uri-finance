@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_columns ADD COLUMN required boolean NOT NULL DEFAULT false;
