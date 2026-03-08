@@ -151,7 +151,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "chart.trend": "Trend",
     "chart.comparison": "Comparison",
     "chart.cumulative": "Cumulative",
-    "chart.expenseByCategory": "Expense by Category",
+    "chart.expenseByCategory": "By Category",
+    "chart.byCategory": "By Category",
     "chart.addToSee": "Add transactions to see charts",
 
     // Period
@@ -359,7 +360,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "chart.trend": "추이",
     "chart.comparison": "비교",
     "chart.cumulative": "누적",
-    "chart.expenseByCategory": "카테고리별 지출",
+    "chart.expenseByCategory": "카테고리별",
+    "chart.byCategory": "카테고리별",
     "chart.addToSee": "차트를 보려면 거래를 추가하세요",
 
     // Period
