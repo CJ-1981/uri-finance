@@ -104,7 +104,7 @@ const AdminPage = () => {
           </div>
         </section>
 
-        {/* Custom Numeric Columns */}
+        {/* Custom Columns */}
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.customColumns")}</h2>
