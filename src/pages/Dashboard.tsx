@@ -49,12 +49,11 @@ const Dashboard = () => {
            {activeProject && (
               <>
               <ExportTransactions transactions={transactions} headers={headers} />
-              <ColumnHeaderEditor headers={headers} onUpdate={updateHeader} onReset={resetHeaders} />
-              <CategoryManager
-                categories={categories}
-                onAdd={addCategory}
-                onDelete={deleteCategory}
-              />
+              {isOwner && (
+                <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              )}
               </>
             )}
             <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-muted-foreground hover:text-foreground">
