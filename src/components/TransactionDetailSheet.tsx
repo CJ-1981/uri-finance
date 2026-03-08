@@ -211,7 +211,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto">
         <SheetHeader>
           <div className="flex items-center justify-between">
             <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
