@@ -119,7 +119,7 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
               {t("tx.select")}
             </Button>
             <div className="flex items-center gap-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground flex-1">
-              <div className="w-10 shrink-0" />
+              
               <div className="flex-1 min-w-0 flex gap-2">
                 <span className="flex-1 truncate">{headers.description}</span>
                 <span className="hidden sm:block w-20 text-right">{headers.category}</span>
