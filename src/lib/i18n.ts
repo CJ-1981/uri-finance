@@ -593,6 +593,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cash.export": "마크다운 내보내기",
     "cash.cleared": "모든 수량이 초기화되었습니다",
     "cash.exported": "마크다운이 내보내기되었습니다",
+    "cash.copy": "복사",
+    "cash.copied": "클립보드에 복사되었습니다",
 
     // Language
     "lang.label": "한국어",
