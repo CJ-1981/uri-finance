@@ -15,6 +15,7 @@ interface Props {
   onBulkEditOpen: (txs: Transaction[]) => void;
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
+  isViewer?: boolean;
 }
 
 const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns }: Props) => {
