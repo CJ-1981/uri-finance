@@ -81,13 +81,14 @@ const Dashboard = () => {
 
   const handleBulkEditOpen = (txs: Transaction[]) => {
     setBulkEditTxs(txs);
-    setBulkEditOpen(true);
+    if (txs.length > 0) {
+      setSelectedTx(txs[0]);
+      setDetailOpen(true);
+    }
   };
 
-  const handleBulkUpdate = async (ids: string[], updates: Partial<Pick<Transaction, "type" | "category">>) => {
-    for (const id of ids) {
-      await updateTransaction(id, updates);
-    }
+  const handleNavigateTx = (tx: Transaction) => {
+    setSelectedTx(tx);
   };
 
   return (
