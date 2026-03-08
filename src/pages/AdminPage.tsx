@@ -679,6 +679,7 @@ const AdminPage = () => {
             </div>
           </div>
         </section>
+        </>)}
       </main>
     </div>
   );
