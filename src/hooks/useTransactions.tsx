@@ -135,5 +135,5 @@ export const useTransactions = (projectId: string | undefined) => {
 
   const balance = totalIncome - totalExpense;
 
-  return { transactions, loading, addTransaction, updateTransaction, deleteTransaction, fetchTransactions, totalIncome, totalExpense, balance };
+  return { transactions, loading, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions, fetchTransactions, totalIncome, totalExpense, balance };
 };
