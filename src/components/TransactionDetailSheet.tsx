@@ -101,19 +101,21 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setType("income")}
+              onClick={() => isOwn && setType("income")}
+              disabled={!isOwn}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "income" ? "income-badge ring-1 ring-income/30" : "bg-muted text-muted-foreground"
-              }`}
+              } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <TrendingUp className="h-4 w-4" /> {t("tx.income")}
             </button>
             <button
               type="button"
-              onClick={() => setType("expense")}
+              onClick={() => isOwn && setType("expense")}
+              disabled={!isOwn}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "expense" ? "expense-badge ring-1 ring-expense/30" : "bg-muted text-muted-foreground"
-              }`}
+              } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
             </button>
