@@ -38,7 +38,7 @@ const ShortcutSettings = () => {
     setOpen(false);
   };
 
-  const renderKeyButton = (target: RecordingTarget, value: string, placeholder: string) => (
+  const renderKeyButton = (target: RecordingTarget, value: string) => (
     <div className="flex gap-1">
       <button
         onClick={() => setRecordingKey(target)}
@@ -52,11 +52,11 @@ const ShortcutSettings = () => {
           ? t("shortcut.pressKey")
           : value
             ? value.toUpperCase()
-            : placeholder}
+            : t("shortcut.clickToSet")}
       </button>
-      {target === "addTransactionAlt" && value && (
+      {value && (
         <button
-          onClick={() => setShortcuts((prev) => ({ ...prev, addTransactionAlt: "" }))}
+          onClick={() => setShortcuts((prev) => ({ ...prev, [target]: "" }))}
           className="h-9 w-9 rounded-md border border-input bg-muted/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-3.5 w-3.5" />
