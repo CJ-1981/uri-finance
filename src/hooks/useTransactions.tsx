@@ -32,6 +32,7 @@ export const useTransactions = (projectId: string | undefined) => {
       .eq("project_id", projectId)
       .is("deleted_at", null)
       .order("transaction_date", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(100);
     setTransactions((data as Transaction[]) || []);
     setLoading(false);
