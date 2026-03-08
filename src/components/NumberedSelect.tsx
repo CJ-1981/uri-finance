@@ -113,6 +113,7 @@ const NumberedSelect = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          data-tab-stop
           onKeyDown={handleKeyDown}
           className={cn(
             "w-full h-10 justify-between font-normal",

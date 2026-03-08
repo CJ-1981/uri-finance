@@ -138,23 +138,20 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     const form = formRef.current;
     if (!form) return;
 
-    const focusable = Array.from(
-      form.querySelectorAll<HTMLElement>(
-        'button:not([disabled]):not([data-radix-collection-item]), input:not([disabled]), [role="combobox"]:not([disabled])'
-      )
-    ).filter((el) => el.offsetParent !== null);
+    const stops = Array.from(
+      form.querySelectorAll<HTMLElement>('[data-tab-stop]')
+    ).filter((el) => el.offsetParent !== null && !el.hasAttribute('disabled'));
 
-    if (focusable.length === 0) return;
+    if (stops.length === 0) return;
 
-    const currentIdx = focusable.indexOf(document.activeElement as HTMLElement);
+    const currentIdx = stops.indexOf(document.activeElement as HTMLElement);
+    e.preventDefault();
     if (e.shiftKey) {
-      e.preventDefault();
-      const prev = currentIdx <= 0 ? focusable.length - 1 : currentIdx - 1;
-      focusable[prev].focus();
+      const prev = currentIdx <= 0 ? stops.length - 1 : currentIdx - 1;
+      stops[prev].focus();
     } else {
-      e.preventDefault();
-      const next = currentIdx >= focusable.length - 1 ? 0 : currentIdx + 1;
-      focusable[next].focus();
+      const next = currentIdx >= stops.length - 1 ? 0 : currentIdx + 1;
+      stops[next].focus();
     }
   }, []);
 
@@ -176,7 +173,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <Button
               type="button"
               variant="ghost"
-              tabIndex={0}
+              data-tab-stop
               onClick={() => setType("income")}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "income"
@@ -189,7 +186,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <Button
               type="button"
               variant="ghost"
-              tabIndex={0}
+              data-tab-stop
               onClick={() => setType("expense")}
               className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
                 type === "expense"
@@ -206,6 +203,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <Input
               type="text"
               inputMode="decimal"
+              data-tab-stop
               value={amount}
               onChange={(e) => {
                 const v = e.target.value.replace(/[^0-9.]/g, "");
@@ -234,6 +232,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    data-tab-stop
                     className={cn(
                       "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
                       !date && "text-muted-foreground"
@@ -274,6 +273,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("tx.descriptionPlaceholder")}
               className="bg-muted/50 border-border/50"
+              data-tab-stop
             />
           </div>
 
@@ -315,7 +315,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <div className="flex gap-2">
             <Button
               type="button"
-              tabIndex={0}
+              data-tab-stop
               disabled={submitting}
               onClick={handleAddAndContinue}
               variant="outline"
@@ -325,7 +325,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </Button>
             <Button
               type="submit"
-              tabIndex={0}
+              data-tab-stop
               disabled={submitting}
               className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
             >
