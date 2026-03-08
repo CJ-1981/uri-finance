@@ -84,6 +84,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       description: description || undefined,
       transaction_date: date,
       custom_values: Object.keys(cv).length > 0 ? cv : undefined,
+      currency,
     });
     setSubmitting(false);
     return true;
