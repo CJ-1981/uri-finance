@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
