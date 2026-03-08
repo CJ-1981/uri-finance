@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ColumnHeaders {
   date: string;
@@ -16,43 +17,56 @@ const DEFAULT_HEADERS: ColumnHeaders = {
   amount: "Amount",
 };
 
-const STORAGE_KEY_PREFIX = "tx-col-headers-";
-
 export const useColumnHeaders = (projectId: string | undefined) => {
-  const storageKey = projectId ? `${STORAGE_KEY_PREFIX}${projectId}` : null;
+  const [headers, setHeaders] = useState<ColumnHeaders>(DEFAULT_HEADERS);
 
-  const loadHeaders = useCallback((): ColumnHeaders => {
-    if (!storageKey) return DEFAULT_HEADERS;
-    try {
-      const stored = localStorage.getItem(storageKey);
-      return stored ? { ...DEFAULT_HEADERS, ...JSON.parse(stored) } : DEFAULT_HEADERS;
-    } catch {
-      return DEFAULT_HEADERS;
-    }
-  }, [storageKey]);
-
-  const [headers, setHeaders] = useState<ColumnHeaders>(loadHeaders);
-
-  // Re-sync when projectId (storageKey) changes
+  // Load from DB
   useEffect(() => {
-    setHeaders(loadHeaders());
-  }, [loadHeaders]);
+    if (!projectId) {
+      setHeaders(DEFAULT_HEADERS);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("projects")
+        .select("column_headers")
+        .eq("id", projectId)
+        .single();
+      if (data?.column_headers && typeof data.column_headers === "object") {
+        setHeaders({ ...DEFAULT_HEADERS, ...(data.column_headers as Partial<ColumnHeaders>) });
+      } else {
+        setHeaders(DEFAULT_HEADERS);
+      }
+    })();
+  }, [projectId]);
 
   const updateHeader = useCallback(
     (key: keyof ColumnHeaders, value: string) => {
       setHeaders((prev) => {
         const next = { ...prev, [key]: value || DEFAULT_HEADERS[key] };
-        if (storageKey) localStorage.setItem(storageKey, JSON.stringify(next));
+        if (projectId) {
+          supabase
+            .from("projects")
+            .update({ column_headers: next } as any)
+            .eq("id", projectId)
+            .then();
+        }
         return next;
       });
     },
-    [storageKey]
+    [projectId]
   );
 
   const resetHeaders = useCallback(() => {
     setHeaders(DEFAULT_HEADERS);
-    if (storageKey) localStorage.removeItem(storageKey);
-  }, [storageKey]);
+    if (projectId) {
+      supabase
+        .from("projects")
+        .update({ column_headers: {} } as any)
+        .eq("id", projectId)
+        .then();
+    }
+  }, [projectId]);
 
   return { headers, updateHeader, resetHeaders, DEFAULT_HEADERS };
 };

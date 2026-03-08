@@ -1,0 +1,1 @@
+ALTER TABLE public.projects ADD COLUMN column_headers jsonb NOT NULL DEFAULT '{}'::jsonb;

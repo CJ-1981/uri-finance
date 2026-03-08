@@ -206,6 +206,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          column_headers: Json
           created_at: string
           currency: string
           description: string | null
@@ -216,6 +217,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          column_headers?: Json
           created_at?: string
           currency?: string
           description?: string | null
@@ -226,6 +228,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          column_headers?: Json
           created_at?: string
           currency?: string
           description?: string | null
