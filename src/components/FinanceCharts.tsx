@@ -115,7 +115,7 @@ const FinanceCharts = ({ transactions, customColumns }: Props) => {
             {categoryData.map((c, i) => (
               <div key={c.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                {c.name}
+                {c.name} <span className="text-foreground font-medium">${c.value.toLocaleString()}</span>
               </div>
             ))}
           </div>
