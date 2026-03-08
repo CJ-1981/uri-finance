@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, Plus, UserPlus, Copy, Check } from "lucide-react";
+import { FolderOpen, Plus, UserPlus, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/hooks/useI18n";
 
