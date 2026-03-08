@@ -10,6 +10,7 @@ export interface CustomColumn {
   name: string;
   column_type: ColumnType;
   masked: boolean;
+  suggestions: string[];
   created_at: string;
 }
 
