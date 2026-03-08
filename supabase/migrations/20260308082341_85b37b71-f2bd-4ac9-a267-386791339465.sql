@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_columns ADD COLUMN column_type text NOT NULL DEFAULT 'numeric';
