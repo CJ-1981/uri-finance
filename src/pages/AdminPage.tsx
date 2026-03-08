@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { UserRole } from "@/hooks/useUserRole";
 
 const AdminPage = () => {
   const { user } = useAuth();
