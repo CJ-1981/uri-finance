@@ -162,6 +162,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbError": "Failed to load database stats",
     "admin.dbTables": "Tables",
 
+    // Trash
+    "admin.trash": "Deleted Transactions",
+    "admin.trashDesc": "Restore accidentally deleted transactions.",
+    "admin.trashEmpty": "No deleted transactions.",
+    "admin.restore": "Restore",
+    "admin.restored": "Transaction restored!",
+    "admin.restoreFailed": "Failed to restore transaction",
+    "admin.permDelete": "Delete permanently",
+    "admin.permDeleted": "Transaction permanently deleted",
+    "admin.permDeleteFailed": "Failed to permanently delete",
+    "admin.deletedOn": "Deleted",
+
     // 404
     "notFound.title": "404",
     "notFound.message": "Oops! Page not found",
