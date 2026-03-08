@@ -96,6 +96,17 @@ const TransactionList = ({ transactions, onSelect, onBulkDelete, onBulkEditOpen,
 
   return (
     <div className="space-y-2 max-w-3xl mx-auto">
+      {/* Search */}
+      <div className="relative px-1">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("tx.search") || "Search transactions..."}
+          className="pl-8 h-8 text-sm bg-muted/30 border-border/50"
+        />
+      </div>
+
       {/* Selection toolbar */}
       <div className="flex items-center justify-between px-1">
         {!isViewer && selectMode ? (
