@@ -32,6 +32,7 @@ const TOOLTIP_STYLE = {
   borderRadius: "8px",
   color: "hsl(210, 20%, 92%)",
   fontSize: 12,
+  padding: "8px 12px",
 };
 
 type PieGroupKey = "category" | "type" | string;
