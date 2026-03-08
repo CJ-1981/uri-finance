@@ -246,6 +246,10 @@ const CashCalculator = ({ currency }: CashCalculatorProps) => {
           <Trash2 className="h-3.5 w-3.5 mr-1" />
           {t("cash.clearAll")}
         </Button>
+        <Button variant="outline" className="flex-1 text-xs" onClick={copyMarkdown}>
+          <Copy className="h-3.5 w-3.5 mr-1" />
+          {t("cash.copy")}
+        </Button>
         <Button variant="default" className="flex-1 text-xs" onClick={exportMarkdown}>
           <FileText className="h-3.5 w-3.5 mr-1" />
           {t("cash.export")}
