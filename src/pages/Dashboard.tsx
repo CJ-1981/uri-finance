@@ -38,6 +38,7 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
       {formatted}
     </p>
   );
+};
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
