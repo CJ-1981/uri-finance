@@ -26,7 +26,7 @@ import { toast } from "sonner";
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction } = useTransactions(activeProject?.id);
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
