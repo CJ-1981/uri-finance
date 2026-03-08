@@ -61,31 +61,32 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
   const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background">
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-300 ${error ? "bg-destructive/10" : "bg-background"}`}>
       <div className="flex flex-col items-center gap-8 animate-fade-in">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-          <Lock className="h-8 w-8 text-primary" />
+        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 ${error ? "bg-destructive/20 animate-pulse-red" : "bg-primary/10"}`}>
+          <Lock className={`h-8 w-8 transition-colors duration-300 ${error ? "text-destructive" : "text-primary"}`} />
         </div>
 
         <div className="text-center">
           <h1 className="text-xl font-bold text-foreground">{t("lock.title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className={`mt-1 text-sm transition-colors duration-200 ${error ? "text-destructive font-medium" : "text-muted-foreground"}`}>
             {error ? t("lock.wrong") : t("lock.enter")}
           </p>
         </div>
 
         {/* PIN dots */}
-        <div className="flex gap-3">
+        <div className={`flex gap-3 ${error ? "animate-shake-hard" : ""}`}>
           {Array.from({ length: PIN_LENGTH }).map((_, i) => (
             <div
               key={i}
               className={`h-4 w-4 rounded-full border-2 transition-all duration-200 ${
                 error
-                  ? "border-destructive bg-destructive"
+                  ? "border-destructive bg-destructive animate-dot-pop"
                   : i < pin.length
-                  ? "border-primary bg-primary"
+                  ? "border-primary bg-primary animate-dot-pop"
                   : "border-muted-foreground/30 bg-transparent"
-              } ${error ? "animate-shake" : ""}`}
+              }`}
+              style={error ? { animationDelay: `${i * 60}ms` } : undefined}
             />
           ))}
         </div>
