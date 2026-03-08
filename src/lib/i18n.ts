@@ -374,6 +374,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lock.title": "앱 잠금",
     "lock.enter": "PIN을 입력하여 잠금 해제",
     "lock.wrong": "잘못된 PIN입니다. 다시 시도하세요",
+    "lock.blocked": "시도 횟수 초과. 대기 시간:",
     "lock.setupTitle": "잠금 PIN 설정",
     "lock.setupEnter": "4자리 PIN을 입력하세요",
     "lock.setupConfirm": "PIN을 다시 입력하세요",
