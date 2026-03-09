@@ -245,6 +245,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
                   onToggleMasked={onToggleMasked}
                   onToggleRequired={onToggleRequired}
                   onUpdateSuggestions={onUpdateSuggestions}
+                  onRename={onRename}
                   expandedCol={expandedCol}
                   toggleExpand={toggleExpand}
                   suggestionsText={suggestionsText}
