@@ -117,6 +117,20 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
+  const renameColumn = async (id: string, newName: string) => {
+    if (!newName.trim()) return;
+    const { error } = await supabase
+      .from("custom_columns")
+      .update({ name: newName.trim() } as any)
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
+      return;
+    }
+    toast.success("Column renamed");
+    await fetchColumns();
+  };
+
   const reorderColumns = async (orderedIds: string[]) => {
     const updates = orderedIds.map((id, index) =>
       supabase.from("custom_columns").update({ sort_order: index } as any).eq("id", id)
@@ -125,5 +139,5 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  return { columns, loading, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, fetchColumns };
+  return { columns, loading, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, renameColumn, fetchColumns };
 };
