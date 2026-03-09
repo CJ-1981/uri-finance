@@ -303,6 +303,10 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      rename_custom_column_key: {
+        Args: { _new_name: string; _old_name: string; _project_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       transaction_type: "income" | "expense"
