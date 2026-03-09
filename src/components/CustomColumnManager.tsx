@@ -40,6 +40,7 @@ const SortableColumnItem = ({
   onToggleMasked,
   onToggleRequired,
   onUpdateSuggestions,
+  onRename,
   expandedCol,
   toggleExpand,
   suggestionsText,
@@ -52,6 +53,7 @@ const SortableColumnItem = ({
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
   onToggleRequired?: (id: string, required: boolean) => Promise<void>;
   onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
+  onRename?: (id: string, newName: string) => Promise<void>;
   expandedCol: string | null;
   toggleExpand: (col: CustomColumn) => void;
   suggestionsText: Record<string, string>;
@@ -60,6 +62,8 @@ const SortableColumnItem = ({
   t: (key: string) => string;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: col.id });
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(col.name);
 
   const style = {
     transform: CSS.Transform.toString(transform),
