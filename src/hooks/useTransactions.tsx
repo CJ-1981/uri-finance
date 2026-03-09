@@ -68,7 +68,7 @@ export const useTransactions = (projectId: string | undefined) => {
       toast.error("Failed to add transaction");
       return;
     }
-    toast.success("Transaction added!");
+    toast.success("Transaction added!", { duration: 2000 });
     await fetchTransactions();
   };
 
