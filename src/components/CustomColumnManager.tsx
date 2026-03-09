@@ -72,6 +72,13 @@ const SortableColumnItem = ({
     zIndex: isDragging ? 10 : undefined,
   };
 
+  const handleRenameSubmit = async () => {
+    if (editName.trim() && editName.trim() !== col.name && onRename) {
+      await onRename(col.id, editName.trim());
+    }
+    setEditing(false);
+  };
+
   return (
     <div ref={setNodeRef} style={style} className="space-y-1">
       <div className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground">
@@ -83,7 +90,34 @@ const SortableColumnItem = ({
         ) : (
           <Type className="h-3 w-3 text-muted-foreground shrink-0" />
         )}
-        <span className="flex-1">{col.name}</span>
+        {editing ? (
+          <div className="flex-1 flex items-center gap-1">
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="h-6 text-sm bg-background px-1.5 py-0"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameSubmit();
+                if (e.key === "Escape") { setEditName(col.name); setEditing(false); }
+              }}
+            />
+            <button onClick={handleRenameSubmit} className="text-muted-foreground hover:text-primary transition-colors">
+              <Check className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : (
+          <span className="flex-1 cursor-pointer" onDoubleClick={() => onRename && setEditing(true)}>{col.name}</span>
+        )}
+        {!editing && onRename && (
+          <button
+            onClick={() => { setEditName(col.name); setEditing(true); }}
+            className="text-muted-foreground hover:text-primary transition-colors"
+            title={t("cc.rename") || "Rename"}
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
         {col.column_type === "text" && onUpdateSuggestions && (
           <button
             onClick={() => toggleExpand(col)}
