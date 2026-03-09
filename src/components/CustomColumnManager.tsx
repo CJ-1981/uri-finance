@@ -31,6 +31,7 @@ interface Props {
   onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
   onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   onReorderAll?: (orderedIds: string[]) => Promise<void>;
+  onRename?: (id: string, newName: string) => Promise<void>;
 }
 
 const SortableColumnItem = ({
