@@ -118,15 +118,28 @@ export const useCustomColumns = (projectId: string | undefined) => {
   };
 
   const renameColumn = async (id: string, newName: string) => {
-    if (!newName.trim()) return;
+    if (!newName.trim() || !projectId) return;
+    const oldCol = columns.find(c => c.id === id);
+    if (!oldCol) return;
+    const trimmed = newName.trim();
+    if (trimmed === oldCol.name) return;
+
     const { error } = await supabase
       .from("custom_columns")
-      .update({ name: newName.trim() } as any)
+      .update({ name: trimmed } as any)
       .eq("id", id);
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
       return;
     }
+
+    // Migrate existing transaction data keys
+    await supabase.rpc("rename_custom_column_key", {
+      _project_id: projectId,
+      _old_name: oldCol.name,
+      _new_name: trimmed,
+    });
+
     toast.success("Column renamed");
     await fetchColumns();
   };
