@@ -138,7 +138,7 @@ const SortableColumnItem = ({
   );
 };
 
-const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggleRequired, onUpdateSuggestions, onReorderAll }: Props) => {
+const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggleRequired, onUpdateSuggestions, onReorderAll, onRename }: Props) => {
   const [name, setName] = useState("");
   const [colType, setColType] = useState<ColumnType>("numeric");
   const [adding, setAdding] = useState(false);
