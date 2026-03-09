@@ -218,12 +218,6 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
               <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg)}>
                 {t("export.csv")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg)}>
-                {t("export.xls")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg)}>
-                {t("export.markdown")}
-              </DropdownMenuItem>
             </>
           )}
           {canImport && (
