@@ -208,8 +208,6 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
     toast.success(t("cash.copied"));
   };
 
-  const isBill = (d: number) => denoms.bills.includes(d);
-
   return (
     <div className="space-y-3">
       {/* Header row */}
@@ -222,7 +220,7 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
       {/* Bills section */}
       {denoms.bills.length > 0 && (
         <div className="space-y-0.5">
-          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1">
+          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 text-center">
             {t("cash.bills")}
           </p>
           {denoms.bills.map((d) => (
@@ -242,7 +240,7 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
       {/* Coins section */}
       {denoms.coins.length > 0 && (
         <div className="space-y-0.5">
-          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 px-1">
+          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 text-center">
             {t("cash.coins")}
           </p>
           {denoms.coins.map((d) => (
