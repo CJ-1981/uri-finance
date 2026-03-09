@@ -119,9 +119,36 @@
     @apply border-border;
   }
 
+  html, body {
+    /* Allow normal scrolling gestures */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Touch-specific styles - only apply to actual touch devices */
+  @media (hover: none) and (pointer: coarse) {
+    html, body {
+      /* Prevent iOS Safari bounce */
+      overscroll-behavior: none;
+      /* Allow normal scrolling gestures on touch */
+      touch-action: pan-x pan-y;
+    }
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Space Grotesk', sans-serif;
+    /* Prevent text selection on mobile (but allow in inputs) */
+    -webkit-user-select: none;
+    user-select: none;
+    /* Prevent iOS text size adjustment */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Allow text selection in input fields and textareas */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -156,4 +183,62 @@
 [data-tab-stop]:focus {
   outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
+}
+
+/* Touch-specific styles - only apply to actual touch devices */
+@media (hover: none) and (pointer: coarse) {
+  /* Prevent zoom on interactive elements while allowing scrolling */
+  button, a, [role="button"] {
+    /* Allow normal touch actions but prevent zoom */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent double-tap zoom on inputs while allowing editing */
+  input, select, textarea {
+    /* Prevent iOS zoom on focus but allow normal interaction */
+    touch-action: manipulation;
+    font-size: 16px; /* Prevents iOS auto-zoom on focus */
+  }
+}
+
+/* Base styles for buttons, inputs, etc. that apply everywhere */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, select, textarea {
+  font-size: 16px; /* Minimum size to prevent iOS auto-zoom on focus */
+}
+
+/* Touch-specific styles for Radix components - only apply to actual touch devices */
+@media (hover: none) and (pointer: coarse) {
+  /* Specific zoom prevention for non-scrollable UI elements */
+  [data-radix-dropdown-menu-content],
+  [data-radix-popover-content],
+  [data-radix-select-content],
+  [data-radix-alert-dialog-content] {
+    /* These don't need scrolling, can be stricter */
+    touch-action: manipulation;
+    overscroll-behavior: contain;
+  }
+
+  /* Allow scrolling in scrollable areas but prevent zoom */
+  [data-radix-scroll-area-viewport],
+  [data-radix-dialog-content],
+  [data-radix-sheet-content],
+  [data-radix-drawer-content] {
+    /* Allow pan gestures (scrolling) but prevent zoom */
+    touch-action: pan-x pan-y;
+    overscroll-behavior: contain;
+  }
+}
+
+/* Prevent iOS Safari bounce specifically */
+@media (hover: none) and (pointer: coarse) {
+  body {
+    /* Allow normal scrolling but prevent bounce */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
 }
