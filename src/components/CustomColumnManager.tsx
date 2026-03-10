@@ -87,6 +87,8 @@ const SortableColumnItem = ({
         </button>
         {col.column_type === "numeric" ? (
           <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+        ) : col.column_type === "list" ? (
+          <List className="h-3 w-3 text-muted-foreground shrink-0" />
         ) : (
           <Type className="h-3 w-3 text-muted-foreground shrink-0" />
         )}
