@@ -18,13 +18,7 @@ interface PinSetupDialogProps {
 
 const PIN_LENGTH = 4;
 
-const hashPin = async (value: string) => {
-  const encoded = new TextEncoder().encode(value);
-  const buffer = await crypto.subtle.digest("SHA-256", encoded);
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-};
+import { storePin } from "@/lib/securePinStorage";
 
 const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps) => {
   const { t } = useI18n();
@@ -48,12 +42,14 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
 
     if (step === "confirm" && next.length === PIN_LENGTH) {
       if (next === pin) {
-        hashPin(next).then((hash) => {
-          localStorage.setItem("app_lock_pin", hash);
+        storePin(next).then(() => {
           toast.success(t("lock.pinSet"));
           resetState();
           onComplete();
           onOpenChange(false);
+        }).catch((err) => {
+          console.error(err);
+          toast.error("Failed to set PIN securely");
         });
       } else {
         setError(true);
