@@ -242,3 +242,14 @@ input, select, textarea {
     overscroll-behavior: none;
   }
 }
+
+/* Hide scrollbars on mobile touch devices */
+@media (hover: none) and (pointer: coarse) {
+  *::-webkit-scrollbar {
+    display: none;
+  }
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
