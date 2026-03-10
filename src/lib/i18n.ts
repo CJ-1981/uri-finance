@@ -46,7 +46,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.descriptionOptional": "Description (optional)",
     "tx.descriptionPlaceholder": "What was this for?",
     "tx.optional": "optional",
-    "tx.select": "Select...",
+    "tx.selectOption": "Select...",
     "tx.adding": "Adding...",
     "tx.addAndContinue": "Add & Continue",
     "tx.saving": "Saving...",
