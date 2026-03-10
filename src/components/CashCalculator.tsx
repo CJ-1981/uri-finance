@@ -74,7 +74,7 @@ function loadCachedCounts(allDenoms: number[]): Counts {
         return parsed.counts;
       }
     }
-  } catch {}
+  } catch { }
   const init: Counts = {};
   allDenoms.forEach((d) => { init[d.toString()] = { named: 0, anon: 0 }; });
   return init;
@@ -212,7 +212,7 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
     <div className="space-y-3">
       {/* Header row */}
       <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background z-10 py-1.5 border-b border-border/30">
-        <div className="text-center">{t("cash.denomination")}</div>
+        <div className="text-center"></div>
         <div className="text-center">{t("cash.named")}</div>
         <div className="text-center">{t("cash.anon")}</div>
       </div>
@@ -361,7 +361,7 @@ const DenomRow = ({ denom, label, counts, onUpdate, onSet, isBill: isBillType }:
     <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 items-center py-0.5">
       {/* Denomination label */}
       <div className="flex items-center justify-center">
-        <span className={`text-xs font-mono font-semibold ${isBillType ? "text-foreground" : "text-muted-foreground"}`}>
+        <span className={`text-xs font-mono ${isBillType ? "text-foreground font-bold" : "text-foreground font-normal"}`}>
           {label}
         </span>
       </div>
