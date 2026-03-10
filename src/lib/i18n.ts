@@ -317,6 +317,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Language
     "lang.label": "EN",
+    "common.clear": "Clear",
   },
   ko: {
     // Auth
@@ -634,5 +635,6 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Language
     "lang.label": "한국어",
+    "common.clear": "지우기",
   },
 };
