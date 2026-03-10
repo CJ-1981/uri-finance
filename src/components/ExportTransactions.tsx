@@ -163,12 +163,13 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
       const lines = text.split(/\r?\n/).filter((l) => l.trim());
       if (lines.length < 2) { toast.error(t("import.noData")); return; }
       const headerCols = parseCSVLine(lines[0]).map((h) => h.toLowerCase().trim());
+      const hl = { date: headers.date.toLowerCase(), type: headers.type.toLowerCase(), category: headers.category.toLowerCase(), description: headers.description.toLowerCase(), amount: headers.amount.toLowerCase() };
       const colMap = {
-        type: headerCols.findIndex((h) => ["type", "유형"].includes(h)),
-        amount: headerCols.findIndex((h) => ["amount", "금액"].includes(h)),
-        category: headerCols.findIndex((h) => ["category", "카테고리"].includes(h)),
-        description: headerCols.findIndex((h) => ["description", "설명", "memo", "메모"].includes(h)),
-        date: headerCols.findIndex((h) => ["date", "날짜", "transaction_date"].includes(h)),
+        type: headerCols.findIndex((h) => ["type", "유형", hl.type].includes(h)),
+        amount: headerCols.findIndex((h) => ["amount", "금액", hl.amount].includes(h)),
+        category: headerCols.findIndex((h) => ["category", "카테고리", hl.category].includes(h)),
+        description: headerCols.findIndex((h) => ["description", "설명", "memo", "메모", hl.description].includes(h)),
+        date: headerCols.findIndex((h) => ["date", "날짜", "transaction_date", hl.date].includes(h)),
         currency: headerCols.findIndex((h) => ["currency", "통화"].includes(h)),
       };
       if (colMap.type === -1 || colMap.amount === -1) { toast.error(t("import.missingColumns")); return; }
