@@ -261,6 +261,16 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
           >
             <Type className="h-3.5 w-3.5" />
           </button>
+          <button
+            type="button"
+            onClick={() => setColType("list")}
+            className={`px-2.5 py-2 text-xs font-medium transition-colors ${
+              colType === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+            }`}
+            title={t("cc.list")}
+          >
+            <List className="h-3.5 w-3.5" />
+          </button>
         </div>
         <Input
           value={name}
