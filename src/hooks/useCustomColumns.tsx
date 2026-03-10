@@ -52,10 +52,18 @@ export const useCustomColumns = (projectId: string | undefined) => {
   };
 
   const deleteColumn = async (id: string) => {
+    const col = columns.find(c => c.id === id);
     const { error } = await supabase.from("custom_columns").delete().eq("id", id);
     if (error) {
       toast.error("Failed to delete column");
       return;
+    }
+    // Clean up existing transaction data
+    if (col && projectId) {
+      await supabase.rpc("remove_custom_column_key", {
+        _project_id: projectId,
+        _column_name: col.name,
+      });
     }
     toast.success("Column removed");
     await fetchColumns();
