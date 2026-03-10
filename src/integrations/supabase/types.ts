@@ -303,6 +303,10 @@ export type Database = {
         Args: { _project_id: string; _user_id: string }
         Returns: boolean
       }
+      remove_custom_column_key: {
+        Args: { _column_name: string; _project_id: string }
+        Returns: undefined
+      }
       rename_custom_column_key: {
         Args: { _new_name: string; _old_name: string; _project_id: string }
         Returns: undefined
