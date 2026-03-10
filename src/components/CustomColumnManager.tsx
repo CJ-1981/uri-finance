@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Hash, Type, EyeOff, Eye, FileText, GripVertical, Asterisk, Pencil, Check } from "lucide-react";
+import { Plus, X, Hash, Type, List, EyeOff, Eye, FileText, GripVertical, Asterisk, Pencil, Check } from "lucide-react";
 import { CustomColumn, ColumnType } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import {
