@@ -275,7 +275,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={colType === "numeric" ? t("cc.placeholder") : t("cc.textPlaceholder")}
+          placeholder={colType === "numeric" ? t("cc.placeholder") : colType === "list" ? t("cc.listPlaceholder") : t("cc.textPlaceholder")}
           className="flex-1 bg-background"
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />

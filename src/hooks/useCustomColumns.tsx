@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type ColumnType = "numeric" | "text";
+export type ColumnType = "numeric" | "text" | "list";
 
 export interface CustomColumn {
   id: string;
