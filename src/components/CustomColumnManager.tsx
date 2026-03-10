@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Hash, Type, EyeOff, Eye, FileText, GripVertical, Asterisk, Pencil, Check } from "lucide-react";
+import { Plus, X, Hash, Type, List, EyeOff, Eye, FileText, GripVertical, Asterisk, Pencil, Check } from "lucide-react";
 import { CustomColumn, ColumnType } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import {
@@ -87,6 +87,8 @@ const SortableColumnItem = ({
         </button>
         {col.column_type === "numeric" ? (
           <Hash className="h-3 w-3 text-muted-foreground shrink-0" />
+        ) : col.column_type === "list" ? (
+          <List className="h-3 w-3 text-muted-foreground shrink-0" />
         ) : (
           <Type className="h-3 w-3 text-muted-foreground shrink-0" />
         )}
@@ -118,13 +120,13 @@ const SortableColumnItem = ({
             <Pencil className="h-3 w-3" />
           </button>
         )}
-        {col.column_type === "text" && onUpdateSuggestions && (
+        {(col.column_type === "text" || col.column_type === "list") && onUpdateSuggestions && (
           <button
             onClick={() => toggleExpand(col)}
             className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5"
-            title={t("cc.manageSuggestions")}
+            title={col.column_type === "list" ? t("cc.manageOptions") : t("cc.manageSuggestions")}
           >
-            <FileText className="h-3.5 w-3.5" />
+            {col.column_type === "list" ? <List className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
             {(col.suggestions || []).length > 0 && (
               <span className="text-[10px] tabular-nums">{col.suggestions.length}</span>
             )}
@@ -154,13 +156,15 @@ const SortableColumnItem = ({
       </div>
       {expandedCol === col.id && (
         <div className="ml-2 space-y-1.5">
-          <p className="text-[11px] text-muted-foreground">{t("cc.suggestionsHint")}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {col.column_type === "list" ? t("cc.optionsHint") : t("cc.suggestionsHint")}
+          </p>
           <Textarea
             value={suggestionsText[col.id] || ""}
             onChange={(e) =>
               setSuggestionsText((prev) => ({ ...prev, [col.id]: e.target.value }))
             }
-            placeholder={t("cc.suggestionsPlaceholder")}
+            placeholder={col.column_type === "list" ? t("cc.optionsPlaceholder") : t("cc.suggestionsPlaceholder")}
             className="bg-background text-xs min-h-[80px]"
           />
           <Button
@@ -169,7 +173,7 @@ const SortableColumnItem = ({
             className="text-xs h-7"
             onClick={() => handleSaveSuggestions(col.id)}
           >
-            {t("cc.saveSuggestions")}
+            {col.column_type === "list" ? t("cc.saveOptions") : t("cc.saveSuggestions")}
           </Button>
         </div>
       )}
@@ -257,11 +261,21 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
           >
             <Type className="h-3.5 w-3.5" />
           </button>
+          <button
+            type="button"
+            onClick={() => setColType("list")}
+            className={`px-2.5 py-2 text-xs font-medium transition-colors ${
+              colType === "list" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+            }`}
+            title={t("cc.list")}
+          >
+            <List className="h-3.5 w-3.5" />
+          </button>
         </div>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={colType === "numeric" ? t("cc.placeholder") : t("cc.textPlaceholder")}
+          placeholder={colType === "numeric" ? t("cc.placeholder") : colType === "list" ? t("cc.listPlaceholder") : t("cc.textPlaceholder")}
           className="flex-1 bg-background"
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />

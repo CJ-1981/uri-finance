@@ -305,7 +305,24 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               {visibleCustomCols.map((col) => (
                   <div key={col.id} className="space-y-2">
                     <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
-                    {col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
+                    {col.column_type === "list" && (col.suggestions || []).length > 0 ? (
+                      <Select
+                        value={customValues[col.name] || ""}
+                        onValueChange={(val) =>
+                          setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                        }
+                        disabled={!isOwn}
+                      >
+                        <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50">
+                          <SelectValue placeholder={t("tx.selectOption")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {col.suggestions.map((opt) => (
+                            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
                       <AutoSuggestInput
                         value={customValues[col.name] || ""}
                         onChange={(val) =>
