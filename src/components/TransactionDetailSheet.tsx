@@ -314,7 +314,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                         disabled={!isOwn}
                       >
                         <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50">
-                          <SelectValue placeholder={t("tx.select") || "Select..."} />
+                          <SelectValue placeholder={t("tx.selectOption")} />
                         </SelectTrigger>
                         <SelectContent>
                           {col.suggestions.map((opt) => (
