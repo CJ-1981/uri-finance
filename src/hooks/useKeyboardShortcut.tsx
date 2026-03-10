@@ -12,7 +12,7 @@ export interface ShortcutConfig {
 
 const DEFAULT_SHORTCUTS: ShortcutConfig = {
   addTransaction: "n",
-  addTransactionAlt: "",
+  addTransactionAlt: "ㅜ",
   tabList: "1",
   tabCharts: "2",
   tabCash: "3",
@@ -30,7 +30,7 @@ export const getShortcuts = (): ShortcutConfig => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return { ...DEFAULT_SHORTCUTS, ...JSON.parse(stored) };
-  } catch {}
+  } catch { }
   return DEFAULT_SHORTCUTS;
 };
 

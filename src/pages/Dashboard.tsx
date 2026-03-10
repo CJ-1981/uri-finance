@@ -14,6 +14,7 @@ import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
+import CategorySelector from "@/components/CategorySelector";
 import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator } from "lucide-react";
@@ -55,6 +56,7 @@ const Dashboard = () => {
   const [detailOpen, setDetailOpen] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("all");
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const realOwner = activeProject && user && activeProject.owner_id === user.id;
@@ -65,6 +67,10 @@ const Dashboard = () => {
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const txListRef = useRef<TransactionListHandle>(null);
+  
+  useEffect(() => {
+    setSelectedCategoryId(null);
+  }, [activeProject?.id]);
 
   const openAddTx = useCallback(() => {
     if (activeProject && !isViewer) setAddTxOpen(true);
@@ -102,11 +108,17 @@ const Dashboard = () => {
     toast.success(t("lock.pinRemoved"));
   };
 
-  // Filter transactions by selected period
-  const filtered = useMemo(
-    () => filterByPeriod(transactions, period, customRange),
-    [transactions, period, customRange]
-  );
+  // Filter transactions by selected period and category
+  const filtered = useMemo(() => {
+    let result = filterByPeriod(transactions, period, customRange);
+    if (selectedCategoryId) {
+      const category = categories.find(c => c.id === selectedCategoryId);
+      if (category) {
+        result = result.filter(tx => tx.category === category.name);
+      }
+    }
+    return result;
+  }, [transactions, period, customRange, selectedCategoryId, categories]);
 
   const projectCurrency = activeProject?.currency || "USD";
 
@@ -286,13 +298,20 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="animate-fade-in space-y-4">
-            {/* Period selector */}
-            <PeriodSelector
-              period={period}
-              onPeriodChange={setPeriod}
-              customRange={customRange}
-              onCustomRangeChange={setCustomRange}
-            />
+            {/* Filters */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              <PeriodSelector
+                period={period}
+                onPeriodChange={setPeriod}
+                customRange={customRange}
+                onCustomRangeChange={setCustomRange}
+              />
+              <CategorySelector
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onCategoryChange={setSelectedCategoryId}
+              />
+            </div>
 
             {/* Balance cards - project currency */}
             <div className="grid grid-cols-3 gap-2">
