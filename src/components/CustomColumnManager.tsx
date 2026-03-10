@@ -120,13 +120,13 @@ const SortableColumnItem = ({
             <Pencil className="h-3 w-3" />
           </button>
         )}
-        {col.column_type === "text" && onUpdateSuggestions && (
+        {(col.column_type === "text" || col.column_type === "list") && onUpdateSuggestions && (
           <button
             onClick={() => toggleExpand(col)}
             className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5"
-            title={t("cc.manageSuggestions")}
+            title={col.column_type === "list" ? t("cc.manageOptions") : t("cc.manageSuggestions")}
           >
-            <FileText className="h-3.5 w-3.5" />
+            {col.column_type === "list" ? <List className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
             {(col.suggestions || []).length > 0 && (
               <span className="text-[10px] tabular-nums">{col.suggestions.length}</span>
             )}
