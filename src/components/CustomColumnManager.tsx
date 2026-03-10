@@ -156,13 +156,15 @@ const SortableColumnItem = ({
       </div>
       {expandedCol === col.id && (
         <div className="ml-2 space-y-1.5">
-          <p className="text-[11px] text-muted-foreground">{t("cc.suggestionsHint")}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {col.column_type === "list" ? t("cc.optionsHint") : t("cc.suggestionsHint")}
+          </p>
           <Textarea
             value={suggestionsText[col.id] || ""}
             onChange={(e) =>
               setSuggestionsText((prev) => ({ ...prev, [col.id]: e.target.value }))
             }
-            placeholder={t("cc.suggestionsPlaceholder")}
+            placeholder={col.column_type === "list" ? t("cc.optionsPlaceholder") : t("cc.suggestionsPlaceholder")}
             className="bg-background text-xs min-h-[80px]"
           />
           <Button
@@ -171,7 +173,7 @@ const SortableColumnItem = ({
             className="text-xs h-7"
             onClick={() => handleSaveSuggestions(col.id)}
           >
-            {t("cc.saveSuggestions")}
+            {col.column_type === "list" ? t("cc.saveOptions") : t("cc.saveSuggestions")}
           </Button>
         </div>
       )}
