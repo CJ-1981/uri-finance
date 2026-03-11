@@ -38,8 +38,8 @@
 
     --income: 152 60% 40%;
     --income-foreground: 152 80% 15%;
-    --expense: 0 72% 50%;
-    --expense-foreground: 0 80% 15%;
+    --expense: 152 60% 40%;
+    --expense-foreground: 152 80% 15%;
 
     --chart-income: 152 60% 40%;
     --chart-expense: 0 72% 50%;
