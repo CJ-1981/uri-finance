@@ -173,7 +173,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <Plus className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col">
         <div className="px-6 overflow-y-auto flex-1 pb-8">
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
