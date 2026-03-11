@@ -48,6 +48,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   const isOwn = !isViewer && transaction?.user_id === user?.id;
 
@@ -211,7 +212,14 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto">
+      <SheetContent 
+        side="bottom" 
+        className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          amountInputRef.current?.focus();
+        }}
+      >
         <SheetHeader>
           <div className="flex items-center justify-between">
             <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
@@ -274,6 +282,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
+              ref={amountInputRef}
               type="text"
               inputMode="decimal"
               data-tab-stop

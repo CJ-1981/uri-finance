@@ -53,6 +53,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
+  const amountInputRef = useRef<HTMLInputElement>(null);
 
   // Build suggestion lists per text column: imported + historical
   const columnSuggestions = useMemo(() => {
@@ -173,7 +174,14 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <Plus className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col">
+      <SheetContent 
+        side="bottom" 
+        className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          amountInputRef.current?.focus();
+        }}
+      >
         <div className="px-6 overflow-y-auto flex-1 pb-8">
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
@@ -214,6 +222,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
             <Input
+              ref={amountInputRef}
               type="text"
               inputMode="decimal"
               data-tab-stop
