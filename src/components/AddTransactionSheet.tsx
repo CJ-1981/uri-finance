@@ -169,7 +169,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size="icon" className="fixed bottom-16 right-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
+        <Button size="icon" className="fixed bottom-16 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
           <Plus className="h-6 w-6" />
         </Button>
       </SheetTrigger>
