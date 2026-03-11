@@ -72,14 +72,7 @@ const Dashboard = () => {
 
   const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen && !pinDialogOpen;
 
-  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
 
-  const goToList = useCallback(() => setView("list"), []);
-  const goToCharts = useCallback(() => setView("charts"), []);
-  const goToCash = useCallback(() => setView("cash"), []);
-  useKeyboardShortcut("tabList", goToList, !!activeProject && noModalOpen);
-  useKeyboardShortcut("tabCharts", goToCharts, !!activeProject && noModalOpen);
-  useKeyboardShortcut("tabCash", goToCash, !!activeProject && noModalOpen);
 
   // "/" shortcut to focus search
   useEffect(() => {
@@ -89,8 +82,8 @@ const Dashboard = () => {
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         if ((e.target as HTMLElement)?.isContentEditable) return;
 
-        // Extra safety check for any open dialogs
-        if (document.querySelector('[role="dialog"], [role="menu"], [role="listbox"], [role="combobox"]')) return;
+        // Extra safety check for any open dialogs - only block if a combobox is expanded
+        if (document.querySelector('[role="dialog"], [role="menu"], [role="listbox"], [role="combobox"][aria-expanded="true"]')) return;
 
         e.preventDefault();
         txListRef.current?.focusSearch();
@@ -144,27 +137,26 @@ const Dashboard = () => {
   );
 
   // j/k to navigate and open transactions in list view
-  const visibleTxs = filtered.slice(0, 20);
+  const navigableTxs = filtered;
 
   const goNextTx = useCallback(() => {
-    if (view !== "list" || !activeProject || detailOpen) return;
-    const currentIdx = selectedTx ? visibleTxs.findIndex(tx => tx.id === selectedTx.id) : -1;
-    const nextIdx = Math.min(currentIdx + 1, visibleTxs.length - 1);
-    if (visibleTxs[nextIdx]) {
-      setSelectedTx(visibleTxs[nextIdx]);
+    if (view !== "list" || !activeProject) return;
+    const currentIdx = selectedTx ? navigableTxs.findIndex(tx => tx.id === selectedTx.id) : -1;
+    const nextIdx = Math.min(currentIdx + 1, navigableTxs.length - 1);
+    if (navigableTxs[nextIdx]) {
+      setSelectedTx(navigableTxs[nextIdx]);
       setDetailOpen(true);
     }
-  }, [view, activeProject, detailOpen, visibleTxs, selectedTx]);
-
+  }, [view, activeProject, navigableTxs, selectedTx]);
   const goPrevTx = useCallback(() => {
-    if (view !== "list" || !activeProject || detailOpen) return;
-    const currentIdx = selectedTx ? visibleTxs.findIndex(tx => tx.id === selectedTx.id) : visibleTxs.length;
+    if (view !== "list" || !activeProject) return;
+    const currentIdx = selectedTx ? navigableTxs.findIndex(tx => tx.id === selectedTx.id) : navigableTxs.length;
     const prevIdx = Math.max(currentIdx - 1, 0);
-    if (visibleTxs[prevIdx]) {
-      setSelectedTx(visibleTxs[prevIdx]);
+    if (navigableTxs[prevIdx]) {
+      setSelectedTx(navigableTxs[prevIdx]);
       setDetailOpen(true);
     }
-  }, [view, activeProject, detailOpen, visibleTxs, selectedTx]);
+  }, [view, activeProject, navigableTxs, selectedTx]);
 
 
 
@@ -190,6 +182,20 @@ const Dashboard = () => {
   const handleNavigateTx = (tx: Transaction) => {
     setSelectedTx(tx);
   };
+
+  const goToList = useCallback(() => setView("list"), []);
+  const goToCharts = useCallback(() => setView("charts"), []);
+  const goToCash = useCallback(() => setView("cash"), []);
+
+  useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
+  useKeyboardShortcut("tabList", goToList, !!activeProject && noModalOpen);
+  useKeyboardShortcut("tabCharts", goToCharts, !!activeProject && noModalOpen);
+  useKeyboardShortcut("tabCash", goToCash, !!activeProject && noModalOpen);
+  
+  // Allow navigation shortcuts even if detail sheet is open
+  const canNavigate = !!activeProject && (noModalOpen || detailOpen);
+  useKeyboardShortcut("nextTx", goNextTx, canNavigate, undefined, true);
+  useKeyboardShortcut("prevTx", goPrevTx, canNavigate, undefined, true);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -403,7 +409,7 @@ const Dashboard = () => {
               onDelete={deleteTransaction}
               customColumns={customColumns}
               isViewer={isViewer}
-              transactionList={bulkEditTxs.length > 0 ? bulkEditTxs : undefined}
+              transactionList={bulkEditTxs.length > 0 ? bulkEditTxs : navigableTxs}
               onNavigate={handleNavigateTx}
               allTransactions={transactions}
             />

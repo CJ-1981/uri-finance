@@ -8,6 +8,8 @@ export interface ShortcutConfig {
   tabList: string;
   tabCharts: string;
   tabCash: string;
+  nextTx: string;
+  prevTx: string;
 }
 
 const DEFAULT_SHORTCUTS: ShortcutConfig = {
@@ -16,6 +18,8 @@ const DEFAULT_SHORTCUTS: ShortcutConfig = {
   tabList: "1",
   tabCharts: "2",
   tabCash: "3",
+  nextTx: "k",
+  prevTx: "j",
 };
 
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
@@ -24,6 +28,8 @@ export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   tabList: "shortcut.tabList",
   tabCharts: "shortcut.tabCharts",
   tabCash: "shortcut.tabCash",
+  nextTx: "shortcut.nextTx",
+  prevTx: "shortcut.prevTx",
 };
 
 export const getShortcuts = (): ShortcutConfig => {
@@ -43,7 +49,9 @@ export const useKeyboardShortcut = (
   callback: () => void,
   enabled = true,
   /** Also listen for this alternate action's key */
-  altAction?: keyof ShortcutConfig
+  altAction?: keyof ShortcutConfig,
+  /** If true, the shortcut will work even if a dialog/modal is open */
+  allowInDialog = false
 ) => {
   const [keys, setKeys] = useState(() => {
     const s = getShortcuts();
@@ -71,7 +79,8 @@ export const useKeyboardShortcut = (
       if ((e.target as HTMLElement)?.isContentEditable) return;
 
       // Check for any open dialogs, sheets, or popovers (common ARIA roles)
-      if (document.querySelector('[role="dialog"], [role="menu"], [role="listbox"], [role="combobox"]')) return;
+      // Only block if a combobox is actually expanded (meaning it's open)
+      if (!allowInDialog && document.querySelector('[role="dialog"], [role="menu"], [role="listbox"], [role="combobox"][aria-expanded="true"]')) return;
 
       const pressed = e.key.toLowerCase();
       const matches =

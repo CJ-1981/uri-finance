@@ -216,8 +216,9 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
         side="bottom" 
         className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
         onOpenAutoFocus={(e) => {
-          e.preventDefault();
-          amountInputRef.current?.focus();
+          // Prevent auto-focusing the input so navigation shortcuts work
+          // e.preventDefault();
+          // amountInputRef.current?.focus();
         }}
       >
         <SheetHeader>

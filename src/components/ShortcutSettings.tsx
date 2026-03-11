@@ -106,6 +106,17 @@ const ShortcutSettings = () => {
             </div>
           </div>
 
+          <div className="border-t border-border/50 pt-3 space-y-2">
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.nextTx")}</label>
+              {renderKeyButton("nextTx", shortcuts.nextTx)}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.prevTx")}</label>
+              {renderKeyButton("prevTx", shortcuts.prevTx)}
+            </div>
+          </div>
+
           <p className="text-[10px] text-muted-foreground">{t("shortcut.hint")}</p>
 
           <Button size="sm" onClick={handleSave} disabled={!!recordingKey} className="w-full">
