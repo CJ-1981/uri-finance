@@ -319,6 +319,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "EN",
     "common.clear": "Clear",
+
+    // Error
+    "error.title": "Something went wrong",
+    "error.message": "We're sorry, but something unexpected happened. Please try refreshing the page.",
+    "error.details": "Error Details (Development Only)",
+    "error.tryAgain": "Try Again",
+    "error.reload": "Reload Page",
+
+    // PIN Setup
+    "pinSetup.failedToSetPinSecurely": "Failed to set PIN securely",
   },
   ko: {
     // Auth
@@ -638,5 +648,15 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "한국어",
     "common.clear": "지우기",
+
+    // Error
+    "error.title": "문제가 발생했습니다",
+    "error.message": "죄송합니다. 예기치 않은 오류가 발생했습니다. 페이지를 새로고침해 주세요.",
+    "error.details": "오류 세부 정보 (개발자용)",
+    "error.tryAgain": "다시 시도",
+    "error.reload": "페이지 새로고침",
+
+    // PIN Setup
+    "pinSetup.failedToSetPinSecurely": "PIN을 안전하게 설정하지 못했습니다",
   },
 };
