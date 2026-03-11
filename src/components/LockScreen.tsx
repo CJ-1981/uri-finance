@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { Lock, Delete, ShieldAlert } from "lucide-react";
+import { 
+  verifyPin,
+  isPinSet,
+  loadLockState,
+  saveLockState,
+  hashPin
+} from "@/lib/securePinStorage";
 
 interface LockScreenProps {
   onUnlock: () => void;
@@ -8,7 +15,6 @@ interface LockScreenProps {
 
 const PIN_LENGTH = 4;
 const MAX_FREE_ATTEMPTS = 3;
-const LOCK_STORAGE_KEY = "app_lock_state";
 
 const getBlockDuration = (failCount: number): number => {
   // After 3 free attempts: 15s, 30s, 60s, 120s, 300s...
@@ -17,26 +23,18 @@ const getBlockDuration = (failCount: number): number => {
   return Math.min(15 * Math.pow(2, extra - 1), 600) * 1000;
 };
 
-const loadLockState = () => {
-  try {
-    const raw = localStorage.getItem(LOCK_STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as { failCount: number; blockedUntil: number };
-  } catch {}
-  return { failCount: 0, blockedUntil: 0 };
-};
-
-const saveLockState = (state: { failCount: number; blockedUntil: number }) => {
-  localStorage.setItem(LOCK_STORAGE_KEY, JSON.stringify(state));
-};
-
 const LockScreen = ({ onUnlock }: LockScreenProps) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [lockState, setLockState] = useState(loadLockState);
-  const [remainingMs, setRemainingMs] = useState(0);
+  const [remainingMs, setRemainingMs] = useState(() => {
+    const initial = loadLockState();
+    const diff = initial.blockedUntil - Date.now();
+    return diff > 0 ? diff : 0;
+  });
   const { t } = useI18n();
 
-  const storedHash = localStorage.getItem("app_lock_pin");
+  const hasPin = isPinSet();
   const isBlocked = remainingMs > 0;
 
   // Countdown timer
@@ -50,25 +48,21 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
     return () => clearInterval(id);
   }, [lockState.blockedUntil]);
 
-  const hashPin = async (value: string) => {
-    const encoded = new TextEncoder().encode(value);
-    const buffer = await crypto.subtle.digest("SHA-256", encoded);
-    return Array.from(new Uint8Array(buffer))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  };
-
   const handleDigit = useCallback(
     (digit: string) => {
-      if (isBlocked) return;
+      // Eagerly check block status against persistent state to prevent refresh bypass
+      if (Date.now() < lockState.blockedUntil) {
+        setPin(""); // Clear any attempted entries while blocked
+        return;
+      }
       if (pin.length >= PIN_LENGTH) return;
       const next = pin + digit;
       setPin(next);
       setError(false);
 
       if (next.length === PIN_LENGTH) {
-        hashPin(next).then((hash) => {
-          if (hash === storedHash) {
+        verifyPin(next).then((isValid) => {
+          if (isValid) {
             // Reset on success
             const cleared = { failCount: 0, blockedUntil: 0 };
             saveLockState(cleared);
@@ -89,7 +83,7 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
         });
       }
     },
-    [pin, storedHash, onUnlock, isBlocked, lockState.failCount]
+    [pin, onUnlock, isBlocked, lockState.failCount]
   );
 
   const handleDelete = () => {

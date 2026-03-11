@@ -249,6 +249,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lock.mismatch": "PINs didn't match. Try again.",
     "lock.pinSet": "Lock PIN set successfully!",
     "lock.pinRemoved": "Lock PIN removed",
+    "lock.pinRemoveFailed": "Failed to remove Lock PIN",
     "lock.enable": "Enable App Lock",
     "lock.disable": "Remove App Lock",
     "lock.changePIN": "Change PIN",
@@ -321,6 +322,16 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "EN",
     "common.clear": "Clear",
+
+    // Error
+    "error.title": "Something went wrong",
+    "error.message": "We're sorry, but something unexpected happened. Please try refreshing the page.",
+    "error.details": "Error Details (Development Only)",
+    "error.tryAgain": "Try Again",
+    "error.reload": "Reload Page",
+
+    // PIN Setup
+    "pinSetup.failedToSetPinSecurely": "Failed to set PIN securely",
   },
   ko: {
     // Auth
@@ -570,6 +581,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lock.mismatch": "PIN이 일치하지 않습니다. 다시 시도하세요.",
     "lock.pinSet": "잠금 PIN이 설정되었습니다!",
     "lock.pinRemoved": "잠금 PIN이 제거되었습니다",
+    "lock.pinRemoveFailed": "잠금 PIN 제거에 실패했습니다",
     "lock.enable": "앱 잠금 활성화",
     "lock.disable": "앱 잠금 해제",
     "lock.changePIN": "PIN 변경",
@@ -642,5 +654,15 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "한국어",
     "common.clear": "지우기",
+
+    // Error
+    "error.title": "문제가 발생했습니다",
+    "error.message": "죄송합니다. 예기치 않은 오류가 발생했습니다. 페이지를 새로고침해 주세요.",
+    "error.details": "오류 세부 정보 (개발자용)",
+    "error.tryAgain": "다시 시도",
+    "error.reload": "페이지 새로고침",
+
+    // PIN Setup
+    "pinSetup.failedToSetPinSecurely": "PIN을 안전하게 설정하지 못했습니다",
   },
 };

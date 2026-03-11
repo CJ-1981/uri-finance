@@ -13,18 +13,20 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
 import LockScreen from "@/components/LockScreen";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import { isPinSet } from "@/lib/securePinStorage";
 
 const queryClient = new QueryClient();
 
 const AppLockGate = ({ children }: { children: React.ReactNode }) => {
-  const hasPin = !!localStorage.getItem("app_lock_pin");
+  const hasPin = isPinSet();
   const [locked, setLocked] = useState(hasPin);
 
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "hidden") return;
       // Re-lock when coming back if PIN is set
-      if (localStorage.getItem("app_lock_pin")) {
+      if (isPinSet()) {
         setLocked(true);
       }
     };
@@ -44,24 +46,26 @@ const App = () => {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <I18nProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <AppLockGate>
-                <BrowserRouter>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
-              </AppLockGate>
-            </TooltipProvider>
-          </AuthProvider>
-        </QueryClientProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <AppLockGate>
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/admin" element={<AdminPage />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </AppLockGate>
+              </TooltipProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
       </I18nProvider>
     </ThemeProvider>
   );

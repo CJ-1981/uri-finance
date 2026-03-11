@@ -180,6 +180,14 @@
   .gradient-dark {
     background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Safari-compatible focus ring for programmatic .focus() */
