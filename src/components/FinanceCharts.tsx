@@ -113,11 +113,71 @@ function GroupSelector({ options, value, onChange }: {
   );
 }
 
+function ClickableLegend({ series, hidden, onToggle }: {
+  series: { key: string; color: string }[];
+  hidden: Set<string>;
+  onToggle: (key: string) => void;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap justify-center gap-3">
+      {series.map((s) => (
+        <button
+          key={s.key}
+          onClick={() => onToggle(s.key)}
+          className={`flex items-center gap-1.5 text-xs transition-opacity ${
+            hidden.has(s.key) ? "opacity-30 line-through" : "text-muted-foreground"
+          }`}
+        >
+          <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+          {s.key}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ClickablePieLegend({ data, hidden, onToggle, fmt }: {
+  data: { name: string; value: number }[];
+  hidden: Set<string>;
+  onToggle: (key: string) => void;
+  fmt: (v: number) => string;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap justify-center gap-3">
+      {data.map((c, i) => (
+        <button
+          key={c.name}
+          onClick={() => onToggle(c.name)}
+          className={`flex items-center gap-1.5 text-xs transition-opacity ${
+            hidden.has(c.name) ? "opacity-30 line-through" : "text-muted-foreground"
+          }`}
+        >
+          <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+          {c.name} <span className="text-foreground font-medium">{fmt(c.value)}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function useHiddenSeries() {
+  const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const toggle = (key: string) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+  const reset = () => setHidden(new Set());
+  return { hidden, toggle, reset };
+}
+
 const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer, projectCurrency = "USD" }: Props) => {
   const { t } = useI18n();
   const fmt = (value: number) => `${projectCurrency} ${value.toLocaleString()}`;
 
-  // Filter out masked columns for viewers
   const visibleColumns = useMemo(() =>
     isViewer ? customColumns.filter((col) => !col.masked) : customColumns,
     [customColumns, isViewer]
@@ -138,11 +198,18 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
   const [cumulativeGroupBy, setCumulativeGroupBy] = useState<GroupKey>("category");
   const [pieGroupBy, setPieGroupBy] = useState<GroupKey>("category");
 
+  const pieHidden = useHiddenSeries();
+  const trendHidden = useHiddenSeries();
+  const cumulativeHidden = useHiddenSeries();
+
+  // Reset hidden when group changes
+  const handlePieGroup = (k: GroupKey) => { setPieGroupBy(k); pieHidden.reset(); };
+  const handleTrendGroup = (k: GroupKey) => { setTrendGroupBy(k); trendHidden.reset(); };
+  const handleCumulativeGroup = (k: GroupKey) => { setCumulativeGroupBy(k); cumulativeHidden.reset(); };
+
   const buckets = useMemo(() => getTimeBuckets(period, customRange), [period, customRange]);
 
-  // Build grouped time-series data for a given groupBy key
   const buildGroupedData = (groupBy: GroupKey) => {
-    // Collect all unique group values
     const allGroups = new Set<string>();
     transactions.forEach((tx) => allGroups.add(getGroupValue(tx, groupBy, t)));
     const groups = Array.from(allGroups).sort();
@@ -185,7 +252,6 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
     return { data, series: cumulativeRaw.series };
   }, [cumulativeRaw]);
 
-  // Pie chart data
   const pieData = useMemo(() => {
     const map: Record<string, number> = {};
     transactions.forEach((tx) => {
@@ -196,6 +262,8 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [transactions, pieGroupBy, t]);
+
+  const filteredPieData = useMemo(() => pieData.filter((d) => !pieHidden.hidden.has(d.name)), [pieData, pieHidden.hidden]);
 
   if (transactions.length === 0) {
     return (
@@ -212,26 +280,20 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
         <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
-            <GroupSelector options={groupOptions} value={pieGroupBy} onChange={setPieGroupBy} />
+            <GroupSelector options={groupOptions} value={pieGroupBy} onChange={handlePieGroup} />
           </div>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
-                {pieData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
+              <Pie data={filteredPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
+                {filteredPieData.map((entry) => {
+                  const origIndex = pieData.findIndex((d) => d.name === entry.name);
+                  return <Cell key={entry.name} fill={COLORS[origIndex % COLORS.length]} />;
+                })}
               </Pie>
               <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
-            {pieData.map((c, i) => (
-              <div key={c.name} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                {c.name} <span className="text-foreground font-medium">{fmt(c.value)}</span>
-              </div>
-            ))}
-          </div>
+          <ClickablePieLegend data={pieData} hidden={pieHidden.hidden} onToggle={pieHidden.toggle} fmt={fmt} />
         </div>
       )}
 
@@ -239,7 +301,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
       <div className="glass-card p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
-          <GroupSelector options={groupOptions} value={trendGroupBy} onChange={setTrendGroupBy} />
+          <GroupSelector options={groupOptions} value={trendGroupBy} onChange={handleTrendGroup} />
         </div>
         <ResponsiveContainer width="100%" height={200}>
           <AreaChart data={trendData.data}>
@@ -254,45 +316,31 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
             <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
-            {trendData.series.map((s) => (
+            {trendData.series.filter((s) => !trendHidden.hidden.has(s.key)).map((s) => (
               <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.color} strokeWidth={2} fill={`url(#grad-trend-${s.key})`} name={s.key} />
             ))}
           </AreaChart>
         </ResponsiveContainer>
-        <div className="mt-2 flex flex-wrap justify-center gap-3">
-          {trendData.series.map((s) => (
-            <div key={s.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-              {s.key}
-            </div>
-          ))}
-        </div>
+        <ClickableLegend series={trendData.series} hidden={trendHidden.hidden} onToggle={trendHidden.toggle} />
       </div>
 
       {/* Bar Chart - Cumulative */}
       <div className="glass-card p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-muted-foreground">{t("chart.cumulative")}</h3>
-          <GroupSelector options={groupOptions} value={cumulativeGroupBy} onChange={setCumulativeGroupBy} />
+          <GroupSelector options={groupOptions} value={cumulativeGroupBy} onChange={handleCumulativeGroup} />
         </div>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={cumulativeData.data} barGap={2}>
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
             <YAxis hide />
             <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
-            {cumulativeData.series.map((s) => (
+            {cumulativeData.series.filter((s) => !cumulativeHidden.hidden.has(s.key)).map((s) => (
               <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} name={s.key} />
             ))}
           </BarChart>
         </ResponsiveContainer>
-        <div className="mt-2 flex flex-wrap justify-center gap-3">
-          {cumulativeData.series.map((s) => (
-            <div key={s.key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-              {s.key}
-            </div>
-          ))}
-        </div>
+        <ClickableLegend series={cumulativeData.series} hidden={cumulativeHidden.hidden} onToggle={cumulativeHidden.toggle} />
       </div>
     </div>
   );
