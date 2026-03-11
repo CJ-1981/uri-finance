@@ -24,6 +24,8 @@ export const storePin = async (pin: string): Promise<void> => {
   try {
     const hash = await hashPin(pin);
     sessionStorage.setItem(PIN_STORAGE_KEY, hash);
+    // Remove legacy entry from localStorage if it exists
+    localStorage.removeItem(PIN_STORAGE_KEY);
   } catch (error) {
     console.error("Failed to store PIN:", error);
     throw new Error("Failed to store PIN securely");
@@ -106,6 +108,7 @@ export const saveLockState = (state: { failCount: number; blockedUntil: number }
 export const clearLockState = (): void => {
   try {
     sessionStorage.removeItem(LOCK_STATE_KEY);
+    localStorage.removeItem(LOCK_STATE_KEY);
   } catch (error) {
     console.error("Failed to clear lock state:", error);
   }

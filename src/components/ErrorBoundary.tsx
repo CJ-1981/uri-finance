@@ -2,6 +2,7 @@ import { Component, ErrorInfo, ReactNode } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   children: ReactNode;
@@ -14,6 +15,66 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
+
+const DefaultErrorFallback = ({ 
+  error, 
+  errorInfo, 
+  onReset 
+}: { 
+  error: Error | null; 
+  errorInfo: ErrorInfo | null; 
+  onReset: () => void;
+}) => {
+  const { t } = useI18n();
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <Card className="max-w-md w-full">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-destructive/10 rounded-full">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <CardTitle className="text-destructive">
+              {t("error.title")}
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            {t("error.message")}
+          </p>
+
+          {process.env.NODE_ENV === "development" && error && (
+            <details className="mt-4 p-4 bg-muted rounded-lg">
+              <summary className="cursor-pointer font-medium text-sm">
+                {t("error.details")}
+              </summary>
+              <pre className="mt-2 text-xs overflow-auto max-h-40">
+                {error.toString()}
+                {errorInfo && errorInfo.componentStack}
+              </pre>
+            </details>
+          )}
+
+          <div className="flex gap-2">
+            <Button onClick={onReset} className="flex-1">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              {t("error.tryAgain")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="flex-1"
+            >
+              {t("error.reload")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 /**
  * Error Boundary Component
@@ -72,52 +133,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="flex items-center justify-center min-h-screen bg-background p-4">
-          <Card className="max-w-md w-full">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-destructive/10 rounded-full">
-                  <AlertCircle className="h-6 w-6 text-destructive" />
-                </div>
-                <CardTitle className="text-destructive">
-                  Something went wrong
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                We're sorry, but something unexpected happened. Please try
-                refreshing the page.
-              </p>
-
-              {process.env.NODE_ENV === "development" && this.state.error && (
-                <details className="mt-4 p-4 bg-muted rounded-lg">
-                  <summary className="cursor-pointer font-medium text-sm">
-                    Error Details (Development Only)
-                  </summary>
-                  <pre className="mt-2 text-xs overflow-auto max-h-40">
-                    {this.state.error.toString()}
-                    {this.state.errorInfo && this.state.errorInfo.componentStack}
-                  </pre>
-                </details>
-              )}
-
-              <div className="flex gap-2">
-                <Button onClick={this.handleReset} className="flex-1">
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Try Again
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => window.location.reload()}
-                  className="flex-1"
-                >
-                  Reload Page
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <DefaultErrorFallback 
+          error={this.state.error} 
+          errorInfo={this.state.errorInfo} 
+          onReset={this.handleReset} 
+        />
       );
     }
 

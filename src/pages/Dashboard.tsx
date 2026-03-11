@@ -25,6 +25,7 @@ import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { isPinSet, clearPin } from "@/lib/securePinStorage";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -62,7 +63,7 @@ const Dashboard = () => {
   const realOwner = activeProject && user && activeProject.owner_id === user.id;
   const isOwner = !isSimulating && realOwner;
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
-  const [hasPin, setHasPin] = useState(!!localStorage.getItem("app_lock_pin"));
+  const [hasPin, setHasPin] = useState(isPinSet());
   const [addTxOpen, setAddTxOpen] = useState(false);
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
@@ -103,9 +104,14 @@ const Dashboard = () => {
   }, []);
 
   const handleRemovePin = () => {
-    localStorage.removeItem("app_lock_pin");
-    setHasPin(false);
-    toast.success(t("lock.pinRemoved"));
+    try {
+      clearPin();
+      setHasPin(false);
+      toast.success(t("lock.pinRemoved"));
+    } catch (err) {
+      console.error("Failed to remove PIN:", err);
+      toast.error("Failed to remove PIN");
+    }
   };
 
   // Filter transactions by selected period and category

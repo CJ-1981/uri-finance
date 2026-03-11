@@ -45,8 +45,8 @@ const App = () => {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-      <ErrorBoundary>
-        <I18nProvider>
+      <I18nProvider>
+        <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <TooltipProvider>
@@ -65,8 +65,8 @@ const App = () => {
               </TooltipProvider>
             </AuthProvider>
           </QueryClientProvider>
-        </I18nProvider>
-      </ErrorBoundary>
+        </ErrorBoundary>
+      </I18nProvider>
     </ThemeProvider>
   );
 };

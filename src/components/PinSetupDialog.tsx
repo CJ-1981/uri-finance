@@ -49,7 +49,7 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
           onOpenChange(false);
         }).catch((err) => {
           console.error(err);
-          toast.error("Failed to set PIN securely");
+          toast.error(t("pinSetup.failedToSetPinSecurely"));
         });
       } else {
         setError(true);
