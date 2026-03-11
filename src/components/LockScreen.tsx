@@ -33,7 +33,11 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [lockState, setLockState] = useState(loadLockState);
-  const [remainingMs, setRemainingMs] = useState(0);
+  const [remainingMs, setRemainingMs] = useState(() => {
+    const initial = loadLockState();
+    const diff = initial.blockedUntil - Date.now();
+    return diff > 0 ? diff : 0;
+  });
   const { t } = useI18n();
 
   const storedHash = localStorage.getItem("app_lock_pin");
@@ -60,7 +64,11 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
 
   const handleDigit = useCallback(
     (digit: string) => {
-      if (isBlocked) return;
+      // Eagerly check block status against persistent state to prevent refresh bypass
+      if (Date.now() < lockState.blockedUntil) {
+        setPin(""); // Clear any attempted entries while blocked
+        return;
+      }
       if (pin.length >= PIN_LENGTH) return;
       const next = pin + digit;
       setPin(next);
