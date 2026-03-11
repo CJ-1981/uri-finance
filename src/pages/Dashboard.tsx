@@ -79,8 +79,6 @@ const Dashboard = () => {
 
   const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen && !pinDialogOpen;
 
-
-
   // "/" shortcut to focus search
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -98,7 +96,7 @@ const Dashboard = () => {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, []);
+  }, [noModalOpen]);
 
   const handleRemovePin = () => {
     try {
