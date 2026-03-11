@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -250,6 +250,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               </div>
             )}
           </div>
+          <SheetDescription className="sr-only">{t("tx.editTransactionDesc")}</SheetDescription>
         </SheetHeader>
 
         <div ref={formRef} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">

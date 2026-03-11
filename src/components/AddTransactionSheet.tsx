@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -185,6 +185,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         <div className="px-6 overflow-y-auto flex-1 pb-8">
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
+          <SheetDescription className="sr-only">{t("tx.addTransactionDesc")}</SheetDescription>
         </SheetHeader>
 
         <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">

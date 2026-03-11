@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Project } from "@/hooks/useProjects";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,6 +60,7 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[80vh] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("proj.projects")}</SheetTitle>
+          <SheetDescription className="sr-only">{t("proj.projectsDesc")}</SheetDescription>
         </SheetHeader>
 
         <div className="mt-4 flex gap-2">

@@ -34,7 +34,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.noTransactions": "No transactions yet. Tap + to add one.",
     "tx.search": "Search transactions...",
     "tx.addTransaction": "Add Transaction",
+    "tx.addTransactionDesc": "Enter details for the new transaction.",
     "tx.editTransaction": "Edit Transaction",
+    "tx.editTransactionDesc": "View or update transaction details.",
     "tx.income": "Income",
     "tx.expense": "Expense",
     "tx.type": "Type",
@@ -75,6 +77,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Projects
     "proj.projects": "Projects",
+    "proj.projectsDesc": "Manage your projects and invitations.",
     "proj.selectProject": "Select Project",
     "proj.myProjects": "My Projects",
     "proj.createNew": "Create New",
@@ -180,6 +183,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.codePlaceholder": "Code",
     "cat.editCode": "Edit code",
     "cat.manageCategories": "Manage Categories",
+    "cat.manageCategoriesDesc": "Add, remove, or reorder transaction categories.",
 
     // Export
     "export.csv": "Export as CSV",
@@ -366,7 +370,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.noTransactions": "거래 내역이 없습니다. +를 눌러 추가하세요.",
     "tx.search": "거래 검색...",
     "tx.addTransaction": "거래 추가",
+    "tx.addTransactionDesc": "새로운 거래 정보를 입력하세요.",
     "tx.editTransaction": "거래 수정",
+    "tx.editTransactionDesc": "거래 상세 내용을 확인하거나 수정합니다.",
     "tx.income": "수입",
     "tx.expense": "지출",
     "tx.type": "유형",
@@ -407,6 +413,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Projects
     "proj.projects": "프로젝트",
+    "proj.projectsDesc": "프로젝트 및 초대를 관리합니다.",
     "proj.selectProject": "프로젝트 선택",
     "proj.myProjects": "내 프로젝트",
     "proj.createNew": "새로 만들기",
@@ -512,6 +519,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.codePlaceholder": "코드",
     "cat.editCode": "코드 수정",
     "cat.manageCategories": "카테고리 관리",
+    "cat.manageCategoriesDesc": "거래 카테고리를 추가, 삭제 또는 순서를 변경합니다.",
 
     // Export
     "export.csv": "CSV로 내보내기",

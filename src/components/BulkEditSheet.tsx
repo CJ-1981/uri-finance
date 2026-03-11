@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,10 +43,13 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
           <SheetTitle className="text-foreground">
             {t("tx.bulkEditTitle").replace("{n}", String(transactions.length))}
           </SheetTitle>
+          <SheetDescription className="text-xs text-muted-foreground">
+            {t("tx.bulkEditDesc")}
+          </SheetDescription>
         </SheetHeader>
 
         <div className="mt-4 space-y-4">
-          <p className="text-xs text-muted-foreground">{t("tx.bulkEditDesc")}</p>
+
 
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Settings2, Plus, X, GripVertical } from "lucide-react";
@@ -249,6 +249,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[70vh]">
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("cat.manageCategories")}</SheetTitle>
+          <SheetDescription className="sr-only">{t("cat.manageCategoriesDesc")}</SheetDescription>
         </SheetHeader>
         <div className="mt-4">
           <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />
