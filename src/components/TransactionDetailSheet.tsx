@@ -16,6 +16,7 @@ import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 
@@ -48,6 +49,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
+  const isMobile = useIsMobile();
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   const isOwn = !isViewer && transaction?.user_id === user?.id;
@@ -216,9 +218,10 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
         side="bottom" 
         className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
         onOpenAutoFocus={(e) => {
-          // Prevent auto-focusing the input so navigation shortcuts work
-          // e.preventDefault();
-          // amountInputRef.current?.focus();
+          e.preventDefault();
+          if (!isMobile) {
+            amountInputRef.current?.focus();
+          }
         }}
       >
         <SheetHeader>

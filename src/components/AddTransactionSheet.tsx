@@ -14,6 +14,7 @@ import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { Transaction } from "@/hooks/useTransactions";
 import { useI18n } from "@/hooks/useI18n";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 
@@ -53,6 +54,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
+  const isMobile = useIsMobile();
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   // Build suggestion lists per text column: imported + historical
@@ -179,7 +181,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
         onOpenAutoFocus={(e) => {
           e.preventDefault();
-          amountInputRef.current?.focus();
+          if (!isMobile) {
+            amountInputRef.current?.focus();
+          }
         }}
       >
         <div className="px-6 overflow-y-auto flex-1 pb-8">
