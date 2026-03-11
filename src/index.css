@@ -38,11 +38,11 @@
 
     --income: 152 60% 40%;
     --income-foreground: 152 80% 15%;
-    --expense: 0 72% 50%;
-    --expense-foreground: 0 80% 15%;
+    --expense: 140 55% 35%;
+    --expense-foreground: 140 70% 15%;
 
     --chart-income: 152 60% 40%;
-    --chart-expense: 0 72% 50%;
+    --chart-expense: 140 55% 35%;
     --chart-1: 168 60% 40%;
     --chart-2: 200 60% 45%;
     --chart-3: 280 60% 55%;
@@ -92,11 +92,11 @@
 
     --income: 152 60% 50%;
     --income-foreground: 152 80% 15%;
-    --expense: 0 72% 58%;
-    --expense-foreground: 0 80% 15%;
+    --expense: 140 55% 45%;
+    --expense-foreground: 140 70% 15%;
 
     --chart-income: 152 60% 50%;
-    --chart-expense: 0 72% 58%;
+    --chart-expense: 140 55% 45%;
     --chart-1: 168 60% 48%;
     --chart-2: 200 60% 50%;
     --chart-3: 280 60% 60%;
