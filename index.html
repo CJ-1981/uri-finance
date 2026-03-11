@@ -20,11 +20,22 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@Lovable" />
     <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4b3be833-cecb-453d-811f-5a742ae08e47/id-preview-389d64da--23b03a28-7947-45e2-80ec-e6a6fb9620da.lovable.app-1772967345600.png">
-    <meta property="og:title" content="우리교회 재정부">
-  <meta name="twitter:title" content="우리교회 재정부">
-  <meta property="og:description" content="Lovable Generated Project">
-  <meta name="twitter:description" content="Lovable Generated Project">
-</head>
+    <meta property="og:title" content="우리교회 재정부" />
+    <meta name="twitter:title" content="우리교회 재정부" />
+    <meta property="og:description" content="Lovable Generated Project" />
+    <meta name="twitter:description" content="Lovable Generated Project" />
+    <script>
+      (function() {
+        try {
+          const theme = localStorage.getItem('theme');
+          const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+          if (theme === 'dark' || (!theme && supportDarkMode)) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
 
   <body>
     <div id="root"></div>

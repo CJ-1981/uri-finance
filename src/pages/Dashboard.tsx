@@ -241,7 +241,22 @@ const Dashboard = () => {
             >
               <Globe className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const newTheme = theme === "dark" ? "light" : "dark";
+                const doc = document as any;
+                if (!doc.startViewTransition) {
+                  setTheme(newTheme);
+                  return;
+                }
+                doc.startViewTransition(() => {
+                  setTheme(newTheme);
+                });
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
             <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
