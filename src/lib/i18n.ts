@@ -255,8 +255,9 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Import
     "import.title": "Import Transactions",
-    "import.desc": "Upload a CSV file with transaction data. Required columns: type, amount. Optional: category, description, date, currency.",
-    "import.selectFile": "Select CSV file",
+    "import.desc": "Upload a CSV, XLS, or MD file with transaction data. Required columns: type, amount. Optional: category, description, date, currency.",
+    "import.invalidFormat": "Invalid file format",
+    "import.selectFile": "Select file",
     "import.formatTitle": "Expected CSV format:",
     "import.noData": "CSV file is empty or has no data rows",
     "import.missingColumns": "CSV must have 'type' and 'amount' columns in the header",
@@ -573,8 +574,9 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Import
     "import.title": "거래 가져오기",
-    "import.desc": "CSV 파일을 업로드하세요. 필수 열: type, amount. 선택: category, description, date, currency.",
-    "import.selectFile": "CSV 파일 선택",
+    "import.desc": "CSV, XLS, 또는 MD 파일을 업로드하세요. 필수 열: type, amount. 선택: category, description, date, currency.",
+    "import.invalidFormat": "지원하지 않는 파일 형식입니다",
+    "import.selectFile": "파일 선택",
     "import.formatTitle": "CSV 형식 예시:",
     "import.noData": "CSV 파일이 비어 있거나 데이터가 없습니다",
     "import.missingColumns": "CSV 헤더에 'type'과 'amount' 열이 필요합니다",
@@ -587,9 +589,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "import.errCategory": "알 수 없는 카테고리: {v}",
     "import.errDate": "잘못된 날짜 형식입니다",
     "import.errCurrency": "알 수 없는 통화: {v}",
-    "import.importBtn": "{n}개 거래 가져오기",
+    "import.importBtn": "{n}개 가져오기",
     "import.importing": "가져오는 중...",
-    "import.success": "{n}개의 거래를 가져왔습니다!",
+    "import.success": "{n}개를 가져왔습니다!",
 
     // 404
     "notFound.title": "404",

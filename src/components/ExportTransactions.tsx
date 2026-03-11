@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ArrowDownUp, Upload, AlertTriangle, CheckCircle2, X } from "lucide-react";
+import { Download, Import, FileSpreadsheet, FileText, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
@@ -38,6 +38,20 @@ interface Props {
 }
 
 // --- Export helpers ---
+
+const escapeXML = (val: any) => {
+  if (val == null) return "";
+  return String(val).replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case "<": return "&lt;";
+      case ">": return "&gt;";
+      case "&": return "&amp;";
+      case "'": return "&apos;";
+      case "\"": return "&quot;";
+      default: return c;
+    }
+  });
+};
 
 const formatAmount = (tx: Transaction) =>
   `${tx.type === "income" ? "" : "-"}${Number(tx.amount).toFixed(2)}`;
@@ -74,14 +88,47 @@ const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
 };
 
 const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
-  const colTh = cols.map((c) => `<th>${c.name}</th>`).join("");
-  const header = `<tr><th>${h.date}</th><th>${h.type}</th><th>${h.category}</th><th>${h.description}</th><th>${h.amount}</th>${colTh}</tr>`;
+  const colNames = cols.map((c) => c.name);
+  const header = `<Row>
+    <Cell><Data ss:Type="String">${escapeXML(h.date)}</Data></Cell>
+    <Cell><Data ss:Type="String">${escapeXML(h.type)}</Data></Cell>
+    <Cell><Data ss:Type="String">${escapeXML(h.category)}</Data></Cell>
+    <Cell><Data ss:Type="String">${escapeXML(h.description)}</Data></Cell>
+    <Cell><Data ss:Type="String">${escapeXML(h.amount)}</Data></Cell>
+    ${colNames.map((name) => `<Cell><Data ss:Type="String">${escapeXML(name)}</Data></Cell>`).join("")}
+  </Row>`;
+
   const rows = transactions.map((tx) => {
-    const colTd = cols.map((c) => `<td>${getCustomVal(tx, c)}</td>`).join("");
-    return `<tr><td>${formatDate(tx)}</td><td>${tx.type}</td><td>${tx.category}</td><td>${tx.description || ""}</td><td>${formatAmount(tx)}</td>${colTd}</tr>`;
-  }).join("");
-  const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"></head><body><table>${header}${rows}</table></body></html>`;
-  downloadFile(html, "transactions.xls", "application/vnd.ms-excel", msg);
+    const customCells = cols.map((c) => {
+      const val = getCustomVal(tx, c);
+      const type = c.column_type === "numeric" ? "Number" : "String";
+      return `<Cell><Data ss:Type="${type}">${escapeXML(val)}</Data></Cell>`;
+    }).join("");
+    return `<Row>
+      <Cell><Data ss:Type="String">${formatDate(tx)}</Data></Cell>
+      <Cell><Data ss:Type="String">${tx.type}</Data></Cell>
+      <Cell><Data ss:Type="String">${escapeXML(tx.category)}</Data></Cell>
+      <Cell><Data ss:Type="String">${escapeXML(tx.description || "")}</Data></Cell>
+      <Cell><Data ss:Type="Number">${Number(tx.amount)}</Data></Cell>
+      ${customCells}
+    </Row>`;
+  }).join("\n");
+
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Worksheet ss:Name="Transactions">
+  <Table>
+   ${header}
+   ${rows}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+  downloadFile(xml, "transactions.xls", "application/vnd.ms-excel", msg);
 };
 
 const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
@@ -118,15 +165,51 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
+function parseMarkdownLine(line: string): string[] {
+  const parts = line.split("|").map(p => p.trim());
+  // MD lines usually start and end with | so they have empty strings at index 0 and length-1
+  if (parts[0] === "" && parts.length > 1) parts.shift();
+  if (parts[parts.length - 1] === "" && parts.length > 1) parts.pop();
+  return parts;
+}
+
+function parseXLS(text: string): string[][] {
+  const parser = new DOMParser();
+  // Try SpreadsheetML (XML) first
+  const xmlDoc = parser.parseFromString(text, "text/xml");
+  const xmlRows = Array.from(xmlDoc.querySelectorAll("Row"));
+  if (xmlRows.length > 0) {
+    return xmlRows.map((row) =>
+      Array.from(row.querySelectorAll("Cell Data")).map((cell) => cell.textContent?.trim() || "")
+    ).filter((r) => r.length > 0);
+  }
+  // Fallback to HTML table (old format)
+  const htmlDoc = parser.parseFromString(text, "text/html");
+  const rows = Array.from(htmlDoc.querySelectorAll("tr"));
+  return rows.map((row) =>
+    Array.from(row.querySelectorAll("th, td")).map((cell) => cell.textContent?.trim() || "")
+  ).filter((r) => r.length > 0);
+}
+
 interface ImportRow { line: number; type: string; amount: string; category: string; description: string; date: string; currency: string; }
 interface ValidationResult { row: ImportRow; errors: string[]; valid: boolean; parsed?: { type: "income" | "expense"; amount: number; category: string; description?: string; transaction_date?: string; currency?: string; }; }
 
 function validateRow(row: ImportRow, categories: Category[], projectCurrency: string, t: (k: string) => string): ValidationResult {
   const errors: string[] = [];
-  const typeLower = row.type.toLowerCase();
+  let typeLower = row.type.toLowerCase();
+  let amount = Number(row.amount);
+
+  // If amount is negative, treat it as an expense and use absolute value
+  if (!isNaN(amount) && amount < 0) {
+    amount = Math.abs(amount);
+    // If type was not specified or was 'income', default to 'expense' for negative values
+    if (!typeLower || typeLower === "income") {
+      typeLower = "expense";
+    }
+  }
+
   if (!VALID_TYPES.includes(typeLower)) errors.push(t("import.errType"));
-  const amount = Number(row.amount);
-  if (!row.amount || isNaN(amount) || amount <= 0) errors.push(t("import.errAmount"));
+  if (!row.amount || isNaN(amount) || amount === 0) errors.push(t("import.errAmount"));
   const category = row.category || "General";
   const catNames = categories.map((c) => c.name.toLowerCase());
   if (row.category && !catNames.includes(row.category.toLowerCase())) errors.push(t("import.errCategory").replace("{v}", row.category));
@@ -156,14 +239,41 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !categories || !projectCurrency) return;
+    const name = file.name.toLowerCase();
     setFileName(file.name);
+    
     const reader = new FileReader();
     reader.onload = (ev) => {
       const text = ev.target?.result as string;
-      const lines = text.split(/\r?\n/).filter((l) => l.trim());
-      if (lines.length < 2) { toast.error(t("import.noData")); return; }
-      const headerCols = parseCSVLine(lines[0]).map((h) => h.toLowerCase().trim());
-      const hl = { date: headers.date.toLowerCase(), type: headers.type.toLowerCase(), category: headers.category.toLowerCase(), description: headers.description.toLowerCase(), amount: headers.amount.toLowerCase() };
+      let rawData: string[][] = [];
+      
+      if (name.endsWith(".xls")) {
+        rawData = parseXLS(text);
+      } else if (name.endsWith(".md")) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim() && !l.includes("---"));
+        rawData = lines.map(parseMarkdownLine);
+      } else if (name.endsWith(".csv")) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        rawData = lines.map(parseCSVLine);
+      } else {
+        toast.error(t("import.invalidFormat") || "Invalid file format");
+        return;
+      }
+      
+      if (rawData.length < 2) { 
+        toast.error(t("import.noData")); 
+        return; 
+      }
+
+      const headerCols = rawData[0].map((h) => h.toLowerCase().trim());
+      const hl = { 
+        date: headers.date.toLowerCase(), 
+        type: headers.type.toLowerCase(), 
+        category: headers.category.toLowerCase(), 
+        description: headers.description.toLowerCase(), 
+        amount: headers.amount.toLowerCase() 
+      };
+      
       const colMap = {
         type: headerCols.findIndex((h) => ["type", "유형", hl.type].includes(h)),
         amount: headerCols.findIndex((h) => ["amount", "금액", hl.amount].includes(h)),
@@ -172,11 +282,25 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
         date: headerCols.findIndex((h) => ["date", "날짜", "transaction_date", hl.date].includes(h)),
         currency: headerCols.findIndex((h) => ["currency", "통화"].includes(h)),
       };
-      if (colMap.type === -1 || colMap.amount === -1) { toast.error(t("import.missingColumns")); return; }
+      
+      if (colMap.type === -1 || colMap.amount === -1) { 
+        toast.error(t("import.missingColumns")); 
+        return; 
+      }
+
       const rows: ImportRow[] = [];
-      for (let i = 1; i < lines.length; i++) {
-        const cols = parseCSVLine(lines[i]);
-        rows.push({ line: i + 1, type: (cols[colMap.type] || "").trim(), amount: (cols[colMap.amount] || "").trim(), category: colMap.category >= 0 ? (cols[colMap.category] || "").trim() : "", description: colMap.description >= 0 ? (cols[colMap.description] || "").trim() : "", date: colMap.date >= 0 ? (cols[colMap.date] || "").trim() : "", currency: colMap.currency >= 0 ? (cols[colMap.currency] || "").trim() : "" });
+      for (let i = 1; i < rawData.length; i++) {
+        const cols = rawData[i];
+        if (cols.length < 2) continue;
+        rows.push({ 
+          line: i + 1, 
+          type: (cols[colMap.type] || "").trim(), 
+          amount: (cols[colMap.amount] || "").trim(), 
+          category: colMap.category >= 0 ? (cols[colMap.category] || "").trim() : "", 
+          description: colMap.description >= 0 ? (cols[colMap.description] || "").trim() : "", 
+          date: colMap.date >= 0 ? (cols[colMap.date] || "").trim() : "", 
+          currency: colMap.currency >= 0 ? (cols[colMap.currency] || "").trim() : "" 
+        });
       }
       setResults(rows.map((r) => validateRow(r, categories!, projectCurrency!, t)));
       setImportOpen(true);
@@ -206,18 +330,27 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
 
   return (
     <>
-      <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFile} />
+      <input ref={fileRef} type="file" accept=".csv,.xls,.md" className="hidden" onChange={handleFile} />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-            <ArrowDownUp className="h-4 w-4" />
+            <Download className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           {transactions.length > 0 && (
             <>
               <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg)}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
                 {t("export.csv")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg)}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                {t("export.xls")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg)}>
+                <FileText className="h-4 w-4 mr-2" />
+                {t("export.markdown")}
               </DropdownMenuItem>
             </>
           )}
@@ -225,7 +358,7 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
             <>
               {transactions.length > 0 && <DropdownMenuSeparator />}
               <DropdownMenuItem onClick={() => fileRef.current?.click()}>
-                <Upload className="h-4 w-4 mr-2" />
+                <Import className="h-4 w-4 mr-2" />
                 {t("import.title")}
               </DropdownMenuItem>
             </>
