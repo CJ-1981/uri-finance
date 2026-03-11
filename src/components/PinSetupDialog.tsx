@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import {
   Dialog,
@@ -36,7 +36,7 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
   const currentPin = step === "enter" ? pin : confirmPin;
   const setCurrentPin = step === "enter" ? setPin : setConfirmPin;
 
-  const handleDigit = (digit: string) => {
+  const handleDigit = useCallback((digit: string) => {
     if (currentPin.length >= PIN_LENGTH) return;
     const next = currentPin + digit;
     setCurrentPin(next);
@@ -65,12 +65,12 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
         }, 600);
       }
     }
-  };
+  }, [currentPin, step, pin, t, onComplete, onOpenChange]); // Exhaustive dependencies
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     setCurrentPin((p) => p.slice(0, -1));
     setError(false);
-  };
+  }, [setCurrentPin]);
 
   const resetState = () => {
     setPin("");
@@ -78,6 +78,23 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
     setStep("enter");
     setError(false);
   };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= "0" && e.key <= "9") {
+        e.preventDefault();
+        handleDigit(e.key);
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        handleDelete();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleDigit, handleDelete]);
 
   const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 
@@ -125,8 +142,10 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
               return (
                 <button
                   key={i}
+                  onPointerDown={(e) => e.preventDefault()}
                   onClick={handleDelete}
-                  className="flex h-12 w-12 items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-muted transition-colors"
+                  tabIndex={-1}
+                  className="flex h-12 w-12 items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-muted transition-colors focus:outline-none"
                 >
                   ←
                 </button>
@@ -134,8 +153,10 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
             return (
               <button
                 key={i}
+                onPointerDown={(e) => e.preventDefault()}
                 onClick={() => handleDigit(d)}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 text-lg font-semibold text-foreground hover:bg-muted transition-colors active:scale-95"
+                tabIndex={-1}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 text-lg font-semibold text-foreground hover:bg-muted transition-colors active:scale-95 focus:outline-none"
               >
                 {d}
               </button>

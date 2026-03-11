@@ -70,7 +70,7 @@ const Dashboard = () => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
 
-  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen;
+  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen && !pinDialogOpen;
 
   useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
 
@@ -84,10 +84,14 @@ const Dashboard = () => {
   // "/" shortcut to focus search
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && !e.altKey && noModalOpen) {
         const tag = (e.target as HTMLElement)?.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         if ((e.target as HTMLElement)?.isContentEditable) return;
+
+        // Extra safety check for any open dialogs
+        if (document.querySelector('[role="dialog"], [role="menu"], [role="listbox"], [role="combobox"]')) return;
+
         e.preventDefault();
         txListRef.current?.focusSearch();
       }

@@ -70,6 +70,9 @@ export const useKeyboardShortcut = (
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if ((e.target as HTMLElement)?.isContentEditable) return;
 
+      // Check for any open dialogs, sheets, or popovers (common ARIA roles)
+      if (document.querySelector('[role="dialog"], [role="menu"], [role="listbox"], [role="combobox"]')) return;
+
       const pressed = e.key.toLowerCase();
       const matches =
         (keys.primary && pressed === keys.primary.toLowerCase()) ||
