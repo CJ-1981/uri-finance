@@ -298,7 +298,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-3 gap-2">
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.balance")}</p>
-                <AmountText value={Math.abs(balance)} currency={projectCurrency} className={balance >= 0 ? "text-income" : "text-expense"} />
+                <AmountText value={Math.abs(balance)} currency={projectCurrency} className="text-blue-600 dark:text-blue-400" />
               </div>
               <div className="glass-card p-3 text-center">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("dash.income")}</p>
@@ -319,7 +319,7 @@ const Dashboard = () => {
                   return (
                     <div key={cur} className="glass-card p-2.5 text-center">
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{cur}</p>
-                      <p className={`mt-0.5 text-sm font-bold ${bal >= 0 ? "text-income" : "text-expense"}`}>
+                      <p className={`mt-0.5 text-sm font-bold text-purple-600 dark:text-purple-400`}>
                         {bal >= 0 ? "+" : "-"}{Math.abs(bal).toLocaleString("en-US", { minimumFractionDigits: 2 })}
                       </p>
                       <p className="text-[9px] text-muted-foreground">
