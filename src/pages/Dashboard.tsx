@@ -109,12 +109,16 @@ const Dashboard = () => {
 
   const handleRemovePin = () => {
     try {
-      clearPin();
-      setHasPin(false);
-      toast.success(t("lock.pinRemoved"));
+      const success = clearPin();
+      if (success) {
+        setHasPin(false);
+        toast.success(t("lock.pinRemoved"));
+      } else {
+        toast.error(t("lock.pinRemoveFailed"));
+      }
     } catch (err) {
       console.error("Failed to remove PIN:", err);
-      toast.error("Failed to remove PIN");
+      toast.error(t("lock.pinRemoveFailed"));
     }
   };
 

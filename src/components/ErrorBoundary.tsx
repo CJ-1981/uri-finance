@@ -45,7 +45,7 @@ const DefaultErrorFallback = ({
             {t("error.message")}
           </p>
 
-          {process.env.NODE_ENV === "development" && error && (
+          {import.meta.env.DEV && error && (
             <details className="mt-4 p-4 bg-muted rounded-lg">
               <summary className="cursor-pointer font-medium text-sm">
                 {t("error.details")}

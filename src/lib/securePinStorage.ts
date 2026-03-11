@@ -52,12 +52,14 @@ export const verifyPin = async (input: string): Promise<boolean> => {
 /**
  * Clear stored PIN
  */
-export const clearPin = (): void => {
+export const clearPin = (): boolean => {
   try {
     sessionStorage.removeItem(PIN_STORAGE_KEY);
     localStorage.removeItem(PIN_STORAGE_KEY); // Also clear local storage
+    return true;
   } catch (error) {
     console.error("Failed to clear PIN:", error);
+    return false;
   }
 };
 
