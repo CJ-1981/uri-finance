@@ -211,7 +211,7 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
   return (
     <div className="space-y-3">
       {/* Header row */}
-      <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background z-10 py-1.5 border-b border-border/30">
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background z-10 py-1 border-b border-border/30">
         <div className="text-center"></div>
         <div className="text-center">{t("cash.named")}</div>
         <div className="text-center">{t("cash.anon")}</div>
@@ -393,13 +393,13 @@ interface CounterCellProps {
 }
 
 const CounterCell = ({ value, onChange, onIncrement, onDecrement }: CounterCellProps) => (
-  <div className="flex items-center gap-1 justify-center">
+  <div className="flex items-center gap-0.5 justify-center">
     <button
       type="button"
       onClick={onDecrement}
-      className="h-9 w-9 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
+      className="h-8 w-8 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
     >
-      <Minus className="h-4 w-4" />
+      <Minus className="h-3.5 w-3.5" />
     </button>
     <Input
       type="number"
@@ -407,14 +407,14 @@ const CounterCell = ({ value, onChange, onIncrement, onDecrement }: CounterCellP
       min={0}
       value={value || ""}
       onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-      className="h-8 w-12 text-center text-sm px-0.5 border-border/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="h-8 w-10 text-center text-sm px-0.5 border-border/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
     />
     <button
       type="button"
       onClick={onIncrement}
-      className="h-9 w-9 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
+      className="h-8 w-8 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
     >
-      <Plus className="h-4 w-4" />
+      <Plus className="h-3.5 w-3.5" />
     </button>
   </div>
 );
