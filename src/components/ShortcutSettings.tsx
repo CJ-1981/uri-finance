@@ -108,6 +108,17 @@ const ShortcutSettings = () => {
 
           <div className="border-t border-border/50 pt-3 space-y-2">
             <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.openPeriod")}</label>
+              {renderKeyButton("openPeriod", shortcuts.openPeriod)}
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.openCategory")}</label>
+              {renderKeyButton("openCategory", shortcuts.openCategory)}
+            </div>
+          </div>
+
+          <div className="border-t border-border/50 pt-3 space-y-2">
+            <div className="space-y-1">
               <label className="text-xs text-muted-foreground">{t("shortcut.nextTx")}</label>
               {renderKeyButton("nextTx", shortcuts.nextTx)}
             </div>
