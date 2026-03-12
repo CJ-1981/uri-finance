@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ColoredBadge from "@/components/ColoredBadge";
 
 interface Props {
   transactions: Transaction[];
@@ -289,12 +290,16 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
           </span>
           {customColumns.filter(col => !(isViewer && col.masked)).map((col) => {
             const val = tx.custom_values?.[col.name];
+            const isListCol = col.column_type === "list";
+            const colorKey = isListCol && val ? (col.suggestion_colors as Record<string, string>)?.[String(val)] : undefined;
             return (
               <span key={col.id} className="hidden sm:block w-24 text-right text-xs text-muted-foreground truncate shrink-0">
                 {val != null
-                  ? col.column_type === "numeric"
-                    ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 })
-                    : String(val)
+                  ? isListCol && colorKey
+                    ? <ColoredBadge value={String(val)} colorKey={colorKey} />
+                    : col.column_type === "numeric"
+                      ? Number(val).toLocaleString("en-US", { minimumFractionDigits: 2 })
+                      : String(val)
                   : "—"}
               </span>
             );

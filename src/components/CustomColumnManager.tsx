@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, X, Hash, Type, List, EyeOff, Eye, FileText, GripVertical, Asterisk, Pencil, Check } from "lucide-react";
 import { CustomColumn, ColumnType } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
+import { OPTION_COLOR_PALETTE, getOptionColor } from "@/lib/optionColors";
 import {
   DndContext,
   closestCenter,
@@ -28,7 +29,7 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
   onToggleRequired?: (id: string, required: boolean) => Promise<void>;
-  onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
+  onUpdateSuggestions?: (id: string, suggestions: string[], suggestionColors?: Record<string, string>) => Promise<void>;
   onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   onReorderAll?: (orderedIds: string[]) => Promise<void>;
   onRename?: (id: string, newName: string) => Promise<void>;
@@ -45,6 +46,8 @@ const SortableColumnItem = ({
   toggleExpand,
   suggestionsText,
   setSuggestionsText,
+  optionColors,
+  setOptionColors,
   handleSaveSuggestions,
   t,
 }: {
@@ -52,12 +55,14 @@ const SortableColumnItem = ({
   onDelete: (id: string) => Promise<void>;
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
   onToggleRequired?: (id: string, required: boolean) => Promise<void>;
-  onUpdateSuggestions?: (id: string, suggestions: string[]) => Promise<void>;
+  onUpdateSuggestions?: (id: string, suggestions: string[], suggestionColors?: Record<string, string>) => Promise<void>;
   onRename?: (id: string, newName: string) => Promise<void>;
   expandedCol: string | null;
   toggleExpand: (col: CustomColumn) => void;
   suggestionsText: Record<string, string>;
   setSuggestionsText: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  optionColors: Record<string, Record<string, string>>;
+  setOptionColors: React.Dispatch<React.SetStateAction<Record<string, Record<string, string>>>>;
   handleSaveSuggestions: (colId: string) => void;
   t: (key: string) => string;
 }) => {
@@ -78,6 +83,13 @@ const SortableColumnItem = ({
     }
     setEditing(false);
   };
+
+  // Parse current suggestions text into option names for color assignment
+  const currentOptions = (suggestionsText[col.id] || "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const colColors = optionColors[col.id] || {};
 
   return (
     <div ref={setNodeRef} style={style} className="space-y-1">
@@ -167,6 +179,43 @@ const SortableColumnItem = ({
             placeholder={col.column_type === "list" ? t("cc.optionsPlaceholder") : t("cc.suggestionsPlaceholder")}
             className="bg-background text-xs min-h-[80px]"
           />
+          {/* Color assignment for list-type columns */}
+          {col.column_type === "list" && currentOptions.length > 0 && (
+            <div className="space-y-1.5 mt-2">
+              <p className="text-[11px] text-muted-foreground font-medium">
+                {t("cc.assignColors") || "Assign colors"}
+              </p>
+              {currentOptions.map((opt) => {
+                const currentColor = colColors[opt] || "gray";
+                const colorDef = getOptionColor(currentColor);
+                return (
+                  <div key={opt} className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${colorDef.bg} ${colorDef.text}`}>
+                      {opt}
+                    </span>
+                    <div className="flex gap-0.5 flex-wrap">
+                      {OPTION_COLOR_PALETTE.map((c) => (
+                        <button
+                          key={c.key}
+                          type="button"
+                          onClick={() =>
+                            setOptionColors((prev) => ({
+                              ...prev,
+                              [col.id]: { ...(prev[col.id] || {}), [opt]: c.key },
+                            }))
+                          }
+                          className={`w-4 h-4 rounded-full border-2 transition-all ${c.dot} ${
+                            currentColor === c.key ? "border-foreground scale-125" : "border-transparent opacity-60 hover:opacity-100"
+                          }`}
+                          title={c.label}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           <Button
             size="sm"
             variant="outline"
@@ -187,6 +236,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
   const [adding, setAdding] = useState(false);
   const [expandedCol, setExpandedCol] = useState<string | null>(null);
   const [suggestionsText, setSuggestionsText] = useState<Record<string, string>>({});
+  const [optionColors, setOptionColors] = useState<Record<string, Record<string, string>>>({});
   const { t } = useI18n();
 
   const sensors = useSensors(
@@ -213,6 +263,13 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
           [col.id]: (col.suggestions || []).join("\n"),
         }));
       }
+      // Initialize option colors from saved data
+      if (!optionColors[col.id]) {
+        setOptionColors((prev) => ({
+          ...prev,
+          [col.id]: (col.suggestion_colors as Record<string, string>) || {},
+        }));
+      }
     }
   };
 
@@ -223,7 +280,8 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
-    await onUpdateSuggestions(colId, entries);
+    const colors = optionColors[colId] || {};
+    await onUpdateSuggestions(colId, entries, colors);
     setExpandedCol(null);
   };
 
@@ -302,6 +360,8 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
                   toggleExpand={toggleExpand}
                   suggestionsText={suggestionsText}
                   setSuggestionsText={setSuggestionsText}
+                  optionColors={optionColors}
+                  setOptionColors={setOptionColors}
                   handleSaveSuggestions={handleSaveSuggestions}
                   t={t}
                 />

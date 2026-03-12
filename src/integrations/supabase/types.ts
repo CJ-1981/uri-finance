@@ -24,6 +24,7 @@ export type Database = {
           project_id: string
           required: boolean
           sort_order: number
+          suggestion_colors: Json
           suggestions: string[]
         }
         Insert: {
@@ -35,6 +36,7 @@ export type Database = {
           project_id: string
           required?: boolean
           sort_order?: number
+          suggestion_colors?: Json
           suggestions?: string[]
         }
         Update: {
@@ -46,6 +48,7 @@ export type Database = {
           project_id?: string
           required?: boolean
           sort_order?: number
+          suggestion_colors?: Json
           suggestions?: string[]
         }
         Relationships: [
