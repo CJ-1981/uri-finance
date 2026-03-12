@@ -19,6 +19,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
+import ColoredBadge from "@/components/ColoredBadge";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
