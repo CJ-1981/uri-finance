@@ -273,7 +273,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                       </SelectTrigger>
                       <SelectContent>
                         {col.suggestions.map((opt) => (
-                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                          <SelectItem key={opt} value={opt}>
+                            <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
