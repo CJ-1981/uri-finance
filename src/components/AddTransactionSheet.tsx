@@ -57,6 +57,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Build suggestion lists per text column: imported + historical
   const columnSuggestions = useMemo(() => {
@@ -170,10 +171,19 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     }
   }, []);
 
+  // Handle sheet open to blur the trigger button
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    if (newOpen) {
+      // Blur the trigger button when sheet opens to avoid aria-hidden conflict
+      triggerRef.current?.blur();
+    }
+    setOpen(newOpen);
+  }, [setOpen]);
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
+        <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
           <Plus className="h-6 w-6" />
         </Button>
       </SheetTrigger>
