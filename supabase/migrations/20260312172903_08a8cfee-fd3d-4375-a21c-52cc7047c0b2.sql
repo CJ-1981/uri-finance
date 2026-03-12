@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_columns ADD COLUMN suggestion_colors jsonb NOT NULL DEFAULT '{}'::jsonb;
