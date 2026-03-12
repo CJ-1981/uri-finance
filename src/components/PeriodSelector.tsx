@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useImperativeHandle, forwardRef, useRef } from "react";
 import { startOfDay, subDays, subMonths, format, parseISO } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,10 @@ export interface DateRange {
   to: Date | undefined;
 }
 
+export interface PeriodSelectorHandle {
+  open: () => void;
+}
+
 interface Props {
   period: PeriodKey;
   onPeriodChange: (p: PeriodKey) => void;
@@ -21,11 +25,20 @@ interface Props {
   onCustomRangeChange: (r: DateRange) => void;
 }
 
-const PeriodSelector = ({ period, onPeriodChange, customRange, onCustomRangeChange }: Props) => {
+const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeriodChange, customRange, onCustomRangeChange }, ref) => {
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Expose open method via ref
+  useImperativeHandle(ref, () => ({
+    open: () => {
+      setMenuOpen(true);
+      triggerRef.current?.focus();
+    },
+  }), []);
 
   const presets: { key: PeriodKey; label: string }[] = [
     { key: "today", label: t("period.today") },
@@ -84,7 +97,7 @@ const PeriodSelector = ({ period, onPeriodChange, customRange, onCustomRangeChan
       {/* Main period dropdown */}
       <Popover open={menuOpen} onOpenChange={setMenuOpen}>
         <PopoverTrigger asChild>
-          <button onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
+          <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
             <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
             {activeLabel}
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -137,7 +150,9 @@ const PeriodSelector = ({ period, onPeriodChange, customRange, onCustomRangeChan
       </Popover>
     </div>
   );
-};
+});
+
+PeriodSelector.displayName = "PeriodSelector";
 
 export default PeriodSelector;
 

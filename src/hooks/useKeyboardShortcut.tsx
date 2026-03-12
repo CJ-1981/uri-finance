@@ -10,6 +10,8 @@ export interface ShortcutConfig {
   tabCash: string;
   nextTx: string;
   prevTx: string;
+  openPeriod: string;
+  openCategory: string;
 }
 
 const DEFAULT_SHORTCUTS: ShortcutConfig = {
@@ -20,6 +22,8 @@ const DEFAULT_SHORTCUTS: ShortcutConfig = {
   tabCash: "3",
   nextTx: "k",
   prevTx: "j",
+  openPeriod: "4",
+  openCategory: "5",
 };
 
 export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
@@ -30,6 +34,8 @@ export const SHORTCUT_LABELS: Record<keyof ShortcutConfig, string> = {
   tabCash: "shortcut.tabCash",
   nextTx: "shortcut.nextTx",
   prevTx: "shortcut.prevTx",
+  openPeriod: "shortcut.openPeriod",
+  openCategory: "shortcut.openCategory",
 };
 
 export const getShortcuts = (): ShortcutConfig => {

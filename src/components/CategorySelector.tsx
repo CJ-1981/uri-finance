@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useImperativeHandle, forwardRef, useRef } from "react";
 import { ChevronDown, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -6,16 +6,29 @@ import { useI18n } from "@/hooks/useI18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Category } from "@/hooks/useCategories";
 
+export interface CategorySelectorHandle {
+  open: () => void;
+}
+
 interface Props {
   categories: Category[];
   selectedCategoryId: string | null;
   onCategoryChange: (id: string | null) => void;
 }
 
-const CategorySelector = ({ categories, selectedCategoryId, onCategoryChange }: Props) => {
+const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories, selectedCategoryId, onCategoryChange }, ref) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Expose open method via ref
+  useImperativeHandle(ref, () => ({
+    open: () => {
+      setOpen(true);
+      triggerRef.current?.focus();
+    },
+  }), []);
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
   const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAll");
@@ -57,7 +70,7 @@ const CategorySelector = ({ categories, selectedCategoryId, onCategoryChange }: 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[150px]">
+        <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[150px]">
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{activeLabel}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -87,6 +100,8 @@ const CategorySelector = ({ categories, selectedCategoryId, onCategoryChange }: 
       </PopoverContent>
     </Popover>
   );
-};
+});
+
+CategorySelector.displayName = "CategorySelector";
 
 export default CategorySelector;

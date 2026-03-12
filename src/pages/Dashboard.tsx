@@ -13,8 +13,8 @@ import TransactionList, { TransactionListHandle } from "@/components/Transaction
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
 import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
-import PeriodSelector, { PeriodKey, DateRange, filterByPeriod } from "@/components/PeriodSelector";
-import CategorySelector from "@/components/CategorySelector";
+import PeriodSelector, { PeriodKey, DateRange, filterByPeriod, PeriodSelectorHandle } from "@/components/PeriodSelector";
+import CategorySelector, { CategorySelectorHandle } from "@/components/CategorySelector";
 import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator } from "lucide-react";
@@ -68,6 +68,8 @@ const Dashboard = () => {
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const txListRef = useRef<TransactionListHandle>(null);
+  const periodSelectorRef = useRef<PeriodSelectorHandle>(null);
+  const categorySelectorRef = useRef<CategorySelectorHandle>(null);
   
   useEffect(() => {
     setSelectedCategoryId(null);
@@ -207,10 +209,22 @@ const Dashboard = () => {
   const goToCharts = useCallback(() => setView("charts"), []);
   const goToCash = useCallback(() => setView("cash"), []);
 
+  // Open period dropdown with '4'
+  const openPeriodSelector = useCallback(() => {
+    periodSelectorRef.current?.open();
+  }, []);
+
+  // Open category dropdown with '5'
+  const openCategorySelector = useCallback(() => {
+    categorySelectorRef.current?.open();
+  }, []);
+
   useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
   useKeyboardShortcut("tabList", goToList, !!activeProject && noModalOpen);
   useKeyboardShortcut("tabCharts", goToCharts, !!activeProject && noModalOpen);
   useKeyboardShortcut("tabCash", goToCash, !!activeProject && noModalOpen);
+  useKeyboardShortcut("openPeriod", openPeriodSelector, !!activeProject && noModalOpen);
+  useKeyboardShortcut("openCategory", openCategorySelector, !!activeProject && noModalOpen);
   
   // Allow navigation shortcuts even if detail sheet is open
   const canNavigate = !!activeProject && (noModalOpen || detailOpen);
@@ -334,12 +348,14 @@ const Dashboard = () => {
             {/* Filters */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
               <PeriodSelector
+                ref={periodSelectorRef}
                 period={period}
                 onPeriodChange={setPeriod}
                 customRange={customRange}
                 onCustomRangeChange={setCustomRange}
               />
               <CategorySelector
+                ref={categorySelectorRef}
                 categories={categories}
                 selectedCategoryId={selectedCategoryId}
                 onCategoryChange={setSelectedCategoryId}

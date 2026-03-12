@@ -298,6 +298,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "shortcut.tabCash": "Cash Counter Tab",
     "shortcut.nextTx": "Next Transaction",
     "shortcut.prevTx": "Previous Transaction",
+    "shortcut.openPeriod": "Open Period Filter",
+    "shortcut.openCategory": "Open Category Filter",
 
     // Cash Calculator
     "cash.title": "Cash Counter",
@@ -634,6 +636,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "shortcut.tabCash": "현금 계산기 탭",
     "shortcut.nextTx": "다음 거래",
     "shortcut.prevTx": "이전 거래",
+    "shortcut.openPeriod": "기간 필터 열기",
+    "shortcut.openCategory": "카테고리 필터 열기",
 
     // Cash Calculator
     "cash.title": "현금 계산기",
