@@ -13,6 +13,7 @@ export interface CustomColumn {
   required: boolean;
   sort_order: number;
   suggestions: string[];
+  suggestion_colors: Record<string, string>;
   created_at: string;
 }
 
