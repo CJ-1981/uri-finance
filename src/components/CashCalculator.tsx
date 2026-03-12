@@ -220,9 +220,15 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
       {/* Bills section */}
       {denoms.bills.length > 0 && (
         <div className="space-y-0.5">
-          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 text-center">
-            {t("cash.bills")}
-          </p>
+          <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 items-center py-0.5">
+            <div className="flex items-center justify-center">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-foreground">
+                {t("cash.bills")}
+              </p>
+            </div>
+            <div></div>
+            <div></div>
+          </div>
           {denoms.bills.map((d) => (
             <DenomRow
               key={`bill-${d}`}
@@ -240,9 +246,15 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
       {/* Coins section */}
       {denoms.coins.length > 0 && (
         <div className="space-y-0.5">
-          <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60 text-center">
-            {t("cash.coins")}
-          </p>
+          <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 items-center py-0.5">
+            <div className="flex items-center justify-center">
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                {t("cash.coins")}
+              </p>
+            </div>
+            <div></div>
+            <div></div>
+          </div>
           {denoms.coins.map((d) => (
             <DenomRow
               key={`coin-${d}`}
