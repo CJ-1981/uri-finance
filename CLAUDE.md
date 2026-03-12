@@ -62,6 +62,14 @@ This is a team finance tracking application built with React, TypeScript, Vite, 
 - Role-based access control via `useUserRole` hook
 - Roles: `owner` (full access), `admin` (can manage members/categories), `member` (can add/edit transactions), `viewer` (read-only)
 - Owner can simulate other roles for testing via UI buttons
+- **Invite Code System**:
+  - Users can optionally enter an invite code during signup
+  - Invite code is stored in localStorage as `pending_invite_code` for processing after authentication
+  - After successful signup, the Dashboard automatically attempts to join the project with the pending invite code
+  - Users can also join projects via the ProjectSwitcher's "Join" tab after logging in
+  - Two invite systems supported:
+    - New: `project_invites` table with individual codes, optional email locking, role assignment
+    - Legacy: `invite_code` field on `projects` table for simple project joining
 
 ### Internationalization
 

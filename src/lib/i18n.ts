@@ -328,6 +328,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "EN",
     "common.clear": "Clear",
+    "common.optional": "optional",
 
     // Error
     "error.title": "Something went wrong",
@@ -666,6 +667,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "한국어",
     "common.clear": "지우기",
+    "common.optional": "선택 사항",
 
     // Error
     "error.title": "문제가 발생했습니다",

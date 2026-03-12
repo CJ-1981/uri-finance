@@ -75,6 +75,18 @@ const Dashboard = () => {
     setSelectedCategoryId(null);
   }, [activeProject?.id]);
 
+  // Handle pending invite code from signup
+  useEffect(() => {
+    const pendingCode = localStorage.getItem("pending_invite_code");
+    if (pendingCode && user) {
+      // Small delay to ensure authentication is complete
+      setTimeout(() => {
+        joinProject(pendingCode);
+        localStorage.removeItem("pending_invite_code");
+      }, 500);
+    }
+  }, [user]);
+
   const openAddTx = useCallback(() => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
