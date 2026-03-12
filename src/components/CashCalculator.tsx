@@ -212,9 +212,9 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
     <div className="space-y-3">
       {/* Header row */}
       <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background z-10 py-1.5 border-b border-border/30">
-        <div className="text-center"></div>
-        <div className="text-center">{t("cash.named")}</div>
-        <div className="text-center">{t("cash.anon")}</div>
+        <div></div>
+        <div className="flex items-center justify-center">{t("cash.named")}</div>
+        <div className="flex items-center justify-center">{t("cash.anon")}</div>
       </div>
 
       {/* Bills section */}
