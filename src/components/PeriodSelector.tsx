@@ -1,10 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { startOfDay, subDays, subMonths, format, parseISO } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/hooks/useI18n";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type PeriodKey = "today" | "week" | "month" | "sixMonths" | "all" | "custom";
 
@@ -24,6 +25,7 @@ const PeriodSelector = ({ period, onPeriodChange, customRange, onCustomRangeChan
   const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const presets: { key: PeriodKey; label: string }[] = [
     { key: "today", label: t("period.today") },
@@ -54,29 +56,57 @@ const PeriodSelector = ({ period, onPeriodChange, customRange, onCustomRangeChan
     }
   };
 
+  const indexToKey = (i: number) => (i < 9 ? String(i + 1) : "0");
+  const keyToIndex = (key: string) => (key === "0" ? 9 : Number(key) - 1);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (isMobile) return;
+
+    if (!menuOpen) {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        setMenuOpen(true);
+      }
+      return;
+    }
+
+    if (/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      const idx = keyToIndex(e.key);
+      if (idx >= 0 && idx < presets.length) {
+        handleSelect(presets[idx].key);
+      }
+    }
+  }, [menuOpen, presets, isMobile]);
+
   return (
     <div className="flex items-center gap-2">
       {/* Main period dropdown */}
       <Popover open={menuOpen} onOpenChange={setMenuOpen}>
         <PopoverTrigger asChild>
-          <button className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
+          <button onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors">
             <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
             {activeLabel}
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-36 p-1 pointer-events-auto">
-          {presets.map((p) => (
+        <PopoverContent align="start" className="w-36 p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
+          {presets.map((p, idx) => (
             <button
               key={p.key}
               onClick={() => handleSelect(p.key)}
               className={cn(
-                "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors",
+                "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
                 period === p.key
                   ? "bg-primary/10 text-primary"
                   : "text-foreground hover:bg-muted"
               )}
             >
+              {!isMobile && idx < 10 && (
+                <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
+                  {indexToKey(idx)}
+                </span>
+              )}
               {p.label}
             </button>
           ))}

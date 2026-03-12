@@ -365,6 +365,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 onValueChange={setCurrency}
                 items={CURRENCIES.map((c) => ({ value: c, label: c }))}
                 className="bg-muted/50 border-border/50"
+                showNumbers
               />
             </div>
           </div>
