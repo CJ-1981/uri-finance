@@ -9,7 +9,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import NumberedSelect from "@/components/NumberedSelect";
 import ColoredBadge from "@/components/ColoredBadge";
 
 interface Props {
@@ -318,16 +318,13 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
       {filteredTransactions.length > 0 && (
         <div className="flex items-center justify-between px-2 pt-2 pb-1">
           <div className="flex items-center gap-2">
-            <Select value={String(pageSize)} onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}>
-              <SelectTrigger className="h-7 w-[70px] text-xs bg-muted/30 border-border/50">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZES.map((s) => (
-                  <SelectItem key={s} value={String(s)} className="text-xs">{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NumberedSelect
+              value={String(pageSize)}
+              onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}
+              items={PAGE_SIZES.map((s) => ({ value: String(s), label: String(s) }))}
+              className="h-7 w-[70px] text-xs bg-muted/30 border-border/50"
+              showNumbers
+            />
             <span className="text-xs text-muted-foreground">/ {t("tx.page") || "page"}</span>
           </div>
           <div className="flex items-center gap-1">

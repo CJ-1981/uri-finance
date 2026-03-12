@@ -4,7 +4,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -321,24 +320,19 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                   <div key={col.id} className="space-y-2">
                     <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
                     {col.column_type === "list" && (col.suggestions || []).length > 0 ? (
-                      <Select
+                      <NumberedSelect
                         value={customValues[col.name] || ""}
                         onValueChange={(val) =>
                           setCustomValues((prev) => ({ ...prev, [col.name]: val }))
                         }
                         disabled={!isOwn}
-                      >
-                        <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50">
-                          <SelectValue placeholder={t("tx.selectOption")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {col.suggestions.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        items={col.suggestions.map((opt) => ({
+                          value: opt,
+                          label: <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
+                        }))}
+                        className="bg-muted/50 border-border/50"
+                        showNumbers
+                      />
                     ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
                       <AutoSuggestInput
                         value={customValues[col.name] || ""}
@@ -419,16 +413,14 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
-              <Select value={currency} onValueChange={setCurrency} disabled={!isOwn}>
-                <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <NumberedSelect
+                value={currency}
+                onValueChange={setCurrency}
+                disabled={!isOwn}
+                items={CURRENCIES.map((c) => ({ value: c, label: c }))}
+                className="bg-muted/50 border-border/50"
+                showNumbers
+              />
             </div>
           </div>
 

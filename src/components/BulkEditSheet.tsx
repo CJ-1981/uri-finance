@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import NumberedSelect from "@/components/NumberedSelect";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { useI18n } from "@/hooks/useI18n";
@@ -21,6 +21,18 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
   const [category, setCategory] = useState<string>("");
   const [type, setType] = useState<string>("");
   const [saving, setSaving] = useState(false);
+
+  // Build options for selects
+  const categoryOptions = useMemo(() => [
+    { value: "", label: t("tx.bulkNoChange") },
+    ...categories.map((c) => ({ value: c.name, label: c.name })),
+  ], [categories, t]);
+
+  const typeOptions = useMemo(() => [
+    { value: "", label: t("tx.bulkNoChange") },
+    { value: "income", label: t("tx.income") },
+    { value: "expense", label: t("tx.expense") },
+  ], [t]);
 
   const handleSave = async () => {
     const ids = transactions.map((tx) => tx.id);
@@ -53,29 +65,24 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
 
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="bg-muted/50 border-border/50">
-                <SelectValue placeholder={t("tx.bulkNoChange")} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NumberedSelect
+              value={category}
+              onValueChange={setCategory}
+              items={categoryOptions}
+              className="bg-muted/50 border-border/50"
+              showNumbers
+            />
           </div>
 
           <div className="space-y-2">
             <Label className="text-muted-foreground text-xs">{t("tx.bulkType")}</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="bg-muted/50 border-border/50">
-                <SelectValue placeholder={t("tx.bulkNoChange")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income">{t("tx.income")}</SelectItem>
-                <SelectItem value="expense">{t("tx.expense")}</SelectItem>
-              </SelectContent>
-            </Select>
+            <NumberedSelect
+              value={type}
+              onValueChange={setType}
+              items={typeOptions}
+              className="bg-muted/50 border-border/50"
+              showNumbers
+            />
           </div>
 
           <Button

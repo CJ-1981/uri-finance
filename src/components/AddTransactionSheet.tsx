@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useCallback } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -272,23 +271,18 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 <div key={col.id} className="space-y-2">
                   <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
                   {col.column_type === "list" && (col.suggestions || []).length > 0 ? (
-                    <Select
+                    <NumberedSelect
                       value={customValues[col.name] || ""}
                       onValueChange={(val) =>
                         setCustomValues((prev) => ({ ...prev, [col.name]: val }))
                       }
-                    >
-                      <SelectTrigger data-tab-stop className="bg-muted/50 border-border/50">
-                        <SelectValue placeholder={t("tx.selectOption")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {col.suggestions.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      items={col.suggestions.map((opt) => ({
+                        value: opt,
+                        label: <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
+                      }))}
+                      className="bg-muted/50 border-border/50"
+                      showNumbers
+                    />
                   ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 ? (
                     <AutoSuggestInput
                       value={customValues[col.name] || ""}

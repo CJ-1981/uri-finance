@@ -8,10 +8,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface NumberedSelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  items: { value: string; label: string }[];
+  items: { value: string; label: string | React.ReactNode }[];
   placeholder?: string;
   className?: string;
   showNumbers?: boolean;
+  disabled?: boolean;
 }
 
 /** Maps index 0–9 → display key "1"–"9","0" */
@@ -25,6 +26,7 @@ const NumberedSelect = ({
   placeholder = "Select…",
   className,
   showNumbers = false,
+  disabled = false,
 }: NumberedSelectProps) => {
   const [open, setOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
@@ -32,15 +34,18 @@ const NumberedSelect = ({
   const listRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
-  const selectedLabel = items.find((i) => i.value === value)?.label ?? placeholder;
+  const selectedItem = items.find((i) => i.value === value);
+  const selectedLabel = selectedItem?.label ?? placeholder;
+  const displaySelectedLabel = typeof selectedLabel === "string" ? selectedLabel : value;
 
   const select = useCallback(
     (val: string) => {
+      if (disabled) return;
       onValueChange(val);
       setOpen(false);
       setTimeout(() => triggerRef.current?.focus(), 0);
     },
-    [onValueChange]
+    [onValueChange, disabled]
   );
 
   // Reset highlight when opened
@@ -61,6 +66,8 @@ const NumberedSelect = ({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (disabled) return;
+
       if (!open) {
         if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
           e.preventDefault();
@@ -100,7 +107,7 @@ const NumberedSelect = ({
           break;
       }
     },
-    [open, highlightIdx, items, select, showNumbers, isMobile]
+    [open, highlightIdx, items, select, showNumbers, isMobile, disabled]
   );
 
   const displayNumbers = showNumbers && !isMobile;
@@ -126,7 +133,9 @@ const NumberedSelect = ({
             {indexToKey(idx)}
           </span>
         )}
-        <span className="truncate flex-1 text-left">{item.label}</span>
+        <span className="truncate flex-1 text-left">
+          {typeof item.label === "string" ? item.label : item.label}
+        </span>
         {item.value === value && (
           <Check className="h-4 w-4 shrink-0 text-primary" />
         )}
@@ -143,11 +152,12 @@ const NumberedSelect = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           data-tab-stop
-          onClick={() => setOpen(true)}
+          onClick={() => !disabled && setOpen(true)}
           className={cn("w-full h-10 justify-between font-normal", className)}
         >
-          <span className="truncate">{selectedLabel}</span>
+          <span className="truncate">{displaySelectedLabel}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
 
@@ -183,7 +193,7 @@ const NumberedSelect = ({
 
   // Desktop: use Popover
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(v) => !disabled && setOpen(v)}>
       <PopoverTrigger asChild>
         <Button
           ref={triggerRef}
@@ -191,11 +201,12 @@ const NumberedSelect = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           data-tab-stop
           onKeyDown={handleKeyDown}
           className={cn("w-full h-10 justify-between font-normal", className)}
         >
-          <span className="truncate">{selectedLabel}</span>
+          <span className="truncate">{displaySelectedLabel}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
