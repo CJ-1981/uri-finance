@@ -94,10 +94,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  const updateSuggestions = async (id: string, suggestions: string[]) => {
+  const updateSuggestions = async (id: string, suggestions: string[], suggestionColors?: Record<string, string>) => {
+    const updateData: any = { suggestions };
+    if (suggestionColors !== undefined) {
+      updateData.suggestion_colors = suggestionColors;
+    }
     const { error } = await supabase
       .from("custom_columns")
-      .update({ suggestions } as any)
+      .update(updateData)
       .eq("id", id);
     if (error) {
       toast.error("Failed to update suggestions");
