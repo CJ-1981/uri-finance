@@ -22,7 +22,7 @@ const CategorySelector = ({ categories, selectedCategoryId, onCategoryChange }: 
 
   // Build options list with "All" as first item
   const options = useMemo(() => [
-    { id: null, name: t("tx.selectAll") },
+    { id: null, name: t("tx.selectAll"), icon: undefined },
     ...categories,
   ], [categories, t]);
 
