@@ -212,22 +212,22 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
     <div className="space-y-3">
       {/* Header row */}
       <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background z-10 py-1 border-b border-border/30">
-        <div className="text-center"></div>
-        <div className="text-center">{t("cash.named")}</div>
-        <div className="text-center">{t("cash.anon")}</div>
+        <div className="flex items-center justify-center"></div>
+        <div className="flex items-center justify-center">{t("cash.named")}</div>
+        <div className="flex items-center justify-center">{t("cash.anon")}</div>
       </div>
 
       {/* Bills section */}
       {denoms.bills.length > 0 && (
         <div className="space-y-0.5">
-          <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 items-center py-0.5">
+          <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 py-0.5">
             <div className="flex items-center justify-center">
               <p className="text-[9px] font-bold uppercase tracking-widest text-foreground">
                 {t("cash.bills")}
               </p>
             </div>
-            <div></div>
-            <div></div>
+            <div className="flex items-center justify-center"></div>
+            <div className="flex items-center justify-center"></div>
           </div>
           {denoms.bills.map((d) => (
             <DenomRow
@@ -246,14 +246,14 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
       {/* Coins section */}
       {denoms.coins.length > 0 && (
         <div className="space-y-0.5">
-          <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 items-center py-0.5">
+          <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 py-0.5">
             <div className="flex items-center justify-center">
-              <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+              <p className="text-[9px] font-semibold uppercase tracking-widest text-foreground/80">
                 {t("cash.coins")}
               </p>
             </div>
-            <div></div>
-            <div></div>
+            <div className="flex items-center justify-center"></div>
+            <div className="flex items-center justify-center"></div>
           </div>
           {denoms.coins.map((d) => (
             <DenomRow
@@ -379,54 +379,66 @@ const DenomRow = ({ denom, label, counts, onUpdate, onSet, isBill: isBillType }:
       </div>
 
       {/* Named column */}
-      <CounterCell
-        value={counts.named}
-        onChange={(v) => onSet(key, "named", v)}
-        onIncrement={() => onUpdate(key, "named", 1)}
-        onDecrement={() => onUpdate(key, "named", -1)}
-      />
+      <div className="flex items-center justify-center">
+        <CounterCell
+          id={`cash-${key}-named`}
+          name={`cash-${key}-named`}
+          value={counts.named}
+          onChange={(v) => onSet(key, "named", v)}
+          onIncrement={() => onUpdate(key, "named", 1)}
+          onDecrement={() => onUpdate(key, "named", -1)}
+        />
+      </div>
 
       {/* Anon column */}
-      <CounterCell
-        value={counts.anon}
-        onChange={(v) => onSet(key, "anon", v)}
-        onIncrement={() => onUpdate(key, "anon", 1)}
-        onDecrement={() => onUpdate(key, "anon", -1)}
-      />
+      <div className="flex items-center justify-center">
+        <CounterCell
+          id={`cash-${key}-anon`}
+          name={`cash-${key}-anon`}
+          value={counts.anon}
+          onChange={(v) => onSet(key, "anon", v)}
+          onIncrement={() => onUpdate(key, "anon", 1)}
+          onDecrement={() => onUpdate(key, "anon", -1)}
+        />
+      </div>
     </div>
   );
 };
 
 interface CounterCellProps {
+  id?: string;
+  name?: string;
   value: number;
   onChange: (v: number) => void;
   onIncrement: () => void;
   onDecrement: () => void;
 }
 
-const CounterCell = ({ value, onChange, onIncrement, onDecrement }: CounterCellProps) => (
-  <div className="flex items-center gap-0.5 justify-center">
+const CounterCell = ({ id, name, value, onChange, onIncrement, onDecrement }: CounterCellProps) => (
+  <div className="flex items-center gap-0.5 justify-center w-full overflow-hidden">
     <button
       type="button"
       onClick={onDecrement}
-      className="h-8 w-8 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
+      className="h-8 w-7 shrink-0 rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all flex items-center justify-center"
     >
-      <Minus className="h-3.5 w-3.5" />
+      <Minus className="h-3 w-3" />
     </button>
     <Input
+      id={id}
+      name={name}
       type="number"
       inputMode="numeric"
       min={0}
       value={value || ""}
       onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-      className="h-8 w-10 text-center text-sm px-0.5 border-border/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="h-8 flex-1 text-center text-sm px-0.5 border-border/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
     />
     <button
       type="button"
       onClick={onIncrement}
-      className="h-8 w-8 flex items-center justify-center rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all shrink-0"
+      className="h-8 w-7 shrink-0 rounded-md bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground active:scale-95 transition-all flex items-center justify-center"
     >
-      <Plus className="h-3.5 w-3.5" />
+      <Plus className="h-3 w-3" />
     </button>
   </div>
 );
