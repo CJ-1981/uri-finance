@@ -333,7 +333,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
               value={String(pageSize)}
               onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}
               items={PAGE_SIZES.map((s) => ({ value: String(s), label: String(s) }))}
-              className="h-7 w-[70px] text-xs bg-muted/30 border-border/50"
+              className="h-7 w-[60px] text-xs bg-muted/30 border-border/50 px-2"
               showNumbers
             />
             <span className="text-xs text-muted-foreground">/ {t("tx.page") || "page"}</span>
