@@ -198,7 +198,7 @@ function parseXLS(text: string): string[][] {
   ).filter((r) => r.length > 0);
 }
 
-interface ImportRow { line: number; type: string; amount: string; category: string; description: string; date: string; currency: string; }
+interface ImportRow { line: number; type: string; amount: string; category: string; code: string; description: string; date: string; currency: string; }
 interface ValidationResult { row: ImportRow; errors: string[]; valid: boolean; parsed?: { type: "income" | "expense"; amount: number; category: string; description?: string; transaction_date?: string; currency?: string; }; }
 
 function validateRow(row: ImportRow, categories: Category[], projectCurrency: string, t: (k: string) => string): ValidationResult {
