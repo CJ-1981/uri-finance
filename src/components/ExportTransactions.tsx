@@ -59,6 +59,11 @@ const formatAmount = (tx: Transaction) =>
 const formatDate = (tx: Transaction) =>
   format(parseISO(tx.transaction_date), "yyyy-MM-dd");
 
+const getCategoryCode = (tx: Transaction, categories?: Category[]) => {
+  const cat = categories?.find(c => c.name === tx.category);
+  return cat?.code || "";
+};
+
 const downloadFile = (content: string, filename: string, mime: string, successMsg: string) => {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
@@ -76,23 +81,24 @@ const getCustomVal = (tx: Transaction, col: CustomColumn) => {
   return col.column_type === "numeric" ? Number(val).toFixed(2) : String(val);
 };
 
-const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
+const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colHeaders = cols.map((c) => c.name).join(",");
-  const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
+  const header = `${h.date},${h.type},${h.category},Code,${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
   const rows = transactions.map((tx) => {
-    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`;
+    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${getCategoryCode(tx, categories)}","${tx.description || ""}",${formatAmount(tx)}`;
     const custom = cols.map((c) => `"${getCustomVal(tx, c)}"`).join(",");
     return cols.length ? `${base},${custom}` : base;
   });
   downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv", msg);
 };
 
-const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
+const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colNames = cols.map((c) => c.name);
   const header = `<Row>
     <Cell><Data ss:Type="String">${escapeXML(h.date)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.type)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.category)}</Data></Cell>
+    <Cell><Data ss:Type="String">Code</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.description)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.amount)}</Data></Cell>
     ${colNames.map((name) => `<Cell><Data ss:Type="String">${escapeXML(name)}</Data></Cell>`).join("")}
@@ -108,6 +114,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
       <Cell><Data ss:Type="String">${formatDate(tx)}</Data></Cell>
       <Cell><Data ss:Type="String">${tx.type}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.category)}</Data></Cell>
+      <Cell><Data ss:Type="String">${escapeXML(getCategoryCode(tx, categories))}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.description || "")}</Data></Cell>
       <Cell><Data ss:Type="Number">${Number(tx.amount)}</Data></Cell>
       ${customCells}
@@ -131,14 +138,14 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   downloadFile(xml, "transactions.xls", "application/vnd.ms-excel", msg);
 };
 
-const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
+const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colH = cols.map((c) => ` ${c.name} |`).join("");
-  const header = `| ${h.date} | ${h.type} | ${h.category} | ${h.description} | ${h.amount} |${colH}`;
+  const header = `| ${h.date} | ${h.type} | ${h.category} | Code | ${h.description} | ${h.amount} |${colH}`;
   const colSep = cols.map(() => " ---: |").join("");
-  const sep = `| --- | --- | --- | --- | ---: |${colSep}`;
+  const sep = `| --- | --- | --- | --- | --- | ---: |${colSep}`;
   const rows = transactions.map((tx) => {
     const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
-    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
+    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${getCategoryCode(tx, categories) || "-"} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
   });
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);
 };
@@ -191,7 +198,7 @@ function parseXLS(text: string): string[][] {
   ).filter((r) => r.length > 0);
 }
 
-interface ImportRow { line: number; type: string; amount: string; category: string; description: string; date: string; currency: string; }
+interface ImportRow { line: number; type: string; amount: string; category: string; code: string; description: string; date: string; currency: string; }
 interface ValidationResult { row: ImportRow; errors: string[]; valid: boolean; parsed?: { type: "income" | "expense"; amount: number; category: string; description?: string; transaction_date?: string; currency?: string; }; }
 
 function validateRow(row: ImportRow, categories: Category[], projectCurrency: string, t: (k: string) => string): ValidationResult {
@@ -210,9 +217,18 @@ function validateRow(row: ImportRow, categories: Category[], projectCurrency: st
 
   if (!VALID_TYPES.includes(typeLower)) errors.push(t("import.errType"));
   if (!row.amount || isNaN(amount) || amount === 0) errors.push(t("import.errAmount"));
-  const category = row.category || "General";
+  // Resolve category by code first, then by name
+  let category = "General";
+  if (row.code) {
+    const byCode = categories.find(c => c.code.toLowerCase() === row.code.toLowerCase());
+    if (byCode) category = byCode.name;
+    else if (row.category) category = row.category;
+  } else if (row.category) {
+    category = row.category;
+  }
   const catNames = categories.map((c) => c.name.toLowerCase());
-  if (row.category && !catNames.includes(row.category.toLowerCase())) errors.push(t("import.errCategory").replace("{v}", row.category));
+  const catCodes = categories.filter(c => c.code).map(c => c.code.toLowerCase());
+  if (category !== "General" && !catNames.includes(category.toLowerCase()) && (!row.code || !catCodes.includes(row.code.toLowerCase()))) errors.push(t("import.errCategory").replace("{v}", row.category || row.code));
   let dateStr = row.date || new Date().toISOString().split("T")[0];
   if (row.date) { const d = new Date(row.date); if (isNaN(d.getTime())) { errors.push(t("import.errDate")); dateStr = new Date().toISOString().split("T")[0]; } else { dateStr = d.toISOString().split("T")[0]; } }
   const currency = row.currency?.toUpperCase() || projectCurrency;
@@ -278,6 +294,7 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
         type: headerCols.findIndex((h) => ["type", "유형", hl.type].includes(h)),
         amount: headerCols.findIndex((h) => ["amount", "금액", hl.amount].includes(h)),
         category: headerCols.findIndex((h) => ["category", "카테고리", hl.category].includes(h)),
+        code: headerCols.findIndex((h) => ["code", "코드"].includes(h)),
         description: headerCols.findIndex((h) => ["description", "설명", "memo", "메모", hl.description].includes(h)),
         date: headerCols.findIndex((h) => ["date", "날짜", "transaction_date", hl.date].includes(h)),
         currency: headerCols.findIndex((h) => ["currency", "통화"].includes(h)),
@@ -297,6 +314,7 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
           type: (cols[colMap.type] || "").trim(), 
           amount: (cols[colMap.amount] || "").trim(), 
           category: colMap.category >= 0 ? (cols[colMap.category] || "").trim() : "", 
+          code: colMap.code >= 0 ? (cols[colMap.code] || "").trim() : "",
           description: colMap.description >= 0 ? (cols[colMap.description] || "").trim() : "", 
           date: colMap.date >= 0 ? (cols[colMap.date] || "").trim() : "", 
           currency: colMap.currency >= 0 ? (cols[colMap.currency] || "").trim() : "" 
@@ -340,15 +358,15 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
         <DropdownMenuContent align="end">
           {transactions.length > 0 && (
             <>
-              <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg)}>
+              <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg, categories)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 {t("export.csv")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg)}>
+              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg, categories)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 {t("export.xls")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg)}>
+              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg, categories)}>
                 <FileText className="h-4 w-4 mr-2" />
                 {t("export.markdown")}
               </DropdownMenuItem>
