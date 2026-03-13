@@ -52,6 +52,14 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
     return map;
   }, [categories]);
 
+  const categoryCodeMap = useMemo(() => {
+    const map = new Map<string, string>();
+    categories?.forEach(cat => {
+      if (cat.code) map.set(cat.name, cat.code);
+    });
+    return map;
+  }, [categories]);
+
   const maskedColumnNames = useMemo(() => {
     if (!isViewer) return new Set<string>();
     return new Set(customColumns.filter(col => col.masked).map(col => col.name));
