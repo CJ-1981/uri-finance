@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,231 +171,261 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     }
   }, []);
 
-  // Handle sheet open to blur the trigger button
+  // Handle sheet open to blur trigger button
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (newOpen) {
-      // Blur the trigger button when sheet opens to avoid aria-hidden conflict
+      // Blur trigger button when sheet opens to avoid aria-hidden conflict
       triggerRef.current?.blur();
     }
     setOpen(newOpen);
   }, [setOpen]);
 
-  return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetTrigger asChild>
-        <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
-          <Plus className="h-6 w-6" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent 
-        side="bottom" 
-        className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-          if (!isMobile) {
-            amountInputRef.current?.focus();
-          }
-        }}
-      >
-        <div className="px-6 overflow-y-auto flex-1 pb-8">
+  const FormContent = (
+    <>
+      {isMobile ? (
+        <DrawerHeader>
+          <DrawerTitle className="text-foreground">{t("tx.addTransaction")}</DrawerTitle>
+        </DrawerHeader>
+      ) : (
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
-          <SheetDescription className="sr-only">{t("tx.addTransactionDesc")}</SheetDescription>
         </SheetHeader>
+      )}
 
-        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
-          {/* Type toggle */}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              data-tab-stop
-              onClick={() => setType("income")}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
-                type === "income"
-                  ? "income-badge ring-1 ring-income/30"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              <TrendingUp className="h-4 w-4" /> {t("tx.income")}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              data-tab-stop
-              onClick={() => setType("expense")}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
-                type === "expense"
-                  ? "expense-badge ring-1 ring-expense/30"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
-              <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
-            </Button>
-          </div>
-
-          {/* Amount */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
-            <Input
-              ref={amountInputRef}
-              type="text"
-              inputMode="decimal"
-              data-tab-stop
-              value={amount}
-              onChange={(e) => {
-                const v = e.target.value.replace(/[^0-9.]/g, "");
-                setAmount(v);
-              }}
-              placeholder="0.00"
-              required
-              className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
-            />
-          </div>
-
-          {/* Category */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-            <NumberedSelect
-              value={category}
-              onValueChange={setCategory}
-              items={categories.map((c) => ({ value: c.name, label: c.name }))}
-              showNumbers
-              className="bg-muted/50 border-border/50 min-w-0"
-            />
-          </div>
-
-          {/* Custom columns (after category) */}
-          {customColumns.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {customColumns.map((col) => (
-                <div key={col.id} className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
-                  {col.column_type === "list" && (col.suggestions || []).length > 0 ? (
-                    <NumberedSelect
-                      value={customValues[col.name] || ""}
-                      onValueChange={(val) =>
-                        setCustomValues((prev) => ({ ...prev, [col.name]: val }))
-                      }
-                      items={col.suggestions.map((opt) => ({
-                        value: opt,
-                        label: <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
-                      }))}
-                      className="bg-muted/50 border-border/50"
-                      showNumbers
-                    />
-                  ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 ? (
-                    <AutoSuggestInput
-                      value={customValues[col.name] || ""}
-                      onChange={(val) =>
-                        setCustomValues((prev) => ({ ...prev, [col.name]: val }))
-                      }
-                      suggestions={columnSuggestions[col.name]}
-                      placeholder=""
-                      className="bg-muted/50 border-border/50"
-                      data-tab-stop
-                    />
-                  ) : (
-                    <Input
-                      type="text"
-                      inputMode={col.column_type === "numeric" ? "decimal" : "text"}
-                      value={customValues[col.name] || ""}
-                      onChange={(e) => {
-                        const val = col.column_type === "numeric"
-                          ? e.target.value.replace(/[^0-9.]/g, "")
-                          : e.target.value;
-                        setCustomValues((prev) => ({ ...prev, [col.name]: val }));
-                      }}
-                      placeholder={col.column_type === "numeric" ? "0.00" : ""}
-                      className="bg-muted/50 border-border/50"
-                      data-tab-stop
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">{t("tx.descriptionOptional")}</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("tx.descriptionPlaceholder")}
-              className="bg-muted/50 border-border/50"
-              data-tab-stop
-            />
-          </div>
-
-          {/* Date & Currency (moved to last) */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2 min-w-0">
-              <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    data-tab-stop
-                    className={cn(
-                      "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-sm">
-                      {date ? format(parse(date, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Pick date"}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
-                    onSelect={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
-              <NumberedSelect
-                value={currency}
-                onValueChange={setCurrency}
-                items={CURRENCIES.map((c) => ({ value: c, label: c }))}
-                className="bg-muted/50 border-border/50"
-                showNumbers
-              />
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              data-tab-stop
-              disabled={submitting}
-              onClick={handleAddAndContinue}
-              variant="outline"
-              className="flex-1 font-semibold h-12"
-            >
-              {submitting ? t("tx.adding") : t("tx.addAndContinue")}
-            </Button>
-            <Button
-              type="submit"
-              data-tab-stop
-              disabled={submitting}
-              className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-            >
-              {submitting ? t("tx.adding") : t("tx.addTransaction")}
-            </Button>
-          </div>
-        </form>
+      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
+        {/* Type toggle */}
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            data-tab-stop
+            onClick={() => setType("income")}
+            className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+              type === "income"
+                ? "income-badge ring-1 ring-income/30"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            <TrendingUp className="h-4 w-4" /> {t("tx.income")}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            data-tab-stop
+            onClick={() => setType("expense")}
+            className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+              type === "expense"
+                ? "expense-badge ring-1 ring-expense/30"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
+          </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+
+        {/* Amount */}
+        <div className="space-y-2">
+          <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
+          <Input
+            ref={amountInputRef}
+            type="text"
+            inputMode="decimal"
+            data-tab-stop
+            value={amount}
+            onChange={(e) => {
+              const v = e.target.value.replace(/[^0-9.]/g, "");
+              setAmount(v);
+            }}
+            placeholder="0.00"
+            required
+            className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
+          />
+        </div>
+
+        {/* Category */}
+        <div className="space-y-2">
+          <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
+          <NumberedSelect
+            value={category}
+            onValueChange={setCategory}
+            items={categories.map((c) => ({ value: c.name, label: c.name }))}
+            showNumbers
+            className="bg-muted/50 border-border/50 min-w-0"
+          />
+        </div>
+
+        {/* Custom columns (after category) */}
+        {customColumns.length > 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            {customColumns.map((col) => (
+              <div key={col.id} className="space-y-2">
+                <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
+                {col.column_type === "list" && (col.suggestions || []).length > 0 ? (
+                  <NumberedSelect
+                    value={customValues[col.name] || ""}
+                    onValueChange={(val) =>
+                      setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                    }
+                    items={col.suggestions.map((opt) => ({
+                      value: opt,
+                      label: <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
+                    }))}
+                    className="bg-muted/50 border-border/50"
+                    showNumbers
+                  />
+                ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 ? (
+                  <AutoSuggestInput
+                    value={customValues[col.name] || ""}
+                    onChange={(val) =>
+                      setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                    }
+                    suggestions={columnSuggestions[col.name]}
+                    placeholder=""
+                    className="bg-muted/50 border-border/50"
+                    data-tab-stop
+                  />
+                ) : (
+                  <Input
+                    type="text"
+                    inputMode={col.column_type === "numeric" ? "decimal" : "text"}
+                    value={customValues[col.name] || ""}
+                    onChange={(e) => {
+                      const val = col.column_type === "numeric"
+                        ? e.target.value.replace(/[^0-9.]/g, "")
+                        : e.target.value;
+                      setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                    }}
+                    placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                    className="bg-muted/50 border-border/50"
+                    data-tab-stop
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Description */}
+        <div className="space-y-2">
+          <Label className="text-muted-foreground text-xs">{t("tx.descriptionOptional")}</Label>
+          <Input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t("tx.descriptionPlaceholder")}
+            className="bg-muted/50 border-border/50"
+            data-tab-stop
+          />
+        </div>
+
+        {/* Date & Currency (moved to last) */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2 min-w-0">
+            <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  data-tab-stop
+                  className={cn(
+                    "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
+                    !date && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm">
+                    {date ? format(parse(date, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Pick date"}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
+                  onSelect={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
+            <NumberedSelect
+              value={currency}
+              onValueChange={setCurrency}
+              items={CURRENCIES.map((c) => ({ value: c, label: c }))}
+              className="bg-muted/50 border-border/50"
+              showNumbers
+            />
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            data-tab-stop
+            disabled={submitting}
+            onClick={handleAddAndContinue}
+            variant="outline"
+            className="flex-1 font-semibold h-12"
+          >
+            {submitting ? t("tx.adding") : t("tx.addAndContinue")}
+          </Button>
+          <Button
+            type="submit"
+            data-tab-stop
+            disabled={submitting}
+            className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+          >
+            {submitting ? t("tx.adding") : t("tx.addTransaction")}
+          </Button>
+        </div>
+      </form>
+    </>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={handleOpenChange}>
+          <DrawerTrigger asChild>
+            <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
+              <Plus className="h-6 w-6" />
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] flex flex-col"
+          >
+            <div className="px-6 overflow-y-auto flex-1 pb-8">
+              {FormContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Sheet open={open} onOpenChange={handleOpenChange}>
+          <SheetTrigger asChild>
+            <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
+              <Plus className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent
+            side="bottom"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              if (!isMobile) {
+                amountInputRef.current?.focus();
+              }
+            }}
+          >
+            <div className="px-6 overflow-y-auto flex-1 pb-8">
+              {FormContent}
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+    </>
   );
 };
 

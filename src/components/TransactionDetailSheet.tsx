@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -212,253 +213,280 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   const visibleCustomCols = customColumns.filter(col => !(isViewer && col.masked));
 
-  return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent 
-        side="bottom" 
-        className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-          if (!isMobile) {
-            amountInputRef.current?.focus();
-          }
-        }}
-      >
-        <SheetHeader>
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
-            {totalCount > 1 && (
-              <div className="flex items-center gap-1 mr-8">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={goPrev}
-                  disabled={!hasPrev}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
-                  {currentIndex + 1}/{totalCount}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={goNext}
-                  disabled={!hasNext}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-          <SheetDescription className="sr-only">{t("tx.editTransactionDesc")}</SheetDescription>
-        </SheetHeader>
-
-        <div ref={formRef} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
-          {/* Type toggle */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              data-tab-stop
-              onClick={() => isOwn && setType("income")}
-              disabled={!isOwn}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
-                type === "income" ? "income-badge ring-1 ring-income/30" : "bg-muted text-muted-foreground"
-              } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
+  const HeaderContent = (
+    <>
+      <div className="flex items-center justify-between">
+        {isMobile ? (
+          <DrawerTitle className="text-foreground">{t("tx.editTransaction")}</DrawerTitle>
+        ) : (
+          <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
+        )}
+        {totalCount > 1 && (
+          <div className="flex items-center gap-1 mr-8">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={goPrev}
+              disabled={!hasPrev}
             >
-              <TrendingUp className="h-4 w-4" /> {t("tx.income")}
-            </button>
-            <button
-              type="button"
-              data-tab-stop
-              onClick={() => isOwn && setType("expense")}
-              disabled={!isOwn}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
-                type === "expense" ? "expense-badge ring-1 ring-expense/30" : "bg-muted text-muted-foreground"
-              } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
+              {currentIndex + 1}/{totalCount}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={goNext}
+              disabled={!hasNext}
             >
-              <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
-            </button>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
+        )}
+      </div>
+    </>
+  );
 
-          {/* Amount */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
-            <Input
-              ref={amountInputRef}
-              type="text"
-              inputMode="decimal"
-              data-tab-stop
-              value={amount}
-              onChange={(e) => {
-                const v = e.target.value.replace(/[^0-9.]/g, "");
-                setAmount(v);
-              }}
-              disabled={!isOwn}
-              className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
-            />
-          </div>
+  const FormContent = (
+    <div ref={formRef} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
+      {/* Type toggle */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          data-tab-stop
+          onClick={() => isOwn && setType("income")}
+          disabled={!isOwn}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+            type === "income" ? "income-badge ring-1 ring-income/30" : "bg-muted text-muted-foreground"
+          } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
+        >
+          <TrendingUp className="h-4 w-4" /> {t("tx.income")}
+        </button>
+        <button
+          type="button"
+          data-tab-stop
+          onClick={() => isOwn && setType("expense")}
+          disabled={!isOwn}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
+            type === "expense" ? "expense-badge ring-1 ring-expense/30" : "bg-muted text-muted-foreground"
+          } ${!isOwn ? "opacity-60 cursor-not-allowed" : ""}`}
+        >
+          <TrendingDown className="h-4 w-4" /> {t("tx.expense")}
+        </button>
+      </div>
 
-          {/* Category */}
-          <div className="space-y-2 min-w-0">
-            <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-            <NumberedSelect
-              value={category}
-              onValueChange={setCategory}
-              items={categories.map((c) => ({ value: c.name, label: c.name }))}
-              showNumbers
-              className="bg-muted/50 border-border/50 min-w-0"
-            />
-          </div>
+      {/* Amount */}
+      <div className="space-y-2">
+        <Label className="text-muted-foreground text-xs">{t("tx.amount")}</Label>
+        <Input
+          ref={amountInputRef}
+          type="text"
+          inputMode="decimal"
+          data-tab-stop
+          value={amount}
+          onChange={(e) => {
+            const v = e.target.value.replace(/[^0-9.]/g, "");
+            setAmount(v);
+          }}
+          disabled={!isOwn}
+          className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
+        />
+      </div>
 
-          {/* Custom columns (after category) */}
-          {visibleCustomCols.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              {visibleCustomCols.map((col) => (
-                  <div key={col.id} className="space-y-2">
-                    <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
-                    {col.column_type === "list" && (col.suggestions || []).length > 0 ? (
-                      <NumberedSelect
-                        value={customValues[col.name] || ""}
-                        onValueChange={(val) =>
-                          setCustomValues((prev) => ({ ...prev, [col.name]: val }))
-                        }
-                        disabled={!isOwn}
-                        items={col.suggestions.map((opt) => ({
-                          value: opt,
-                          label: <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
-                        }))}
-                        className="bg-muted/50 border-border/50"
-                        showNumbers
-                      />
-                    ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
-                      <AutoSuggestInput
-                        value={customValues[col.name] || ""}
-                        onChange={(val) =>
-                          setCustomValues((prev) => ({ ...prev, [col.name]: val }))
-                        }
-                        suggestions={columnSuggestions[col.name]}
-                        placeholder=""
-                        className="bg-muted/50 border-border/50"
-                        data-tab-stop
-                      />
-                    ) : (
-                      <Input
-                        type="text"
-                        inputMode={col.column_type === "numeric" ? "decimal" : "text"}
-                        data-tab-stop
-                        value={customValues[col.name] || ""}
-                        onChange={(e) => {
-                          const val = col.column_type === "numeric"
-                            ? e.target.value.replace(/[^0-9.]/g, "")
-                            : e.target.value;
-                          setCustomValues((prev) => ({ ...prev, [col.name]: val }));
-                        }}
-                        placeholder={col.column_type === "numeric" ? "0.00" : ""}
-                        disabled={!isOwn}
-                        className="bg-muted/50 border-border/50"
-                      />
-                    )}
-                  </div>
-              ))}
-            </div>
-          )}
+      {/* Category */}
+      <div className="space-y-2 min-w-0">
+        <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
+        <NumberedSelect
+          value={category}
+          onValueChange={setCategory}
+          items={categories.map((c) => ({ value: c.name, label: c.name }))}
+          showNumbers
+          className="bg-muted/50 border-border/50 min-w-0"
+        />
+      </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">{t("tx.description")}</Label>
-            <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("tx.descriptionPlaceholder")}
-              disabled={!isOwn}
-              data-tab-stop
-              className="bg-muted/50 border-border/50"
-            />
-          </div>
-
-          {/* Date & Currency (last before buttons) */}
-          <div className="grid grid-cols-2 gap-3 overflow-hidden">
-            <div className="space-y-2 min-w-0">
-              <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    data-tab-stop
+      {/* Custom columns (after category) */}
+      {visibleCustomCols.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {visibleCustomCols.map((col) => (
+              <div key={col.id} className="space-y-2">
+                <Label className="text-muted-foreground text-xs">{col.name}{col.required ? <span className="text-destructive ml-0.5">*</span> : <span className="text-muted-foreground/50 ml-1">({t("tx.optional") || "optional"})</span>}</Label>
+                {col.column_type === "list" && (col.suggestions || []).length > 0 ? (
+                  <NumberedSelect
+                    value={customValues[col.name] || ""}
+                    onValueChange={(val) =>
+                      setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                    }
                     disabled={!isOwn}
-                    className={cn(
-                      "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-sm">
-                      {date ? format(parse(date, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Pick date"}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
-                    onSelect={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+                    items={col.suggestions.map((opt) => ({
+                      value: opt,
+                      label: <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
+                    }))}
+                    className="bg-muted/50 border-border/50"
+                    showNumbers
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
-              <NumberedSelect
-                value={currency}
-                onValueChange={setCurrency}
-                disabled={!isOwn}
-                items={CURRENCIES.map((c) => ({ value: c, label: c }))}
-                className="bg-muted/50 border-border/50"
-                showNumbers
-              />
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          {isOwn && (
-            <div className="flex gap-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" data-tab-stop className="h-12 px-4">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
-                    <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                data-tab-stop
-                className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-              >
-                <Save className="h-4 w-4 mr-1" />
-                {saving ? t("tx.saving") : t("tx.saveChanges")}
-              </Button>
-            </div>
-          )}
+                ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
+                  <AutoSuggestInput
+                    value={customValues[col.name] || ""}
+                    onChange={(val) =>
+                      setCustomValues((prev) => ({ ...prev, [col.name]: val }))
+                    }
+                    suggestions={columnSuggestions[col.name]}
+                    placeholder=""
+                    className="bg-muted/50 border-border/50"
+                    data-tab-stop
+                  />
+                ) : (
+                  <Input
+                    type="text"
+                    inputMode={col.column_type === "numeric" ? "decimal" : "text"}
+                    data-tab-stop
+                    value={customValues[col.name] || ""}
+                    onChange={(e) => {
+                      const val = col.column_type === "numeric"
+                        ? e.target.value.replace(/[^0-9.]/g, "")
+                        : e.target.value;
+                      setCustomValues((prev) => ({ ...prev, [col.name]: val }));
+                    }}
+                    placeholder={col.column_type === "numeric" ? "0.00" : ""}
+                    disabled={!isOwn}
+                    className="bg-muted/50 border-border/50"
+                  />
+                )}
+              </div>
+            ))}
         </div>
-      </SheetContent>
-    </Sheet>
+      )}
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label className="text-muted-foreground text-xs">{t("tx.description")}</Label>
+        <Input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder={t("tx.descriptionPlaceholder")}
+          disabled={!isOwn}
+          data-tab-stop
+          className="bg-muted/50 border-border/50"
+        />
+      </div>
+
+      {/* Date & Currency (last before buttons) */}
+      <div className="grid grid-cols-2 gap-3 overflow-hidden">
+        <div className="space-y-2 min-w-0">
+          <Label className="text-muted-foreground text-xs">{t("tx.date")}</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                data-tab-stop
+                disabled={!isOwn}
+                className={cn(
+                  "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate text-sm">
+                  {date ? format(parse(date, "yyyy-MM-dd", new Date()), "MMM d, yyyy") : "Pick date"}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
+                onSelect={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="space-y-2">
+          <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
+          <NumberedSelect
+            value={currency}
+            onValueChange={setCurrency}
+            disabled={!isOwn}
+            items={CURRENCIES.map((c) => ({ value: c, label: c }))}
+            className="bg-muted/50 border-border/50"
+            showNumbers
+          />
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      {isOwn && (
+        <div className="flex gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" data-tab-stop className="h-12 px-4">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            data-tab-stop
+            className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+          >
+            <Save className="h-4 w-4 mr-1" />
+            {saving ? t("tx.saving") : t("tx.saveChanges")}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      {isMobile ? (
+        <Drawer open={open} onOpenChange={handleOpenChange}>
+          <DrawerContent
+            className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto"
+          >
+            <DrawerHeader>
+              {HeaderContent}
+            </DrawerHeader>
+            {FormContent}
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Sheet open={open} onOpenChange={handleOpenChange}>
+          <SheetContent
+            side="bottom"
+            className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
+            onOpenAutoFocus={(e) => {
+              e.preventDefault();
+              if (!isMobile) {
+                amountInputRef.current?.focus();
+              }
+            }}
+          >
+            <SheetHeader>
+              {HeaderContent}
+            </SheetHeader>
+            {FormContent}
+          </SheetContent>
+        </Sheet>
+      )}
+    </>
   );
 };
 
