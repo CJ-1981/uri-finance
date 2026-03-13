@@ -52,9 +52,16 @@ const Auth = () => {
       const { error } = await signUp(email, password);
       setSubmitting(false);
       if (error) {
-        // Clear pending invite code on error
-        localStorage.removeItem("pending_invite_code");
-        toast.error(error.message);
+        // Don't clear pending invite code - keep it for use after login
+        // Check if error is about user already existing
+        const errorMessage = error.message || "";
+        if (errorMessage.includes("already registered") ||
+            errorMessage.includes("already exists") ||
+            errorMessage.includes("User already")) {
+          toast.error(t("auth.userExists"));
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
 

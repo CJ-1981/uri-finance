@@ -19,6 +19,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.inviteCodePlaceholder": "Enter invite code from project creator",
     "auth.invalidInviteCode": "Invalid invite code. Please get one from a project creator.",
     "auth.inviteEmailMismatch": "This invite code is assigned to a different email address.",
+    "auth.userExists": "You already have an account. Please sign in to continue. Your invite code has been saved.",
     "auth.loading": "Loading...",
 
     // Dashboard
@@ -358,6 +359,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.inviteCodePlaceholder": "프로젝트 생성자의 초대 코드를 입력하세요",
     "auth.invalidInviteCode": "유효하지 않은 초대 코드입니다. 프로젝트 생성자에게 문의하세요.",
     "auth.inviteEmailMismatch": "이 초대 코드는 다른 이메일 주소에 할당되어 있습니다.",
+    "auth.userExists": "이미 계정이 있습니다. 로그인을 진행해주세요. 초대 코드가 저장되었습니다.",
     "auth.loading": "로딩 중...",
 
     // Dashboard
