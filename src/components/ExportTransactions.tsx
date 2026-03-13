@@ -356,15 +356,15 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
         <DropdownMenuContent align="end">
           {transactions.length > 0 && (
             <>
-              <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg)}>
+              <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg, categories)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 {t("export.csv")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg)}>
+              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg, categories)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 {t("export.xls")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg)}>
+              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg, categories)}>
                 <FileText className="h-4 w-4 mr-2" />
                 {t("export.markdown")}
               </DropdownMenuItem>
