@@ -92,12 +92,13 @@ const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv", msg);
 };
 
-const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
+const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colNames = cols.map((c) => c.name);
   const header = `<Row>
     <Cell><Data ss:Type="String">${escapeXML(h.date)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.type)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.category)}</Data></Cell>
+    <Cell><Data ss:Type="String">Code</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.description)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.amount)}</Data></Cell>
     ${colNames.map((name) => `<Cell><Data ss:Type="String">${escapeXML(name)}</Data></Cell>`).join("")}
@@ -113,6 +114,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
       <Cell><Data ss:Type="String">${formatDate(tx)}</Data></Cell>
       <Cell><Data ss:Type="String">${tx.type}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.category)}</Data></Cell>
+      <Cell><Data ss:Type="String">${escapeXML(getCategoryCode(tx, categories))}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.description || "")}</Data></Cell>
       <Cell><Data ss:Type="Number">${Number(tx.amount)}</Data></Cell>
       ${customCells}
