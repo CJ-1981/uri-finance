@@ -75,6 +75,8 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
       if (tx.currency?.toLowerCase().includes(q)) return true;
       if (tx.transaction_date.includes(q)) return true;
       if (String(tx.amount).includes(q)) return true;
+      const categoryCode = categoryCodeMap.get(tx.category);
+      if (categoryCode?.toLowerCase().includes(q)) return true;
       if (tx.custom_values) {
         for (const [key, val] of Object.entries(tx.custom_values)) {
           if (maskedColumnNames.has(key)) continue;
@@ -83,7 +85,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
       }
       return false;
     });
-  }, [transactions, searchQuery, maskedColumnNames]);
+  }, [transactions, searchQuery, maskedColumnNames, categoryCodeMap]);
 
   // Reset page when search or data changes
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
