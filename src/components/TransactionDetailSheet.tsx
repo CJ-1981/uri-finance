@@ -459,19 +459,21 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
       {isMobile ? (
         <Drawer open={open} onOpenChange={handleOpenChange}>
           <DrawerContent
-            className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
           >
-            <DrawerHeader>
-              {HeaderContent}
-            </DrawerHeader>
-            {FormContent}
+            <div className="overflow-y-auto flex-1 px-6 pb-8">
+              <DrawerHeader>
+                {HeaderContent}
+              </DrawerHeader>
+              {FormContent}
+            </div>
           </DrawerContent>
         </Drawer>
       ) : (
         <Sheet open={open} onOpenChange={handleOpenChange}>
           <SheetContent
             side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh]"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
               if (!isMobile) {
@@ -479,10 +481,12 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               }
             }}
           >
-            <SheetHeader>
-              {HeaderContent}
-            </SheetHeader>
-            {FormContent}
+            <div className="overflow-y-auto flex-1 px-6 pb-8">
+              <SheetHeader>
+                {HeaderContent}
+              </SheetHeader>
+              {FormContent}
+            </div>
           </SheetContent>
         </Sheet>
       )}
