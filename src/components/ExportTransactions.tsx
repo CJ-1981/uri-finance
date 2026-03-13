@@ -217,9 +217,18 @@ function validateRow(row: ImportRow, categories: Category[], projectCurrency: st
 
   if (!VALID_TYPES.includes(typeLower)) errors.push(t("import.errType"));
   if (!row.amount || isNaN(amount) || amount === 0) errors.push(t("import.errAmount"));
-  const category = row.category || "General";
+  // Resolve category by code first, then by name
+  let category = "General";
+  if (row.code) {
+    const byCode = categories.find(c => c.code.toLowerCase() === row.code.toLowerCase());
+    if (byCode) category = byCode.name;
+    else if (row.category) category = row.category;
+  } else if (row.category) {
+    category = row.category;
+  }
   const catNames = categories.map((c) => c.name.toLowerCase());
-  if (row.category && !catNames.includes(row.category.toLowerCase())) errors.push(t("import.errCategory").replace("{v}", row.category));
+  const catCodes = categories.filter(c => c.code).map(c => c.code.toLowerCase());
+  if (category !== "General" && !catNames.includes(category.toLowerCase()) && (!row.code || !catCodes.includes(row.code.toLowerCase()))) errors.push(t("import.errCategory").replace("{v}", row.category || row.code));
   let dateStr = row.date || new Date().toISOString().split("T")[0];
   if (row.date) { const d = new Date(row.date); if (isNaN(d.getTime())) { errors.push(t("import.errDate")); dateStr = new Date().toISOString().split("T")[0]; } else { dateStr = d.toISOString().split("T")[0]; } }
   const currency = row.currency?.toUpperCase() || projectCurrency;
