@@ -503,9 +503,9 @@ const AdminPage = () => {
             {invites.length > 0 && (
               <div className="space-y-2 mt-2">
                 {invites.map((inv) => (
-                  <div key={inv.id} className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2">
+                  <div key={inv.id} className="flex items-center gap-3 rounded-lg bg-muted/30 px-3 py-2">
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <code className="text-sm font-mono text-primary">{inv.code}</code>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                           inv.used_by
@@ -518,12 +518,21 @@ const AdminPage = () => {
                           {(inv as any).role || "member"}
                         </span>
                       </div>
-                      {(inv as any).email && (
-                        <p className="text-xs text-primary/70 truncate mt-0.5">{(inv as any).email}</p>
-                      )}
-                      {inv.label && (
-                        <p className="text-xs text-muted-foreground truncate">{inv.label}</p>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {(inv as any).email && (
+                          <div className="flex items-center gap-1">
+                            <p className="text-xs text-primary truncate">{(inv as any).email}</p>
+                          </div>
+                        )}
+                        {inv.label && (
+                          <div className="flex items-center gap-1">
+                            <p className="text-xs text-muted-foreground truncate">{inv.label}</p>
+                          </div>
+                        )}
+                        {!inv.label && !(inv as any).email && (
+                          <p className="text-xs text-muted-foreground italic">{t("admin.noInviteDesc")}</p>
+                        )}
+                      </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
                       {!inv.used_by && (
