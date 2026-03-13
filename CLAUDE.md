@@ -67,9 +67,34 @@ This is a team finance tracking application built with React, TypeScript, Vite, 
   - Invite code is stored in localStorage as `pending_invite_code` for processing after authentication
   - After successful signup, the Dashboard automatically attempts to join the project with the pending invite code
   - Users can also join projects via the ProjectSwitcher's "Join" tab after logging in
+  - **Important**: Pending invite code is NOT cleared when signup fails (e.g., user already exists)
+    - This allows existing users to log in and use their invite code to join projects
   - Two invite systems supported:
     - New: `project_invites` table with individual codes, optional email locking, role assignment
     - Legacy: `invite_code` field on `projects` table for simple project joining
+
+### Member Management
+- Admin page displays all project members with their roles (owner/admin/member/viewer)
+- **Email Display**:
+  - Current user sees their full email address
+  - Other members show truncated user IDs (first 8 characters)
+  - Members who joined via invite code display the email from that invite
+  - Members without invite (legacy) show truncated user ID
+- **Invite Code Lookup**:
+  - Member list looks up invite codes to find email and description labels
+  - Email and description from original invite are displayed when available
+  - Description shown in primary color next to role badge
+- **Control Buttons**:
+  - Cycle role (member → viewer → admin)
+  - Transfer ownership (owner → member)
+  - Remove member (delete from project)
+  - Ban member (prevents rejoining)
+  - Control buttons are right-aligned in a separate row below member info
+  - Owner cannot be removed/banned by themselves
+- **Layout**:
+  - Vertical flex layout with proper spacing
+  - Full email addresses use `break-all` for wrapping without truncation
+  - Improved mobile spacing with `pt-1` and `gap-2`
 
 ### Internationalization
 
