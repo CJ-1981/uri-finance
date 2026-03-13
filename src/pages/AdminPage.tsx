@@ -395,18 +395,29 @@ const AdminPage = () => {
                   : isViewer
                   ? t("admin.viewer")
                   : t("admin.member");
+
+                // Look up invite info for this member (email and label)
+                const memberInvite = invites.find(inv => inv.used_by === m.user_id);
+                const memberEmail = memberInvite?.email;
+                const memberLabel = memberInvite?.label;
+
                 return (
                   <div key={m.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-foreground truncate font-mono">
-                        {isSelf ? (user?.email || m.user_id.slice(0, 8) + "...") : m.user_id.slice(0, 8) + "..."}
+                        {memberEmail || (isSelf ? user?.email : null) || m.user_id.slice(0, 8) + "..."}
                       </p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        {isOwnerMember && <Crown className="h-3 w-3 text-amber-500" />}
-                        {isAdmin && <Shield className="h-3 w-3 text-primary" />}
-                        {isViewer && <EyeOff className="h-3 w-3 text-muted-foreground" />}
-                        {roleLabel}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          {isOwnerMember && <Crown className="h-3 w-3 text-amber-500" />}
+                          {isAdmin && <Shield className="h-3 w-3 text-primary" />}
+                          {isViewer && <EyeOff className="h-3 w-3 text-muted-foreground" />}
+                          {roleLabel}
+                        </p>
+                        {memberLabel && (
+                          <p className="text-xs text-primary/70 truncate ml-2">{memberLabel}</p>
+                        )}
+                      </div>
                     </div>
                     {!isSelf && !isOwnerMember && (
                       <div className="flex gap-1 shrink-0">
