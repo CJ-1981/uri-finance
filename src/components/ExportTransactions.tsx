@@ -81,11 +81,11 @@ const getCustomVal = (tx: Transaction, col: CustomColumn) => {
   return col.column_type === "numeric" ? Number(val).toFixed(2) : String(val);
 };
 
-const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
+const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colHeaders = cols.map((c) => c.name).join(",");
-  const header = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
+  const header = `${h.date},${h.type},${h.category},Code,${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
   const rows = transactions.map((tx) => {
-    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${tx.description || ""}",${formatAmount(tx)}`;
+    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${getCategoryCode(tx, categories)}","${tx.description || ""}",${formatAmount(tx)}`;
     const custom = cols.map((c) => `"${getCustomVal(tx, c)}"`).join(",");
     return cols.length ? `${base},${custom}` : base;
   });
