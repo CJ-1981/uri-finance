@@ -59,6 +59,11 @@ const formatAmount = (tx: Transaction) =>
 const formatDate = (tx: Transaction) =>
   format(parseISO(tx.transaction_date), "yyyy-MM-dd");
 
+const getCategoryCode = (tx: Transaction, categories?: Category[]) => {
+  const cat = categories?.find(c => c.name === tx.category);
+  return cat?.code || "";
+};
+
 const downloadFile = (content: string, filename: string, mime: string, successMsg: string) => {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
