@@ -18,14 +18,13 @@ export const hashPin = async (value: string): Promise<string> => {
 };
 
 /**
- * Store PIN hash in sessionStorage (more secure than localStorage)
+ * Store PIN hash in both sessionStorage and localStorage for persistence
  */
 export const storePin = async (pin: string): Promise<void> => {
   try {
     const hash = await hashPin(pin);
     sessionStorage.setItem(PIN_STORAGE_KEY, hash);
-    // Remove legacy entry from localStorage if it exists
-    localStorage.removeItem(PIN_STORAGE_KEY);
+    localStorage.setItem(PIN_STORAGE_KEY, hash);
   } catch (error) {
     console.error("Failed to store PIN:", error);
     throw new Error("Failed to store PIN securely");
