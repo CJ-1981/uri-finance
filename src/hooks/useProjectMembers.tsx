@@ -83,17 +83,19 @@ export const useProjectMembers = (projectId?: string) => {
   const createInvite = async (label?: string, email?: string, role?: string) => {
     if (!projectId) return false;
     const { data: { user } } = await supabase.auth.getUser();
+    console.log("createInvite - user:", user, "projectId:", projectId);
     if (!user) return false;
 
     const { error } = await supabase
       .from("project_invites")
-      .insert({ 
-        project_id: projectId, 
+      .insert({
+        project_id: projectId,
         created_by: user.id,
         label: label?.trim() || null,
         email: email?.trim().toLowerCase() || null,
         role: role || "member",
       } as any);
+    console.log("createInvite - error:", error);
     if (error) return false;
     await fetchInvites();
     return true;
