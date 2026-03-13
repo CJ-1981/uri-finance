@@ -138,14 +138,14 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   downloadFile(xml, "transactions.xls", "application/vnd.ms-excel", msg);
 };
 
-const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string) => {
+const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colH = cols.map((c) => ` ${c.name} |`).join("");
-  const header = `| ${h.date} | ${h.type} | ${h.category} | ${h.description} | ${h.amount} |${colH}`;
+  const header = `| ${h.date} | ${h.type} | ${h.category} | Code | ${h.description} | ${h.amount} |${colH}`;
   const colSep = cols.map(() => " ---: |").join("");
-  const sep = `| --- | --- | --- | --- | ---: |${colSep}`;
+  const sep = `| --- | --- | --- | --- | --- | ---: |${colSep}`;
   const rows = transactions.map((tx) => {
     const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
-    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
+    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${getCategoryCode(tx, categories) || "-"} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
   });
   downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);
 };
