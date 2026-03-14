@@ -267,6 +267,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleted": "Transaction permanently deleted",
     "admin.permDeleteFailed": "Failed to permanently delete",
     "admin.deletedOn": "Deleted",
+    "admin.selectMode": "Select",
+    "admin.selectAll": "All",
+    "admin.selected": "{n} selected",
+    "admin.bulkRestore": "Restore",
+    "admin.bulkDelete": "Delete",
 
     // Archive
     "admin.archive": "Data Archive",
@@ -643,6 +648,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.permDeleted": "거래가 영구 삭제되었습니다",
     "admin.permDeleteFailed": "영구 삭제에 실패했습니다",
     "admin.deletedOn": "삭제일",
+    "admin.selectMode": "선택",
+    "admin.selectAll": "모두",
+    "admin.selected": "{n}개 선택됨",
+    "admin.bulkRestore": "복원",
+    "admin.bulkDelete": "삭제",
 
     // Archive
     "admin.archive": "데이터 아카이브",
