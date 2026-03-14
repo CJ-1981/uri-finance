@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Download, Import, FileSpreadsheet, FileText, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -414,6 +414,9 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
         <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[85vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-foreground">{t("import.title")}</SheetTitle>
+            <SheetDescription className="sr-only">
+              Review import results showing successfully imported and failed transactions.
+            </SheetDescription>
           </SheetHeader>
           {results && (
             <div className="mt-4 space-y-3">

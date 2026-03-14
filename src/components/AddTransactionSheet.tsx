@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -185,10 +185,16 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       {isMobile ? (
         <DrawerHeader>
           <DrawerTitle className="text-foreground">{t("tx.addTransaction")}</DrawerTitle>
+          <DrawerDescription className="sr-only">
+            Add a new transaction to track your income or expenses.
+          </DrawerDescription>
         </DrawerHeader>
       ) : (
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
+          <SheetDescription className="sr-only">
+            Add a new transaction to track your income or expenses.
+          </SheetDescription>
         </SheetHeader>
       )}
 

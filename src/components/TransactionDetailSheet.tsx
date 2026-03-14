@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -464,6 +464,9 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             <div className="overflow-y-auto flex-1 px-6 pb-8">
               <DrawerHeader>
                 {HeaderContent}
+                <DrawerDescription className="sr-only">
+                  Edit transaction details including amount, category, and custom fields.
+                </DrawerDescription>
               </DrawerHeader>
               {FormContent}
             </div>
@@ -484,6 +487,9 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             <div className="overflow-y-auto flex-1 px-6 pb-8">
               <SheetHeader>
                 {HeaderContent}
+                <SheetDescription className="sr-only">
+                  Edit transaction details including amount, category, and custom fields.
+                </SheetDescription>
               </SheetHeader>
               {FormContent}
             </div>
