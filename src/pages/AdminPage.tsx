@@ -622,7 +622,8 @@ const AdminPage = () => {
           </div>
         </section>
 
-        {/* Project Setup Export/Import */}
+        {/* Project Setup Export/Import - Owner only */}
+        {isOwner && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("setup.title")}</h2>
@@ -640,6 +641,7 @@ const AdminPage = () => {
             />
           </div>
         </section>
+        )}
 
         {/* Categories */}
         <section className="space-y-4">
