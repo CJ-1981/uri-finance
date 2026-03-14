@@ -166,4 +166,4 @@ export const useCategories = (projectId: string | undefined) => {
   };
 
   return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, fetchCategories };
-};
+}

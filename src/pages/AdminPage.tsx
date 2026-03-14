@@ -10,6 +10,7 @@ import { useI18n } from "@/hooks/useI18n";
 import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import TrashManager from "@/components/TrashManager";
+import ExportProjectSetup from "@/components/ExportProjectSetup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -29,9 +30,9 @@ import { UserRole } from "@/hooks/useUserRole";
 const AdminPage = () => {
   const { user } = useAuth();
   const { projects, activeProject, fetchProjects } = useProjects();
-  const { categories, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories } = useCategories(activeProject?.id);
+  const { categories, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, fetchCategories } = useCategories(activeProject?.id);
   const { headers, draft, dirty, saving, updateDraft, saveHeaders, resetHeaders } = useColumnHeaders(activeProject?.id);
-  const { columns: customColumns, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, renameColumn } = useCustomColumns(activeProject?.id);
+  const { columns: customColumns, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, renameColumn, fetchColumns } = useCustomColumns(activeProject?.id);
   const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -618,6 +619,23 @@ const AdminPage = () => {
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
             <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} onToggleMasked={toggleMasked} onToggleRequired={toggleRequired} onUpdateSuggestions={updateSuggestions} onReorderAll={reorderColumns} onRename={renameColumn} />
+          </div>
+        </section>
+
+        {/* Project Setup Export/Import */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">{t("setup.title")}</h2>
+            <p className="text-xs text-muted-foreground">{t("setup.desc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4">
+            <ExportProjectSetup
+              categories={categories}
+              customColumns={customColumns}
+              projectId={activeProject.id}
+              onCategoriesRefresh={fetchCategories}
+              onColumnsRefresh={fetchColumns}
+            />
           </div>
         </section>
 

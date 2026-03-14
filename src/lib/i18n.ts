@@ -196,6 +196,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "export.markdown": "Export as Markdown",
     "export.success": "Exported as",
 
+    // Setup Export/Import
+    "setup.title": "Project Setup",
+    "setup.desc": "Export or import categories and custom columns to share across projects.",
+    "setup.export": "Export",
+    "setup.import": "Import",
+    "setup.importing": "Importing...",
+    "setup.exportDesc": "Export categories and custom columns to share with other projects",
+    "setup.exported": "Project setup exported",
+    "setup.imported": "Project setup imported ({n} items)",
+    "setup.importError": "Failed to import project setup: ",
+    "setup.invalidFormat": "Invalid file format",
+
     // Charts
     "chart.trend": "Trend",
     "chart.comparison": "Comparison",
@@ -557,6 +569,18 @@ export const translations: Record<Locale, Record<string, string>> = {
     "export.xls": "XLS로 내보내기",
     "export.markdown": "Markdown으로 내보내기",
     "export.success": "내보내기 완료:",
+
+    // Setup Export/Import
+    "setup.title": "프로젝트 설정",
+    "setup.desc": "카테고리와 사용자 정의 열을 내보내기/가져오기하여 프로젝트 간에 공유하세요.",
+    "setup.export": "내보내기",
+    "setup.import": "가져오기",
+    "setup.importing": "가져오는 중...",
+    "setup.exportDesc": "다른 프로젝트와 공유하기 위해 카테고리와 사용자 정의 열을 내보내기",
+    "setup.exported": "프로젝트 설정이 내보내졌습니다",
+    "setup.imported": "프로젝트 설정이 가져왔습니다 ({n}개 항목)",
+    "setup.importError": "프로젝트 설정 가져오기 실패: ",
+    "setup.invalidFormat": "잘못된 파일 형식",
 
     // Charts
     "chart.trend": "추이",
