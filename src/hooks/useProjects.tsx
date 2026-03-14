@@ -19,14 +19,24 @@ export const useProjects = () => {
   const { t } = useI18n();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeProject, setActiveProject] = useState<Project | null>(null);
+  // Initialize activeProject from localStorage cache to prevent flicker
+  const [activeProject, setActiveProject] = useState<Project | null>(() => {
+    try {
+      const cached = localStorage.getItem("active_project_cache");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
 
-  // Persist selected project ID to localStorage
+  // Persist selected project to localStorage (cache full object for instant restoration)
   const handleSetActiveProject = (project: Project | null) => {
     if (project) {
       localStorage.setItem("active_project_id", project.id);
+      localStorage.setItem("active_project_cache", JSON.stringify(project));
     } else {
       localStorage.removeItem("active_project_id");
+      localStorage.removeItem("active_project_cache");
     }
     setActiveProject(project);
   };
