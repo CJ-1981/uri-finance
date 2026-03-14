@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useImperativeHandle, forwardRef, useRef, useEffect } from "react";
-import { startOfDay, subDays, subMonths, format, parseISO } from "date-fns";
+import { startOfDay, subDays, subMonths, parseISO } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
@@ -93,17 +93,19 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
 
   const startDateLabel = useMemo(() => {
     if (customRange.from) {
-      return format(customRange.from, "MMM d");
+      const monthName = monthNames[customRange.from.getMonth()].substring(0, 3);
+      return `${monthName} ${customRange.from.getDate()}`;
     }
     return t("period.start");
-  }, [customRange.from, t]);
+  }, [customRange.from, t, monthNames]);
 
   const endDateLabel = useMemo(() => {
     if (customRange.to) {
-      return format(customRange.to, "MMM d");
+      const monthName = monthNames[customRange.to.getMonth()].substring(0, 3);
+      return `${monthName} ${customRange.to.getDate()}`;
     }
     return t("period.end");
-  }, [customRange.to, t]);
+  }, [customRange.to, t, monthNames]);
 
   const handleSelect = (key: PeriodKey) => {
     if (key === "custom") {
@@ -197,21 +199,21 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
 
       {/* Separate start/end date buttons for custom range */}
       {period === "custom" && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-col sm:flex-row">
           <Button
             variant={selectingStart ? "default" : "outline"}
             size="sm"
             onClick={handleStartDateClick}
-            className="text-xs h-7 px-2"
+            className="text-xs h-7 px-2 w-full sm:w-auto"
           >
             {startDateLabel}
           </Button>
-          <span className="text-muted-foreground text-xs">–</span>
+          <span className="hidden sm:inline text-muted-foreground text-xs">–</span>
           <Button
             variant={!selectingStart ? "default" : "outline"}
             size="sm"
             onClick={handleEndDateClick}
-            className="text-xs h-7 px-2"
+            className="text-xs h-7 px-2 w-full sm:w-auto"
           >
             {endDateLabel}
           </Button>
@@ -268,6 +270,7 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
                         }
                         setShowYearPicker(false);
                         setDisplayedMonth(newDate);
+                        setDisplayedYear(year);
                         onPeriodChange("custom");
                       }}
                       className={cn(
@@ -286,7 +289,13 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setDisplayedYear(displayedYear - 12)}
+                  onClick={() => {
+                    const newYear = displayedYear - 12;
+                    setDisplayedYear(newYear);
+                    const newMonth = new Date(displayedMonth);
+                    newMonth.setFullYear(newYear);
+                    setDisplayedMonth(newMonth);
+                  }}
                   className="h-7 px-2 text-xs"
                 >
                   ← Earlier
@@ -294,7 +303,13 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setDisplayedYear(displayedYear + 12)}
+                  onClick={() => {
+                    const newYear = displayedYear + 12;
+                    setDisplayedYear(newYear);
+                    const newMonth = new Date(displayedMonth);
+                    newMonth.setFullYear(newYear);
+                    setDisplayedMonth(newMonth);
+                  }}
                   className="h-7 px-2 text-xs"
                 >
                   Later →
@@ -321,6 +336,7 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
                         }
                         setShowMonthPicker(false);
                         setDisplayedMonth(newDate);
+                        setDisplayedYear(displayedYear);
                         onPeriodChange("custom");
                       }}
                       className={cn(
@@ -362,7 +378,10 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
                 return false;
               }}
               defaultMonth={selectingStart ? customRange.from : customRange.to}
-              onMonthChange={(month) => setDisplayedMonth(month)}
+              onMonthChange={(month) => {
+                setDisplayedMonth(month);
+                setDisplayedYear(month.getFullYear());
+              }}
               numberOfMonths={1}
               initialFocus
               className={cn("p-3 pointer-events-auto")}
@@ -372,8 +391,8 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
               }}
               components={{
                 CaptionLabel: () => {
-                  const year = (selectingStart ? customRange.from : customRange.to)?.getFullYear() || new Date().getFullYear();
-                  const monthName = format(displayedMonth, "MMMM");
+                  const year = displayedMonth.getFullYear();
+                  const monthName = monthNames[displayedMonth.getMonth()];
                   return (
                     <div className="flex items-center gap-2">
                       <button
