@@ -31,11 +31,11 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
   }), []);
 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
-  const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAll");
+  const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAllCategories");
 
   // Build options list with "All" as first item
   const options = useMemo(() => [
-    { id: null, name: t("tx.selectAll"), icon: undefined },
+    { id: null, name: t("tx.selectAllCategories"), icon: undefined },
     ...categories,
   ], [categories, t]);
 
