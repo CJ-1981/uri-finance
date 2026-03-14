@@ -1,1 +1,1 @@
-project_id = "smaezjholbhtffflegvt"
+project_id = "env(VITE_SUPABASE_PROJECT_ID)"

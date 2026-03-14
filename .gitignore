@@ -27,3 +27,6 @@ dist-ssr
 .claude/
 .moai/
 .mcp.json
+
+# Supabase
+supabase/.temp/
