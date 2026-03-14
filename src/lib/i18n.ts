@@ -425,7 +425,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.updateFailed": "거래 수정에 실패했습니다",
     "tx.deleteFailed": "거래 삭제에 실패했습니다",
     "tx.select": "선택",
-    "tx.selectAll": "전체",
+    "tx.selectAll": "모든 카테고리",
     "tx.selected": "{n}개 선택됨",
     "tx.bulkDelete": "삭제",
     "tx.page": "페이지",
