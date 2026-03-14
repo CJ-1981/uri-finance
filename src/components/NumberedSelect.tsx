@@ -215,11 +215,15 @@ const NumberedSelect = ({
         align="start"
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onWheel={(e) => e.stopPropagation()}
       >
         <div
           ref={listRef}
           role="listbox"
-          className="max-h-60 overflow-y-auto overscroll-contain"
+          className="max-h-60 overflow-y-auto"
+          onWheel={(e) => {
+            e.stopPropagation();
+          }}
         >
           {renderItems()}
         </div>
