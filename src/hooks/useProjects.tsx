@@ -19,6 +19,16 @@ export const useProjects = () => {
   const [loading, setLoading] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
 
+  // Persist selected project ID to localStorage
+  const handleSetActiveProject = (project: Project | null) => {
+    if (project) {
+      localStorage.setItem("active_project_id", project.id);
+    } else {
+      localStorage.removeItem("active_project_id");
+    }
+    setActiveProject(project);
+  };
+
   const fetchProjects = async () => {
     if (!user) return;
     const { data: memberships } = await supabase
@@ -34,13 +44,22 @@ export const useProjects = () => {
         .in("id", ids)
         .order("created_at", { ascending: false });
       setProjects((data as Project[]) || []);
-      // Update activeProject with fresh data if it exists
-      if (data && activeProject) {
-        const updated = data.find((p) => p.id === activeProject.id);
-        if (updated) setActiveProject(updated as Project);
-        else if (data.length > 0) setActiveProject(data[0] as Project);
-      } else if (data && data.length > 0 && !activeProject) {
-        setActiveProject(data[0] as Project);
+
+      // Restore active project from localStorage, or fall back to first project
+      if (data && data.length > 0) {
+        const savedProjectId = localStorage.getItem("active_project_id");
+        if (savedProjectId) {
+          const savedProject = data.find((p) => p.id === savedProjectId);
+          if (savedProject) {
+            handleSetActiveProject(savedProject as Project);
+          } else {
+            // Saved project no longer exists, fall back to first project
+            handleSetActiveProject(data[0] as Project);
+          }
+        } else {
+          // No saved project, use first project
+          handleSetActiveProject(data[0] as Project);
+        }
       }
     } else {
       setProjects([]);
@@ -72,7 +91,7 @@ export const useProjects = () => {
 
     toast.success("Project created!");
     await fetchProjects();
-    setActiveProject(data as Project);
+    handleSetActiveProject(data as Project);
   };
 
   const joinProject = async (inviteCode: string) => {
@@ -127,7 +146,7 @@ export const useProjects = () => {
 
       toast.success(`Joined "${project.name}"!`);
       await fetchProjects();
-      setActiveProject(project as Project);
+      handleSetActiveProject(project as Project);
       return;
     }
 
@@ -188,8 +207,8 @@ export const useProjects = () => {
 
     toast.success(`Joined "${project?.name}"!`);
     await fetchProjects();
-    if (project) setActiveProject(project as Project);
+    if (project) handleSetActiveProject(project as Project);
   };
 
-  return { projects, loading, activeProject, setActiveProject, createProject, joinProject, fetchProjects };
+  return { projects, loading, activeProject, setActiveProject: handleSetActiveProject, createProject, joinProject, fetchProjects };
 };
