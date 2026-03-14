@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 
 export interface Project {
@@ -15,6 +16,7 @@ export interface Project {
 
 export const useProjects = () => {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -29,8 +31,12 @@ export const useProjects = () => {
     setActiveProject(project);
   };
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (skipDelay = false) => {
     if (!user) return;
+    // Add delay to allow RLS to see newly created memberships
+    if (!skipDelay) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
     const { data: memberships } = await supabase
       .from("project_members")
       .select("project_id")
@@ -144,8 +150,11 @@ export const useProjects = () => {
         return;
       }
 
-      toast.success(`Joined "${project.name}"!`);
-      await fetchProjects();
+      // Wait for RLS to see the new membership
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      toast.success(t("proj.joined").replace("{project}", project.name));
+      await fetchProjects(true); // skip delay since we already waited
       handleSetActiveProject(project as Project);
       return;
     }
@@ -198,16 +207,24 @@ export const useProjects = () => {
       return;
     }
 
-    // Get project info for toast
+    // Wait for RLS to see the new membership
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Get project info for toast (query project_id from invites which bypasses RLS)
     const { data: project } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("id", projectId)
+      .from("project_invites")
+      .select("projects!inner(*)")
+      .eq("id", (invite as any).id)
       .single();
 
-    toast.success(`Joined "${project?.name}"!`);
-    await fetchProjects();
-    if (project) handleSetActiveProject(project as Project);
+    const projectName = (project as any)?.projects?.name;
+    if (projectName) {
+      toast.success(t("proj.joined").replace("{project}", projectName));
+    }
+    await fetchProjects(true); // skip delay since we already waited
+    if (project) {
+      handleSetActiveProject((project as any).projects as Project);
+    }
   };
 
   return { projects, loading, activeProject, setActiveProject: handleSetActiveProject, createProject, joinProject, fetchProjects };

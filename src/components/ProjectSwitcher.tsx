@@ -4,8 +4,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FolderOpen, Plus, UserPlus, Copy, Check } from "lucide-react";
-import { toast } from "sonner";
+import { FolderOpen, Plus, UserPlus } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
@@ -22,7 +21,6 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [code, setCode] = useState("");
-  const [copied, setCopied] = useState(false);
   const { t } = useI18n();
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -40,14 +38,6 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
     await onJoin(code.trim());
     setCode("");
     setTab("list");
-  };
-
-  const copyInviteCode = () => {
-    if (!active) return;
-    navigator.clipboard.writeText(active.invite_code);
-    setCopied(true);
-    toast.success(t("proj.inviteCopied"));
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -104,29 +94,7 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">{p.description}</p>
                     )}
                   </button>
-                ))
-              )}
-
-              {active && (
-                <div className="mt-4 rounded-xl bg-muted/30 p-4">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {t("proj.shareInvite")}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 rounded-lg bg-muted px-3 py-2 text-sm font-mono text-primary">
-                      {active.invite_code}
-                    </code>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={copyInviteCode}
-                      className="h-9 w-9 text-muted-foreground hover:text-primary"
-                    >
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-              )}
+                )))}
             </div>
           )}
 

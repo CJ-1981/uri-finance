@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 export interface ProjectMember {
   id: string;
@@ -54,12 +53,29 @@ export const useProjectMembers = (projectId?: string) => {
   }, [fetchMembers, fetchInvites]);
 
   const removeMember = async (memberId: string) => {
+    // First, get the member's user_id to delete associated invite
+    const { data: member } = await supabase
+      .from("project_members")
+      .select("user_id")
+      .eq("id", memberId)
+      .single();
+
+    if (member?.user_id) {
+      // Delete the invite that was used by this member for this project only
+      await supabase
+        .from("project_invites")
+        .delete()
+        .eq("used_by", member.user_id)
+        .eq("project_id", projectId!);
+    }
+
     const { error } = await supabase
       .from("project_members")
       .delete()
       .eq("id", memberId);
     if (error) return false;
     await fetchMembers();
+    await fetchInvites();
     return true;
   };
 
@@ -71,12 +87,20 @@ export const useProjectMembers = (projectId?: string) => {
       .insert({ project_id: projectId, user_id: userId });
     if (banError && banError.code !== "23505") return false;
 
+    // Delete invite that was used by this member for this project only
+    await supabase
+      .from("project_invites")
+      .delete()
+      .eq("used_by", userId)
+      .eq("project_id", projectId!);
+
     const { error } = await supabase
       .from("project_members")
       .delete()
       .eq("id", memberId);
     if (error) return false;
     await fetchMembers();
+    await fetchInvites();
     return true;
   };
 
