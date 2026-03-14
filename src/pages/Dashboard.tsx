@@ -7,7 +7,7 @@ import { useColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useCustomColumns } from "@/hooks/useCustomColumns";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useI18n } from "@/hooks/useI18n";
-import ProjectSwitcher from "@/components/ProjectSwitcher";
+import ProjectSwitcher, { ProjectSwitcherHandle } from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList, { TransactionListHandle } from "@/components/TransactionList";
 import TransactionDetailSheet from "@/components/TransactionDetailSheet";
@@ -17,7 +17,7 @@ import PeriodSelector, { PeriodKey, DateRange, filterByPeriod, PeriodSelectorHan
 import CategorySelector, { CategorySelectorHandle } from "@/components/CategorySelector";
 import PinSetupDialog from "@/components/PinSetupDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
 import ShortcutSettings from "@/components/ShortcutSettings";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
@@ -70,6 +70,7 @@ const Dashboard = () => {
   const txListRef = useRef<TransactionListHandle>(null);
   const periodSelectorRef = useRef<PeriodSelectorHandle>(null);
   const categorySelectorRef = useRef<CategorySelectorHandle>(null);
+  const projectSwitcherRef = useRef<ProjectSwitcherHandle>(null);
   
   useEffect(() => {
     setSelectedCategoryId(null);
@@ -249,6 +250,7 @@ const Dashboard = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <ProjectSwitcher
+              ref={projectSwitcherRef}
               projects={projects}
               active={activeProject}
               onSelect={setActiveProject}
@@ -354,6 +356,14 @@ const Dashboard = () => {
             <p className="mt-1 text-sm text-muted-foreground max-w-xs">
               {t("dash.getStartedDesc")}
             </p>
+            <Button
+              variant="default"
+              size="lg"
+              onClick={() => projectSwitcherRef.current?.openJoinTab()}
+              className="mt-6 gradient-primary font-semibold"
+            >
+              <UserPlus className="mr-2 h-4 w-4" /> {t("dash.joinProject")}
+            </Button>
           </div>
         ) : (
           <div className="animate-fade-in space-y-4">

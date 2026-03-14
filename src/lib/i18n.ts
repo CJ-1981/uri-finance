@@ -30,6 +30,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.charts": "Charts",
     "dash.getStarted": "Get Started",
     "dash.getStartedDesc": "Create a project or join one with an invite code to start tracking finances together.",
+    "dash.joinProject": "Join a Project",
 
     // Transaction list
     "tx.noTransactions": "No transactions yet. Tap + to add one.",
@@ -391,6 +392,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.charts": "차트",
     "dash.getStarted": "시작하기",
     "dash.getStartedDesc": "프로젝트를 만들거나 초대 코드로 참여하여 함께 재무를 관리하세요.",
+    "dash.joinProject": "프로젝트 참여",
 
     // Transaction list
     "tx.noTransactions": "거래 내역이 없습니다. +를 눌러 추가하세요.",

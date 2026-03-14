@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useImperativeHandle, forwardRef } from "react";
 import { Project } from "@/hooks/useProjects";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderOpen, Plus, UserPlus } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+
+export interface ProjectSwitcherHandle {
+  openJoinTab: () => void;
+}
 
 interface Props {
   projects: Project[];
@@ -15,13 +19,20 @@ interface Props {
   onJoin: (code: string) => Promise<void>;
 }
 
-const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props) => {
+const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, active, onSelect, onCreate, onJoin }, ref) => {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"list" | "create" | "join">("list");
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [code, setCode] = useState("");
   const { t } = useI18n();
+
+  useImperativeHandle(ref, () => ({
+    openJoinTab: () => {
+      setTab("join");
+      setOpen(true);
+    },
+  }));
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,6 +157,8 @@ const ProjectSwitcher = ({ projects, active, onSelect, onCreate, onJoin }: Props
       </SheetContent>
     </Sheet>
   );
-};
+});
+
+ProjectSwitcher.displayName = "ProjectSwitcher";
 
 export default ProjectSwitcher;
