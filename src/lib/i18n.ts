@@ -299,6 +299,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lock.enable": "Enable App Lock",
     "lock.disable": "Remove App Lock",
     "lock.changePIN": "Change PIN",
+    "lock.disableTitle": "Remove App Lock",
+    "lock.disableConfirm": "Enter your PIN to remove app lock",
+    "lock.disabledSuccess": "App lock removed",
 
     // Import
     "import.title": "Import Transactions",
@@ -680,6 +683,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lock.enable": "앱 잠금 활성화",
     "lock.disable": "앱 잠금 해제",
     "lock.changePIN": "PIN 변경",
+    "lock.disableTitle": "앱 잠금 제거",
+    "lock.disableConfirm": "앱 잠금을 제거하려면 PIN을 입력하세요",
+    "lock.disabledSuccess": "앱 잠금이 제거되었습니다",
 
     // Import
     "import.title": "거래 가져오기",

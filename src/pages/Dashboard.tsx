@@ -16,6 +16,7 @@ import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod, PeriodSelectorHandle } from "@/components/PeriodSelector";
 import CategorySelector, { CategorySelectorHandle } from "@/components/CategorySelector";
 import PinSetupDialog from "@/components/PinSetupDialog";
+import PinDisableDialog from "@/components/PinDisableDialog";
 import { Button } from "@/components/ui/button";
 import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
@@ -24,8 +25,7 @@ import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { isPinSet, clearPin } from "@/lib/securePinStorage";
+import { isPinSet } from "@/lib/securePinStorage";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -63,6 +63,7 @@ const Dashboard = () => {
   const realOwner = activeProject && user && activeProject.owner_id === user.id;
   const isOwner = !isSimulating && realOwner;
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinDisableDialogOpen, setPinDisableDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(isPinSet());
   const [addTxOpen, setAddTxOpen] = useState(false);
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
@@ -92,7 +93,7 @@ const Dashboard = () => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
 
-  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen && !pinDialogOpen;
+  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen && !pinDialogOpen && !pinDisableDialogOpen;
 
   // "/" shortcut to focus search
   useEffect(() => {
@@ -114,18 +115,7 @@ const Dashboard = () => {
   }, [noModalOpen]);
 
   const handleRemovePin = () => {
-    try {
-      const success = clearPin();
-      if (success) {
-        setHasPin(false);
-        toast.success(t("lock.pinRemoved"));
-      } else {
-        toast.error(t("lock.pinRemoveFailed"));
-      }
-    } catch (err) {
-      console.error("Failed to remove PIN:", err);
-      toast.error(t("lock.pinRemoveFailed"));
-    }
+    setHasPin(false);
   };
 
   // Filter transactions by selected period and category
@@ -281,7 +271,7 @@ const Dashboard = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => hasPin ? handleRemovePin() : setPinDialogOpen(true)}
+              onClick={() => hasPin ? setPinDisableDialogOpen(true) : setPinDialogOpen(true)}
               className="text-muted-foreground hover:text-foreground"
               title={hasPin ? t("lock.disable") : t("lock.enable")}
             >
@@ -482,6 +472,7 @@ const Dashboard = () => {
         )}
       </main>
       <PinSetupDialog open={pinDialogOpen} onOpenChange={setPinDialogOpen} onComplete={() => setHasPin(true)} />
+      <PinDisableDialog open={pinDisableDialogOpen} onOpenChange={setPinDisableDialogOpen} onDisableSuccess={handleRemovePin} />
     </div>
   );
 };
