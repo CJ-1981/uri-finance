@@ -50,7 +50,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     clearPin();
     clearLockState();
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut({ scope: 'global' });
+    } catch (error) {
+      // Silently handle logout errors (e.g., 403 from expired tokens)
+      // Local state is already cleared, so user is effectively logged out
+      console.debug('Logout error (ignoring):', error);
+    }
   };
 
   return (
