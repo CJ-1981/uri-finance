@@ -109,6 +109,7 @@ const Auth = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                autoComplete={isLogin ? "username" : "email"}
                 className="bg-muted/50 border-border/50"
               />
             </div>
@@ -125,6 +126,7 @@ const Auth = () => {
                 placeholder="••••••••"
                 required
                 minLength={6}
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 className="bg-muted/50 border-border/50"
               />
             </div>

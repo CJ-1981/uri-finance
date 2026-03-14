@@ -12,5 +12,21 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  global: {
+    fetch: async (url: string | Request, options: RequestInit = {}) => {
+      try {
+        const response = await fetch(url, options);
+        // Suppress 403 errors for logout requests (common when session is already invalid)
+        if (response.status === 403 && url.toString().includes('/logout')) {
+          // Return a successful response to prevent errors from bubbling up
+          return new Response(JSON.stringify({}), { status: 200, statusText: 'OK' });
+        }
+        return response;
+      } catch (error) {
+        console.debug('Supabase fetch error:', error);
+        throw error;
+      }
+    },
+  },
 });
