@@ -77,8 +77,8 @@ const ShortcutSettings = () => {
           <Keyboard className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80" align="end">
-        <div className="space-y-3">
+      <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto" align="end">
+        <div className="space-y-3 pb-2">
           <h4 className="font-medium text-sm">{t("shortcut.title")}</h4>
 
           <div className="space-y-1">
