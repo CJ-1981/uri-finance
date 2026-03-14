@@ -198,7 +198,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Setup Export/Import
     "setup.title": "Project Setup",
-    "setup.desc": "Export or import categories and custom columns to share across projects.",
+    "setup.desc": "Export or import categories, custom columns, column headers, and currency to share across projects.",
     "setup.export": "Export",
     "setup.import": "Import",
     "setup.importing": "Importing...",
@@ -207,6 +207,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "setup.imported": "Project setup imported ({n} items)",
     "setup.importError": "Failed to import project setup: ",
     "setup.invalidFormat": "Invalid file format",
+    "setup.currencyUpdated": "Currency updated to {currency}",
+    "setup.headersImported": "Column headers imported",
 
     // Charts
     "chart.trend": "Trend",
@@ -572,7 +574,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Setup Export/Import
     "setup.title": "프로젝트 설정",
-    "setup.desc": "카테고리와 사용자 정의 열을 내보내기/가져오기하여 프로젝트 간에 공유하세요.",
+    "setup.desc": "카테고리, 사용자 정의 열, 열 헤더, 통화를 내보내기/가져오기하여 프로젝트 간에 공유하세요.",
     "setup.export": "내보내기",
     "setup.import": "가져오기",
     "setup.importing": "가져오는 중...",
@@ -581,6 +583,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "setup.imported": "프로젝트 설정이 가져왔습니다 ({n}개 항목)",
     "setup.importError": "프로젝트 설정 가져오기 실패: ",
     "setup.invalidFormat": "잘못된 파일 형식",
+    "setup.currencyUpdated": "통화가 {currency}(으)로 업데이트되었습니다",
+    "setup.headersImported": "열 헤더가 가져와졌습니다",
 
     // Charts
     "chart.trend": "추이",

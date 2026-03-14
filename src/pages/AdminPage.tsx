@@ -11,6 +11,7 @@ import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import TrashManager from "@/components/TrashManager";
 import ExportProjectSetup from "@/components/ExportProjectSetup";
+import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -23,7 +24,6 @@ import { toast } from "sonner";
 import { format, parse, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
-import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { UserRole } from "@/hooks/useUserRole";
 
@@ -632,6 +632,8 @@ const AdminPage = () => {
             <ExportProjectSetup
               categories={categories}
               customColumns={customColumns}
+              columnHeaders={headers}
+              currency={activeProject.currency}
               projectId={activeProject.id}
               onCategoriesRefresh={fetchCategories}
               onColumnsRefresh={fetchColumns}

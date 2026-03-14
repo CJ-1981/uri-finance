@@ -5,11 +5,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   categories: Category[];
   customColumns: CustomColumn[];
+  columnHeaders: ColumnHeaders;
+  currency: string;
   projectId: string;
   onCategoriesRefresh: () => Promise<void>;
   onColumnsRefresh: () => Promise<void>;
@@ -18,6 +21,8 @@ interface Props {
 interface ProjectSetupExport {
   version: string;
   exportedAt: string;
+  currency: string;
+  columnHeaders: ColumnHeaders;
   categories: Array<{
     name: string;
     code: string;
@@ -38,6 +43,8 @@ interface ProjectSetupExport {
 const ExportProjectSetup = ({
   categories,
   customColumns,
+  columnHeaders,
+  currency,
   projectId,
   onCategoriesRefresh,
   onColumnsRefresh,
@@ -57,6 +64,8 @@ const ExportProjectSetup = ({
     const exportData: ProjectSetupExport = {
       version: "1.0",
       exportedAt: new Date().toISOString(),
+      currency,
+      columnHeaders,
       categories: categories.map((cat) => ({
         name: cat.name,
         code: cat.code,
@@ -136,6 +145,37 @@ const ExportProjectSetup = ({
           });
         if (error) {
           console.error("Failed to import column:", col.name, error);
+        }
+      }
+
+      // Import currency if provided
+      if (importData.currency) {
+        const { error: currencyError } = await supabase
+          .from("projects")
+          .update({ currency: importData.currency.toUpperCase() })
+          .eq("id", projectId);
+        if (currencyError) {
+          console.error("Failed to import currency:", currencyError);
+        } else {
+          toast.success(
+            (t("setup.currencyUpdated") || "Currency updated to {currency}").replace(
+              "{currency}",
+              importData.currency.toUpperCase()
+            )
+          );
+        }
+      }
+
+      // Import column headers if provided
+      if (importData.columnHeaders) {
+        const { error: headersError } = await supabase
+          .from("projects")
+          .update({ column_headers: importData.columnHeaders } as unknown as Record<string, unknown>)
+          .eq("id", projectId);
+        if (headersError) {
+          console.error("Failed to import column headers:", headersError);
+        } else {
+          toast.success(t("setup.headersImported") || "Column headers imported");
         }
       }
 
