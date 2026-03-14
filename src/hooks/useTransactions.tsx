@@ -105,6 +105,7 @@ export const useTransactions = (projectId: string | undefined) => {
     description?: string;
     transaction_date?: string;
     currency?: string;
+    custom_values?: Record<string, number | string>;
   }>) => {
     if (!user || !projectId) return;
     const rows = txs.map((tx) => ({
@@ -115,7 +116,7 @@ export const useTransactions = (projectId: string | undefined) => {
       category: tx.category,
       description: tx.description || null,
       transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
-      custom_values: {},
+      custom_values: tx.custom_values || {},
       currency: tx.currency || "USD",
     }));
     const { error } = await supabase.from("transactions").insert(rows);

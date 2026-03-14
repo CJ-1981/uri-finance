@@ -34,6 +34,7 @@ interface Props {
     description?: string;
     transaction_date?: string;
     currency?: string;
+    custom_values?: Record<string, number | string>;
   }>) => Promise<void>;
 }
 
@@ -223,10 +224,10 @@ function parseXLS(text: string): string[][] {
   ).filter((r) => r.length > 0);
 }
 
-interface ImportRow { line: number; type: string; amount: string; category: string; code: string; description: string; date: string; currency: string; }
-interface ValidationResult { row: ImportRow; errors: string[]; valid: boolean; parsed?: { type: "income" | "expense"; amount: number; category: string; description?: string; transaction_date?: string; currency?: string; }; }
+interface ImportRow { line: number; type: string; amount: string; category: string; code: string; description: string; date: string; currency: string; customValues: Record<string, string>; }
+interface ValidationResult { row: ImportRow; errors: string[]; valid: boolean; parsed?: { type: "income" | "expense"; amount: number; category: string; description?: string; transaction_date?: string; currency?: string; custom_values?: Record<string, number | string>; }; }
 
-function validateRow(row: ImportRow, categories: Category[], projectCurrency: string, t: (k: string) => string): ValidationResult {
+function validateRow(row: ImportRow, categories: Category[], projectCurrency: string, t: (k: string) => string, customColumns: CustomColumn[]): ValidationResult {
   const errors: string[] = [];
   let typeLower = row.type.toLowerCase();
   let amount = Number(row.amount);
@@ -258,9 +259,26 @@ function validateRow(row: ImportRow, categories: Category[], projectCurrency: st
   if (row.date) { const d = new Date(row.date); if (isNaN(d.getTime())) { errors.push(t("import.errDate")); dateStr = new Date().toISOString().split("T")[0]; } else { dateStr = d.toISOString().split("T")[0]; } }
   const currency = row.currency?.toUpperCase() || projectCurrency;
   if (row.currency && !CURRENCIES.includes(currency)) errors.push(t("import.errCurrency").replace("{v}", row.currency));
+
+  // Parse custom values
+  const custom_values: Record<string, number | string> = {};
+  customColumns.forEach((col) => {
+    const val = row.customValues[col.name];
+    if (val !== undefined && val !== "") {
+      if (col.column_type === "numeric") {
+        const num = Number(val);
+        if (!isNaN(num)) {
+          custom_values[col.name] = num;
+        }
+      } else {
+        custom_values[col.name] = val;
+      }
+    }
+  });
+
   const valid = errors.length === 0;
   const matchedCategory = categories.find((c) => c.name.toLowerCase() === category.toLowerCase())?.name || category;
-  return { row, errors, valid, parsed: valid ? { type: typeLower as "income" | "expense", amount, category: matchedCategory, description: row.description || undefined, transaction_date: dateStr, currency: CURRENCIES.includes(currency) ? currency : projectCurrency } : undefined };
+  return { row, errors, valid, parsed: valid ? { type: typeLower as "income" | "expense", amount, category: matchedCategory, description: row.description || undefined, transaction_date: dateStr, currency: CURRENCIES.includes(currency) ? currency : projectCurrency, custom_values: Object.keys(custom_values).length > 0 ? custom_values : undefined } : undefined };
 }
 
 // --- Component ---
@@ -323,6 +341,10 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
         description: headerCols.findIndex((h) => ["description", "설명", "memo", "메모", hl.description].includes(h)),
         date: headerCols.findIndex((h) => ["date", "날짜", "transaction_date", hl.date].includes(h)),
         currency: headerCols.findIndex((h) => ["currency", "통화"].includes(h)),
+        customColumns: customColumns.map((c) => ({
+          column: c,
+          index: headerCols.findIndex((h) => h.toLowerCase() === c.name.toLowerCase()),
+        })),
       };
       
       if (colMap.type === -1 || colMap.amount === -1) { 
@@ -334,18 +356,25 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
       for (let i = 1; i < rawData.length; i++) {
         const cols = rawData[i];
         if (cols.length < 2) continue;
-        rows.push({ 
-          line: i + 1, 
-          type: (cols[colMap.type] || "").trim(), 
-          amount: (cols[colMap.amount] || "").trim(), 
-          category: colMap.category >= 0 ? (cols[colMap.category] || "").trim() : "", 
+        const customValues: Record<string, string> = {};
+        colMap.customColumns.forEach(({ column, index }) => {
+          if (index >= 0 && cols[index] !== undefined) {
+            customValues[column.name] = cols[index].trim();
+          }
+        });
+        rows.push({
+          line: i + 1,
+          type: (cols[colMap.type] || "").trim(),
+          amount: (cols[colMap.amount] || "").trim(),
+          category: colMap.category >= 0 ? (cols[colMap.category] || "").trim() : "",
           code: colMap.code >= 0 ? (cols[colMap.code] || "").trim() : "",
-          description: colMap.description >= 0 ? (cols[colMap.description] || "").trim() : "", 
-          date: colMap.date >= 0 ? (cols[colMap.date] || "").trim() : "", 
-          currency: colMap.currency >= 0 ? (cols[colMap.currency] || "").trim() : "" 
+          description: colMap.description >= 0 ? (cols[colMap.description] || "").trim() : "",
+          date: colMap.date >= 0 ? (cols[colMap.date] || "").trim() : "",
+          currency: colMap.currency >= 0 ? (cols[colMap.currency] || "").trim() : "",
+          customValues,
         });
       }
-      setResults(rows.map((r) => validateRow(r, categories!, projectCurrency!, t)));
+      setResults(rows.map((r) => validateRow(r, categories!, projectCurrency!, t, visibleCols)));
       setImportOpen(true);
     };
     reader.readAsText(file);
