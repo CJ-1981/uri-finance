@@ -26,6 +26,7 @@ interface Props {
   categories: Category[];
   onAdd: (name: string, code?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onUpdateName?: (id: string, name: string) => Promise<void>;
   onUpdateCode?: (id: string, code: string) => Promise<void>;
   onUpdateIcon?: (id: string, icon: string) => Promise<void>;
   onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
@@ -36,8 +37,14 @@ interface Props {
 const SortableCategoryItem = ({
   cat,
   onDelete,
+  onUpdateName,
   onUpdateCode,
   onUpdateIcon,
+  editingNameId,
+  setEditingNameId,
+  editNameValue,
+  setEditNameValue,
+  handleNameSave,
   editingCodeId,
   setEditingCodeId,
   editCodeValue,
@@ -52,8 +59,14 @@ const SortableCategoryItem = ({
 }: {
   cat: Category;
   onDelete: (id: string) => Promise<void>;
+  onUpdateName?: (id: string, name: string) => Promise<void>;
   onUpdateCode?: (id: string, code: string) => Promise<void>;
   onUpdateIcon?: (id: string, icon: string) => Promise<void>;
+  editingNameId: string | null;
+  setEditingNameId: (id: string | null) => void;
+  editNameValue: string;
+  setEditNameValue: (v: string) => void;
+  handleNameSave: (id: string) => void;
   editingCodeId: string | null;
   setEditingCodeId: (id: string | null) => void;
   editCodeValue: string;
@@ -131,7 +144,29 @@ const SortableCategoryItem = ({
           {cat.icon || "·"}
         </button>
       )}
-      <span className="text-sm text-foreground flex-1 min-w-0 truncate">{cat.name}</span>
+      {editingNameId === cat.id ? (
+        <Input
+          value={editNameValue}
+          onChange={(e) => setEditNameValue(e.target.value)}
+          onBlur={() => handleNameSave(cat.id)}
+          onKeyDown={(e) => e.key === "Enter" && handleNameSave(cat.id)}
+          className="h-6 text-sm bg-background border-border/50 px-2 py-1 flex-1 min-w-0"
+          autoFocus
+        />
+      ) : (
+        <span
+          onClick={() => {
+            if (onUpdateName) {
+              setEditingNameId(cat.id);
+              setEditNameValue(cat.name);
+            }
+          }}
+          className="text-sm text-foreground flex-1 min-w-0 truncate cursor-pointer hover:text-primary transition-colors"
+          title={onUpdateName ? (t("cat.editName") || "Edit name") : undefined}
+        >
+          {cat.name}
+        </span>
+      )}
       <button onClick={() => onDelete(cat.id)} className="text-muted-foreground hover:text-expense transition-colors p-1 shrink-0">
         <X className="h-3.5 w-3.5" />
       </button>
@@ -139,10 +174,12 @@ const SortableCategoryItem = ({
   );
 };
 
-const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIcon, onReorderAll }: Omit<Props, "inline" | "onReorder">) => {
+const CategoryContent = ({ categories, onAdd, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll }: Omit<Props, "inline" | "onReorder">) => {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [adding, setAdding] = useState(false);
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editNameValue, setEditNameValue] = useState("");
   const [editingCodeId, setEditingCodeId] = useState<string | null>(null);
   const [editCodeValue, setEditCodeValue] = useState("");
   const [editingIconId, setEditingIconId] = useState<string | null>(null);
@@ -161,6 +198,13 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
     setNewName("");
     setNewCode("");
     setAdding(false);
+  };
+
+  const handleNameSave = async (id: string) => {
+    if (onUpdateName) {
+      await onUpdateName(id, editNameValue);
+    }
+    setEditingNameId(null);
   };
 
   const handleCodeSave = async (id: string) => {
@@ -209,8 +253,14 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
                 key={cat.id}
                 cat={cat}
                 onDelete={onDelete}
+                onUpdateName={onUpdateName}
                 onUpdateCode={onUpdateCode}
                 onUpdateIcon={onUpdateIcon}
+                editingNameId={editingNameId}
+                setEditingNameId={setEditingNameId}
+                editNameValue={editNameValue}
+                setEditNameValue={setEditNameValue}
+                handleNameSave={handleNameSave}
                 editingCodeId={editingCodeId}
                 setEditingCodeId={setEditingCodeId}
                 editCodeValue={editCodeValue}
@@ -231,12 +281,12 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
   );
 };
 
-const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIcon, onReorder, onReorderAll, inline }: Props) => {
+const CategoryManager = ({ categories, onAdd, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorder, onReorderAll, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
   if (inline) {
-    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />;
+    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />;
   }
 
   return (
@@ -252,7 +302,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, onUpdateCode, onUpdateIc
           <SheetDescription className="sr-only">{t("cat.manageCategoriesDesc")}</SheetDescription>
         </SheetHeader>
         <div className="mt-4">
-          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />
+          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />
         </div>
       </SheetContent>
     </Sheet>

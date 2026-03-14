@@ -29,7 +29,7 @@ import { UserRole } from "@/hooks/useUserRole";
 const AdminPage = () => {
   const { user } = useAuth();
   const { projects, activeProject, fetchProjects } = useProjects();
-  const { categories, addCategory, deleteCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories } = useCategories(activeProject?.id);
+  const { categories, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories } = useCategories(activeProject?.id);
   const { headers, draft, dirty, saving, updateDraft, saveHeaders, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, renameColumn } = useCustomColumns(activeProject?.id);
   const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
@@ -628,7 +628,7 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{t("admin.categoriesDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CategoryManager categories={categories} onAdd={addCategory} onDelete={deleteCategory} onUpdateCode={updateCategoryCode} onUpdateIcon={updateCategoryIcon} onReorderAll={reorderCategories} inline />
+            <CategoryManager categories={categories} onAdd={addCategory} onDelete={deleteCategory} onUpdateName={renameCategory} onUpdateCode={updateCategoryCode} onUpdateIcon={updateCategoryIcon} onReorderAll={reorderCategories} inline />
           </div>
         </section>
 

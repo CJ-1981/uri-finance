@@ -52,6 +52,11 @@ export const useCategories = (projectId: string | undefined) => {
   };
 
   const deleteCategory = async (id: string) => {
+    // Find the category name before deleting
+    const category = categories.find(c => c.id === id);
+    const categoryName = category?.name;
+
+    // Delete the category from project_categories table
     const { error } = await supabase
       .from("project_categories")
       .delete()
@@ -60,19 +65,51 @@ export const useCategories = (projectId: string | undefined) => {
       toast.error("Failed to delete category");
       return;
     }
+
+    // Update all transactions with this category to "General"
+    if (categoryName) {
+      await supabase
+        .from("transactions")
+        .update({ category: "General" })
+        .eq("category", categoryName);
+    }
+
     toast.success("Category removed");
     await fetchCategories();
   };
 
   const renameCategory = async (id: string, newName: string) => {
+    // Find the current category name
+    const category = categories.find(c => c.id === id);
+    if (!category) {
+      toast.error("Category not found");
+      return;
+    }
+    const oldName = category.name;
+    const trimmedNewName = newName.trim();
+
+    // Update the category in project_categories table
     const { error } = await supabase
       .from("project_categories")
-      .update({ name: newName.trim() })
+      .update({ name: trimmedNewName })
       .eq("id", id);
     if (error) {
       toast.error("Failed to rename category");
       return;
     }
+
+    // Update all transactions that have the old category name
+    const { error: txError } = await supabase
+      .from("transactions")
+      .update({ category: trimmedNewName })
+      .eq("category", oldName);
+
+    if (txError) {
+      toast.error("Failed to update transactions");
+      return;
+    }
+
+    toast.success("Category renamed!");
     await fetchCategories();
   };
 

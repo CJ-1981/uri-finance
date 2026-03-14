@@ -183,6 +183,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Categories
     "cat.newPlaceholder": "New category name",
     "cat.codePlaceholder": "Code",
+    "cat.editName": "Edit name",
     "cat.editCode": "Edit code",
     "cat.manageCategories": "Manage Categories",
     "cat.manageCategoriesDesc": "Add, remove, or reorder transaction categories.",
@@ -542,6 +543,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Categories
     "cat.newPlaceholder": "새 카테고리 이름",
     "cat.codePlaceholder": "코드",
+    "cat.editName": "이름 수정",
     "cat.editCode": "코드 수정",
     "cat.manageCategories": "카테고리 관리",
     "cat.manageCategoriesDesc": "거래 카테고리를 추가, 삭제 또는 순서를 변경합니다.",
