@@ -196,7 +196,10 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `cash-count-${new Date().toISOString().slice(0, 10)}.md`;
+    const now = new Date();
+    const date = now.toISOString().split('T')[0];
+    const time = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+    a.download = `cash-count-${date}_${time}.md`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success(t("cash.exported"));

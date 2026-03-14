@@ -39,6 +39,13 @@ interface Props {
 
 // --- Export helpers ---
 
+const getExportTimestamp = () => {
+  const now = new Date();
+  const date = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const time = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+  return `${date}_${time}`;
+};
+
 const escapeXML = (val: any) => {
   if (val == null) return "";
   return String(val).replace(/[<>&'"]/g, (c) => {
@@ -89,12 +96,13 @@ const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
     const custom = cols.map((c) => `"${getCustomVal(tx, c)}"`).join(",");
     return cols.length ? `${base},${custom}` : base;
   });
-  downloadFile([header, ...rows].join("\n"), "transactions.csv", "text/csv", msg);
+  const timestamp = getExportTimestamp();
+  downloadFile([header, ...rows].join("\n"), `transactions_${timestamp}.csv`, "text/csv", msg);
 };
 
 const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colNames = cols.map((c) => c.name);
-  const header = `<Row>
+  const header = `<Row ss:AutoFitHeight="0">
     <Cell><Data ss:Type="String">${escapeXML(h.date)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.type)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.category)}</Data></Cell>
@@ -110,7 +118,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
       const type = c.column_type === "numeric" ? "Number" : "String";
       return `<Cell><Data ss:Type="${type}">${escapeXML(val)}</Data></Cell>`;
     }).join("");
-    return `<Row>
+    return `<Row ss:AutoFitHeight="0">
       <Cell><Data ss:Type="String">${formatDate(tx)}</Data></Cell>
       <Cell><Data ss:Type="String">${tx.type}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.category)}</Data></Cell>
@@ -121,21 +129,37 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
     </Row>`;
   }).join("\n");
 
-  const xml = `<?xml version="1.0"?>
+  const totalRows = transactions.length + 1; // header + data rows
+  const totalCols = 6 + cols.length; // 6 base columns + custom columns
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
  xmlns:x="urn:schemas-microsoft-com:office:excel"
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Created>${new Date().toISOString()}</Created>
+  <Version>16.00</Version>
+ </DocumentProperties>
+ <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>9000</WindowHeight>
+  <WindowWidth>13860</WindowWidth>
+  <WindowTopX>0</WindowTopX>
+  <WindowTopY>0</WindowTopY>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
+ </ExcelWorkbook>
  <Worksheet ss:Name="Transactions">
-  <Table>
+  <Table ss:ExpandedColumnCount="${totalCols}" ss:ExpandedRowCount="${totalRows}" x:FullRows="1" ss:DefaultRowHeight="15">
    ${header}
    ${rows}
   </Table>
  </Worksheet>
 </Workbook>`;
-  downloadFile(xml, "transactions.xls", "application/vnd.ms-excel", msg);
+  const timestamp = getExportTimestamp();
+  downloadFile(xml, `transactions_${timestamp}.xls`, "application/vnd.ms-excel", msg);
 };
 
 const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
@@ -147,7 +171,8 @@ const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: Cus
     const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
     return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${getCategoryCode(tx, categories) || "-"} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
   });
-  downloadFile([header, sep, ...rows].join("\n"), "transactions.md", "text/markdown", msg);
+  const timestamp = getExportTimestamp();
+  downloadFile([header, sep, ...rows].join("\n"), `transactions_${timestamp}.md`, "text/markdown", msg);
 };
 
 // --- CSV Import helpers ---
