@@ -18,6 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Applied to all pages, modals, dialogs, and interactive elements
   - Fixed to allow two-finger scrolling on macOS Safari and trackpads
 - **Cash Calculator Center Alignment**: Centered "bills" and "coins" section headers for improved mobile readability
+- **PIN Verification**: Added PIN verification before disabling app lock for enhanced security
+
+### Changed
+- **Category Selector Labels**: Separated category selector "All" label from transaction list "All" label for clarity
+  - Category selector now shows "All Categories" (전체 카테고리)
+  - Transaction list select all button shows "All" (모두)
+- **NumberedSelect Dropdown**: Removed width constraint to prevent text truncation in dropdown options
+
+### Fixed
+- **Korean Translation**: Corrected Korean translation for selectAll option to use "모두"
+- **Project Settings Access**: Restricted project settings export/import to owners only for security
 
 ### Changed
 - **Security Enhancement**: Moved Supabase auth tokens from localStorage to secure sessionStorage
