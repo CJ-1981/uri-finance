@@ -8,6 +8,7 @@
   :root {
     --background: 210 20% 98%;
     --foreground: 220 20% 10%;
+    color-scheme: light;
 
     --card: 0 0% 100%;
     --card-foreground: 220 20% 10%;
@@ -64,6 +65,7 @@
   .dark {
     --background: 220 20% 7%;
     --foreground: 210 20% 92%;
+    color-scheme: dark;
 
     --card: 220 18% 10%;
     --card-foreground: 210 20% 92%;

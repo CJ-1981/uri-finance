@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
 import LockScreen from "@/components/LockScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { ThemeMetaUpdater } from "@/components/ThemeMetaUpdater";
 import { isPinSet } from "@/lib/securePinStorage";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => {
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <TooltipProvider>
+                <ThemeMetaUpdater />
                 <Toaster />
                 <Sonner />
                 <AppLockGate>
