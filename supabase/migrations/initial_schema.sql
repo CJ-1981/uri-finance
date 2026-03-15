@@ -235,6 +235,118 @@ END;
 $$;
 
 -- ============================================================
+-- Global Admin Functions
+-- ============================================================
+
+-- Get all users with their project names
+CREATE OR REPLACE FUNCTION public.get_all_users()
+RETURNS TABLE (
+  id UUID,
+  email TEXT,
+  created_at TIMESTAMPTZ,
+  project_count BIGINT,
+  projects JSONB
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  SELECT u.id, u.email, u.created_at, COUNT(DISTINCT pm.project_id) as project_count,
+         COALESCE(
+           jsonb_agg(
+             jsonb_build_object('id', p.id, 'name', p.name)
+             ORDER BY p.name
+           ) FILTER (WHERE p.id IS NOT NULL),
+           '[]'::jsonb
+         ) as projects
+  FROM auth.users u
+  LEFT JOIN public.project_members pm ON u.id = pm.user_id
+  LEFT JOIN public.projects p ON pm.project_id = p.id
+  GROUP BY u.id, u.email, u.created_at
+  ORDER BY u.created_at DESC;
+$$;
+
+-- Get all projects with owner/member info
+CREATE OR REPLACE FUNCTION public.get_all_projects()
+RETURNS TABLE (
+  id UUID,
+  name TEXT,
+  owner_email TEXT,
+  member_count BIGINT,
+  transaction_count BIGINT,
+  created_at TIMESTAMPTZ
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+  SELECT p.id, p.name, u.email as owner_email,
+         COUNT(DISTINCT pm.user_id) as member_count,
+         COUNT(DISTINCT t.id) as transaction_count,
+         p.created_at
+  FROM public.projects p
+  JOIN auth.users u ON p.owner_id = u.id
+  LEFT JOIN public.project_members pm ON p.id = pm.project_id
+  LEFT JOIN public.transactions t ON p.id = t.project_id AND t.deleted_at IS NULL
+  GROUP BY p.id, p.name, u.email, p.created_at
+  ORDER BY p.created_at DESC;
+$$;
+
+-- Remove user from all projects (not delete from auth.users)
+CREATE OR REPLACE FUNCTION public.admin_delete_user(_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+BEGIN
+  DELETE FROM public.project_members WHERE user_id = _user_id;
+  DELETE FROM public.project_bans WHERE user_id = _user_id;
+  UPDATE public.project_invites
+  SET used_by = NULL, used_at = NULL
+  WHERE used_by = _user_id;
+  RETURN TRUE;
+END;
+$$;
+
+-- Delete a project (cascade delete all related data)
+CREATE OR REPLACE FUNCTION public.admin_delete_project(_project_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+BEGIN
+  -- Delete project members
+  DELETE FROM public.project_members WHERE project_id = _project_id;
+
+  -- Delete project bans
+  DELETE FROM public.project_bans WHERE project_id = _project_id;
+
+  -- Delete project invites
+  DELETE FROM public.project_invites WHERE project_id = _project_id;
+
+  -- Delete custom columns
+  DELETE FROM public.custom_columns WHERE project_id = _project_id;
+
+  -- Delete transactions (including soft-deleted ones)
+  DELETE FROM public.transactions WHERE project_id = _project_id;
+
+  -- Delete project categories
+  DELETE FROM public.project_categories WHERE project_id = _project_id;
+
+  -- Delete the project itself
+  DELETE FROM public.projects WHERE id = _project_id;
+
+  RETURN TRUE;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE;
+    RETURN FALSE;
+END;
+$$;
+
+-- ============================================================
 -- Triggers
 -- ============================================================
 

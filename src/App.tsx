@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
+import GlobalAdminPage from "./pages/GlobalAdminPage";
 import LockScreen from "@/components/LockScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ThemeMetaUpdater } from "@/components/ThemeMetaUpdater";
@@ -60,6 +61,7 @@ const App = () => {
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/admin" element={<AdminPage />} />
+                      <Route path="/global-admin" element={<GlobalAdminPage />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </BrowserRouter>
