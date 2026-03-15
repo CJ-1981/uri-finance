@@ -11,7 +11,6 @@ import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import TrashManager from "@/components/TrashManager";
 import ExportProjectSetup from "@/components/ExportProjectSetup";
-import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -21,15 +20,13 @@ import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Data
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, parse, parseISO } from "date-fns";
+import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Transaction } from "@/hooks/useTransactions";
-import { CustomColumn } from "@/hooks/useCustomColumns";
 import { UserRole } from "@/hooks/useUserRole";
 
 const AdminPage = () => {
   const { user } = useAuth();
-  const { projects, activeProject, fetchProjects } = useProjects();
+  const { projects, activeProject, fetchProjects, deleteProject } = useProjects();
   const { categories, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, fetchCategories } = useCategories(activeProject?.id);
   const { headers, draft, dirty, saving, updateDraft, saveHeaders, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, renameColumn, fetchColumns } = useCustomColumns(activeProject?.id);
@@ -216,6 +213,16 @@ const AdminPage = () => {
     setArchiveFrom("");
     setArchiveTo("");
     toast.success(t("admin.archiveSuccess").replace("{n}", String(txs.length)));
+  };
+
+  const handleDeleteProject = async () => {
+    if (!activeProject) return;
+    const confirmed = window.confirm(
+      t("admin.deleteConfirm").replace("{project}", activeProject.name)
+    );
+    if (!confirmed) return;
+    await deleteProject(activeProject.id);
+    navigate("/");
   };
 
   if (!activeProject) {
@@ -680,6 +687,15 @@ const AdminPage = () => {
                 <Check className="h-4 w-4" />
               </Button>
             </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteProject}
+              className="w-full"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t("admin.deleteProject")}
+            </Button>
           </div>
         </section>
 
@@ -753,6 +769,21 @@ const AdminPage = () => {
             </div>
           </div>
         </section>
+
+        {/* System Administration - Owner only */}
+        {realOwner && (
+        <section className="rounded-2xl bg-card border border-border p-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/global-admin")}
+            className="w-full"
+          >
+            <Database className="h-4 w-4 mr-2" />
+            {t("global.title")}
+          </Button>
+        </section>
+        )}
         </>)}
       </main>
     </div>

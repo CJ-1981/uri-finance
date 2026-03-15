@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Global Admin Page**: Complete mobile-responsive redesign with card-based layout for better mobile experience
+- **Project Delete Functionality**: Added ability to delete projects from global admin page with cascading delete
+- **User Project Display**: Users tab now shows project names as badges instead of just count
+- **Admin Page Navigation**: Moved "System Administration" button to bottom of admin page for improved organization
+
+### Changed
 - **Error Boundary Component**: Added React error boundary component for better error handling and crash prevention
 - **Secure Storage Adapter**: Created secure storage adapter for safer data persistence using sessionStorage
 - **PIN Security Storage**: Added secure PIN storage module with enhanced security measures

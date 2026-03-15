@@ -130,6 +130,8 @@ export const useProjects = () => {
         .single();
 
       if (!project) {
+        // Clear invalid pending invite code from localStorage
+        localStorage.removeItem("pending_invite_code");
         toast.error("Invalid or already used invite code");
         return;
       }
@@ -143,6 +145,8 @@ export const useProjects = () => {
         .maybeSingle();
 
       if (ban) {
+        // Clear invalid pending invite code from localStorage
+        localStorage.removeItem("pending_invite_code");
         toast.error("You have been banned from this project.");
         return;
       }
@@ -179,6 +183,8 @@ export const useProjects = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const userEmail = sessionData.session?.user?.email?.toLowerCase();
       if (userEmail !== inviteEmail.toLowerCase()) {
+        // Clear invalid pending invite code from localStorage
+        localStorage.removeItem("pending_invite_code");
         toast.error("This invite code is assigned to a different email address.");
         return;
       }
@@ -193,6 +199,8 @@ export const useProjects = () => {
       .maybeSingle();
 
     if (ban) {
+      // Clear invalid pending invite code from localStorage
+      localStorage.removeItem("pending_invite_code");
       toast.error("You have been banned from this project.");
       return;
     }
@@ -237,5 +245,80 @@ export const useProjects = () => {
     }
   };
 
-  return { projects, loading, activeProject, setActiveProject: handleSetActiveProject, createProject, joinProject, fetchProjects };
+  // Clear project cache helper function
+  const clearProjectCache = () => {
+    localStorage.removeItem("active_project_id");
+    localStorage.removeItem("active_project_cache");
+  };
+
+  // Validate cached project membership on mount to prevent security leak
+  useEffect(() => {
+    const validateCache = async () => {
+      if (!user || !activeProject) return;
+
+      // Verify user is still a member of cached project
+      const { data: membership } = await supabase
+        .from("project_members")
+        .select("id")
+        .eq("project_id", activeProject.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!membership) {
+        // Clear invalid cache and set activeProject to null
+        clearProjectCache();
+        setActiveProject(null);
+      }
+    };
+
+    validateCache();
+  }, [user]);
+
+  const deleteProject = async (projectId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    // Verify ownership before deletion
+    const { data: project } = await supabase
+      .from("projects")
+      .select("owner_id")
+      .eq("id", projectId)
+      .single();
+
+    if (!project || project.owner_id !== user.id) {
+      toast.error("Only project owner can delete the project");
+      return false;
+    }
+
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", projectId);
+
+    if (error) {
+      toast.error("Failed to delete project");
+      return false;
+    }
+
+    // Clear cache if deleting active project
+    if (activeProject?.id === projectId) {
+      clearProjectCache();
+      setActiveProject(null);
+    }
+
+    toast.success("Project deleted successfully");
+    await fetchProjects(true);
+    return true;
+  };
+
+  return {
+    projects,
+    loading,
+    activeProject,
+    setActiveProject: handleSetActiveProject,
+    createProject,
+    joinProject,
+    fetchProjects,
+    clearProjectCache,
+    deleteProject
+  };
 };

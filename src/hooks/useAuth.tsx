@@ -50,6 +50,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     clearPin();
     clearLockState();
+    // Clear all project-related localStorage to prevent data leakage on shared devices
+    localStorage.removeItem("active_project_id");
+    localStorage.removeItem("active_project_cache");
+    localStorage.removeItem("pending_invite_code");
     try {
       await supabase.auth.signOut({ scope: 'global' });
     } catch (error) {
