@@ -1,73 +1,224 @@
-# Welcome to your Lovable project
+# URI Finance - Team Finance Tracking Application
 
-## Project info
+A React application for tracking team finances with custom categories, columns, and multi-user project management.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- **Multi-User Projects**: Create projects and invite team members with role-based access control
+- **Custom Categories**: Define transaction categories per project with codes and icons
+- **Custom Columns**: Add custom fields to transactions (numeric, text, list types)
+- **Transaction Management**: Add, edit, delete transactions with soft delete support
+- **Import/Export**: CSV, XLS, and Markdown export with custom column support
+- **Cash Calculator**: Track cash counts by denomination with named/anonymous breakdowns
+- **Charts**: Visualize income, expenses, and trends with multiple chart types
+- **Archive**: Export and remove transactions within date ranges
+- **Trash Bin**: Restore accidentally deleted transactions
+- **Mobile Responsive**: Optimized for mobile browsers with zoom prevention
+- **System Administration**: Global admin panel for managing all users and projects (owner email restricted)
+- **Multi-Language**: English and Korean (ko) support
+- **Theme Support**: Light and dark mode with system preference detection
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS
+- **UI Library**: shadcn/ui (built on Radix UI primitives)
+- **State Management**: React hooks
+- **Backend**: Supabase (PostgreSQL with Row-Level Security)
+- **Routing**: React Router DOM
+- **Forms**: React Hook Form with Zod validation
+- **Charts**: Recharts
+- **Notifications**: Sonner toast library
+- **Theme**: next-themes
+- **Date**: date-fns
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v18 or higher recommended)
+- npm or yarn
+- A Supabase project (create one at https://supabase.com)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```bash
+# Clone the repository
+git clone https://github.com/CJ-1981/uri-finance.git
+cd uri-finance
 
-Follow these steps:
+# Install dependencies
+npm install
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Supabase Setup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Create a Supabase Project**: Go to [supabase.com](https://supabase.com) and create a new project
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Get Project Credentials**:
+   - Project URL (e.g., `https://smaezjholbhtffflegvt.supabase.co`)
+   - Anon Public Key (for development)
+   - Service Role Key (for server-side operations)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. **Create a `.env` file** in the project root:
+
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-public-key
+VITE_SUPABASE_PROJECT_ID=your-project-id
+
+# System Administration (Optional)
+# Comma-separated list of email addresses allowed to access global admin
+# Leave empty to allow all authenticated users (not recommended for production)
+VITE_SYSTEM_ADMIN_EMAILS=owner@example.com,admin@example.com
+```
+
+#### Environment Variables Explained
+
+| Variable | Description | Required | Example |
+|-----------|-------------|----------|----------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL | Yes | `https://smaezjholbhtffflegvt.supabase.co` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon/public key for client access | Yes | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
+| `VITE_SUPABASE_PROJECT_ID` | Your Supabase project ID | Yes | `smaezjholbhtffflegvt` |
+| `VITE_SYSTEM_ADMIN_EMAILS` | Email addresses allowed to access global admin | No | `admin@example.com,dev@example.com` |
+
+#### Getting Your Supabase Credentials
+
+After creating your Supabase project, you can find your credentials in:
+
+1. **Project Settings** → API → [Copy Project URL]
+2. **Project Settings** → API → [Anon/Public Key] → [New Anon Key]
+3. **Project Settings** → General → [Project Reference] → [Project ID]
+
+Copy these values into your `.env` file.
+
+#### System Admin Email Configuration
+
+The global admin page allows system administrators to view and manage all users and projects. To control access:
+
+1. **Single Owner Email**: Set one email address:
+   ```env
+   VITE_SYSTEM_ADMIN_EMAILS=owner@yourcompany.com
+   ```
+
+2. **Multiple Emails**: Add multiple system administrators (comma-separated):
+   ```env
+   VITE_SYSTEM_ADMIN_EMAILS=admin1@yourcompany.com,admin2@yourcompany.com,admin3@yourcompany.com
+   ```
+
+3. **Disable Restriction**: Leave empty to allow all authenticated users:
+   ```env
+   VITE_SYSTEM_ADMIN_EMAILS=
+   ```
+
+**Security Note**: Only emails in this list can access the global admin page. Use this feature carefully in production environments.
+
+### Running the Development Server
+
+```bash
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will open at [http://localhost:8080](http://localhost:8080)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Database Migrations
 
-**Use GitHub Codespaces**
+When you add or modify database functions, apply migrations to your Supabase project:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+# Apply pending migrations
+npx supabase db push
 
-## What technologies are used for this project?
+# Generate TypeScript types from database schema
+npx supabase gen types typescript --project-id your-project-id
+```
 
-This project is built with:
+## Project Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+src/
+├── components/          # React components
+│   ├── ui/               # shadcn/ui base components
+│   ├── CashCalculator.tsx
+│   ├── CategoryManager.tsx
+│   ├── ExportProjectSetup.tsx
+│   └── ...
+├── hooks/               # Custom React hooks
+│   ├── useAuth.tsx
+│   ├── useProjects.tsx
+│   ├── useGlobalAdmin.tsx
+│   └── ...
+├── integrations/
+│   └── supabase/
+│       ├── client.ts   # Supabase client instance
+│       └── types.ts    # Auto-generated database types
+├── lib/
+│   ├── i18n.ts        # Internationalization (en, ko)
+│   └── utils.ts        # Utility functions
+├── pages/               # Route pages
+│   ├── Dashboard.tsx
+│   ├── AdminPage.tsx
+│   ├── GlobalAdminPage.tsx
+│   └── ...
+└── main.tsx             # Application entry point
 
-## How can I deploy this project?
+supabase/
+└── migrations/         # Database schema migrations
+    ├── initial_schema.sql
+    └── 2026031500002_update_global_admin_functions.sql
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Testing
 
-## Can I connect a custom domain to my Lovable project?
+Run the test suite:
 
-Yes, you can!
+```bash
+# Run tests once
+npm test
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+# Run tests in watch mode
+npm run test:watch
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Building for Production
+
+```bash
+# Create optimized production build
+npm run build
+```
+
+The production files will be in the `dist/` directory.
+
+## Deployment
+
+This application is designed to be deployed on platforms like:
+- Vercel
+- Netlify
+- Supabase Hosting
+- Any static file hosting
+
+### Environment Variables in Production
+
+Make sure to set production environment variables in your hosting platform:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_PROJECT_ID`
+- `VITE_SYSTEM_ADMIN_EMAILS` (for system admin access control)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make your changes
+4. Commit your changes: `git commit -m "Description of changes"`
+5. Push to your fork: `git push origin feature/your-feature-name`
+6. Create a Pull Request
+
+## License
+
+This project is open source and available under the [Apache License 2.0](LICENSE).
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of changes to this project.
