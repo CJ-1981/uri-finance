@@ -44,6 +44,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) {
+      // Trigger preference fetch after successful sign-in (SPEC-003: Preference Restoration on Sign-In)
+      // This will be handled by useProjects hook's useEffect on user change
+      // The onAuthStateChange will trigger, causing useProjects to fetch projects
+      // and restore the user's default project from server preferences
+    }
     return { error };
   };
 
@@ -51,6 +57,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     clearPin();
     clearLockState();
     // Clear all project-related localStorage to prevent data leakage on shared devices
+    // Note: Server-side preferences in user_preferences table are NOT cleared here
+    // This allows preference restoration when user signs back in on the same device
+    // while maintaining security for shared device scenarios
     localStorage.removeItem("active_project_id");
     localStorage.removeItem("active_project_cache");
     localStorage.removeItem("pending_invite_code");

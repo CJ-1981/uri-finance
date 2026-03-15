@@ -29,14 +29,71 @@ export const useProjects = () => {
     }
   });
 
-  // Persist selected project to localStorage (cache full object for instant restoration)
-  const handleSetActiveProject = (project: Project | null) => {
+  // Fetch user preference from server
+  const fetchUserPreference = async (): Promise<string | null> => {
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('default_project_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error) {
+      // Fallback to localStorage cache
+      const cached = localStorage.getItem("active_project_id");
+      return cached;
+    }
+
+    return data?.default_project_id || null;
+  };
+
+  // Save user preference to server (with membership validation per REQ-001)
+  const saveUserPreference = async (projectId: string): Promise<void> => {
+    if (!user) return;
+
+    // Validate membership before setting preference (REQ-001: Server-Side Preference Persistence)
+    const { data: membership } = await supabase
+      .from("project_members")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!membership) {
+      console.warn("Attempted to set preference for non-member project:", projectId);
+      return; // Don't save preference for non-member projects
+    }
+
+    await supabase
+      .from('user_preferences')
+      .upsert({
+        user_id: user.id,
+        default_project_id: projectId
+      });
+  };
+
+  // Persist selected project to localStorage (cache full object for instant restoration) and server
+  const handleSetActiveProject = async (project: Project | null) => {
     if (project) {
       localStorage.setItem("active_project_id", project.id);
       localStorage.setItem("active_project_cache", JSON.stringify(project));
+      // Save preference to server (fire and forget - don't block UI)
+      saveUserPreference(project.id).catch(console.debug);
     } else {
       localStorage.removeItem("active_project_id");
       localStorage.removeItem("active_project_cache");
+      // Clear preference from server when project is deselected
+      if (user) {
+        supabase
+          .from('user_preferences')
+          .update({ default_project_id: null })
+          .eq('user_id', user.id)
+          .then(({ error }) => {
+            if (error) console.debug('Failed to clear preference:', error);
+          })
+          .catch(console.debug);
+      }
     }
     setActiveProject(project);
   };
@@ -61,15 +118,35 @@ export const useProjects = () => {
         .order("created_at", { ascending: false });
       setProjects((data as Project[]) || []);
 
-      // Restore active project from localStorage, or fall back to first project
+      // Restore active project from server preference or localStorage, or fall back to first project
       if (data && data.length > 0) {
-        const savedProjectId = localStorage.getItem("active_project_id");
+        const preferenceId = await fetchUserPreference();
+        let savedProjectId = localStorage.getItem("active_project_id");
+
+        // Use server preference if available, otherwise use localStorage cache
+        if (preferenceId) {
+          savedProjectId = preferenceId;
+        }
+
         if (savedProjectId) {
           const savedProject = data.find((p) => p.id === savedProjectId);
           if (savedProject) {
-            handleSetActiveProject(savedProject as Project);
+            // Verify user is still a member of the preference project
+            const { data: membership } = await supabase
+              .from("project_members")
+              .select("id")
+              .eq("project_id", savedProject.id)
+              .eq("user_id", user.id)
+              .maybeSingle();
+
+            if (membership) {
+              handleSetActiveProject(savedProject as Project);
+            } else {
+              // Preference project no longer accessible, clear it and use first project
+              handleSetActiveProject(data[0] as Project);
+            }
           } else {
-            // Saved project no longer exists, fall back to first project
+            // Preference project no longer exists, fall back to first project
             handleSetActiveProject(data[0] as Project);
           }
         } else {
@@ -107,7 +184,7 @@ export const useProjects = () => {
 
     toast.success("Project created!");
     await fetchProjects();
-    handleSetActiveProject(data as Project);
+    await handleSetActiveProject(data as Project);
   };
 
   const joinProject = async (inviteCode: string) => {
@@ -169,7 +246,7 @@ export const useProjects = () => {
 
       toast.success(t("proj.joined").replace("{project}", project.name));
       await fetchProjects(true); // skip delay since we already waited
-      handleSetActiveProject(project as Project);
+      await handleSetActiveProject(project as Project);
       return;
     }
 
@@ -241,7 +318,7 @@ export const useProjects = () => {
     }
     await fetchProjects(true); // skip delay since we already waited
     if (project) {
-      handleSetActiveProject((project as any).projects as Project);
+      await handleSetActiveProject((project as any).projects as Project);
     }
   };
 
@@ -252,6 +329,8 @@ export const useProjects = () => {
   };
 
   // Validate cached project membership on mount to prevent security leak
+  // This is now handled in fetchProjects() when server preference is loaded
+  // Keeping this as a secondary validation for localStorage cache
   useEffect(() => {
     const validateCache = async () => {
       if (!user || !activeProject) return;
@@ -272,7 +351,7 @@ export const useProjects = () => {
     };
 
     validateCache();
-  }, [user]);
+  }, [user, activeProject]);
 
   const deleteProject = async (projectId: string): Promise<boolean> => {
     if (!user) return false;
