@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CategoryNameSelector } from "@/components/CategorySelector";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, Tag } from "lucide-react";
+import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Category } from "@/hooks/useCategories";
@@ -40,6 +40,88 @@ interface Props {
   }) => Promise<void>;
 }
 
+// Tree item component for inline dropdown
+const InlineTreeItem = ({ node, depth, selectedCategoryName, expandedNodes, onToggleExpand, onSelect, isMobile }: {
+  node: Category & { children: (Category & { children: any[] })[] };
+  depth: number;
+  selectedCategoryName: string | null;
+  expandedNodes: Set<string>;
+  onToggleExpand: (id: string) => void;
+  onSelect: (name: string | null) => void;
+  isMobile: boolean;
+}) => {
+  const hasChildren = node.children.length > 0;
+  const isExpanded = expandedNodes.has(node.id);
+
+  return (
+    <div>
+      <div className="flex items-center gap-1">
+        {/* Expand/collapse button */}
+        {hasChildren && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand(node.id);
+            }}
+            className={cn(
+              "shrink-0 rounded transition-colors",
+              isMobile
+                ? "p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+                : "p-0.5 min-w-[20px] min-h-[20px] flex items-center justify-center text-muted-foreground hover:text-foreground"
+            )}
+            title={isExpanded ? "Collapse" : "Expand"}
+          >
+            {isMobile ? (
+              isExpanded ? <Plus className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />
+            ) : (
+              isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
+            )}
+          </button>
+        )}
+        {/* Spacer if no children */}
+        {!hasChildren && (
+          <div className={cn(
+            isMobile ? "w-[36px] h-[36px]" : "w-[20px] h-[20px]"
+          )} />
+        )}
+        {/* Category button */}
+        <button
+          type="button"
+          onClick={() => onSelect(node.name)}
+          className={cn(
+            "flex-1 text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+            selectedCategoryName === node.name
+              ? "bg-primary/10 text-primary"
+              : "text-foreground hover:bg-muted"
+          )}
+          style={{ paddingLeft: `${12 + depth * 16}px` }}
+        >
+          {node.icon && <span className="shrink-0">{node.icon}</span>}
+          <span className="truncate">{node.name}</span>
+        </button>
+      </div>
+      {/* Children */}
+      {hasChildren && isExpanded && (
+        <div className="flex flex-col">
+          {node.children.map((child) => (
+            <InlineTreeItem
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              selectedCategoryName={selectedCategoryName}
+              expandedNodes={expandedNodes}
+              onToggleExpand={onToggleExpand}
+              onSelect={onSelect}
+              isMobile={isMobile}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Custom inline dropdown for modal context
 const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryChange }: {
   categories: Category[];
@@ -50,9 +132,33 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   const selectedCategory = categories.find((c) => c.name === selectedCategoryName);
   const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAllCategories");
+
+  // Build tree structure
+  const categoryTree = useMemo(() => {
+    const categoryMap = new Map<string, Category & { children: (Category & { children: any[] })[] }>();
+    const roots: (Category & { children: any[] })[] = [];
+
+    // First pass: create nodes
+    categories.forEach(cat => {
+      categoryMap.set(cat.id, { ...cat, children: [] });
+    });
+
+    // Second pass: build tree
+    categories.forEach(cat => {
+      const node = categoryMap.get(cat.id)!;
+      if (cat.parent_id && categoryMap.has(cat.parent_id)) {
+        categoryMap.get(cat.parent_id)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  }, [categories]);
 
   const handleSelect = (name: string | null) => {
     onCategoryChange(name);
@@ -63,6 +169,18 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
     e.stopPropagation();
     e.preventDefault();
     setOpen(!open);
+  };
+
+  const toggleExpanded = (id: string) => {
+    setExpandedNodes(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   return (
@@ -110,6 +228,7 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
             }}
           >
             <div className="p-1">
+              {/* "All Categories" option */}
               <button
                 type="button"
                 onClick={() => handleSelect(null)}
@@ -123,22 +242,18 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
                 <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <span>{t("tx.selectAllCategories")}</span>
               </button>
-              {categories.map((category) => (
-                <button
-                  type="button"
-                  key={category.id}
-                  onClick={() => handleSelect(category.name)}
-                  className={cn(
-                    "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
-                    selectedCategoryName === category.name
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground hover:bg-muted"
-                  )}
-                  style={{ paddingLeft: category.parent_id ? '32px' : '12px' }}
-                >
-                  {category.icon && <span className="shrink-0">{category.icon}</span>}
-                  <span className="truncate">{category.name}</span>
-                </button>
+              {/* Tree items */}
+              {categoryTree.map((node) => (
+                <InlineTreeItem
+                  key={node.id}
+                  node={node}
+                  depth={0}
+                  selectedCategoryName={selectedCategoryName}
+                  expandedNodes={expandedNodes}
+                  onToggleExpand={toggleExpanded}
+                  onSelect={handleSelect}
+                  isMobile={isMobile}
+                />
               ))}
             </div>
           </div>

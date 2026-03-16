@@ -377,9 +377,6 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}
         data-mobile-popover="true"
-        style={isMobile ? {
-          touchAction: 'none'
-        } : undefined}
       >
         {/* "All" option */}
         <button
@@ -693,9 +690,6 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}
         data-mobile-popover="true"
-        style={isMobile ? {
-          touchAction: 'none'
-        } : undefined}
       >
         {/* "All" option */}
         <button
