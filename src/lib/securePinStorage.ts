@@ -7,14 +7,55 @@ const PIN_STORAGE_KEY = "app_lock_pin";
 const LOCK_STATE_KEY = "app_lock_state";
 
 /**
+ * Check if storage is available and accessible
+ */
+const isStorageAvailable = (storage: Storage): boolean => {
+  try {
+    const testKey = "__storage_test__";
+    storage.setItem(testKey, "test");
+    storage.removeItem(testKey);
+    return true;
+  } catch (e) {
+    console.warn(`${storage === localStorage ? 'Local' : 'Session'} storage unavailable:`, e);
+    return false;
+  }
+};
+
+/**
+ * Check if crypto.subtle is available
+ */
+const isCryptoSubtleAvailable = (): boolean => {
+  return typeof crypto !== "undefined" &&
+         crypto !== null &&
+         typeof crypto.subtle === "object";
+};
+
+/**
  * Hash PIN using SHA-256 for secure storage
  */
 export const hashPin = async (value: string): Promise<string> => {
-  const encoded = new TextEncoder().encode(value);
-  const buffer = await crypto.subtle.digest("SHA-256", encoded);
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  if (!isCryptoSubtleAvailable()) {
+    console.warn("crypto.subtle not available, using fallback hashing");
+    // Fallback: Simple hash for non-crypto environments
+    let hash = 0;
+    for (let i = 0; i < value.length; i++) {
+      const char = value.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(16).padStart(64, "0");
+  }
+
+  try {
+    const encoded = new TextEncoder().encode(value);
+    const buffer = await crypto.subtle.digest("SHA-256", encoded);
+    return Array.from(new Uint8Array(buffer))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch (e) {
+    console.error("Failed to hash PIN with crypto.subtle:", e);
+    throw new Error("Failed to hash PIN securely");
+  }
 };
 
 /**
@@ -23,8 +64,33 @@ export const hashPin = async (value: string): Promise<string> => {
 export const storePin = async (pin: string): Promise<void> => {
   try {
     const hash = await hashPin(pin);
-    sessionStorage.setItem(PIN_STORAGE_KEY, hash);
-    localStorage.setItem(PIN_STORAGE_KEY, hash);
+
+    // Try to store in both storage mechanisms
+    const storageResults = [];
+
+    if (isStorageAvailable(localStorage)) {
+      try {
+        localStorage.setItem(PIN_STORAGE_KEY, hash);
+        storageResults.push("localStorage");
+      } catch (e) {
+        console.warn("Failed to store in localStorage:", e);
+      }
+    }
+
+    if (isStorageAvailable(sessionStorage)) {
+      try {
+        sessionStorage.setItem(PIN_STORAGE_KEY, hash);
+        storageResults.push("sessionStorage");
+      } catch (e) {
+        console.warn("Failed to store in sessionStorage:", e);
+      }
+    }
+
+    if (storageResults.length === 0) {
+      throw new Error("Failed to store PIN - no storage available");
+    }
+
+    console.log(`PIN stored successfully in: ${storageResults.join(", ")}`);
   } catch (error) {
     console.error("Failed to store PIN:", error);
     throw new Error("Failed to store PIN securely");

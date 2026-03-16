@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test LocalStorage Access</title>
+</head>
+<body>
+    <h1>LocalStorage Test</h1>
+    <div id="result"></div>
+    <script>
+        try {
+            localStorage.setItem('test', 'value');
+            const value = localStorage.getItem('test');
+            document.getElementById('result').innerHTML = 
+                '<p style="color: green">localStorage works: ' + value + '</p>';
+        } catch (e) {
+            document.getElementById('result').innerHTML = 
+                '<p style="color: red">localStorage failed: ' + e.message + '</p>';
+        }
+        
+        // Test sessionStorage
+        try {
+            sessionStorage.setItem('test', 'value');
+            const value = sessionStorage.getItem('test');
+            document.getElementById('result').innerHTML += 
+                '<p style="color: green">sessionStorage works: ' + value + '</p>';
+        } catch (e) {
+            document.getElementById('result').innerHTML += 
+                '<p style="color: red">sessionStorage failed: ' + e.message + '</p>';
+        }
+    </script>
+</body>
+</html>

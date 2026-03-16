@@ -181,6 +181,25 @@ npm test
 npm run test:watch
 ```
 
+### Test Configuration
+
+The project uses Vitest with jsdom environment. For features that require Web Crypto API (like PIN storage), a custom polyfill is implemented in `src/test/setup.ts`.
+
+**See documentation**: [Crypto API Polyfill for Testing](docs/crypto-polyfill-for-testing.md)
+
+#### PIN Storage Tests
+
+PIN-related functionality uses `crypto.subtle.digest()` for secure hashing. In the test environment, this is polyfilled to enable:
+
+- PIN hashing and verification
+- Secure storage operations
+- Authentication flow testing
+
+```bash
+# Run PIN storage tests specifically
+npm test -- --run src/lib/securePinStorage.test.ts src/components/PinSetupDialog.test.tsx
+```
+
 ## Building for Production
 
 ```bash

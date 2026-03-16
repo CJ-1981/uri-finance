@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network IP PIN Setting Diagnosis</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .warning { color: orange; }
+        .info { color: blue; }
+        h2 { color: #333; }
+        button { margin: 5px; padding: 10px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Network IP PIN Setting Diagnosis</h1>
+    <div id="current-url"></div>
+    <div id="origin"></div>
+
+    <div class="test-section">
+        <h2>1. LocalStorage Test</h2>
+        <div id="localStorage-result"></div>
+        <button onclick="testLocalStorage()">Test LocalStorage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>2. SessionStorage Test</h2>
+        <div id="sessionStorage-result"></div>
+        <button onclick="testSessionStorage()">Test SessionStorage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Crypto API Test</h2>
+        <div id="crypto-result"></div>
+        <button onclick="testCrypto()">Test Crypto API</button>
+    </div>
+
+    <div class="test-section">
+        <h2>4. PIN Storage Simulation</h2>
+        <div id="pin-result"></div>
+        <button onclick="testPinStorage()">Test PIN Storage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Browser Information</h2>
+        <div id="browser-info"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Network Information</h2>
+        <div id="network-info"></div>
+    </div>
+
+    <script>
+        // Display current URL and origin
+        document.getElementById('current-url').innerHTML = `<p><strong>Current URL:</strong> ${window.location.href}</p>`;
+        document.getElementById('origin').innerHTML = `<p><strong>Origin:</strong> ${window.location.origin}</p>`;
+
+        // Test 1: LocalStorage
+        function testLocalStorage() {
+            const resultDiv = document.getElementById('localStorage-result');
+            try {
+                localStorage.setItem('test-key', 'test-value');
+                const value = localStorage.getItem('test-key');
+                localStorage.removeItem('test-key');
+                resultDiv.innerHTML = `<p class="pass">✓ LocalStorage works: ${value}</p>`;
+                return true;
+            } catch (e) {
+                resultDiv.innerHTML = `<p class="fail">✗ LocalStorage failed: ${e.message}</p>`;
+                return false;
+            }
+        }
+
+        // Test 2: SessionStorage
+        function testSessionStorage() {
+            const resultDiv = document.getElementById('sessionStorage-result');
+            try {
+                sessionStorage.setItem('test-key', 'test-value');
+                const value = sessionStorage.getItem('test-key');
+                sessionStorage.removeItem('test-key');
+                resultDiv.innerHTML = `<p class="pass">✓ SessionStorage works: ${value}</p>`;
+                return true;
+            } catch (e) {
+                resultDiv.innerHTML = `<p class="fail">✗ SessionStorage failed: ${e.message}</p>`;
+                return false;
+            }
+        }
+
+        // Test 3: Crypto API
+        async function testCrypto() {
+            const resultDiv = document.getElementById('crypto-result');
+            try {
+                if (!window.crypto) {
+                    resultDiv.innerHTML = `<p class="fail">✗ Crypto API not available</p>`;
+                    return false;
+                }
+
+                if (!window.crypto.subtle) {
+                    resultDiv.innerHTML = `<p class="fail">✗ Crypto.subtle not available</p>`;
+                    return false;
+                }
+
+                // Test SHA-256 digest
+                const text = "test";
+                const encoded = new TextEncoder().encode(text);
+                const hashBuffer = await crypto.subtle.digest("SHA-256", encoded);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+                resultDiv.innerHTML = `<p class="pass">✓ Crypto API works: SHA-256 hash of "test" = ${hashHex}</p>`;
+                return true;
+            } catch (e) {
+                resultDiv.innerHTML = `<p class="fail">✗ Crypto API failed: ${e.message}</p>`;
+                return false;
+            }
+        }
+
+        // Test 4: PIN Storage Simulation
+        async function testPinStorage() {
+            const resultDiv = document.getElementById('pin-result');
+
+            try {
+                // Check storage availability
+                const storageOK = testLocalStorage() && testSessionStorage();
+                const cryptoOK = await testCrypto();
+
+                if (!storageOK) {
+                    resultDiv.innerHTML = `<p class="fail">✗ PIN storage cannot work - storage issues detected</p>`;
+                    return false;
+                }
+
+                if (!cryptoOK) {
+                    resultDiv.innerHTML = `<p class="fail">✗ PIN storage cannot work - crypto API issues detected</p>`;
+                    return false;
+                }
+
+                // Simulate PIN storage
+                const mockHash = "mock-sha-256-hash";
+                localStorage.setItem('app_lock_pin', mockHash);
+                sessionStorage.setItem('app_lock_pin', mockHash);
+
+                const localStored = localStorage.getItem('app_lock_pin');
+                const sessionStored = sessionStorage.getItem('app_lock_pin');
+
+                if (localStored === mockHash && sessionStored === mockHash) {
+                    resultDiv.innerHTML = `<p class="pass">✓ PIN storage simulation successful</p>`;
+                    // Clean up
+                    localStorage.removeItem('app_lock_pin');
+                    sessionStorage.removeItem('app_lock_pin');
+                    return true;
+                } else {
+                    resultDiv.innerHTML = `<p class="fail">✗ PIN storage simulation failed</p>`;
+                    return false;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `<p class="fail">✗ PIN storage test failed: ${e.message}</p>`;
+                return false;
+            }
+        }
+
+        // Test 5: Browser Information
+        function getBrowserInfo() {
+            const infoDiv = document.getElementById('browser-info');
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Platform': navigator.platform,
+                'Cookies Enabled': navigator.cookieEnabled,
+                'Online': navigator.onLine,
+                'Language': navigator.language,
+                'Do Not Track': navigator.doNotTrack
+            };
+
+            let html = '<ul>';
+            for (const [key, value] of Object.entries(info)) {
+                html += `<li><strong>${key}:</strong> ${value}</li>`;
+            }
+            html += '</ul>';
+
+            infoDiv.innerHTML = html;
+        }
+
+        // Test 6: Network Information
+        function getNetworkInfo() {
+            const infoDiv = document.getElementById('network-info');
+            const info = {
+                'Current URL': window.location.href,
+                'Origin': window.location.origin,
+                'Protocol': window.location.protocol,
+                'Hostname': window.location.hostname,
+                'Port': window.location.port,
+                'Pathname': window.location.pathname,
+                'Is Localhost': window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            };
+
+            let html = '<ul>';
+            for (const [key, value] of Object.entries(info)) {
+                const color = key === 'Is Localhost' ? (value ? 'green' : 'orange') : 'inherit';
+                html += `<li style="color: ${color}"><strong>${key}:</strong> ${value}</li>`;
+            }
+            html += '</ul>';
+
+            if (info['Is Localhost']) {
+                html += '<p class="info">ℹ Testing from localhost - normal behavior expected</p>';
+            } else {
+                html += '<p class="warning">⚠ Testing from network IP - may have different behavior</p>';
+            }
+
+            infoDiv.innerHTML = html;
+        }
+
+        // Run initial tests
+        window.onload = function() {
+            getBrowserInfo();
+            getNetworkInfo();
+            testLocalStorage();
+            testSessionStorage();
+            testCrypto();
+        };
+    </script>
+</body>
+</html>
