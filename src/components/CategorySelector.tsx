@@ -398,7 +398,8 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
         <div
           data-category-scroll="true"
           className={cn(
-            isMobile && "max-h-[calc(60vh-50px)] overflow-y-auto overflow-x-hidden"
+            "overflow-y-auto overflow-x-hidden",
+            isMobile && "max-h-[calc(60vh-50px)]"
           )}
           style={isMobile ? {
             WebkitOverflowScrolling: 'touch',
@@ -711,7 +712,8 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
         <div
           data-category-scroll="true"
           className={cn(
-            isMobile && "max-h-[calc(60vh-50px)] overflow-y-auto overflow-x-hidden"
+            "overflow-y-auto overflow-x-hidden",
+            isMobile && "max-h-[calc(60vh-50px)]"
           )}
           style={isMobile ? {
             WebkitOverflowScrolling: 'touch',
