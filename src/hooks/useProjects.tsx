@@ -14,6 +14,8 @@ export interface Project {
   created_at: string;
 }
 
+type ProjectSource = 'user-selection' | 'cache' | 'server';
+
 export const useProjects = () => {
   const { user } = useAuth();
   const { t } = useI18n();
@@ -74,25 +76,29 @@ export const useProjects = () => {
   };
 
   // Persist selected project to localStorage (cache full object for instant restoration) and server
-  const handleSetActiveProject = async (project: Project | null) => {
+  // Only saves to localStorage and server when source is 'user-selection' to prevent overwriting manual changes
+  const handleSetActiveProject = (project: Project | null, source: ProjectSource = 'user-selection'): void => {
     if (project) {
-      localStorage.setItem("active_project_id", project.id);
-      localStorage.setItem("active_project_cache", JSON.stringify(project));
-      // Save preference to server (fire and forget - don't block UI)
-      saveUserPreference(project.id).catch(console.debug);
+      // Only save to localStorage and server for user selections
+      // Automatic restorations (cache/server) should not overwrite user's current choice or burden the database
+      if (source === 'user-selection') {
+        localStorage.setItem("active_project_id", project.id);
+        localStorage.setItem("active_project_cache", JSON.stringify(project));
+        // Save preference to server (fire and forget - don't block UI)
+        saveUserPreference(project.id).catch((err: unknown) => console.debug(err));
+      }
     } else {
       localStorage.removeItem("active_project_id");
       localStorage.removeItem("active_project_cache");
       // Clear preference from server when project is deselected
       if (user) {
-        supabase
-          .from('user_preferences')
-          .update({ default_project_id: null })
-          .eq('user_id', user.id)
-          .then(({ error }) => {
-            if (error) console.debug('Failed to clear preference:', error);
-          })
-          .catch(console.debug);
+        (async () => {
+          const { error } = await supabase
+            .from('user_preferences')
+            .update({ default_project_id: null })
+            .eq('user_id', user.id);
+          if (error) console.debug('Failed to clear preference:', error);
+        })().catch((err: unknown) => console.debug(err));
       }
     }
     setActiveProject(project);
@@ -140,18 +146,20 @@ export const useProjects = () => {
               .maybeSingle();
 
             if (membership) {
-              handleSetActiveProject(savedProject as Project);
+              // Determine source: server preference or initial cache
+              const source: ProjectSource = preferenceId ? 'server' : 'cache';
+              handleSetActiveProject(savedProject as Project, source);
             } else {
               // Preference project no longer accessible, clear it and use first project
-              handleSetActiveProject(data[0] as Project);
+              handleSetActiveProject(data[0] as Project, 'cache');
             }
           } else {
             // Preference project no longer exists, fall back to first project
-            handleSetActiveProject(data[0] as Project);
+            handleSetActiveProject(data[0] as Project, 'cache');
           }
         } else {
           // No saved project, use first project
-          handleSetActiveProject(data[0] as Project);
+          handleSetActiveProject(data[0] as Project, 'cache');
         }
       }
     } else {
@@ -184,7 +192,7 @@ export const useProjects = () => {
 
     toast.success("Project created!");
     await fetchProjects();
-    await handleSetActiveProject(data as Project);
+    handleSetActiveProject(data as Project, 'user-selection');
   };
 
   const joinProject = async (inviteCode: string) => {
@@ -246,7 +254,7 @@ export const useProjects = () => {
 
       toast.success(t("proj.joined").replace("{project}", project.name));
       await fetchProjects(true); // skip delay since we already waited
-      await handleSetActiveProject(project as Project);
+      handleSetActiveProject(project as Project, 'user-selection');
       return;
     }
 
@@ -318,7 +326,7 @@ export const useProjects = () => {
     }
     await fetchProjects(true); // skip delay since we already waited
     if (project) {
-      await handleSetActiveProject((project as any).projects as Project);
+      handleSetActiveProject((project as any).projects as Project, 'user-selection');
     }
   };
 
