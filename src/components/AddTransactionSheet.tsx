@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CategoryNameSelector } from "@/components/CategorySelector";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, TrendingUp, TrendingDown, CalendarIcon } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, Tag } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Category } from "@/hooks/useCategories";
@@ -39,6 +39,114 @@ interface Props {
     currency?: string;
   }) => Promise<void>;
 }
+
+// Custom inline dropdown for modal context
+const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryChange }: {
+  categories: Category[];
+  selectedCategoryName: string | null;
+  onCategoryChange: (name: string | null) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const { t } = useI18n();
+  const isMobile = useIsMobile();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedCategory = categories.find((c) => c.name === selectedCategoryName);
+  const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAllCategories");
+
+  const handleSelect = (name: string | null) => {
+    onCategoryChange(name);
+    setOpen(false);
+  };
+
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setOpen(!open);
+  };
+
+  return (
+    <div
+      ref={dropdownRef}
+      className="relative"
+      data-category-dropdown-open={open ? "true" : "false"}
+    >
+      <button
+        type="button"
+        onClick={handleToggle}
+        className={cn(
+          "flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors w-full",
+          !open && "data-tab-stop"
+        )}
+      >
+        <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <span className="truncate flex-1 text-left">{activeLabel}</span>
+        <ChevronDown className={cn("h-3 w-3 text-muted-foreground shrink-0 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/20 z-[60]"
+            onClick={() => setOpen(false)}
+          />
+          {/* Dropdown content */}
+          <div
+            className={cn(
+              "absolute left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-[70]",
+              isMobile ? "max-h-[60vh] overflow-y-auto" : "max-h-[400px] overflow-y-auto"
+            )}
+            style={{
+              touchAction: 'pan-y',
+              WebkitOverflowScrolling: 'touch'
+            }}
+            onKeyDown={(e) => {
+              // Prevent tab key from bubbling to form
+              if (e.key === 'Tab') {
+                e.stopPropagation();
+                e.preventDefault();
+              }
+            }}
+          >
+            <div className="p-1">
+              <button
+                type="button"
+                onClick={() => handleSelect(null)}
+                className={cn(
+                  "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+                  selectedCategoryName === null
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground hover:bg-muted"
+                )}
+              >
+                <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span>{t("tx.selectAllCategories")}</span>
+              </button>
+              {categories.map((category) => (
+                <button
+                  type="button"
+                  key={category.id}
+                  onClick={() => handleSelect(category.name)}
+                  className={cn(
+                    "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+                    selectedCategoryName === category.name
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted"
+                  )}
+                  style={{ paddingLeft: category.parent_id ? '32px' : '12px' }}
+                >
+                  {category.icon && <span className="shrink-0">{category.icon}</span>}
+                  <span className="truncate">{category.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd }: Props) => {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -149,6 +257,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
     // Don't intercept Tab when a popover/dropdown is open
     if (document.querySelector('[data-radix-popper-content-wrapper]')) return;
+    // Don't intercept Tab when custom category dropdown is open
+    if (document.querySelector('[data-category-dropdown-open="true"]')) return;
 
     const form = formRef.current;
     if (!form) return;
@@ -252,11 +362,19 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         {/* Category */}
         <div className="space-y-2">
           <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-          <CategoryNameSelector
-            categories={categories}
-            selectedCategoryName={category}
-            onCategoryChange={setCategory}
-          />
+          {isMobile ? (
+            <InlineCategoryDropdown
+              categories={categories}
+              selectedCategoryName={category}
+              onCategoryChange={setCategory}
+            />
+          ) : (
+            <CategoryNameSelector
+              categories={categories}
+              selectedCategoryName={category}
+              onCategoryChange={setCategory}
+            />
+          )}
         </div>
 
         {/* Custom columns (after category) */}

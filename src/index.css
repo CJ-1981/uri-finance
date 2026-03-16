@@ -228,7 +228,7 @@ input, select, textarea {
 @media (hover: none) and (pointer: coarse) {
   /* Specific zoom prevention for non-scrollable UI elements */
   [data-radix-dropdown-menu-content],
-  [data-radix-popover-content],
+  [data-radix-popover-content]:not([data-mobile-popover="true"]),
   [data-radix-select-content],
   [data-radix-alert-dialog-content] {
     /* These don't need scrolling, can be stricter */
@@ -240,10 +240,18 @@ input, select, textarea {
   [data-radix-scroll-area-viewport],
   [data-radix-dialog-content],
   [data-radix-sheet-content],
-  [data-radix-drawer-content] {
+  [data-radix-drawer-content],
+  [data-category-scroll],
+  [data-mobile-popover="true"] [data-category-scroll] {
     /* Allow pan gestures (scrolling) but prevent zoom */
-    touch-action: pan-x pan-y;
+    touch-action: pan-y;
     overscroll-behavior: contain;
+  }
+
+  /* Fix for modal PopoverContent z-index conflict */
+  [data-radix-popover-content][data-mobile-popover="true"] {
+    touch-action: none !important;
+    z-index: 100 !important;
   }
 }
 
@@ -264,5 +272,41 @@ input, select, textarea {
   * {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Show scrollbar for category dropdown on mobile */
+  [data-category-scroll]::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+  }
+  [data-category-scroll]::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  [data-category-scroll]::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.6);
+    border-radius: 3px;
+  }
+  [data-category-scroll]::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.8);
+  }
+  [data-category-scroll] {
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+  }
+
+  /* Allow touch scrolling for category dropdown - most specific rule */
+  [data-mobile-popover="true"] [data-category-scroll],
+  [data-category-scroll] {
+    touch-action: pan-y !important;
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  /* Specific fix for modal context */
+  [data-mobile-popover="true"] {
+    position: fixed !important;
+    z-index: 100 !important;
   }
 }

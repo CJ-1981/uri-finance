@@ -134,6 +134,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverContentRef = useRef<HTMLDivElement>(null);
 
   // Reset focus when popover closes
   const handleOpenChange = useCallback((newOpen: boolean) => {
@@ -141,7 +142,17 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       setFocusedIndex(null);
     }
     setOpen(newOpen);
-  }, []);
+
+    // Force enable touch scrolling on mobile
+    if (newOpen && isMobile && popoverContentRef.current) {
+      const scrollableElement = popoverContentRef.current.querySelector('[data-category-scroll="true"]') as HTMLElement;
+      if (scrollableElement) {
+        scrollableElement.style.touchAction = 'pan-y';
+        (scrollableElement.style as any).WebkitOverflowScrolling = 'touch';
+        scrollableElement.style.overscrollBehavior = 'contain';
+      }
+    }
+  }, [isMobile]);
 
   // Expose open method via ref
   useImperativeHandle(ref, () => ({
@@ -348,7 +359,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
   }, [open, categoryTreeOptions, isMobile, handleSelect, focusedIndex, categories, expandedNodes, toggleExpanded]);
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal={isMobile}>
       <PopoverTrigger asChild>
         <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]">
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -356,7 +367,20 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
           <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
+      <PopoverContent
+        ref={popoverContentRef}
+        align="start"
+        className={cn(
+          "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
+          isMobile && "max-h-[60vh]"
+        )}
+        onKeyDown={handleKeyDown}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        data-mobile-popover="true"
+        style={isMobile ? {
+          touchAction: 'none'
+        } : undefined}
+      >
         {/* "All" option */}
         <button
           onClick={() => handleSelect(null)}
@@ -373,24 +397,36 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{t("tx.selectAllCategories")}</span>
         </button>
-        {/* Tree items */}
-        {categoryTree.map((node, index) => (
-          <TreeItem
-            key={node.id}
-            node={node}
-            depth={0}
-            selectedCategoryId={selectedCategoryId}
-            focusedIndex={focusedIndex}
-            globalIndex={index + 1}
-            onSelect={handleSelect}
-            expandedNodes={expandedNodes}
-            onToggleExpand={toggleExpanded}
-            onSetFocus={setFocusedIndex}
-            isMobile={isMobile}
-            t={t}
-            showShortcut={true}
-          />
-        ))}
+        {/* Tree items with scrollable container */}
+        <div
+          data-category-scroll="true"
+          className={cn(
+            isMobile && "max-h-[calc(60vh-50px)] overflow-y-auto overflow-x-hidden"
+          )}
+          style={isMobile ? {
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+            overscrollBehavior: 'contain'
+          } : undefined}
+        >
+          {categoryTree.map((node, index) => (
+            <TreeItem
+              key={node.id}
+              node={node}
+              depth={0}
+              selectedCategoryId={selectedCategoryId}
+              focusedIndex={focusedIndex}
+              globalIndex={index + 1}
+              onSelect={handleSelect}
+              expandedNodes={expandedNodes}
+              onToggleExpand={toggleExpanded}
+              onSetFocus={setFocusedIndex}
+              isMobile={isMobile}
+              t={t}
+              showShortcut={true}
+            />
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   );
@@ -406,14 +442,25 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverContentRef = useRef<HTMLDivElement>(null);
 
-  // Reset focus when popover closes
+  // Force touch scrolling on mobile when popover opens
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (!newOpen) {
       setFocusedIndex(null);
     }
     setOpen(newOpen);
-  }, []);
+
+    // Force enable touch scrolling on mobile
+    if (newOpen && isMobile && popoverContentRef.current) {
+      const scrollableElement = popoverContentRef.current.querySelector('[data-category-scroll="true"]') as HTMLElement;
+      if (scrollableElement) {
+        scrollableElement.style.touchAction = 'pan-y';
+        (scrollableElement.style as any).WebkitOverflowScrolling = 'touch';
+        scrollableElement.style.overscrollBehavior = 'contain';
+      }
+    }
+  }, [isMobile]);
 
   // Expose open method via ref
   useImperativeHandle(ref, () => ({
@@ -627,7 +674,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
   }, [open, categoryTreeOptions, isMobile, handleSelect, focusedIndex, categories, expandedNodes, toggleExpanded, globalIndexToIdMap]);
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal={isMobile}>
       <PopoverTrigger asChild>
         <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]">
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -635,7 +682,21 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
           <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="min-w-[250px] max-w-[400px] w-auto p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
+      <PopoverContent
+        ref={popoverContentRef}
+        align="start"
+        className={cn(
+          "min-w-[250px] max-w-[400px] w-auto p-1 pointer-events-auto",
+          isMobile && "max-h-[60vh]",
+          isMobile && "z-[100]"
+        )}
+        onKeyDown={handleKeyDown}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        data-mobile-popover="true"
+        style={isMobile ? {
+          touchAction: 'none'
+        } : undefined}
+      >
         {/* "All" option */}
         <button
           onClick={() => handleSelect(null)}
@@ -652,24 +713,36 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{t("tx.selectAllCategories")}</span>
         </button>
-        {/* Tree items */}
-        {categoryTree.map((node, index) => (
-          <TreeItem
-            key={node.id}
-            node={node}
-            depth={0}
-            selectedCategoryId={selectedCategory ? selectedCategory.id : null}
-            focusedIndex={focusedIndex}
-            globalIndex={index + 1}
-            onSelect={handleSelect}
-            expandedNodes={expandedNodes}
-            onToggleExpand={toggleExpanded}
-            onSetFocus={setFocusedIndex}
-            isMobile={isMobile}
-            t={t}
-            showShortcut={true}
-          />
-        ))}
+        {/* Tree items with scrollable container */}
+        <div
+          data-category-scroll="true"
+          className={cn(
+            isMobile && "max-h-[calc(60vh-50px)] overflow-y-auto overflow-x-hidden"
+          )}
+          style={isMobile ? {
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
+            overscrollBehavior: 'contain'
+          } : undefined}
+        >
+          {categoryTree.map((node, index) => (
+            <TreeItem
+              key={node.id}
+              node={node}
+              depth={0}
+              selectedCategoryId={selectedCategory ? selectedCategory.id : null}
+              focusedIndex={focusedIndex}
+              globalIndex={index + 1}
+              onSelect={handleSelect}
+              expandedNodes={expandedNodes}
+              onToggleExpand={toggleExpanded}
+              onSetFocus={setFocusedIndex}
+              isMobile={isMobile}
+              t={t}
+              showShortcut={true}
+            />
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   );
