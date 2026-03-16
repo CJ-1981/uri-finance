@@ -126,41 +126,69 @@ export const useProjects = () => {
 
       // Restore active project from server preference or localStorage, or fall back to first project
       if (data && data.length > 0) {
-        const preferenceId = await fetchUserPreference();
-        let savedProjectId = localStorage.getItem("active_project_id");
-
-        // Use server preference if available, otherwise use localStorage cache
-        if (preferenceId) {
-          savedProjectId = preferenceId;
-        }
-
-        if (savedProjectId) {
-          const savedProject = data.find((p) => p.id === savedProjectId);
-          if (savedProject) {
-            // Verify user is still a member of the preference project
+        // Priority 1: Preserve current selection if valid (user hasn't manually changed it)
+        if (activeProject) {
+          const currentProjectInList = data.find((p) => p.id === activeProject.id);
+          if (currentProjectInList) {
+            // Verify user is still a member of the current project
             const { data: membership } = await supabase
               .from("project_members")
               .select("id")
-              .eq("project_id", savedProject.id)
+              .eq("project_id", activeProject.id)
               .eq("user_id", user.id)
               .maybeSingle();
 
             if (membership) {
-              // Determine source: server preference or initial cache
-              const source: ProjectSource = preferenceId ? 'server' : 'cache';
-              handleSetActiveProject(savedProject as Project, source);
-            } else {
-              // Preference project no longer accessible, clear it and use first project
-              handleSetActiveProject(data[0] as Project, 'cache');
+              // Current selection is still valid, preserve it
+              return; // Don't change activeProject
             }
-          } else {
-            // Preference project no longer exists, fall back to first project
-            handleSetActiveProject(data[0] as Project, 'cache');
           }
-        } else {
-          // No saved project, use first project
-          handleSetActiveProject(data[0] as Project, 'cache');
+          // Current selection is invalid, fall through to restore from cache/server
         }
+
+        // Priority 2: Use localStorage cache (user's recent manual selection)
+        const cachedProjectId = localStorage.getItem("active_project_id");
+        if (cachedProjectId) {
+          const cachedProject = data.find((p) => p.id === cachedProjectId);
+          if (cachedProject) {
+            // Verify user is still a member of the cached project
+            const { data: membership } = await supabase
+              .from("project_members")
+              .select("id")
+              .eq("project_id", cachedProject.id)
+              .eq("user_id", user.id)
+              .maybeSingle();
+
+            if (membership) {
+              handleSetActiveProject(cachedProject as Project, 'cache');
+              return;
+            }
+          }
+          // Cached project is invalid, fall through to server preference
+        }
+
+        // Priority 3: Use server preference (fallback for sync across devices)
+        const preferenceId = await fetchUserPreference();
+        if (preferenceId) {
+          const preferenceProject = data.find((p) => p.id === preferenceId);
+          if (preferenceProject) {
+            // Verify user is still a member of the preference project
+            const { data: membership } = await supabase
+              .from("project_members")
+              .select("id")
+              .eq("project_id", preferenceProject.id)
+              .eq("user_id", user.id)
+              .maybeSingle();
+
+            if (membership) {
+              handleSetActiveProject(preferenceProject as Project, 'server');
+              return;
+            }
+          }
+        }
+
+        // Priority 4: Use first project as default
+        handleSetActiveProject(data[0] as Project, 'cache');
       }
     } else {
       setProjects([]);
