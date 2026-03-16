@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings2, Plus, X, GripVertical, ChevronRight } from "lucide-react";
-import { Category } from "@/hooks/useCategories";
+import { Settings2, Plus, X, GripVertical, ChevronRight, ChevronDown, Tag } from "lucide-react";
+import { Category, CategoryTreeNode } from "@/hooks/useCategories";
 import { useI18n } from "@/hooks/useI18n";
+import { cn } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
@@ -30,11 +31,195 @@ interface Props {
   onUpdateName?: (id: string, name: string) => Promise<void>;
   onUpdateCode?: (id: string, code: string) => Promise<void>;
   onUpdateIcon?: (id: string, icon: string) => Promise<void>;
-  onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   onReorderAll?: (orderedIds: string[]) => Promise<void>;
   onUpdateParent?: (id: string, newParentId: string | null) => Promise<void>;
   inline?: boolean;
 }
+
+// Tree structure for category display
+interface CategoryTreeItemProps {
+  node: CategoryTreeNode;
+  depth: number;
+  onDelete: (id: string) => void;
+  onUpdateName?: (id: string, name: string) => void;
+  onUpdateCode?: (id: string, code: string) => void;
+  onUpdateIcon?: (id: string, icon: string) => Promise<void>;
+  onUpdateParent?: (id: string, newParentId: string | null) => void;
+  onAddSubCategory?: (parentId: string, name: string, code?: string) => Promise<void>;
+  editingNameId: string | null;
+  setEditingNameId: (id: string | null) => void;
+  editNameValue: string;
+  setEditNameValue: (v: string) => void;
+  handleNameSave: (id: string) => void;
+  editingCodeId: string | null;
+  setEditingCodeId: (id: string | null) => void;
+  editCodeValue: string;
+  setEditCodeValue: (v: string) => void;
+  handleCodeSave: (id: string) => void;
+  editingIconId: string | null;
+  setEditingIconId: (id: string | null) => void;
+  editIconValue: string;
+  setEditIconValue: (v: string) => void;
+  handleIconSave: (id: string) => void;
+  onUpdateIconFn?: (id: string, icon: string) => Promise<void>;
+  t: (key: string) => string;
+}
+
+const CategoryTreeItem = ({ node, depth, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onUpdateParent, onAddSubCategory, editingNameId, setEditingNameId, editNameValue, setEditNameValue, handleNameSave, editingCodeId, setEditingCodeId, editCodeValue, setEditCodeValue, handleCodeSave, editingIconId, setEditingIconId, editIconValue, setEditIconValue, handleIconSave, onUpdateIconFn, t }: CategoryTreeItemProps) => {
+  const [expanded, setExpanded] = useState(true);
+  const hasChildren = node.children.length > 0;
+
+  return (
+    <div>
+      <div className="flex items-center gap-1">
+        {/* Explicit expand/collapse button for tree structure */}
+        {hasChildren && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="shrink-0 rounded transition-colors p-0.5 min-w-[20px] min-h-[20px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+            title="Toggle children"
+          >
+            {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+          </button>
+        )}
+        {/* Spacer if no children */}
+        {!hasChildren && (
+          <div className="w-[20px] h-[20px] shrink-0" />
+        )}
+        {/* Category code */}
+        {editingCodeId === node.id ? (
+          <Input
+            value={editCodeValue}
+            onChange={(e) => setEditCodeValue(e.target.value)}
+            onBlur={() => handleCodeSave(node.id)}
+            onKeyDown={(e) => e.key === "Enter" && handleCodeSave(node.id)}
+            className="w-16 h-6 text-xs bg-muted/50 border-border/50 px-1.5 shrink-0"
+            autoFocus
+          />
+        ) : (
+          <button
+            onClick={() => {
+              if (onUpdateCode) {
+                setEditingCodeId(node.id);
+                setEditCodeValue(node.code);
+              }
+            }}
+            className="text-[10px] font-mono text-muted-foreground bg-muted/50 rounded px-1.5 hover:bg-muted shrink-0"
+            title={t("cat.editCode") || "Edit code"}
+          >
+            {node.code}
+          </button>
+        )}
+        {/* Category emoji */}
+        {editingIconId === node.id ? (
+          <Input
+            value={editIconValue}
+            onChange={(e) => setEditIconValue(e.target.value)}
+            onBlur={() => handleIconSave(node.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleIconSave(node.id);
+            }}
+            className="w-10 h-6 text-center text-sm bg-muted/50 border-border/50 px-1 shrink-0"
+            autoFocus
+            placeholder="😀"
+          />
+        ) : (
+          <button
+            onClick={() => {
+              if (onUpdateIconFn) {
+                setEditingIconId(node.id);
+                setEditIconValue(node.icon || "");
+              }
+            }}
+            className="text-base w-6 h-6 flex items-center justify-center rounded hover:bg-muted transition-colors shrink-0"
+            title={t("cat.editIcon") || "Set emoji icon"}
+          >
+            {node.icon || "·"}
+          </button>
+        )}
+        {/* Category name */}
+        {editingNameId === node.id ? (
+          <Input
+            value={editNameValue}
+            onChange={(e) => setEditNameValue(e.target.value)}
+            onBlur={() => handleNameSave(node.id)}
+            onKeyDown={(e) => e.key === "Enter" && handleNameSave(node.id)}
+            className="flex-1 h-6 text-sm bg-muted/50 border-border/50 px-1.5 min-w-0"
+            autoFocus
+          />
+        ) : (
+          <span
+            onClick={() => {
+              if (onUpdateName) {
+                setEditingNameId(node.id);
+                setEditNameValue(node.name);
+              }
+            }}
+            className="text-sm text-foreground truncate cursor-pointer hover:text-primary transition-colors flex-1 min-w-0"
+          >
+            {node.name}
+          </span>
+        )}
+        {/* Action buttons */}
+        <div className="flex items-center gap-1 shrink-0">
+          {onAddSubCategory && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const newSubCatName = prompt(t("cat.subCategoryPrompt") || "Enter sub-category name:");
+                if (newSubCatName && newSubCatName.trim()) {
+                  onAddSubCategory(node.id, newSubCatName.trim());
+                }
+              }}
+              className="text-xs text-muted-foreground hover:text-primary transition-colors px-1 py-0.5 shrink-0"
+              title={t("cat.addSubCategory") || "Add sub-category"}
+            >
+              <Plus className="h-3 w-3" />
+            </button>
+          )}
+          <button onClick={() => onDelete(node.id)} className="text-xs text-muted-foreground hover:text-expense transition-colors px-1 py-0.5 shrink-0">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      </div>
+      {/* Children container */}
+      {hasChildren && expanded && (
+        <div className="flex flex-col pl-4">
+          {node.children.map((child) => (
+            <CategoryTreeItem
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              onDelete={onDelete}
+              onUpdateName={onUpdateName}
+              onUpdateCode={onUpdateCode}
+              onUpdateIcon={onUpdateIcon}
+              onUpdateParent={onUpdateParent}
+              onAddSubCategory={onAddSubCategory}
+              editingNameId={editingNameId}
+              setEditingNameId={setEditingNameId}
+              editNameValue={editNameValue}
+              setEditNameValue={setEditNameValue}
+              handleNameSave={handleNameSave}
+              editingCodeId={editingCodeId}
+              setEditingCodeId={setEditingCodeId}
+              editCodeValue={editCodeValue}
+              setEditCodeValue={setEditCodeValue}
+              handleCodeSave={handleCodeSave}
+              editingIconId={editingIconId}
+              setEditingIconId={setEditingIconId}
+              editIconValue={editIconValue}
+              setEditIconValue={setEditIconValue}
+              handleIconSave={handleIconSave}
+              onUpdateIconFn={onUpdateIconFn}
+              t={t}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const SortableCategoryItem = ({
   cat,
@@ -173,7 +358,7 @@ const SortableCategoryItem = ({
       )}
       {onAddSubCategory && (
         <button
-          onClick={(e) => {
+          onClick={() => {
             const newSubCatName = prompt(t("cat.subCategoryPrompt") || "Enter sub-category name:");
             if (newSubCatName && newSubCatName.trim()) {
               onAddSubCategory(cat.id, newSubCatName.trim());
@@ -204,6 +389,36 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
   const [editIconValue, setEditIconValue] = useState("");
   const { t } = useI18n();
 
+  // Build tree structure
+  const treeStructure = useMemo(() => {
+    const map = new Map<string, CategoryTreeNode>();
+    const roots: CategoryTreeNode[] = [];
+
+    // Initialize all nodes
+    categories.forEach((cat) => {
+      map.set(cat.id, { ...cat, children: [] });
+    });
+
+    // Build tree hierarchy
+    categories.forEach((cat) => {
+      const node = map.get(cat.id)!;
+      if (cat.parent_id) {
+        const parent = map.get(cat.parent_id);
+        if (parent) {
+          parent.children.push(node);
+        } else {
+          roots.push(node);
+        }
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  }, [categories]);
+
+  const hasSubCategories = categories.some((cat) => cat.parent_id !== null);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
@@ -230,6 +445,13 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
       await onUpdateCode(id, editCodeValue);
     }
     setEditingCodeId(null);
+  };
+
+  const handleIconSave = async (id: string) => {
+    if (onUpdateIcon) {
+      await onUpdateIcon(id, editIconValue);
+    }
+    setEditingIconId(null);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -263,44 +485,79 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
           <Plus className="h-4 w-4" />
         </Button>
       </div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-1 max-h-[40vh] overflow-y-auto">
-            {categories.map((cat) => (
-              <SortableCategoryItem
-                key={cat.id}
-                cat={cat}
-                onDelete={onDelete}
-                onUpdateName={onUpdateName}
-                onUpdateCode={onUpdateCode}
-                onUpdateIcon={onUpdateIcon}
-                editingNameId={editingNameId}
-                setEditingNameId={setEditingNameId}
-                editNameValue={editNameValue}
-                setEditNameValue={setEditNameValue}
-                handleNameSave={handleNameSave}
-                editingCodeId={editingCodeId}
-                setEditingCodeId={setEditingCodeId}
-                editCodeValue={editCodeValue}
-                setEditCodeValue={setEditCodeValue}
-                handleCodeSave={handleCodeSave}
-                editingIconId={editingIconId}
-                setEditingIconId={setEditingIconId}
-                editIconValue={editIconValue}
-                setEditIconValue={setEditIconValue}
-                onUpdateIconFn={onUpdateIcon}
-                onAddSubCategory={onAddSubCategory}
-                t={t}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+      {hasSubCategories ? (
+        <div className="space-y-1 max-h-[40vh] overflow-y-auto">
+          {treeStructure.map((node) => (
+            <CategoryTreeItem
+              key={node.id}
+              node={node}
+              depth={0}
+              onDelete={onDelete}
+              onUpdateName={onUpdateName}
+              onUpdateCode={onUpdateCode}
+              onUpdateIcon={onUpdateIcon}
+              onUpdateParent={undefined}
+              onAddSubCategory={onAddSubCategory}
+              editingNameId={editingNameId}
+              setEditingNameId={setEditingNameId}
+              editNameValue={editNameValue}
+              setEditNameValue={setEditNameValue}
+              handleNameSave={handleNameSave}
+              editingCodeId={editingCodeId}
+              setEditingCodeId={setEditingCodeId}
+              editCodeValue={editCodeValue}
+              setEditCodeValue={setEditCodeValue}
+              handleCodeSave={handleCodeSave}
+              editingIconId={editingIconId}
+              setEditingIconId={setEditingIconId}
+              editIconValue={editIconValue}
+              setEditIconValue={setEditIconValue}
+              handleIconSave={handleIconSave}
+              onUpdateIconFn={onUpdateIcon}
+              t={t}
+            />
+          ))}
+        </div>
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-1 max-h-[40vh] overflow-y-auto">
+              {categories.map((cat) => (
+                <SortableCategoryItem
+                  key={cat.id}
+                  cat={cat}
+                  onDelete={onDelete}
+                  onUpdateName={onUpdateName}
+                  onUpdateCode={onUpdateCode}
+                  onUpdateIcon={onUpdateIcon}
+                  editingNameId={editingNameId}
+                  setEditingNameId={setEditingNameId}
+                  editNameValue={editNameValue}
+                  setEditNameValue={setEditNameValue}
+                  handleNameSave={handleNameSave}
+                  editingCodeId={editingCodeId}
+                  setEditingCodeId={setEditingCodeId}
+                  editCodeValue={editCodeValue}
+                  setEditCodeValue={setEditCodeValue}
+                  handleCodeSave={handleCodeSave}
+                  editingIconId={editingIconId}
+                  setEditingIconId={setEditingIconId}
+                  editIconValue={editIconValue}
+                  setEditIconValue={setEditIconValue}
+                  onUpdateIconFn={onUpdateIcon}
+                  onAddSubCategory={onAddSubCategory}
+                  t={t}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      )}
     </div>
   );
 };
 
-const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorder, onReorderAll, inline }: Props) => {
+const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
