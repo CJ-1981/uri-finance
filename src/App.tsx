@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import { I18nProvider } from "@/hooks/useI18n";
@@ -19,6 +19,23 @@ import { ThemeMetaUpdater } from "@/components/ThemeMetaUpdater";
 import { isPinSet } from "@/lib/securePinStorage";
 
 const queryClient = new QueryClient();
+
+// GitHub Pages SPA routing: Restore route from 404.html redirect
+const RouteRestoration = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const sessionKey = "redirect-path";
+    const savedPath = sessionStorage.getItem(sessionKey);
+
+    if (savedPath && savedPath !== "/") {
+      sessionStorage.removeItem(sessionKey);
+      navigate(savedPath, { replace: true });
+    }
+  }, [navigate]);
+
+  return null;
+};
 
 const AppLockGate = ({ children }: { children: React.ReactNode }) => {
   const hasPin = isPinSet();
@@ -57,6 +74,7 @@ const App = () => {
                 <Sonner />
                 <AppLockGate>
                   <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <RouteRestoration />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
