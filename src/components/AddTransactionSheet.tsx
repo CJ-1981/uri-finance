@@ -193,12 +193,12 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
         type="button"
         onClick={handleToggle}
         className={cn(
-          "flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors w-full",
+          "flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]",
           !open && "data-tab-stop"
         )}
       >
         <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <span className="truncate flex-1 text-left">{activeLabel}</span>
+        <span className="truncate">{activeLabel}</span>
         <ChevronDown className={cn("h-3 w-3 text-muted-foreground shrink-0 transition-transform", open && "rotate-180")} />
       </button>
 
