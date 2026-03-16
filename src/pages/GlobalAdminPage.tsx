@@ -4,7 +4,7 @@ import { useSystemAdmin } from "@/hooks/useSystemAdmin";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, User, FolderOpen, Trash2, Mail, Calendar, Users, Database, RefreshCw } from "lucide-react";
+import { ArrowLeft, User, FolderOpen, Trash2, Mail, Calendar, Users, Database, RefreshCw, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -106,7 +106,10 @@ const GlobalAdminPage = () => {
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-muted-foreground">{t("global.loading")}</div>
+          <div className="min-h-screen flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <p className="mt-4 text-sm text-muted-foreground">{t("global.loading")}</p>
+          </div>
         ) : activeTab === "users" ? (
           <div className="space-y-4">
             <h2 className="text-sm font-semibold text-foreground mb-4">{t("global.users")}</h2>

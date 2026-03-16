@@ -18,7 +18,7 @@ import CategorySelector, { CategorySelectorHandle } from "@/components/CategoryS
 import PinSetupDialog from "@/components/PinSetupDialog";
 import PinDisableDialog from "@/components/PinDisableDialog";
 import { Button } from "@/components/ui/button";
-import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus } from "lucide-react";
+import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus, Loader2 } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
 import ShortcutSettings from "@/components/ShortcutSettings";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
@@ -45,7 +45,7 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
-  const { projects, activeProject, setActiveProject, createProject, joinProject } = useProjects();
+  const { projects, activeProject, setActiveProject, createProject, joinProject, loading } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
@@ -233,6 +233,16 @@ const Dashboard = () => {
   const canNavigate = !!activeProject && (noModalOpen || detailOpen);
   useKeyboardShortcut("nextTx", goNextTx, canNavigate, undefined, true);
   useKeyboardShortcut("prevTx", goPrevTx, canNavigate, undefined, true);
+
+  // Show loading screen when loading and no project
+  if (loading && !activeProject) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">{t("global.loading")}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">

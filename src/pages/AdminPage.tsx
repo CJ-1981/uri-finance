@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon, Eye } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon, Eye, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,7 +26,7 @@ import { UserRole } from "@/hooks/useUserRole";
 
 const AdminPage = () => {
   const { user } = useAuth();
-  const { projects, activeProject, fetchProjects, deleteProject } = useProjects();
+  const { projects, activeProject, fetchProjects, deleteProject, loading } = useProjects();
   const { categories, addCategory, addSubCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, fetchCategories } = useCategories(activeProject?.id);
   const { headers, draft, dirty, saving, updateDraft, saveHeaders, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, renameColumn, fetchColumns } = useCustomColumns(activeProject?.id);
@@ -224,6 +224,15 @@ const AdminPage = () => {
     await deleteProject(activeProject.id);
     navigate("/");
   };
+
+  if (loading && !activeProject) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground">{t("global.loading")}</p>
+      </div>
+    );
+  }
 
   if (!activeProject) {
     return (
