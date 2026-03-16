@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useImperativeHandle, forwardRef, useRef } from "react";
-import { ChevronDown, ChevronRight, Tag } from "lucide-react";
+import { ChevronDown, ChevronRight, Tag, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/hooks/useI18n";
@@ -36,37 +36,58 @@ const TreeItem = ({ node, depth, selectedCategoryId, onSelect, expandedNodes, on
 
   return (
     <div>
-      <button
-        onClick={() => onSelect(node.id)}
-        className={cn(
-          "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
-          selectedCategoryId === node.id
-            ? "bg-primary/10 text-primary"
-            : "text-foreground hover:bg-muted"
-        )}
-        style={{ paddingLeft: `${12 + depth * 16}px` }}
-      >
-        {!isMobile && currentIdx < 10 && (
-          <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
-            {indexToKey(currentIdx)}
-          </span>
-        )}
+      <div className="flex items-center gap-1">
+        {/* Explicit expand/collapse button */}
         {hasChildren && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onToggleExpand(node.id);
             }}
-            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            className={cn(
+              "shrink-0 rounded transition-colors",
+              isMobile
+                ? "p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
+                : "p-0.5 min-w-[20px] min-h-[20px] flex items-center justify-center text-muted-foreground hover:text-foreground"
+            )}
+            title={isExpanded ? t("tx.collapse") || "Collapse" : t("tx.expand") || "Expand"}
           >
-            {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            {isMobile ? (
+              isExpanded ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />
+            ) : (
+              isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
+            )}
           </button>
         )}
-        {node.icon && <span className="shrink-0">{node.icon}</span>}
-        <span className="truncate">{node.name}</span>
-      </button>
+        {/* Spacer if no children */}
+        {!hasChildren && (
+          <div className={cn(
+            isMobile ? "w-[36px] h-[36px]" : "w-[20px] h-[20px]"
+          )} />
+        )}
+        {/* Category selection button */}
+        <button
+          onClick={() => onSelect(node.id)}
+          className={cn(
+            "flex-1 text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+            selectedCategoryId === node.id
+              ? "bg-primary/10 text-primary"
+              : "text-foreground hover:bg-muted"
+          )}
+          style={{ paddingLeft: `${12 + depth * 16}px` }}
+        >
+          {!isMobile && currentIdx < 10 && (
+            <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
+              {indexToKey(currentIdx)}
+            </span>
+          )}
+          {node.icon && <span className="shrink-0">{node.icon}</span>}
+          <span className="truncate">{node.name}</span>
+        </button>
+      </div>
+      {/* Children container */}
       {hasChildren && isExpanded && (
-        <div>
+        <div className="flex flex-col">
           {node.children.map(child => (
             <TreeItem
               key={child.id}
@@ -188,7 +209,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
         handleSelect(categoryTreeOptions[idx].id);
       }
     }
-  }, [open, categoryTreeOptions, isMobile]);
+  }, [open, categoryTreeOptions, isMobile, handleSelect]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

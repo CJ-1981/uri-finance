@@ -78,6 +78,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.bulkNoChange": "No change",
     "tx.bulkType": "Type",
     "tx.bulkApply": "Apply to {n} items",
+    "tx.expand": "Expand",
+    "tx.collapse": "Collapse",
 
     // Projects
     "proj.projects": "Projects",
@@ -493,6 +495,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.bulkNoChange": "변경 없음",
     "tx.bulkType": "유형",
     "tx.bulkApply": "{n}개 항목에 적용",
+    "tx.expand": "펼치기",
+    "tx.collapse": "접기",
 
     // Projects
     "proj.projects": "프로젝트",
