@@ -103,32 +103,28 @@ END $$;
 
 -- Test 4: Verify ON DELETE behavior
 DO $$
+DECLARE
+  fk_del_action TEXT;
 BEGIN
   -- Check user_id has ON DELETE CASCADE
-  DECLARE
-    fk_del_action TEXT;
-  BEGIN
-    SELECT confdeltype::text
-    INTO fk_del_action
-    FROM pg_constraint
-    WHERE conname = 'user_preferences_user_id_fkey';
+  SELECT confdeltype::text
+  INTO fk_del_action
+  FROM pg_constraint
+  WHERE conname = 'user_preferences_user_id_fkey';
 
-    IF fk_del_action != 'c' THEN
-      RAISE EXCEPTION 'user_id should have ON DELETE CASCADE';
-    END IF;
-  END;
+  IF fk_del_action != 'c' THEN
+    RAISE EXCEPTION 'user_id should have ON DELETE CASCADE';
+  END IF;
 
   -- Check default_project_id has ON DELETE SET NULL
-  BEGIN
-    SELECT confdeltype::text
-    INTO fk_del_action
-    FROM pg_constraint
-    WHERE conname = 'user_preferences_default_project_id_fkey';
+  SELECT confdeltype::text
+  INTO fk_del_action
+  FROM pg_constraint
+  WHERE conname = 'user_preferences_default_project_id_fkey';
 
-    IF fk_del_action != 'n' THEN
-      RAISE EXCEPTION 'default_project_id should have ON DELETE SET NULL';
-    END IF;
-  END;
+  IF fk_del_action != 'n' THEN
+    RAISE EXCEPTION 'default_project_id should have ON DELETE SET NULL';
+  END IF;
 
   RAISE NOTICE '✓ Test 4 PASSED: ON DELETE behavior is correct';
 END $$;

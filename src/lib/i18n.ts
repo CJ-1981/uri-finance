@@ -218,6 +218,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.editCode": "Edit code",
     "cat.manageCategories": "Manage Categories",
     "cat.manageCategoriesDesc": "Add, remove, or reorder transaction categories.",
+    "cat.addSubCategory": "Add sub-category",
+    "cat.subCategoryPrompt": "Enter sub-category name:",
 
     // Export
     "export.csv": "Export as CSV",
@@ -631,6 +633,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.editCode": "코드 수정",
     "cat.manageCategories": "카테고리 관리",
     "cat.manageCategoriesDesc": "거래 카테고리를 추가, 삭제 또는 순서를 변경합니다.",
+    "cat.addSubCategory": "하위 카테고리 추가",
+    "cat.subCategoryPrompt": "하위 카테고리 이름을 입력하세요:",
 
     // Export
     "export.csv": "CSV로 내보내기",

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings2, Plus, X, GripVertical } from "lucide-react";
+import { Settings2, Plus, X, GripVertical, ChevronRight } from "lucide-react";
 import { Category } from "@/hooks/useCategories";
 import { useI18n } from "@/hooks/useI18n";
 import {
@@ -25,12 +25,14 @@ import { CSS } from "@dnd-kit/utilities";
 interface Props {
   categories: Category[];
   onAdd: (name: string, code?: string) => Promise<void>;
+  onAddSubCategory?: (parentId: string, name: string, code?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onUpdateName?: (id: string, name: string) => Promise<void>;
   onUpdateCode?: (id: string, code: string) => Promise<void>;
   onUpdateIcon?: (id: string, icon: string) => Promise<void>;
   onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   onReorderAll?: (orderedIds: string[]) => Promise<void>;
+  onUpdateParent?: (id: string, newParentId: string | null) => Promise<void>;
   inline?: boolean;
 }
 
@@ -55,6 +57,7 @@ const SortableCategoryItem = ({
   editIconValue,
   setEditIconValue,
   onUpdateIconFn,
+  onAddSubCategory,
   t,
 }: {
   cat: Category;
@@ -77,6 +80,7 @@ const SortableCategoryItem = ({
   editIconValue: string;
   setEditIconValue: (v: string) => void;
   onUpdateIconFn?: (id: string, icon: string) => Promise<void>;
+  onAddSubCategory?: (parentId: string, name: string, code?: string) => Promise<void>;
   t: (key: string) => string;
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: cat.id });
@@ -167,6 +171,20 @@ const SortableCategoryItem = ({
           {cat.name}
         </span>
       )}
+      {onAddSubCategory && (
+        <button
+          onClick={(e) => {
+            const newSubCatName = prompt(t("cat.subCategoryPrompt") || "Enter sub-category name:");
+            if (newSubCatName && newSubCatName.trim()) {
+              onAddSubCategory(cat.id, newSubCatName.trim());
+            }
+          }}
+          className="text-muted-foreground hover:text-income transition-colors p-1 shrink-0"
+          title={t("cat.addSubCategory") || "Add sub-category"}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      )}
       <button onClick={() => onDelete(cat.id)} className="text-muted-foreground hover:text-expense transition-colors p-1 shrink-0">
         <X className="h-3.5 w-3.5" />
       </button>
@@ -174,7 +192,7 @@ const SortableCategoryItem = ({
   );
 };
 
-const CategoryContent = ({ categories, onAdd, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll }: Omit<Props, "inline" | "onReorder">) => {
+const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll }: Omit<Props, "inline" | "onReorder">) => {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [adding, setAdding] = useState(false);
@@ -271,6 +289,7 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateName, onUpdateCo
                 editIconValue={editIconValue}
                 setEditIconValue={setEditIconValue}
                 onUpdateIconFn={onUpdateIcon}
+                onAddSubCategory={onAddSubCategory}
                 t={t}
               />
             ))}
@@ -281,12 +300,12 @@ const CategoryContent = ({ categories, onAdd, onDelete, onUpdateName, onUpdateCo
   );
 };
 
-const CategoryManager = ({ categories, onAdd, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorder, onReorderAll, inline }: Props) => {
+const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorder, onReorderAll, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
 
   if (inline) {
-    return <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />;
+    return <CategoryContent categories={categories} onAdd={onAdd} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />;
   }
 
   return (
@@ -302,7 +321,7 @@ const CategoryManager = ({ categories, onAdd, onDelete, onUpdateName, onUpdateCo
           <SheetDescription className="sr-only">{t("cat.manageCategoriesDesc")}</SheetDescription>
         </SheetHeader>
         <div className="mt-4">
-          <CategoryContent categories={categories} onAdd={onAdd} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />
+          <CategoryContent categories={categories} onAdd={onAdd} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />
         </div>
       </SheetContent>
     </Sheet>

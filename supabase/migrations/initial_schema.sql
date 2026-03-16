@@ -50,9 +50,16 @@ CREATE TABLE public.project_categories (
   code TEXT NOT NULL DEFAULT '',
   icon TEXT NOT NULL DEFAULT '',
   sort_order INTEGER NOT NULL DEFAULT 0,
+  parent_id UUID REFERENCES public.project_categories(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(project_id, name)
 );
+
+-- Add index for parent_id to enable efficient tree queries
+CREATE INDEX project_categories_parent_id_idx ON public.project_categories(parent_id);
+
+-- Add comment to explain the hierarchy
+COMMENT ON COLUMN public.project_categories.parent_id IS 'Parent category ID for sub-categories. NULL means top-level category.';
 
 -- Custom columns table
 CREATE TABLE public.custom_columns (

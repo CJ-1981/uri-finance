@@ -9,7 +9,12 @@ export interface Category {
   code: string;
   icon: string;
   sort_order: number;
+  parent_id: string | null;
   created_at: string;
+}
+
+export interface CategoryTreeNode extends Category {
+  children: CategoryTreeNode[];
 }
 
 export const useCategories = (projectId: string | undefined) => {
@@ -32,6 +37,38 @@ export const useCategories = (projectId: string | undefined) => {
   useEffect(() => {
     fetchCategories();
   }, [projectId]);
+
+  const buildCategoryTree = (categories: Category[]): CategoryTreeNode[] => {
+    const categoryMap = new Map<string, CategoryTreeNode>();
+    const roots: CategoryTreeNode[] = [];
+
+    // First pass: create nodes
+    categories.forEach(cat => {
+      categoryMap.set(cat.id, { ...cat, children: [] });
+    });
+
+    // Second pass: build tree
+    categories.forEach(cat => {
+      const node = categoryMap.get(cat.id)!;
+      if (cat.parent_id && categoryMap.has(cat.parent_id)) {
+        categoryMap.get(cat.parent_id)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  };
+
+  const flattenCategoryTree = (nodes: CategoryTreeNode[]): Category[] => {
+    const result: Category[] = [];
+    const traverse = (node: CategoryTreeNode) => {
+      result.push(node);
+      node.children.forEach(traverse);
+    };
+    nodes.forEach(traverse);
+    return result;
+  };
 
   const addCategory = async (name: string, code?: string) => {
     if (!projectId) return;
@@ -165,5 +202,65 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
-  return { categories, loading, addCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, fetchCategories };
+  const addSubCategory = async (parentId: string, name: string, code?: string) => {
+    if (!projectId) return;
+    const { error } = await supabase
+      .from("project_categories")
+      .insert({ project_id: projectId, name: name.trim(), code: code?.trim() || "", parent_id: parentId });
+    if (error) {
+      if (error.code === "23505") {
+        toast.error("Sub-category already exists");
+      } else {
+        toast.error("Failed to add sub-category");
+      }
+      return;
+    }
+    toast.success("Sub-category added!");
+    await fetchCategories();
+  };
+
+  const updateCategoryParent = async (id: string, newParentId: string | null) => {
+    // Prevent creating cycles
+    if (newParentId) {
+      let currentId = newParentId;
+      const visited = new Set<string>();
+      while (currentId) {
+        if (visited.has(currentId)) {
+          toast.error("Cannot create cycle in category hierarchy");
+          return;
+        }
+        visited.add(currentId);
+        const parent = categories.find(c => c.id === currentId);
+        if (!parent) break;
+        currentId = parent.parent_id || "";
+      }
+    }
+
+    const { error } = await supabase
+      .from("project_categories")
+      .update({ parent_id: newParentId })
+      .eq("id", id);
+    if (error) {
+      toast.error("Failed to update category parent");
+      return;
+    }
+    await fetchCategories();
+  };
+
+  return {
+    categories,
+    loading,
+    addCategory,
+    addSubCategory,
+    deleteCategory,
+    renameCategory,
+    updateCategoryCode,
+    updateCategoryIcon,
+    reorderCategory,
+    reorderCategories,
+    updateCategoryParent,
+    buildCategoryTree,
+    flattenCategoryTree,
+    fetchCategories,
+  };
 }
