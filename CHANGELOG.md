@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Korean Translation**: Corrected Korean translation for selectAll option to use "모두"
 - **Project Settings Access**: Restricted project settings export/import to owners only for security
+- **Mobile Category Dropdown Scrolling**: Fixed category dropdown scrolling issues on mobile devices:
+  - Added custom inline dropdown for mobile modal context to avoid Portal z-index conflicts
+  - Added visible 6px scrollbar for category dropdown on mobile devices
+  - Fixed tab navigation interference with category dropdown interaction
+  - Resolved z-index conflicts between PopoverContent and Drawer components
+  - Applied proper touch-action and overscroll-behavior for smooth mobile scrolling
 
 ### Changed
 - **Security Enhancement**: Moved Supabase auth tokens from localStorage to secure sessionStorage
