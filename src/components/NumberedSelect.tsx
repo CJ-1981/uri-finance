@@ -211,7 +211,7 @@ const NumberedSelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="min-w-[120px] w-fit p-1"
+        className="min-w-[180px] max-w-[300px] w-auto p-1"
         align="start"
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}

@@ -16,23 +16,41 @@ interface Props {
   onCategoryChange: (id: string | null) => void;
 }
 
+interface NameBasedProps {
+  categories: Category[];
+  selectedCategoryName: string | null;
+  onCategoryChange: (name: string | null) => void;
+}
+
 interface TreeItemProps {
   node: CategoryTreeNode;
   depth: number;
   selectedCategoryId: string | null;
+  focusedIndex: number | null;
+  globalIndex: number;
   onSelect: (id: string | null) => void;
   expandedNodes: Set<string>;
   onToggleExpand: (id: string) => void;
+  onSetFocus: (index: number) => void;
   isMobile: boolean;
-  indexToKey: (i: number) => string;
   t: (key: string) => string;
-  idxCounter: { value: number };
+  showShortcut?: boolean;
 }
 
-const TreeItem = ({ node, depth, selectedCategoryId, onSelect, expandedNodes, onToggleExpand, isMobile, indexToKey, t, idxCounter }: TreeItemProps) => {
+const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, onSelect, expandedNodes, onToggleExpand, onSetFocus, isMobile, t, showShortcut }: TreeItemProps) => {
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
-  const currentIdx = idxCounter.value++;
+  const isFocused = focusedIndex === globalIndex;
+  const getShortcutLabel = () => {
+    // Only show shortcuts for level 1 parent categories (depth === 0)
+    if (depth === 0) {
+      // Map level 1 categories to 1-9, with 0 for the 10th
+      if (globalIndex >= 1 && globalIndex <= 9) return String(globalIndex);
+      if (globalIndex === 10) return "0";
+    }
+    return undefined;
+  };
+  const displayShortcut = showShortcut !== false && getShortcutLabel();
 
   return (
     <div>
@@ -68,18 +86,18 @@ const TreeItem = ({ node, depth, selectedCategoryId, onSelect, expandedNodes, on
         {/* Category selection button */}
         <button
           onClick={() => onSelect(node.id)}
+          onFocus={() => onSetFocus(globalIndex)}
           className={cn(
             "flex-1 text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
             selectedCategoryId === node.id
               ? "bg-primary/10 text-primary"
-              : "text-foreground hover:bg-muted"
+              : "text-foreground hover:bg-muted",
+            isFocused && !isMobile && "ring-2 ring-primary ring-offset-2"
           )}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
-          {!isMobile && currentIdx < 10 && (
-            <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
-              {indexToKey(currentIdx)}
-            </span>
+          {displayShortcut && !isMobile && (
+            <span className="text-xs text-muted-foreground/50 font-mono w-4">{displayShortcut}</span>
           )}
           {node.icon && <span className="shrink-0">{node.icon}</span>}
           <span className="truncate">{node.name}</span>
@@ -88,19 +106,21 @@ const TreeItem = ({ node, depth, selectedCategoryId, onSelect, expandedNodes, on
       {/* Children container */}
       {hasChildren && isExpanded && (
         <div className="flex flex-col">
-          {node.children.map(child => (
+          {node.children.map((child, childIndex) => (
             <TreeItem
               key={child.id}
               node={child}
               depth={depth + 1}
               selectedCategoryId={selectedCategoryId}
+              focusedIndex={focusedIndex}
+              globalIndex={globalIndex + childIndex + 1}
               onSelect={onSelect}
               expandedNodes={expandedNodes}
               onToggleExpand={onToggleExpand}
+              onSetFocus={onSetFocus}
               isMobile={isMobile}
-              indexToKey={indexToKey}
               t={t}
-              idxCounter={idxCounter}
+              showShortcut={showShortcut}
             />
           ))}
         </div>
@@ -114,6 +134,14 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Reset focus when popover closes
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    if (!newOpen) {
+      setFocusedIndex(null);
+    }
+    setOpen(newOpen);
+  }, []);
 
   // Expose open method via ref
   useImperativeHandle(ref, () => ({
@@ -171,6 +199,20 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
   // Expand/collapse state for tree nodes
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
+  // Keyboard navigation state
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  // Build map of globalIndex -> category ID for keyboard shortcuts
+  const globalIndexToIdMap = useMemo(() => {
+    const map = new Map<number, string | null>();
+    map.set(0, null); // "All Categories"
+    let count = 1;
+    for (let i = 1; i < categoryTreeOptions.length; i++) {
+      map.set(count++, categoryTreeOptions[i].id);
+    }
+    return map;
+  }, [categoryTreeOptions]);
+
   const toggleExpanded = useCallback((id: string) => {
     setExpandedNodes(prev => {
       const next = new Set(prev);
@@ -183,13 +225,11 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
     });
   }, []);
 
-  const indexToKey = (i: number) => (i < 9 ? String(i + 1) : "0");
-  const keyToIndex = (key: string) => (key === "0" ? 9 : Number(key) - 1);
-
-  const handleSelect = (id: string | null) => {
+  const handleSelect = useCallback((id: string | null) => {
     onCategoryChange(id);
     setOpen(false);
-  };
+    setFocusedIndex(null);
+  }, [onCategoryChange]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (isMobile) return;
@@ -198,61 +238,157 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
         e.preventDefault();
         setOpen(true);
+        setFocusedIndex(0);
       }
       return;
     }
 
-    if (/^[0-9]$/.test(e.key)) {
-      e.preventDefault();
-      const idx = keyToIndex(e.key);
-      if (idx >= 0 && idx < categoryTreeOptions.length) {
-        handleSelect(categoryTreeOptions[idx].id);
-      }
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          if (prev === null) return 0;
+          return Math.min(prev + 1, categoryTreeOptions.length - 1);
+        });
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          if (prev === null) return 0;
+          return Math.max(prev - 1, 0);
+        });
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null) {
+            const hasChildren = categories.some(c => c.parent_id === categoryId);
+            if (hasChildren && !expandedNodes.has(categoryId)) {
+              toggleExpanded(categoryId);
+            }
+          }
+        }
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null && expandedNodes.has(categoryId)) {
+            // Collapse if expanded
+            toggleExpanded(categoryId);
+          } else if (focusedIndex > 0) {
+            // Move to parent/previous level
+            const currentDepth = categoryTreeOptions[focusedIndex].depth;
+            // Find first item with shallower depth
+            for (let i = focusedIndex - 1; i >= 0; i--) {
+              if (categoryTreeOptions[i].depth < currentDepth) {
+                setFocusedIndex(i);
+                break;
+              }
+            }
+          }
+        }
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          handleSelect(categoryTreeOptions[focusedIndex].id);
+        }
+        break;
+      case "+":
+      case "=":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null) {
+            const hasChildren = categories.some(c => c.parent_id === categoryId);
+            if (hasChildren) {
+              toggleExpanded(categoryId);
+            }
+          }
+        }
+        break;
+      case "-":
+      case "_":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null && expandedNodes.has(categoryId)) {
+            toggleExpanded(categoryId);
+          }
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setOpen(false);
+        setFocusedIndex(null);
+        break;
+      case "1":
+      case "2":
+      case "3":
+      case "4":
+      case "5":
+      case "6":
+      case "7":
+      case "8":
+      case "9":
+        e.preventDefault();
+        const targetId = globalIndexToIdMap.get(parseInt(e.key, 10));
+        if (targetId !== undefined) {
+          handleSelect(targetId);
+        }
+        break;
+      case "0":
+        e.preventDefault();
+        handleSelect(null); // "All Categories"
+        break;
     }
-  }, [open, categoryTreeOptions, isMobile, handleSelect]);
+  }, [open, categoryTreeOptions, isMobile, handleSelect, focusedIndex, categories, expandedNodes, toggleExpanded]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[150px]">
+        <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]">
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{activeLabel}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-48 p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
+      <PopoverContent align="start" className="min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
         {/* "All" option */}
         <button
           onClick={() => handleSelect(null)}
+          onFocus={() => setFocusedIndex(0)}
           className={cn(
             "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
             selectedCategoryId === null
               ? "bg-primary/10 text-primary"
-              : "text-foreground hover:bg-muted"
+              : "text-foreground hover:bg-muted",
+            focusedIndex === 0 && !isMobile && "ring-2 ring-primary ring-offset-2"
           )}
         >
-          {!isMobile && (
-            <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
-              {indexToKey(0)}
-            </span>
-          )}
+          {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{t("tx.selectAllCategories")}</span>
         </button>
         {/* Tree items */}
-        {categoryTree.map((node) => (
+        {categoryTree.map((node, index) => (
           <TreeItem
             key={node.id}
             node={node}
             depth={0}
             selectedCategoryId={selectedCategoryId}
+            focusedIndex={focusedIndex}
+            globalIndex={index + 1}
             onSelect={handleSelect}
             expandedNodes={expandedNodes}
             onToggleExpand={toggleExpanded}
+            onSetFocus={setFocusedIndex}
             isMobile={isMobile}
-            indexToKey={indexToKey}
             t={t}
-            idxCounter={{ value: 1 }}
+            showShortcut={true}
           />
         ))}
       </PopoverContent>
@@ -263,3 +399,282 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
 CategorySelector.displayName = "CategorySelector";
 
 export default CategorySelector;
+
+// Name-based category selector for modal forms
+const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(({ categories, selectedCategoryName, onCategoryChange }, ref) => {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Reset focus when popover closes
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    if (!newOpen) {
+      setFocusedIndex(null);
+    }
+    setOpen(newOpen);
+  }, []);
+
+  // Expose open method via ref
+  useImperativeHandle(ref, () => ({
+    open: () => {
+      setOpen(true);
+      triggerRef.current?.focus();
+    },
+  }), []);
+
+  // Build tree structure
+  const categoryTree = useMemo(() => {
+    const categoryMap = new Map<string, CategoryTreeNode>();
+    const roots: CategoryTreeNode[] = [];
+
+    // First pass: create nodes
+    categories.forEach(cat => {
+      categoryMap.set(cat.id, { ...cat, children: [] });
+    });
+
+    // Second pass: build tree
+    categories.forEach(cat => {
+      const node = categoryMap.get(cat.id)!;
+      if (cat.parent_id && categoryMap.has(cat.parent_id)) {
+        categoryMap.get(cat.parent_id)!.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    });
+
+    return roots;
+  }, [categories]);
+
+  // Build flattened list for keyboard navigation (with indentation info)
+  const categoryTreeOptions = useMemo(() => {
+    const result: Array<{ id: string | null; name: string; icon?: string; depth: number }> = [
+      { id: null, name: t("tx.selectAllCategories"), icon: undefined, depth: 0 },
+    ];
+
+    const flattenTree = (nodes: CategoryTreeNode[], depth: number = 0) => {
+      nodes.forEach(node => {
+        result.push({ id: node.id, name: node.name, icon: node.icon || undefined, depth });
+        if (node.children.length > 0) {
+          flattenTree(node.children, depth + 1);
+        }
+      });
+    };
+
+    flattenTree(categoryTree);
+    return result;
+  }, [categoryTree, t]);
+
+  const selectedCategory = categories.find((c) => c.name === selectedCategoryName);
+  const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAllCategories");
+
+  // Expand/collapse state for tree nodes
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  // Keyboard navigation state
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  // Build map of globalIndex -> category ID for keyboard shortcuts
+  const globalIndexToIdMap = useMemo(() => {
+    const map = new Map<number, string | null>();
+    map.set(0, null); // "All Categories"
+    let count = 1;
+    for (let i = 1; i < categoryTreeOptions.length; i++) {
+      map.set(count++, categoryTreeOptions[i].id);
+    }
+    return map;
+  }, [categoryTreeOptions]);
+
+  const toggleExpanded = useCallback((id: string) => {
+    setExpandedNodes(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelect = useCallback((id: string | null) => {
+    if (id === null) {
+      onCategoryChange(null);
+    } else {
+      const category = categories.find(c => c.id === id);
+      if (category) {
+        onCategoryChange(category.name);
+      }
+    }
+    setOpen(false);
+    setFocusedIndex(null);
+  }, [onCategoryChange, categories]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (isMobile) return;
+
+    if (!open) {
+      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+        e.preventDefault();
+        setOpen(true);
+        setFocusedIndex(0);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          if (prev === null) return 0;
+          return Math.min(prev + 1, categoryTreeOptions.length - 1);
+        });
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setFocusedIndex(prev => {
+          if (prev === null) return 0;
+          return Math.max(prev - 1, 0);
+        });
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null) {
+            const hasChildren = categories.some(c => c.parent_id === categoryId);
+            if (hasChildren && !expandedNodes.has(categoryId)) {
+              toggleExpanded(categoryId);
+            }
+          }
+        }
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null && expandedNodes.has(categoryId)) {
+            // Collapse if expanded
+            toggleExpanded(categoryId);
+          } else if (focusedIndex > 0) {
+            // Move to parent/previous level
+            const currentDepth = categoryTreeOptions[focusedIndex].depth;
+            // Find first item with shallower depth
+            for (let i = focusedIndex - 1; i >= 0; i--) {
+              if (categoryTreeOptions[i].depth < currentDepth) {
+                setFocusedIndex(i);
+                break;
+              }
+            }
+          }
+        }
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          handleSelect(categoryTreeOptions[focusedIndex].id);
+        }
+        break;
+      case "+":
+      case "=":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null) {
+            const hasChildren = categories.some(c => c.parent_id === categoryId);
+            if (hasChildren) {
+              toggleExpanded(categoryId);
+            }
+          }
+        }
+        break;
+      case "-":
+      case "_":
+        e.preventDefault();
+        if (focusedIndex !== null && focusedIndex < categoryTreeOptions.length) {
+          const categoryId = categoryTreeOptions[focusedIndex].id;
+          if (categoryId !== null && expandedNodes.has(categoryId)) {
+            toggleExpanded(categoryId);
+          }
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setOpen(false);
+        setFocusedIndex(null);
+        break;
+      case "1":
+      case "2":
+      case "3":
+      case "4":
+      case "5":
+      case "6":
+      case "7":
+      case "8":
+      case "9":
+        e.preventDefault();
+        const targetId = globalIndexToIdMap.get(parseInt(e.key, 10));
+        if (targetId !== undefined) {
+          handleSelect(targetId);
+        }
+        break;
+      case "0":
+        e.preventDefault();
+        handleSelect(null); // "All Categories"
+        break;
+    }
+  }, [open, categoryTreeOptions, isMobile, handleSelect, focusedIndex, categories, expandedNodes, toggleExpanded, globalIndexToIdMap]);
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverTrigger asChild>
+        <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]">
+          <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{activeLabel}</span>
+          <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="min-w-[250px] max-w-[400px] w-auto p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
+        {/* "All" option */}
+        <button
+          onClick={() => handleSelect(null)}
+          onFocus={() => setFocusedIndex(0)}
+          className={cn(
+            "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+            selectedCategoryName === null
+              ? "bg-primary/10 text-primary"
+              : "text-foreground hover:bg-muted",
+            focusedIndex === 0 && !isMobile && "ring-2 ring-primary ring-offset-2"
+          )}
+        >
+          {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
+          <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{t("tx.selectAllCategories")}</span>
+        </button>
+        {/* Tree items */}
+        {categoryTree.map((node, index) => (
+          <TreeItem
+            key={node.id}
+            node={node}
+            depth={0}
+            selectedCategoryId={selectedCategory ? selectedCategory.id : null}
+            focusedIndex={focusedIndex}
+            globalIndex={index + 1}
+            onSelect={handleSelect}
+            expandedNodes={expandedNodes}
+            onToggleExpand={toggleExpanded}
+            onSetFocus={setFocusedIndex}
+            isMobile={isMobile}
+            t={t}
+            showShortcut={true}
+          />
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+});
+
+CategoryNameSelector.displayName = "CategoryNameSelector";
+
+export { CategoryNameSelector };

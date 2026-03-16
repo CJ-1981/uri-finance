@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CategoryNameSelector } from "@/components/CategorySelector";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -299,12 +300,10 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
       {/* Category */}
       <div className="space-y-2 min-w-0">
         <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-        <NumberedSelect
-          value={category}
-          onValueChange={setCategory}
-          items={categories.map((c) => ({ value: c.name, label: c.name }))}
-          showNumbers
-          className="bg-muted/50 border-border/50 min-w-0"
+        <CategoryNameSelector
+          categories={categories}
+          selectedCategoryName={category}
+          onCategoryChange={setCategory}
         />
       </div>
 
@@ -325,7 +324,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                       value: opt,
                       label: <ColoredBadge value={opt} colorKey={(col.suggestion_colors as Record<string, string>)?.[opt]} />
                     }))}
-                    className="bg-muted/50 border-border/50"
+                    className="bg-muted/50 border-border/50 min-w-0"
                     showNumbers
                   />
                 ) : col.column_type === "text" && columnSuggestions[col.name]?.length > 0 && isOwn ? (
@@ -406,14 +405,14 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             </PopoverContent>
           </Popover>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
           <NumberedSelect
             value={currency}
             onValueChange={setCurrency}
             disabled={!isOwn}
             items={CURRENCIES.map((c) => ({ value: c, label: c }))}
-            className="bg-muted/50 border-border/50"
+            className="bg-muted/50 border-border/50 min-w-0"
             showNumbers
           />
         </div>
