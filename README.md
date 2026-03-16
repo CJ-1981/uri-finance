@@ -212,10 +212,38 @@ The production files will be in the `dist/` directory.
 ## Deployment
 
 This application is designed to be deployed on platforms like:
+- **GitHub Pages** (Recommended) - Free static hosting with GitHub Actions
 - Vercel
 - Netlify
 - Supabase Hosting
 - Any static file hosting
+
+### GitHub Pages Deployment (Recommended)
+
+The application is optimized for GitHub Pages deployment with automatic build and deployment workflows. See [docs/GITHUB_PAGES_SETUP.md](docs/GITHUB_PAGES_SETUP.md) for detailed setup instructions.
+
+**Automatic Deployment Setup:**
+1. Enable GitHub Pages in your repository settings
+2. Configure required secrets in repository settings
+3. The GitHub Actions workflow will automatically deploy on main branch pushes
+
+**Deployment Command:**
+```bash
+# Build for GitHub Pages (includes SPA routing support)
+npm run build:gh
+
+# Or for development build (local testing)
+npm run build
+```
+
+**Environment Variables for Production:**
+When deploying to GitHub Pages, ensure these environment variables are configured:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_SUPABASE_PROJECT_ID`
+- `VITE_SYSTEM_ADMIN_EMAILS` (optional, for system admin access)
+
+For more detailed information, see [docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md).
 
 ### Environment Variables in Production
 

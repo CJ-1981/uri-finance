@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-03-16
+
+### Added
+- **GitHub Pages Migration**: Complete migration from lovable.dev to GitHub Pages for better CI/CD integration
+  - GitHub Actions workflow with automated build and deployment
+  - Dynamic base path configuration for custom domain and default GitHub Pages URL support
+  - SPA routing solution with 404.html fallback for direct route access
+  - 53 characterization tests for behavior preservation
+  - Comprehensive deployment documentation and setup guides
+
+### Infrastructure
+- **Build Configuration**: Updated Vite configuration with dynamic base path support
+- **Environment Variables**: Added VITE_BASE_URL for flexible base path configuration
+- **Deployment Script**: New `build:gh` command for GitHub Pages optimized builds
+- **SPA Routing**: Implemented 404.html solution to handle direct route access on static hosting
+- **Test Suite**: Added comprehensive test coverage for build configuration and routing
+
+### Documentation
+- **GitHub Pages Setup**: Complete setup documentation in `docs/GITHUB_PAGES_SETUP.md`
+- **Migration Guide**: Step-by-step migration guide in `docs/MIGRATION_GUIDE.md`
+- **Environment Configuration**: Updated environment variable documentation for GitHub Pages
+- **README Updates**: Added deployment section with GitHub Pages instructions
+
+### Security
+- **Secret Management**: Proper GitHub Secrets configuration for Supabase credentials
+- **Build Security**: No sensitive data exposure in production builds
+- **Asset Optimization**: Excluded development-only plugins (lovable-tagger) from production bundle
+
+### Performance
+- **Bundle Size**: Optimized for GitHub Pages hosting constraints
+- **Asset Loading**: Correct base path configuration for static assets
+- **Load Times**: Maintained acceptable performance thresholds
+
 ## [Unreleased]
 
 ### Added
