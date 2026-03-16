@@ -683,7 +683,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
         ref={popoverContentRef}
         align="start"
         className={cn(
-          "min-w-[250px] max-w-[400px] w-auto p-1 pointer-events-auto",
+          "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
           isMobile && "max-h-[60vh]",
           isMobile && "z-[100]"
         )}

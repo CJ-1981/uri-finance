@@ -212,7 +212,7 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
           {/* Dropdown content */}
           <div
             className={cn(
-              "absolute left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-[70]",
+              "absolute left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-[70] min-w-[200px] max-w-[300px]",
               isMobile ? "max-h-[60vh] overflow-y-auto" : "max-h-[400px] overflow-y-auto"
             )}
             style={{
