@@ -81,6 +81,16 @@ const AppLockGate = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   usePreventZoom();
 
+  useEffect(() => {
+    console.log('App: Component mounted');
+    // Add global error handler
+    const handleError = (event: ErrorEvent) => {
+      console.error('App: Global error caught', event.error);
+    };
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <I18nProvider>

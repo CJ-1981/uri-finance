@@ -20,21 +20,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    console.log('AuthProvider: Initializing authentication...');
+
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          console.log('AuthProvider: Auth state changed', { event: _event, hasSession: !!session });
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
+
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        if (error) {
+          console.error('AuthProvider: Get session error', error);
+        } else {
+          console.log('AuthProvider: Session retrieved', { hasSession: !!session });
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
         setLoading(false);
-      }
-    );
+      }).catch(err => {
+        console.error('AuthProvider: Session promise rejected', err);
+        setLoading(false);
+      });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      return () => subscription.unsubscribe();
+    } catch (error) {
+      console.error('AuthProvider: Initialization error', error);
       setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
   const signUp = async (email: string, password: string) => {
