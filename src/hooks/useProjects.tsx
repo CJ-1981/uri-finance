@@ -120,8 +120,8 @@ export const useProjects = () => {
       const { data } = await supabase
         .from("projects")
         .select("*")
-        .in("id", ids)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .in("id", ids);
       setProjects((data as Project[]) || []);
 
       // Restore active project from server preference or localStorage, or fall back to first project

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -26,12 +26,24 @@ const RouteRestoration = () => {
 
   useEffect(() => {
     const sessionKey = "redirect-path";
+    const isRestoring = useRef(false);
     const savedPath = sessionStorage.getItem(sessionKey);
 
-    if (savedPath && savedPath !== "/") {
-      sessionStorage.removeItem(sessionKey);
-      navigate(savedPath, { replace: true });
+    // Prevent infinite navigation loops
+    if (isRestoring.current || !savedPath || savedPath === "/") {
+      return;
     }
+
+    isRestoring.current = true;
+
+    // Clear saved path and navigate
+    sessionStorage.removeItem(sessionKey);
+    navigate(savedPath, { replace: true });
+
+    // Mark restoration as complete after a delay
+    setTimeout(() => {
+      isRestoring.current = false;
+    }, 100);
   }, [navigate]);
 
   return null;
