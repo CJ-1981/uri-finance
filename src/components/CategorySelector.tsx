@@ -187,13 +187,13 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
 
   // Build flattened list for keyboard navigation (with indentation info)
   const categoryTreeOptions = useMemo(() => {
-    const result: Array<{ id: string | null; name: string; icon?: string; depth: number }> = [
-      { id: null, name: t("tx.selectAllCategories"), icon: undefined, depth: 0 },
+    const result: Array<{ id: string | null; name: string; icon?: string; depth: number; nodeId: string }> = [
+      { id: null, name: t("tx.selectAllCategories"), icon: undefined, depth: 0, nodeId: "all" },
     ];
 
     const flattenTree = (nodes: CategoryTreeNode[], depth: number = 0) => {
       nodes.forEach(node => {
-        result.push({ id: node.id, name: node.name, icon: node.icon || undefined, depth });
+        result.push({ id: node.id, name: node.name, icon: node.icon || undefined, depth, nodeId: node.id });
         if (node.children.length > 0) {
           flattenTree(node.children, depth + 1);
         }
@@ -213,13 +213,16 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
   // Keyboard navigation state
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
-  // Build map of globalIndex -> category ID for keyboard shortcuts
+  // Build map of globalIndex -> category ID for keyboard shortcuts (parent-level only)
   const globalIndexToIdMap = useMemo(() => {
     const map = new Map<number, string | null>();
     map.set(0, null); // "All Categories"
     let count = 1;
+    // Only map parent-level categories (depth 0) for shortcuts
     for (let i = 1; i < categoryTreeOptions.length; i++) {
-      map.set(count++, categoryTreeOptions[i].id);
+      if (categoryTreeOptions[i].depth === 0) {
+        map.set(count++, categoryTreeOptions[i].id);
+      }
     }
     return map;
   }, [categoryTreeOptions]);
@@ -493,13 +496,13 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
 
   // Build flattened list for keyboard navigation (with indentation info)
   const categoryTreeOptions = useMemo(() => {
-    const result: Array<{ id: string | null; name: string; icon?: string; depth: number }> = [
-      { id: null, name: t("tx.selectAllCategories"), icon: undefined, depth: 0 },
+    const result: Array<{ id: string | null; name: string; icon?: string; depth: number; nodeId: string }> = [
+      { id: null, name: t("tx.selectAllCategories"), icon: undefined, depth: 0, nodeId: "all" },
     ];
 
     const flattenTree = (nodes: CategoryTreeNode[], depth: number = 0) => {
       nodes.forEach(node => {
-        result.push({ id: node.id, name: node.name, icon: node.icon || undefined, depth });
+        result.push({ id: node.id, name: node.name, icon: node.icon || undefined, depth, nodeId: node.id });
         if (node.children.length > 0) {
           flattenTree(node.children, depth + 1);
         }
@@ -519,13 +522,16 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
   // Keyboard navigation state
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
-  // Build map of globalIndex -> category ID for keyboard shortcuts
+  // Build map of globalIndex -> category ID for keyboard shortcuts (parent-level only)
   const globalIndexToIdMap = useMemo(() => {
     const map = new Map<number, string | null>();
     map.set(0, null); // "All Categories"
     let count = 1;
+    // Only map parent-level categories (depth 0) for shortcuts
     for (let i = 1; i < categoryTreeOptions.length; i++) {
-      map.set(count++, categoryTreeOptions[i].id);
+      if (categoryTreeOptions[i].depth === 0) {
+        map.set(count++, categoryTreeOptions[i].id);
+      }
     }
     return map;
   }, [categoryTreeOptions]);
