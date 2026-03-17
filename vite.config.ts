@@ -23,3 +23,5 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+
+// Cache busting: 2026-03-17 19:35
