@@ -23,10 +23,17 @@ const queryClient = new QueryClient();
 // GitHub Pages SPA routing: Restore route from 404.html redirect
 const RouteRestoration = () => {
   const navigate = useNavigate();
+  const isRestoring = useRef(false);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
+    // Guard against duplicate execution (e.g., React Strict Mode)
+    if (hasInitialized.current) {
+      return;
+    }
+    hasInitialized.current = true;
+
     const sessionKey = "redirect-path";
-    const isRestoring = useRef(false);
     const savedPath = sessionStorage.getItem(sessionKey);
 
     // Prevent infinite navigation loops
@@ -44,7 +51,7 @@ const RouteRestoration = () => {
     setTimeout(() => {
       isRestoring.current = false;
     }, 100);
-  }, [navigate]);
+  }, []); // Empty deps - run once on mount
 
   return null;
 };
