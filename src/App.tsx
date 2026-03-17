@@ -102,7 +102,7 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 <AppLockGate>
-                  <BrowserRouter basename="/" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <BrowserRouter basename="/uri-finance" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <RouteRestoration />
                     <Routes>
                       <Route path="/" element={<Index />} />
