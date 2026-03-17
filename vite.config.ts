@@ -5,7 +5,7 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: process.env.VITE_BASE_URL || "/uri-finance/",
+  base: process.env.VITE_BASE_URL || "/",
   define: {
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
