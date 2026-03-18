@@ -74,7 +74,7 @@ const AuthCallback = () => {
         // Token is present but session not yet ready - retry
         if (retryCount < maxRetries) {
           retryCount++;
-          console.log(`AuthCallback: Still processing (retry ${retryCount}/${maxRetries})...`);
+          console.log(`AuthCallback: [V2-RETRY] Still processing (retry ${retryCount}/${maxRetries})...`);
           setTimeout(checkSession, 1000); // Check again in 1 second
         } else {
           console.log('AuthCallback: Session verification timed out');
