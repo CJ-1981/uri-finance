@@ -10,6 +10,7 @@ import { I18nProvider } from "@/hooks/useI18n";
 import { usePreventZoom } from "@/hooks/usePreventZoom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
 import GlobalAdminPage from "./pages/GlobalAdminPage";
@@ -45,7 +46,20 @@ const RouteRestoration = () => {
 
     // Clear saved path and navigate
     sessionStorage.removeItem(sessionKey);
-    navigate(savedPath, { replace: true });
+
+    // Ensure we strip the basename from the path before navigating internally
+    const basename = "/uri-finance";
+    let finalPath = savedPath;
+    if (finalPath.startsWith(basename)) {
+      finalPath = finalPath.slice(basename.length);
+    }
+    // Ensure it starts with /
+    if (!finalPath.startsWith("/")) {
+      finalPath = "/" + finalPath;
+    }
+
+    console.log('App: Restoring route to', finalPath);
+    navigate(finalPath, { replace: true });
 
     // Mark restoration as complete after a delay
     setTimeout(() => {
@@ -107,6 +121,7 @@ const App = () => {
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
+                      <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="/admin" element={<AdminPage />} />
                       <Route path="/global-admin" element={<GlobalAdminPage />} />
                       <Route path="*" element={<NotFound />} />
