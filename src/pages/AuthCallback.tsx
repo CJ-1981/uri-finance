@@ -41,12 +41,12 @@ const AuthCallback = () => {
     }
 
     // Supabase client automatically processes the hash fragment
-    // We just need to wait for the session to be established
+    // We use a retry mechanism to wait for the session to be established
+    let retryCount = 0;
+    const maxRetries = 10; // Up to 10 seconds
+
     const checkSession = async () => {
       try {
-        // Give Supabase client time to process the hash
-        await new Promise(resolve => setTimeout(resolve, 500));
-
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -60,16 +60,26 @@ const AuthCallback = () => {
           console.log('AuthCallback: Session established, redirecting to dashboard');
           // Clear the hash to avoid re-processing
           window.history.replaceState({}, document.title, window.location.pathname);
-
-          // Redirect to dashboard
           navigate('/', { replace: true });
-        } else if (!hasAccessToken) {
+          return;
+        } 
+        
+        if (!hasAccessToken) {
           // No auth hash and no session - redirect to auth page
           console.log('AuthCallback: No auth hash, redirecting to auth page');
           navigate('/auth', { replace: true });
+          return;
+        }
+
+        // Token is present but session not yet ready - retry
+        if (retryCount < maxRetries) {
+          retryCount++;
+          console.log(`AuthCallback: Still processing (retry ${retryCount}/${maxRetries})...`);
+          setTimeout(checkSession, 1000); // Check again in 1 second
         } else {
-          // Still processing - wait a bit longer
-          console.log('AuthCallback: Still processing, waiting...');
+          console.log('AuthCallback: Session verification timed out');
+          setError('Authentication timed out. Please try logging in again.');
+          setProcessing(false);
         }
       } catch (err) {
         console.error('AuthCallback: Unexpected error', err);
