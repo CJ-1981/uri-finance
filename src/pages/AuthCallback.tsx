@@ -22,19 +22,28 @@ const AuthCallback = () => {
   useEffect(() => {
     console.log('AuthCallback: Component mounted, processing auth hash...');
 
-    // Check if there's an access_token in the hash
+    // Check if there's an access_token in the hash OR a code in the query (PKCE)
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const searchParams = new URLSearchParams(window.location.search);
+    
     const hasAccessToken = hashParams.has('access_token');
-    const hasError = hashParams.has('error');
+    const hasCode = searchParams.has('code');
+    const hasError = hashParams.has('error') || searchParams.has('error');
 
-    console.log('AuthCallback: Hash params', {
+    console.log('AuthCallback: Params detection', {
       hasAccessToken,
+      hasCode,
       hasError,
-      hashLength: window.location.hash.length
+      hashLength: window.location.hash.length,
+      search: window.location.search
     });
 
     if (hasError) {
-      const errorMessage = hashParams.get('error_description') || hashParams.get('error') || 'Unknown error';
+      const errorMessage = hashParams.get('error_description') || 
+                           searchParams.get('error_description') || 
+                           hashParams.get('error') || 
+                           searchParams.get('error') || 
+                           'Unknown error';
       setError(errorMessage);
       setProcessing(false);
       return;
@@ -58,26 +67,26 @@ const AuthCallback = () => {
 
         if (session) {
           console.log('AuthCallback: Session established, redirecting to dashboard');
-          // Clear the hash to avoid re-processing
+          // Clear hash/query to avoid re-processing
           window.history.replaceState({}, document.title, window.location.pathname);
           navigate('/', { replace: true });
           return;
         } 
         
-        if (!hasAccessToken) {
-          // No auth hash and no session - redirect to auth page
-          console.log('AuthCallback: No auth hash, redirecting to auth page');
+        if (!hasAccessToken && !hasCode) {
+          // No auth credentials (token or code) and no session - redirect to auth page
+          console.log('AuthCallback: No auth credentials found, redirecting to auth page');
           navigate('/auth', { replace: true });
           return;
         }
 
-        // Token is present but session not yet ready - retry
+        // Credentials are present but session not yet established - retry
         if (retryCount < maxRetries) {
           retryCount++;
-          console.log(`AuthCallback: [V2-RETRY] Still processing (retry ${retryCount}/${maxRetries})...`);
+          console.log(`AuthCallback: [V3-PKCE] Still processing (retry ${retryCount}/${maxRetries})...`);
           setTimeout(checkSession, 1000); // Check again in 1 second
         } else {
-          console.log('AuthCallback: Session verification timed out');
+          console.log('AuthCallback: Authentication verification timed out');
           setError('Authentication timed out. Please try logging in again.');
           setProcessing(false);
         }
