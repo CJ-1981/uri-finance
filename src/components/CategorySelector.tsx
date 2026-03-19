@@ -41,6 +41,11 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, 
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
   const isFocused = focusedIndex === globalIndex;
+
+  // Debug: log when this item is focused
+  if (isFocused && !isMobile) {
+    console.log(`[CategorySelector] Focused: "${node.name}" (globalIndex=${globalIndex}, focusedIndex=${focusedIndex}, depth=${depth})`);
+  }
   const getShortcutLabel = () => {
     // Only show shortcuts for level 1 parent categories (depth === 0)
     if (depth === 0) {
@@ -261,15 +266,19 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       case "ArrowDown":
         e.preventDefault();
         setFocusedIndex(prev => {
-          if (prev === null) return 0;
-          return Math.min(prev + 1, categoryTreeOptions.length - 1);
+          const next = prev === null ? 0 : Math.min(prev + 1, categoryTreeOptions.length - 1);
+          const nextItem = categoryTreeOptions[next];
+          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          return next;
         });
         break;
       case "ArrowUp":
         e.preventDefault();
         setFocusedIndex(prev => {
-          if (prev === null) return 0;
-          return Math.max(prev - 1, 0);
+          const next = prev === null ? 0 : Math.max(prev - 1, 0);
+          const nextItem = categoryTreeOptions[next];
+          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          return next;
         });
         break;
       case "ArrowRight":
@@ -577,15 +586,19 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
       case "ArrowDown":
         e.preventDefault();
         setFocusedIndex(prev => {
-          if (prev === null) return 0;
-          return Math.min(prev + 1, categoryTreeOptions.length - 1);
+          const next = prev === null ? 0 : Math.min(prev + 1, categoryTreeOptions.length - 1);
+          const nextItem = categoryTreeOptions[next];
+          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          return next;
         });
         break;
       case "ArrowUp":
         e.preventDefault();
         setFocusedIndex(prev => {
-          if (prev === null) return 0;
-          return Math.max(prev - 1, 0);
+          const next = prev === null ? 0 : Math.max(prev - 1, 0);
+          const nextItem = categoryTreeOptions[next];
+          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          return next;
         });
         break;
       case "ArrowRight":
