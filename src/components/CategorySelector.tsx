@@ -680,7 +680,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
   return (
     <Popover open={open} onOpenChange={handleOpenChange} modal={isMobile}>
       <PopoverTrigger asChild>
-        <button ref={triggerRef} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]">
+        <button ref={triggerRef} tabIndex={0} data-tab-stop={!open ? "" : undefined} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]">
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{activeLabel}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />

@@ -191,10 +191,11 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
     >
       <button
         type="button"
+        tabIndex={0}
         onClick={handleToggle}
+        data-tab-stop={!open ? "" : undefined}
         className={cn(
-          "flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]",
-          !open && "data-tab-stop"
+          "flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]"
         )}
       >
         <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
