@@ -45,7 +45,7 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
-  const { projects, activeProject, setActiveProject, createProject, joinProject, loading } = useProjects();
+  const { projects, activeProject, setActiveProject, createProject, joinProject, loading, isSystemAdmin } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
@@ -256,6 +256,7 @@ const Dashboard = () => {
               onSelect={setActiveProject}
               onCreate={createProject}
               onJoin={joinProject}
+              isSystemAdmin={isSystemAdmin}
             />
             {activeProject && (
               <>

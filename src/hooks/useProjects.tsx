@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
+import { useSystemAdmin } from "@/hooks/useSystemAdmin";
 
 export interface Project {
   id: string;
@@ -19,6 +20,7 @@ type ProjectSource = 'user-selection' | 'cache' | 'server';
 export const useProjects = () => {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { isSystemAdmin } = useSystemAdmin();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   // Initialize activeProject from localStorage cache to prevent flicker
@@ -202,6 +204,13 @@ export const useProjects = () => {
 
   const createProject = async (name: string, description?: string) => {
     if (!user) return;
+
+    // Only system admins can create projects
+    if (!isSystemAdmin) {
+      toast.error("Only system administrators can create projects");
+      return;
+    }
+
     const { data, error } = await supabase
       .from("projects")
       .insert({ name, description, owner_id: user.id })
@@ -434,6 +443,7 @@ export const useProjects = () => {
     joinProject,
     fetchProjects,
     clearProjectCache,
-    deleteProject
+    deleteProject,
+    isSystemAdmin
   };
 };

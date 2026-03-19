@@ -17,11 +17,12 @@ interface Props {
   onSelect: (p: Project) => void;
   onCreate: (name: string, desc?: string) => Promise<void>;
   onJoin: (code: string) => Promise<void>;
+  isSystemAdmin?: boolean;
 }
 
-const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, active, onSelect, onCreate, onJoin }, ref) => {
+const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, active, onSelect, onCreate, onJoin, isSystemAdmin = false }, ref) => {
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"list" | "create" | "join">("list");
+  const [tab, setTab] = useState<"list" | "create" | "join">(isSystemAdmin ? "list" : "list");
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [code, setCode] = useState("");
@@ -67,7 +68,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
         <div className="mt-4 flex gap-2">
           {([
             { key: "list" as const, label: t("proj.myProjects") },
-            { key: "create" as const, label: t("proj.createNew") },
+            ...(isSystemAdmin ? [{ key: "create" as const, label: t("proj.createNew") }] : []),
             { key: "join" as const, label: t("proj.join") },
           ]).map(({ key, label }) => (
             <button
