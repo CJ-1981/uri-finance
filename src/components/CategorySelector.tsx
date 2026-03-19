@@ -42,9 +42,14 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, 
   const isExpanded = expandedNodes.has(node.id);
   const isFocused = focusedIndex === globalIndex;
 
+  // Debug: log all TreeItem renders
+  if (!isMobile) {
+    console.log(`[CategorySelector] Rendering: "${node.name}" (globalIndex=${globalIndex}, depth=${depth}, hasChildren=${hasChildren}, childrenCount=${node.children.length})`);
+  }
+
   // Debug: log when this item is focused
   if (isFocused && !isMobile) {
-    console.log(`[CategorySelector] Focused: "${node.name}" (globalIndex=${globalIndex}, focusedIndex=${focusedIndex}, depth=${depth}, isExpanded=${isExpanded}, hasChildren=${hasChildren})`);
+    console.log(`[CategorySelector] >>> FOCUSED: "${node.name}" (globalIndex=${globalIndex}, focusedIndex=${focusedIndex})`);
   }
   const getShortcutLabel = () => {
     // Only show shortcuts for level 1 parent categories (depth === 0)
