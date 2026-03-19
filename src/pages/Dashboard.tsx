@@ -18,6 +18,7 @@ import CategorySelector, { CategorySelectorHandle } from "@/components/CategoryS
 import PinSetupDialog from "@/components/PinSetupDialog";
 import PinDisableDialog from "@/components/PinDisableDialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { LogOut, BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus, Loader2 } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
 import ShortcutSettings from "@/components/ShortcutSettings";
@@ -314,9 +315,16 @@ const Dashboard = () => {
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={signOut} className="text-muted-foreground hover:text-foreground">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{user?.email || "Logged out"}</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
         {activeProject && (
