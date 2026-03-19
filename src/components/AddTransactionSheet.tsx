@@ -362,9 +362,16 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Ctrl+Enter or Cmd+Enter → submit
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
       e.preventDefault();
       formRef.current?.requestSubmit();
+      return;
+    }
+
+    // Shift+Ctrl+Enter or Shift+Cmd+Enter → add and continue
+    if (e.key === "Enter" && e.shiftKey && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      handleAddAndContinue();
       return;
     }
 
@@ -607,17 +614,31 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             disabled={submitting}
             onClick={handleAddAndContinue}
             variant="outline"
-            className="flex-1 font-semibold h-12"
+            className="flex-1 font-semibold h-12 justify-center gap-2"
           >
-            {submitting ? t("tx.adding") : t("tx.addAndContinue")}
+            {submitting ? t("tx.adding") : (
+              <>
+                <span>{t("tx.addAndContinue")}</span>
+                <kbd className="hidden sm:inline-flex h-5 px-1.5 items-center gap-1 rounded bg-muted/70 text-[10px] font-mono text-muted-foreground pointer-events-none border border-border/50">
+                  <span>⌘</span><span>⇧</span><span>⏎</span>
+                </kbd>
+              </>
+            )}
           </Button>
           <Button
             type="submit"
             data-tab-stop
             disabled={submitting}
-            className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+            className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 justify-center gap-2"
           >
-            {submitting ? t("tx.adding") : t("tx.addTransaction")}
+            {submitting ? t("tx.adding") : (
+              <>
+                <span>{t("tx.addTransaction")}</span>
+                <kbd className="hidden sm:inline-flex h-5 px-1.5 items-center gap-1 rounded bg-primary-foreground/20 text-[10px] font-mono text-primary-foreground/80 pointer-events-none border border-primary-foreground/20">
+                  <span>⌘</span><span>⏎</span>
+                </kbd>
+              </>
+            )}
           </Button>
         </div>
       </form>
