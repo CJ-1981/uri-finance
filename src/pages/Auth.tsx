@@ -11,11 +11,15 @@ import { useI18n } from "@/hooks/useI18n";
 const Auth = () => {
   const { user, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPassword, updatePassword } = useAuth();
   const { t, locale, setLocale } = useI18n();
 
   if (loading) {
@@ -27,6 +31,51 @@ const Auth = () => {
   }
 
   if (user) return <Navigate to="/" replace />;
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    const { error } = await resetPassword(email);
+    setSubmitting(false);
+
+    if (error) {
+      toast.error(t("auth.resetPasswordError"));
+      console.error("Password reset error:", error);
+    } else {
+      toast.success(t("auth.resetPasswordSent"));
+      setIsPasswordReset(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (newPassword !== confirmPassword) {
+      toast.error(t("auth.passwordMismatch"));
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error(t("auth.passwordTooShort") || "Password must be at least 6 characters");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const { error } = await updatePassword(newPassword);
+    setSubmitting(false);
+
+    if (error) {
+      toast.error(t("auth.updatePasswordError"));
+      console.error("Update password error:", error);
+    } else {
+      toast.success(t("auth.updatePasswordSuccess"));
+      setNewPassword("");
+      setConfirmPassword("");
+      setIsPasswordReset(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,76 +143,139 @@ const Auth = () => {
 
         <div className="glass-card p-6">
           <h2 className="mb-6 text-lg font-semibold text-foreground">
-            {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
+            {isPasswordReset ? t("auth.resetPassword") : isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
           </h2>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-muted-foreground text-sm">
-                {t("auth.email")}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                autoComplete={isLogin ? "username" : "email"}
-                className="bg-muted/50 border-border/50"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-muted-foreground text-sm">
-                {t("auth.password")}
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                autoComplete={isLogin ? "current-password" : "new-password"}
-                className="bg-muted/50 border-border/50"
-              />
-            </div>
-
-            {/* Invite code field - only shown on signup (optional) */}
-            {!isLogin && (
+          {/* Password Reset Form */}
+          {isPasswordReset ? (
+            <form onSubmit={handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="inviteCode" className="text-muted-foreground text-sm">
-                  {t("auth.inviteCode")} <span className="text-xs text-muted-foreground opacity-60">({t("common.optional")})</span>
+                <p className="text-sm text-muted-foreground">
+                  {t("auth.resetPasswordDesc")}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reset-email" className="text-muted-foreground text-sm">
+                  {t("auth.email")}
                 </Label>
                 <Input
-                  id="inviteCode"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  placeholder={t("auth.inviteCodePlaceholder")}
-                  className="bg-muted/50 border-border/50 font-mono"
+                  id="reset-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="email"
+                  className="bg-muted/50 border-border/50"
                 />
               </div>
-            )}
 
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
-            >
-              {submitting ? t("auth.submitting") : isLogin ? t("auth.signIn") : t("auth.signUp")}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                {submitting ? t("auth.submitting") : t("auth.resetPasswordSubmit")}
+              </Button>
 
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              {isLogin ? t("auth.switchToSignUp") : t("auth.switchToSignIn")}
-            </button>
-          </div>
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsPasswordReset(false)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t("auth.backToSignIn")}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-muted-foreground text-sm">
+                  {t("auth.email")}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete={isLogin ? "username" : "email"}
+                  className="bg-muted/50 border-border/50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-muted-foreground text-sm">
+                    {t("auth.password")}
+                  </Label>
+                  {isLogin && (
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordReset(true)}
+                      className="text-xs text-primary hover:text-primary/80 transition-colors"
+                    >
+                      {t("auth.forgotPassword")}
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  className="bg-muted/50 border-border/50"
+                />
+                {!isLogin && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("auth.passwordGuideline")}
+                  </p>
+                )}
+              </div>
+
+              {/* Invite code field - only shown on signup (optional) */}
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode" className="text-muted-foreground text-sm">
+                    {t("auth.inviteCode")} <span className="text-xs text-muted-foreground opacity-60">({t("common.optional")})</span>
+                  </Label>
+                  <Input
+                    id="inviteCode"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    placeholder={t("auth.inviteCodePlaceholder")}
+                    className="bg-muted/50 border-border/50 font-mono"
+                  />
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                {submitting ? t("auth.submitting") : isLogin ? t("auth.signIn") : t("auth.signUp")}
+              </Button>
+            </form>
+          )}
+
+          {!isPasswordReset && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                {isLogin ? t("auth.switchToSignUp") : t("auth.switchToSignIn")}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
