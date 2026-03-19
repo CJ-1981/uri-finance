@@ -54,7 +54,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password });
+    // Construct the email redirect URL with the correct base path
+    const baseUrl = import.meta.env.VITE_BASE_URL || '/';
+    const redirectTo = `${window.location.origin}${baseUrl}auth/callback`;
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectTo,
+      },
+    });
     return { error };
   };
 
