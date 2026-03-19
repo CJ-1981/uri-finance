@@ -89,10 +89,11 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, 
           onFocus={() => onSetFocus(globalIndex)}
           className={cn(
             "flex-1 text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+            "border-2 border-transparent",
             selectedCategoryId === node.id
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            isFocused && !isMobile && "border-2 border-primary"
+            isFocused && !isMobile && "border-primary"
           )}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
@@ -387,10 +388,11 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
           onFocus={() => setFocusedIndex(0)}
           className={cn(
             "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+            "border-2 border-transparent",
             selectedCategoryId === null
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            focusedIndex === 0 && !isMobile && "border-2 border-primary"
+            focusedIndex === 0 && !isMobile && "border-primary"
           )}
         >
           {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
@@ -704,10 +706,11 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
           onFocus={() => setFocusedIndex(0)}
           className={cn(
             "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
+            "border-2 border-transparent",
             selectedCategoryName === null
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            focusedIndex === 0 && !isMobile && "border-2 border-primary"
+            focusedIndex === 0 && !isMobile && "border-primary"
           )}
         >
           {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
