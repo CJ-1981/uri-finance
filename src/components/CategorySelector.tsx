@@ -92,7 +92,7 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, 
             selectedCategoryId === node.id
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            isFocused && !isMobile && "outline-2 outline-primary outline-offset-2"
+            isFocused && !isMobile && "shadow-[0_0_0_2px_hsl(var(--primary))]"
           )}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
@@ -390,7 +390,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
             selectedCategoryId === null
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            focusedIndex === 0 && !isMobile && "outline-2 outline-primary outline-offset-2"
+            focusedIndex === 0 && !isMobile && "shadow-[0_0_0_2px_hsl(var(--primary))]"
           )}
         >
           {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
@@ -707,7 +707,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
             selectedCategoryName === null
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            focusedIndex === 0 && !isMobile && "outline-2 outline-primary outline-offset-2"
+            focusedIndex === 0 && !isMobile && "shadow-[0_0_0_2px_hsl(var(--primary))]"
           )}
         >
           {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
