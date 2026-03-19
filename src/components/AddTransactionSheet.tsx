@@ -22,6 +22,9 @@ import ColoredBadge from "@/components/ColoredBadge";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
+// Platform detection for keyboard shortcuts
+const isMac = typeof window !== "undefined" && window.navigator.userAgent.includes("Mac");
+
 interface Props {
   categories: Category[];
   customColumns: CustomColumn[];
@@ -620,7 +623,13 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               <>
                 <span>{t("tx.addAndContinue")}</span>
                 <kbd className="hidden sm:inline-flex h-5 px-1.5 items-center gap-1 rounded bg-muted/70 text-[10px] font-mono text-muted-foreground pointer-events-none border border-border/50">
-                  <span>⌘</span><span>⇧</span><span>⏎</span>
+                  {isMac ? (
+                    <>
+                      <span>⌘</span><span>⇧</span><span>⏎</span>
+                    </>
+                  ) : (
+                    <span>Ctrl+⇧+Enter</span>
+                  )}
                 </kbd>
               </>
             )}
@@ -635,7 +644,13 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               <>
                 <span>{t("tx.addTransaction")}</span>
                 <kbd className="hidden sm:inline-flex h-5 px-1.5 items-center gap-1 rounded bg-primary-foreground/20 text-[10px] font-mono text-primary-foreground/80 pointer-events-none border border-primary-foreground/20">
-                  <span>⌘</span><span>⏎</span>
+                  {isMac ? (
+                    <>
+                      <span>⌘</span><span>⏎</span>
+                    </>
+                  ) : (
+                    <span>Ctrl+Enter</span>
+                  )}
                 </kbd>
               </>
             )}
