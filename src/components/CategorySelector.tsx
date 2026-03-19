@@ -88,11 +88,11 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, 
           onClick={() => onSelect(node.id)}
           onFocus={() => onSetFocus(globalIndex)}
           className={cn(
-            "flex-1 text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2 relative",
+            "flex-1 text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
             selectedCategoryId === node.id
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            isFocused && !isMobile && "shadow-[0_0_0_2px_hsl(var(--primary))]"
+            isFocused && !isMobile && "border-2 border-primary"
           )}
           style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
@@ -386,11 +386,11 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
           onClick={() => handleSelect(null)}
           onFocus={() => setFocusedIndex(0)}
           className={cn(
-            "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2 relative",
+            "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
             selectedCategoryId === null
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            focusedIndex === 0 && !isMobile && "shadow-[0_0_0_2px_hsl(var(--primary))]"
+            focusedIndex === 0 && !isMobile && "border-2 border-primary"
           )}
         >
           {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
@@ -703,11 +703,11 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
           onClick={() => handleSelect(null)}
           onFocus={() => setFocusedIndex(0)}
           className={cn(
-            "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2 relative",
+            "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
             selectedCategoryName === null
               ? "bg-primary/10 text-primary"
               : "text-foreground hover:bg-muted",
-            focusedIndex === 0 && !isMobile && "shadow-[0_0_0_2px_hsl(var(--primary))]"
+            focusedIndex === 0 && !isMobile && "border-2 border-primary"
           )}
         >
           {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
