@@ -190,6 +190,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
     ];
     const textCols = visibleColumns
       .filter((col) => col.column_type === "text")
+      .filter((col) => col.name !== "이름" && col.name !== "Name") // Exclude name columns from chart grouping
       .map((col) => ({ key: col.name as GroupKey, label: col.name }));
     return [...base, ...textCols];
   }, [visibleColumns, t]);
