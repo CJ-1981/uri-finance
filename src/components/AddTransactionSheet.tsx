@@ -142,8 +142,8 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
 
   // Build tree structure
   const categoryTree = useMemo(() => {
-    const categoryMap = new Map<string, Category & { children: (Category & { children: any[] })[] }>();
-    const roots: (Category & { children: any[] })[] = [];
+    const categoryMap = new Map<string, Category & { children: (Category & { children: Category[] })[] }>();
+    const roots: (Category & { children: Category[] })[] = [];
 
     // First pass: create nodes
     categories.forEach(cat => {

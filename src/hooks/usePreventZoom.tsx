@@ -132,7 +132,7 @@ export const usePreventZoom = () => {
     return () => {
       if (isIOS) {
         const preventGestureZoom = (e: Event) => {
-          if ((e as any).scale !== undefined && (e as any).scale !== 1) {
+          if ((e as GestureEvent).scale !== undefined && (e as GestureEvent).scale !== 1) {
             e.preventDefault();
           }
         };

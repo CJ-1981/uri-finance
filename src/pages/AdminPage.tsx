@@ -47,7 +47,7 @@ const AdminPage = () => {
   const [dbStats, setDbStats] = useState<{
     db_size_pretty: string;
     db_size: number;
-    tables: Array<{ name: string; row_count: number }>;
+    tables: Array<{ table_name: string; row_count: number; size: string }>;
   } | null>(null);
   const [dbLoading, setDbLoading] = useState(false);
   const [archiveFrom, setArchiveFrom] = useState("");
@@ -183,7 +183,7 @@ const AdminPage = () => {
     const cols = customColumns;
     const colHeaders = cols.map((c) => c.name).join(",");
     const csvHeader = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
-    const csvRows = txs.map((tx: any) => {
+    const csvRows = txs.map((tx: { transaction_date: string; type: string; amount: number; category: string; description?: string; custom_values?: Record<string, number | string> }) => {
       const fmtDate = tx.transaction_date;
       const fmtAmt = `${tx.type === "income" ? "" : "-"}${Number(tx.amount).toFixed(2)}`;
       const base = `${fmtDate},${tx.type},"${tx.category}","${tx.description || ""}",${fmtAmt}`;
@@ -203,7 +203,7 @@ const AdminPage = () => {
     URL.revokeObjectURL(url);
 
     // Soft-delete all archived transactions
-    const ids = txs.map((tx: any) => tx.id);
+    const ids = txs.map((tx: { id: string }) => tx.id);
     const batchSize = 50;
     for (let i = 0; i < ids.length; i += batchSize) {
       const batch = ids.slice(i, i + batchSize);
@@ -551,13 +551,13 @@ const AdminPage = () => {
                           {inv.used_by ? t("admin.inviteUsed") : t("admin.inviteUnused")}
                         </span>
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          {(inv as any).role || "member"}
+                          {(inv as { role?: string }).role || "member"}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {(inv as any).email && (
+                        {(inv as { email?: string }).email && (
                           <div className="flex items-center gap-1">
-                            <p className="text-xs text-primary truncate">{(inv as any).email}</p>
+                            <p className="text-xs text-primary truncate">{(inv as { email?: string }).email}</p>
                           </div>
                         )}
                         {inv.label && (
@@ -565,7 +565,7 @@ const AdminPage = () => {
                             <p className="text-xs text-muted-foreground truncate">{inv.label}</p>
                           </div>
                         )}
-                        {!inv.label && !(inv as any).email && (
+                        {!inv.label && !(inv as { email?: string }).email && (
                           <p className="text-xs text-muted-foreground italic">{t("admin.noInviteDesc")}</p>
                         )}
                       </div>
@@ -745,7 +745,7 @@ const AdminPage = () => {
                 {dbStats.tables && dbStats.tables.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-xs font-medium text-muted-foreground">{t("admin.dbTables")}</p>
-                    {dbStats.tables.map((tbl: any) => (
+                    {dbStats.tables.map((tbl: { table_name: string; row_count: number; size: string }) => (
                       <div key={tbl.table_name} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
                         <span className="text-sm text-foreground font-mono">{tbl.table_name}</span>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
