@@ -49,6 +49,11 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
   const isFocused = focusedIndex === globalIndex;
 
   // Debug: log when this item is focused
+  if (!isMobile) {
+    console.log(`[CategorySelector] Rendering: "${node.name}" (globalIndex=${globalIndex}, depth=${depth}, hasChildren=${hasChildren}, isExpanded=${isExpanded})`);
+  }
+
+  // Debug: log when this item is focused
   if (isFocused && !isMobile) {
     console.log(`[CategorySelector] >>> FOCUSED: "${node.name}" (globalIndex=${globalIndex}, focusedIndex=${focusedIndex})`);
   }
