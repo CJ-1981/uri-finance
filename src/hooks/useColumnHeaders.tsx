@@ -68,7 +68,7 @@ export const useColumnHeaders = (projectId: string | undefined) => {
     }
     await supabase
       .from("projects")
-      .update({ column_headers: toSave } as any)
+      .update({ column_headers: toSave } as { column_headers: ColumnHeaders })
       .eq("id", projectId);
     setHeaders(toSave);
     setDraft(toSave);
@@ -83,7 +83,7 @@ export const useColumnHeaders = (projectId: string | undefined) => {
     if (projectId) {
       await supabase
         .from("projects")
-        .update({ column_headers: {} } as any)
+        .update({ column_headers: {} } as { column_headers: Partial<ColumnHeaders> })
         .eq("id", projectId);
     }
   }, [projectId]);

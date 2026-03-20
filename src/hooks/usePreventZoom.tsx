@@ -1,5 +1,10 @@
 import { useEffect } from "react";
 
+// iOS gesture events have a scale property
+interface GestureEvent extends Event {
+  scale: number;
+}
+
 export const usePreventZoom = () => {
   useEffect(() => {
     // Detect if we're on a touch screen device
@@ -105,8 +110,8 @@ export const usePreventZoom = () => {
 
     // Only add gesture listeners for iOS (specific API)
     if (isIOS) {
-      const preventGestureZoom = (e: Event) => {
-        if ((e as any).scale !== undefined && (e as any).scale !== 1) {
+      const preventGestureZoom = (e: GestureEvent) => {
+        if (e.scale !== undefined && e.scale !== 1) {
           e.preventDefault();
         }
       };

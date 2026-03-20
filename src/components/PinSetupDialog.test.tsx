@@ -30,8 +30,8 @@ describe("PinSetupDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default successful storePin mock
-    (storePin as any).mockResolvedValue(undefined);
-    (isPinSet as any).mockReturnValue(false);
+    vi.mocked(storePin).mockResolvedValue(undefined);
+    vi.mocked(isPinSet).mockReturnValue(false);
   });
 
   const renderDialog = (open = true) => {
@@ -213,7 +213,7 @@ describe("PinSetupDialog", () => {
 
   describe("Error Handling", () => {
     it("should show error toast when storePin fails", async () => {
-      (storePin as any).mockRejectedValue(new Error("Storage error"));
+      vi.mocked(storePin).mockRejectedValue(new Error("Storage error"));
 
       renderDialog();
 

@@ -30,7 +30,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
       .eq("project_id", projectId)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
-    setColumns((data as CustomColumn[]) || []);
+    setColumns((data ?? []) as CustomColumn[]);
     setLoading(false);
   }, [projectId]);
 
@@ -43,7 +43,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
     const maxOrder = columns.length > 0 ? Math.max(...columns.map(c => c.sort_order)) : -1;
     const { error } = await supabase
       .from("custom_columns")
-      .insert({ project_id: projectId, name: name.trim(), column_type: columnType, sort_order: maxOrder + 1 } as any);
+      .insert({ project_id: projectId, name: name.trim(), column_type: columnType, sort_order: maxOrder + 1 } as Partial<CustomColumn>);
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Column already exists" : "Failed to add column");
       return;
@@ -85,7 +85,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
   const toggleRequired = async (id: string, required: boolean) => {
     const { error } = await supabase
       .from("custom_columns")
-      .update({ required } as any)
+      .update({ required } as { required: boolean })
       .eq("id", id);
     if (error) {
       toast.error("Failed to update column");
@@ -95,7 +95,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
   };
 
   const updateSuggestions = async (id: string, suggestions: string[], suggestionColors?: Record<string, string>) => {
-    const updateData: any = { suggestions };
+    const updateData: { suggestions: string[]; suggestion_colors?: Record<string, string> } = { suggestions };
     if (suggestionColors !== undefined) {
       updateData.suggestion_colors = suggestionColors;
     }
@@ -124,8 +124,8 @@ export const useCustomColumns = (projectId: string | undefined) => {
     const swapOrder = current.sort_order !== swap.sort_order ? swap.sort_order : swapIdx;
 
     await Promise.all([
-      supabase.from("custom_columns").update({ sort_order: swapOrder } as any).eq("id", current.id),
-      supabase.from("custom_columns").update({ sort_order: currentOrder } as any).eq("id", swap.id),
+      supabase.from("custom_columns").update({ sort_order: swapOrder } as { sort_order: number }).eq("id", current.id),
+      supabase.from("custom_columns").update({ sort_order: currentOrder } as { sort_order: number }).eq("id", swap.id),
     ]);
     await fetchColumns();
   };
@@ -139,7 +139,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
 
     const { error } = await supabase
       .from("custom_columns")
-      .update({ name: trimmed } as any)
+      .update({ name: trimmed } as { name: string })
       .eq("id", id);
     if (error) {
       toast.error(error.message.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
@@ -159,7 +159,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
 
   const reorderColumns = async (orderedIds: string[]) => {
     const updates = orderedIds.map((id, index) =>
-      supabase.from("custom_columns").update({ sort_order: index } as any).eq("id", id)
+      supabase.from("custom_columns").update({ sort_order: index } as { sort_order: number }).eq("id", id)
     );
     await Promise.all(updates);
     await fetchColumns();

@@ -42,11 +42,11 @@ describe("useAuth - Sign-In/Sign-Out Flow Tests", () => {
     vi.clearAllMocks();
     localStorage.clear();
     // Reset mocks
-    (supabase.auth.getSession as any).mockResolvedValue({
+    vi.mocked(supabase.auth.getSession).mockResolvedValue({
       data: { session: null },
       error: null,
     });
-    (supabase.auth.onAuthStateChange as any).mockReturnValue({
+    vi.mocked(supabase.auth.onAuthStateChange).mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     });
   });

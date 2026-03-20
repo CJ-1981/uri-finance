@@ -44,7 +44,11 @@ const AdminPage = () => {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [creatingInvite, setCreatingInvite] = useState(false);
-  const [dbStats, setDbStats] = useState<any>(null);
+  const [dbStats, setDbStats] = useState<{
+    db_size_pretty: string;
+    db_size: number;
+    tables: Array<{ name: string; row_count: number }>;
+  } | null>(null);
   const [dbLoading, setDbLoading] = useState(false);
   const [archiveFrom, setArchiveFrom] = useState("");
   const [archiveTo, setArchiveTo] = useState("");

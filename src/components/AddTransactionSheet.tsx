@@ -45,7 +45,7 @@ interface Props {
 
 // Tree item component for inline dropdown
 const InlineTreeItem = ({ node, depth, selectedCategoryName, expandedNodes, onToggleExpand, onSelect, isMobile }: {
-  node: Category & { children: (Category & { children: any[] })[] };
+  node: Category & { children?: Category[] };
   depth: number;
   selectedCategoryName: string | null;
   expandedNodes: Set<string>;
