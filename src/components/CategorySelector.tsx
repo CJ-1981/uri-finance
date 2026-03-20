@@ -48,11 +48,6 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
 
   const isFocused = focusedIndex === globalIndex;
 
-  // Debug: log all TreeItem renders
-  if (!isMobile) {
-    console.log(`[CategorySelector] Rendering: "${node.name}" (globalIndex=${globalIndex}, depth=${depth}, hasChildren=${hasChildren}, childrenCount=${node.children.length})`);
-  }
-
   // Debug: log when this item is focused
   if (isFocused && !isMobile) {
     console.log(`[CategorySelector] >>> FOCUSED: "${node.name}" (globalIndex=${globalIndex}, focusedIndex=${focusedIndex})`);
@@ -67,70 +62,6 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
     return undefined;
   };
   const displayShortcut = showShortcut !== false && getShortcutLabel();
-
-  // When expanded with children, don't render the parent button to avoid index collision
-  // Only show children, which will have their own indices
-  if (hasChildren && isExpanded) {
-    return (
-      <div>
-        {/* Expand/collapse button only (collapsed state) */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand(node.id);
-            }}
-            className={cn(
-              "shrink-0 rounded transition-colors",
-              isMobile
-                ? "p-2 min-w-[36px] min-h-[36px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
-                : "p-0.5 min-w-[20px] min-h-[20px] flex items-center justify-center text-muted-foreground hover:text-foreground"
-            )}
-            title={t("tx.collapse") || "Collapse"}
-          >
-            {isMobile ? (
-              <Minus className="h-3.5 w-3.5" />
-            ) : (
-              <ChevronDown className="h-3 w-3" />
-            )}
-          </button>
-          {/* Parent label (non-interactive, no focus) */}
-          <span
-            className={cn(
-              "flex-1 px-3 py-2 text-xs font-medium flex items-center gap-2",
-              selectedCategoryId === node.id
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground"
-            )}
-            style={{ paddingLeft: `${12 + depth * 16}px` }}
-          >
-            {node.icon && <span className="shrink-0">{node.icon}</span>}
-            <span className="truncate">{node.name}</span>
-          </span>
-        </div>
-        {/* Children container */}
-        <div className="flex flex-col">
-          {node.children.map((child) => (
-            <TreeItem
-              key={child.id}
-              node={child}
-              depth={depth + 1}
-              selectedCategoryId={selectedCategoryId}
-              focusedIndex={focusedIndex}
-              categoryOptions={categoryOptions}
-              onSelect={onSelect}
-              expandedNodes={expandedNodes}
-              onToggleExpand={onToggleExpand}
-              onSetFocus={onSetFocus}
-              isMobile={isMobile}
-              t={t}
-              showShortcut={false}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
