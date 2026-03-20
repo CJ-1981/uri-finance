@@ -165,7 +165,7 @@ export const useCategories = (projectId: string | undefined) => {
   const updateCategoryIcon = async (id: string, icon: string) => {
     const { error } = await supabase
       .from("project_categories")
-      .update({ icon } as any)
+      .update({ icon } as { icon: string })
       .eq("id", id);
     if (error) {
       toast.error("Failed to update icon");
@@ -188,15 +188,15 @@ export const useCategories = (projectId: string | undefined) => {
     const swapOrder = current.sort_order !== swap.sort_order ? swap.sort_order : swapIdx;
 
     await Promise.all([
-      supabase.from("project_categories").update({ sort_order: swapOrder } as any).eq("id", current.id),
-      supabase.from("project_categories").update({ sort_order: currentOrder } as any).eq("id", swap.id),
+      supabase.from("project_categories").update({ sort_order: swapOrder } as { sort_order: number }).eq("id", current.id),
+      supabase.from("project_categories").update({ sort_order: currentOrder } as { sort_order: number }).eq("id", swap.id),
     ]);
     await fetchCategories();
   };
 
   const reorderCategories = async (orderedIds: string[]) => {
     const updates = orderedIds.map((id, index) =>
-      supabase.from("project_categories").update({ sort_order: index } as any).eq("id", id)
+      supabase.from("project_categories").update({ sort_order: index } as { sort_order: number }).eq("id", id)
     );
     await Promise.all(updates);
     await fetchCategories();

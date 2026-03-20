@@ -296,9 +296,9 @@ export const useProjects = () => {
     }
 
     // New invite system
-    const projectId = (invite as any).project_id;
-    const inviteEmail = (invite as any).email;
-    const inviteRole = (invite as any).role || "member";
+    const projectId = (invite as { project_id: string }).project_id;
+    const inviteEmail = (invite as { email: string | null }).email;
+    const inviteRole = (invite as { role?: string }).role || "member";
 
     // Validate email if invite is email-locked
     if (inviteEmail) {
@@ -331,7 +331,7 @@ export const useProjects = () => {
     await supabase
       .from("project_invites")
       .update({ used_by: user.id, used_at: new Date().toISOString() })
-      .eq("id", (invite as any).id);
+      .eq("id", (invite as { id: string }).id);
 
     // Join project with the assigned role
     const { error } = await supabase
@@ -354,16 +354,16 @@ export const useProjects = () => {
     const { data: project } = await supabase
       .from("project_invites")
       .select("projects!inner(*)")
-      .eq("id", (invite as any).id)
+      .eq("id", (invite as { id: string }).id)
       .single();
 
-    const projectName = (project as any)?.projects?.name;
+    const projectName = (project as unknown as { projects?: { name: string } }).projects?.name;
     if (projectName) {
       toast.success(t("proj.joined").replace("{project}", projectName));
     }
     await fetchProjects(true); // skip delay since we already waited
     if (project) {
-      handleSetActiveProject((project as any).projects as Project, 'user-selection');
+      handleSetActiveProject((project as unknown as { projects: Project }).projects, 'user-selection');
     }
   };
 

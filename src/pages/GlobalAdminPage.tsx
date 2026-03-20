@@ -133,7 +133,7 @@ const GlobalAdminPage = () => {
                         </p>
                         {user.projects && user.projects.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5">
-                            {user.projects.map((proj: any) => (
+                            {user.projects.map((proj: { id: string; name: string }) => (
                               <span
                                 key={proj.id}
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded bg-primary/10 text-primary text-xs"
