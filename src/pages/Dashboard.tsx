@@ -303,7 +303,9 @@ const Dashboard = () => {
               size="icon"
               onClick={() => {
                 const newTheme = theme === "dark" ? "light" : "dark";
-                const doc = document as HTMLDocument & { fullscreenElement: HTMLElement | null };
+                const doc = document as Document & {
+                  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+                };
                 if (!doc.startViewTransition) {
                   setTheme(newTheme);
                   return;

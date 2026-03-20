@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
-// iOS gesture events have a scale property
+// iOS gesture events have a scale property (optional for cross-platform compatibility)
 interface GestureEvent extends Event {
-  scale: number;
+  scale?: number;
 }
 
 export const usePreventZoom = () => {
@@ -18,13 +18,16 @@ export const usePreventZoom = () => {
     const isMacDesktop = /Macintosh|Mac OS X|MacIntel|MacARM|Mac_PowerPC/.test(navigator.userAgent) &&
                          !isIOS; // Exclude iOS devices
 
-    console.log('Zoom prevention - Device detection:', {
-      isIOS,
-      isAndroid,
-      isTouchScreen,
-      isMacDesktop,
-      userAgent: navigator.userAgent
-    });
+    // Debug logging (development only)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Zoom prevention - Device detection:', {
+        isIOS,
+        isAndroid,
+        isTouchScreen,
+        isMacDesktop,
+        userAgent: navigator.userAgent
+      });
+    }
 
     // Dynamically set viewport meta tag for touch devices only
     if (isTouchScreen && !isMacDesktop) {
@@ -108,13 +111,17 @@ export const usePreventZoom = () => {
       }
     };
 
+    // Hoist gesture handler so cleanup can access the same function reference
+    // This prevents memory leaks by ensuring removeEventListener matches addEventListener
+    const preventGestureZoom = (e: Event) => {
+      const ge = e as GestureEvent;
+      if (ge.scale !== undefined && ge.scale !== 1) {
+        e.preventDefault();
+      }
+    };
+
     // Only add gesture listeners for iOS (specific API)
     if (isIOS) {
-      const preventGestureZoom = (e: GestureEvent) => {
-        if (e.scale !== undefined && e.scale !== 1) {
-          e.preventDefault();
-        }
-      };
       document.addEventListener('gesturestart', preventGestureZoom, { passive: false });
       document.addEventListener('gesturechange', preventGestureZoom, { passive: false });
       document.addEventListener('gestureend', preventGestureZoom, { passive: false });
@@ -131,11 +138,6 @@ export const usePreventZoom = () => {
 
     return () => {
       if (isIOS) {
-        const preventGestureZoom = (e: Event) => {
-          if ((e as GestureEvent).scale !== undefined && (e as GestureEvent).scale !== 1) {
-            e.preventDefault();
-          }
-        };
         document.removeEventListener('gesturestart', preventGestureZoom);
         document.removeEventListener('gesturechange', preventGestureZoom);
         document.removeEventListener('gestureend', preventGestureZoom);

@@ -2,6 +2,17 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Typed RPC function names for better type safety
+type RpcFunctionName = "get_all_users" | "get_all_projects" | "admin_delete_user" | "admin_delete_project";
+
+/**
+ * Type-safe wrapper for Supabase RPC calls.
+ * Provides centralized type safety and error handling for RPC functions.
+ */
+const callRpc = <T,>(fnName: RpcFunctionName, args?: Record<string, unknown>) => {
+  return supabase.rpc(fnName, args);
+};
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -27,8 +38,8 @@ export const useGlobalAdmin = () => {
   const fetchAllData = async () => {
     setLoading(true);
     const [usersResult, projectsResult] = await Promise.all([
-      supabase.rpc("get_all_users" as unknown as string),
-      supabase.rpc("get_all_projects" as unknown as string)
+      callRpc("get_all_users"),
+      callRpc("get_all_projects")
     ]);
     setUsers((usersResult.data as UserInfo[]) || []);
     setProjects((projectsResult.data as ProjectInfo[]) || []);
@@ -36,7 +47,7 @@ export const useGlobalAdmin = () => {
   };
 
   const removeUserFromAllProjects = async (userId: string) => {
-    const { error } = await supabase.rpc("admin_delete_user" as unknown as string, { _user_id: userId });
+    const { error } = await callRpc("admin_delete_user", { _user_id: userId });
     if (error) {
       toast.error("Failed to remove user");
       return false;
@@ -47,7 +58,7 @@ export const useGlobalAdmin = () => {
   };
 
   const deleteProject = async (projectId: string, projectName: string) => {
-    const { error } = await supabase.rpc("admin_delete_project" as unknown as string, { _project_id: projectId });
+    const { error } = await callRpc("admin_delete_project", { _project_id: projectId });
     if (error) {
       toast.error(`Failed to delete project: ${error.message}`);
       return false;
