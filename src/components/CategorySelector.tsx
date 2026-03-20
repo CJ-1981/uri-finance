@@ -815,14 +815,14 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
             overscrollBehavior: 'contain'
           } : undefined}
         >
-          {categoryTree.map((node, index) => (
+          {categoryTree.map((node) => (
             <TreeItem
               key={node.id}
               node={node}
               depth={0}
               selectedCategoryId={selectedCategory ? selectedCategory.id : null}
               focusedIndex={focusedIndex}
-              globalIndex={index + 1}
+              categoryOptions={categoryTreeOptions}
               onSelect={handleSelect}
               expandedNodes={expandedNodes}
               onToggleExpand={toggleExpanded}
