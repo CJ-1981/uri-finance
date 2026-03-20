@@ -42,7 +42,9 @@ export const getShortcuts = (): ShortcutConfig => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return { ...DEFAULT_SHORTCUTS, ...JSON.parse(stored) };
-  } catch { }
+  } catch {
+    // Ignore storage errors - return defaults
+  }
   return DEFAULT_SHORTCUTS;
 };
 

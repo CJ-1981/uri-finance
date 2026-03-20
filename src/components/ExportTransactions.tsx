@@ -47,7 +47,7 @@ const getExportTimestamp = () => {
   return `${date}_${time}`;
 };
 
-const escapeXML = (val: any) => {
+const escapeXML = (val: unknown) => {
   if (val == null) return "";
   return String(val).replace(/[<>&'"]/g, (c) => {
     switch (c) {

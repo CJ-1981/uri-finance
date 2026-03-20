@@ -165,7 +165,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       const scrollableElement = popoverContentRef.current.querySelector('[data-category-scroll="true"]') as HTMLElement;
       if (scrollableElement) {
         scrollableElement.style.touchAction = 'pan-y';
-        (scrollableElement.style as any).WebkitOverflowScrolling = 'touch';
+        (scrollableElement.style as CSSStyleDeclaration & { WebkitOverflowScrolling?: string }).WebkitOverflowScrolling = 'touch';
         scrollableElement.style.overscrollBehavior = 'contain';
       }
     }
@@ -430,13 +430,14 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       case "6":
       case "7":
       case "8":
-      case "9":
+      case "9": {
         e.preventDefault();
         const targetId = globalIndexToIdMap.get(parseInt(e.key, 10));
         if (targetId !== undefined) {
           handleSelect(targetId);
         }
         break;
+      }
       case "0":
         e.preventDefault();
         handleSelect(null); // "All Categories"
@@ -541,7 +542,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
       const scrollableElement = popoverContentRef.current.querySelector('[data-category-scroll="true"]') as HTMLElement;
       if (scrollableElement) {
         scrollableElement.style.touchAction = 'pan-y';
-        (scrollableElement.style as any).WebkitOverflowScrolling = 'touch';
+        (scrollableElement.style as CSSStyleDeclaration & { WebkitOverflowScrolling?: string }).WebkitOverflowScrolling = 'touch';
         scrollableElement.style.overscrollBehavior = 'contain';
       }
     }
@@ -813,13 +814,14 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
       case "6":
       case "7":
       case "8":
-      case "9":
+      case "9": {
         e.preventDefault();
         const targetId = globalIndexToIdMap.get(parseInt(e.key, 10));
         if (targetId !== undefined) {
           handleSelect(targetId);
         }
         break;
+      }
       case "0":
         e.preventDefault();
         handleSelect(null); // "All Categories"

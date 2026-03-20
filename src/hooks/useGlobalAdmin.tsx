@@ -27,8 +27,8 @@ export const useGlobalAdmin = () => {
   const fetchAllData = async () => {
     setLoading(true);
     const [usersResult, projectsResult] = await Promise.all([
-      supabase.rpc("get_all_users" as any),
-      supabase.rpc("get_all_projects" as any)
+      supabase.rpc("get_all_users" as unknown as string),
+      supabase.rpc("get_all_projects" as unknown as string)
     ]);
     setUsers((usersResult.data as UserInfo[]) || []);
     setProjects((projectsResult.data as ProjectInfo[]) || []);
@@ -36,7 +36,7 @@ export const useGlobalAdmin = () => {
   };
 
   const removeUserFromAllProjects = async (userId: string) => {
-    const { error } = await supabase.rpc("admin_delete_user" as any, { _user_id: userId });
+    const { error } = await supabase.rpc("admin_delete_user" as unknown as string, { _user_id: userId });
     if (error) {
       toast.error("Failed to remove user");
       return false;
@@ -47,7 +47,7 @@ export const useGlobalAdmin = () => {
   };
 
   const deleteProject = async (projectId: string, projectName: string) => {
-    const { error } = await supabase.rpc("admin_delete_project" as any, { _project_id: projectId });
+    const { error } = await supabase.rpc("admin_delete_project" as unknown as string, { _project_id: projectId });
     if (error) {
       toast.error(`Failed to delete project: ${error.message}`);
       return false;

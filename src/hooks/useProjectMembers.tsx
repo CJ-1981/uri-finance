@@ -118,7 +118,7 @@ export const useProjectMembers = (projectId?: string) => {
         label: label?.trim() || null,
         email: email?.trim().toLowerCase() || null,
         role: role || "member",
-      } as any);
+      } as Partial<ProjectInvite>);
     console.log("createInvite - error:", error);
     if (error) return false;
     await fetchInvites();

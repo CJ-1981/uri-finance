@@ -74,7 +74,9 @@ function loadCachedCounts(allDenoms: number[]): Counts {
         return parsed.counts;
       }
     }
-  } catch { }
+  } catch {
+    // Ignore cache errors - fallback to empty counts
+  }
   const init: Counts = {};
   allDenoms.forEach((d) => { init[d.toString()] = { named: 0, anon: 0 }; });
   return init;

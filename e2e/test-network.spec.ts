@@ -62,14 +62,12 @@ test('Network request analysis', async ({ page, context }) => {
 
   // Check if JavaScript is executing
   const isJsExecuting = await page.evaluate(() => {
-    // @ts-ignore
     return window.React !== undefined || (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ !== undefined;
   });
   console.log(`JavaScript executing: ${isJsExecuting}`);
 
   // Check React version if available
   const reactVersion = await page.evaluate(() => {
-    // @ts-ignore
     return window.React?.version || 'N/A';
   });
   console.log(`React version: ${reactVersion}`);
