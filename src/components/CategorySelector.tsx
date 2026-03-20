@@ -186,21 +186,21 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
       {/* Children container */}
       {hasChildren && isExpanded && (
         <div className="flex flex-col">
-          {node.children.map((child, childIndex) => (
+          {node.children.map((child) => (
             <TreeItem
               key={child.id}
               node={child}
               depth={depth + 1}
               selectedCategoryId={selectedCategoryId}
               focusedIndex={focusedIndex}
-              globalIndex={globalIndex + childIndex + 1}
+              categoryOptions={categoryOptions}
               onSelect={onSelect}
               expandedNodes={expandedNodes}
               onToggleExpand={onToggleExpand}
               onSetFocus={onSetFocus}
               isMobile={isMobile}
               t={t}
-              showShortcut={showShortcut}
+              showShortcut={false}
             />
           ))}
         </div>
