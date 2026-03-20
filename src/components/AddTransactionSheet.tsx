@@ -53,7 +53,8 @@ const InlineTreeItem = ({ node, depth, selectedCategoryName, expandedNodes, onTo
   onSelect: (name: string | null) => void;
   isMobile: boolean;
 }) => {
-  const hasChildren = node.children.length > 0;
+  const children = node.children ?? [];
+  const hasChildren = children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
 
   return (
@@ -107,7 +108,7 @@ const InlineTreeItem = ({ node, depth, selectedCategoryName, expandedNodes, onTo
       {/* Children */}
       {hasChildren && isExpanded && (
         <div className="flex flex-col">
-          {node.children.map((child) => (
+          {children.map((child) => (
             <InlineTreeItem
               key={child.id}
               node={child}

@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
+
+type ProjectInviteInsert = Database["public"]["Tables"]["project_invites"]["Insert"];
 
 export interface ProjectMember {
   id: string;
@@ -118,7 +121,7 @@ export const useProjectMembers = (projectId?: string) => {
         label: label?.trim() || null,
         email: email?.trim().toLowerCase() || null,
         role: role || "member",
-      } as Partial<ProjectInvite>);
+      } satisfies ProjectInviteInsert);
     console.log("createInvite - error:", error);
     if (error) return false;
     await fetchInvites();
