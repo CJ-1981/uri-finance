@@ -35,9 +35,10 @@ interface TreeItemProps {
   isMobile: boolean;
   t: (key: string) => string;
   showShortcut?: boolean;
+  visibleShortcutNumber?: number; // The shortcut number for this visible parent item
 }
 
-const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptions, onSelect, expandedNodes, onToggleExpand, onSetFocus, isMobile, t, showShortcut }: TreeItemProps) => {
+const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptions, onSelect, expandedNodes, onToggleExpand, onSetFocus, isMobile, t, showShortcut, visibleShortcutNumber }: TreeItemProps) => {
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
 
@@ -50,7 +51,7 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
 
   // Debug: log when this item is focused
   if (!isMobile) {
-    console.log(`[CategorySelector] Rendering: "${node.name}" (globalIndex=${globalIndex}, depth=${depth}, hasChildren=${hasChildren}, isExpanded=${isExpanded})`);
+    console.log(`[CategorySelector] Rendering: "${node.name}" (globalIndex=${globalIndex}, depth=${depth}, hasChildren=${hasChildren}, isExpanded=${isExpanded}, visibleShortcutNumber=${visibleShortcutNumber})`);
   }
 
   // Debug: log when this item is focused
@@ -59,10 +60,10 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
   }
   const getShortcutLabel = () => {
     // Only show shortcuts for level 1 parent categories (depth === 0)
-    if (depth === 0) {
-      // Map level 1 categories to 1-9, with 0 for the 10th
-      if (globalIndex >= 1 && globalIndex <= 9) return String(globalIndex);
-      if (globalIndex === 10) return "0";
+    // Use the provided visibleShortcutNumber (1-9, with 0 for the 10th)
+    if (depth === 0 && visibleShortcutNumber !== undefined) {
+      if (visibleShortcutNumber >= 1 && visibleShortcutNumber <= 9) return String(visibleShortcutNumber);
+      if (visibleShortcutNumber === 10) return "0";
     }
     return undefined;
   };
@@ -220,14 +221,66 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
     return result;
   }, [categoryTree, t]);
 
+  // Build map of child -> parent for visibility checking
+  const childToParentMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const buildMap = (nodes: CategoryTreeNode[]) => {
+      nodes.forEach(node => {
+        if (node.children.length > 0) {
+          node.children.forEach(child => {
+            map.set(child.id, node.id);
+          });
+          buildMap(node.children);
+        }
+      });
+    };
+    buildMap(categoryTree);
+    return map;
+  }, [categoryTree]);
+
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
   const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAllCategories");
 
   // Expand/collapse state for tree nodes
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
+  // Check if an item is visible (all ancestors are expanded)
+  const isItemVisible = useCallback((index: number): boolean => {
+    if (index === 0) return true; // "All Categories" is always visible
+    if (index >= categoryTreeOptions.length) return false;
+
+    const item = categoryTreeOptions[index];
+    if (item.depth === 0) return true; // Root items are always visible
+
+    // Check if all ancestors are expanded
+    let currentId = item.nodeId;
+    while (currentId && childToParentMap.has(currentId)) {
+      const parentId = childToParentMap.get(currentId)!;
+      if (!expandedNodes.has(parentId)) {
+        return false;
+      }
+      currentId = parentId;
+    }
+    return true;
+  }, [categoryTreeOptions, expandedNodes, childToParentMap]);
+
   // Keyboard navigation state
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  // Calculate visible shortcut numbers for parent items (depth 0 only)
+  const visibleShortcutMap = useMemo(() => {
+    const map = new Map<string, number>();
+    let count = 1; // Start from 1 (0 is for "All Categories")
+    for (let i = 1; i < categoryTreeOptions.length; i++) {
+      const item = categoryTreeOptions[i];
+      // Only assign shortcuts to visible parent items (depth 0)
+      if (item.depth === 0 && isItemVisible(i)) {
+        map.set(item.nodeId, count++);
+        if (count > 10) break; // Only support 0-9 shortcuts
+      }
+    }
+    return map;
+  }, [categoryTreeOptions, isItemVisible]);
 
   // Build map of globalIndex -> category ID for keyboard shortcuts (parent-level only)
   const globalIndexToIdMap = useMemo(() => {
@@ -277,18 +330,28 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       case "ArrowDown":
         e.preventDefault();
         setFocusedIndex(prev => {
-          const next = prev === null ? 0 : Math.min(prev + 1, categoryTreeOptions.length - 1);
+          let next = prev === null ? 0 : prev + 1;
+          // Skip invisible items (children whose parent is collapsed)
+          while (next < categoryTreeOptions.length && !isItemVisible(next)) {
+            next++;
+          }
+          if (next >= categoryTreeOptions.length) next = Math.max(0, prev ?? 0);
           const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
       case "ArrowUp":
         e.preventDefault();
         setFocusedIndex(prev => {
-          const next = prev === null ? 0 : Math.max(prev - 1, 0);
+          let next = prev === null ? 0 : prev - 1;
+          // Skip invisible items (children whose parent is collapsed)
+          while (next >= 0 && !isItemVisible(next)) {
+            next--;
+          }
+          if (next < 0) next = Math.min(categoryTreeOptions.length - 1, prev ?? 0);
           const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
@@ -445,6 +508,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
               isMobile={isMobile}
               t={t}
               showShortcut={true}
+              visibleShortcutNumber={visibleShortcutMap.get(node.id)}
             />
           ))}
         </div>
@@ -533,14 +597,66 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
     return result;
   }, [categoryTree, t]);
 
+  // Build map of child -> parent for visibility checking
+  const childToParentMap = useMemo(() => {
+    const map = new Map<string, string>();
+    const buildMap = (nodes: CategoryTreeNode[]) => {
+      nodes.forEach(node => {
+        if (node.children.length > 0) {
+          node.children.forEach(child => {
+            map.set(child.id, node.id);
+          });
+          buildMap(node.children);
+        }
+      });
+    };
+    buildMap(categoryTree);
+    return map;
+  }, [categoryTree]);
+
   const selectedCategory = categories.find((c) => c.name === selectedCategoryName);
   const activeLabel = selectedCategory ? selectedCategory.name : t("tx.selectAllCategories");
 
   // Expand/collapse state for tree nodes
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
+  // Check if an item is visible (all ancestors are expanded)
+  const isItemVisible = useCallback((index: number): boolean => {
+    if (index === 0) return true; // "All Categories" is always visible
+    if (index >= categoryTreeOptions.length) return false;
+
+    const item = categoryTreeOptions[index];
+    if (item.depth === 0) return true; // Root items are always visible
+
+    // Check if all ancestors are expanded
+    let currentId = item.nodeId;
+    while (currentId && childToParentMap.has(currentId)) {
+      const parentId = childToParentMap.get(currentId)!;
+      if (!expandedNodes.has(parentId)) {
+        return false;
+      }
+      currentId = parentId;
+    }
+    return true;
+  }, [categoryTreeOptions, expandedNodes, childToParentMap]);
+
   // Keyboard navigation state
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  // Calculate visible shortcut numbers for parent items (depth 0 only)
+  const visibleShortcutMap = useMemo(() => {
+    const map = new Map<string, number>();
+    let count = 1; // Start from 1 (0 is for "All Categories")
+    for (let i = 1; i < categoryTreeOptions.length; i++) {
+      const item = categoryTreeOptions[i];
+      // Only assign shortcuts to visible parent items (depth 0)
+      if (item.depth === 0 && isItemVisible(i)) {
+        map.set(item.nodeId, count++);
+        if (count > 10) break; // Only support 0-9 shortcuts
+      }
+    }
+    return map;
+  }, [categoryTreeOptions, isItemVisible]);
 
   // Build map of globalIndex -> category ID for keyboard shortcuts (parent-level only)
   const globalIndexToIdMap = useMemo(() => {
@@ -597,18 +713,28 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
       case "ArrowDown":
         e.preventDefault();
         setFocusedIndex(prev => {
-          const next = prev === null ? 0 : Math.min(prev + 1, categoryTreeOptions.length - 1);
+          let next = prev === null ? 0 : prev + 1;
+          // Skip invisible items (children whose parent is collapsed)
+          while (next < categoryTreeOptions.length && !isItemVisible(next)) {
+            next++;
+          }
+          if (next >= categoryTreeOptions.length) next = Math.max(0, prev ?? 0);
           const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
       case "ArrowUp":
         e.preventDefault();
         setFocusedIndex(prev => {
-          const next = prev === null ? 0 : Math.max(prev - 1, 0);
+          let next = prev === null ? 0 : prev - 1;
+          // Skip invisible items (children whose parent is collapsed)
+          while (next >= 0 && !isItemVisible(next)) {
+            next--;
+          }
+          if (next < 0) next = Math.min(categoryTreeOptions.length - 1, prev ?? 0);
           const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth}`);
+          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
@@ -766,6 +892,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
               isMobile={isMobile}
               t={t}
               showShortcut={true}
+              visibleShortcutNumber={visibleShortcutMap.get(node.id)}
             />
           ))}
         </div>
