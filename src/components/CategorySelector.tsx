@@ -27,7 +27,7 @@ interface TreeItemProps {
   depth: number;
   selectedCategoryId: string | null;
   focusedIndex: number | null;
-  globalIndex: number;
+  categoryOptions: Array<{ id: string | null; nodeId: string; name: string; depth: number }>;
   onSelect: (id: string | null) => void;
   expandedNodes: Set<string>;
   onToggleExpand: (id: string) => void;
@@ -37,9 +37,15 @@ interface TreeItemProps {
   showShortcut?: boolean;
 }
 
-const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, onSelect, expandedNodes, onToggleExpand, onSetFocus, isMobile, t, showShortcut }: TreeItemProps) => {
+const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptions, onSelect, expandedNodes, onToggleExpand, onSetFocus, isMobile, t, showShortcut }: TreeItemProps) => {
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
+
+  // Find this item's actual index in the flat categoryOptions array
+  const globalIndex = useMemo(() => {
+    return categoryOptions.findIndex(opt => opt.nodeId === node.id);
+  }, [categoryOptions, node.id]);
+
   const isFocused = focusedIndex === globalIndex;
 
   // Debug: log all TreeItem renders
@@ -104,14 +110,14 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, globalIndex, 
         </div>
         {/* Children container */}
         <div className="flex flex-col">
-          {node.children.map((child, childIndex) => (
+          {node.children.map((child) => (
             <TreeItem
               key={child.id}
               node={child}
               depth={depth + 1}
               selectedCategoryId={selectedCategoryId}
               focusedIndex={focusedIndex}
-              globalIndex={globalIndex + childIndex + 1}
+              categoryOptions={categoryOptions}
               onSelect={onSelect}
               expandedNodes={expandedNodes}
               onToggleExpand={onToggleExpand}
@@ -488,14 +494,14 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
             overscrollBehavior: 'contain'
           } : undefined}
         >
-          {categoryTree.map((node, index) => (
+          {categoryTree.map((node) => (
             <TreeItem
               key={node.id}
               node={node}
               depth={0}
               selectedCategoryId={selectedCategoryId}
               focusedIndex={focusedIndex}
-              globalIndex={index + 1}
+              categoryOptions={categoryTreeOptions}
               onSelect={handleSelect}
               expandedNodes={expandedNodes}
               onToggleExpand={toggleExpanded}
