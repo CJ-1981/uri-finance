@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { FileUp } from 'lucide-react';
 import { useFiles } from '@/hooks/useFiles';
+import { useI18n } from '@/hooks/useI18n';
 import { FileListItem } from './FileListItem';
 import { FileUploadSheet } from './FileUploadSheet';
 import { FilePreviewDialog } from './FilePreviewDialog';
@@ -22,6 +23,7 @@ import type { ProjectFile } from '@/types/files';
  * - Integration with useFiles hook
  */
 export const FileManager = ({ projectId, canDelete }: { projectId: string; canDelete: boolean }) => {
+  const { t } = useI18n();
   const { files, isLoading, uploadFile, isUploading, downloadFile, deleteFile } = useFiles(projectId);
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
 
@@ -72,21 +74,21 @@ export const FileManager = ({ projectId, canDelete }: { projectId: string; canDe
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Files</h2>
+        <h2 className="text-2xl font-bold">{t('files.title')}</h2>
         <FileUploadSheet onUpload={handleUpload} isUploading={isUploading} />
       </div>
 
       {/* File List */}
       {isLoading ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Loading files...</p>
+          <p className="text-muted-foreground">{t('files.loading')}</p>
         </div>
       ) : files.length === 0 ? (
         <div className="text-center py-12">
           <FileUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">No files uploaded yet</p>
+          <p className="text-muted-foreground">{t('files.noFiles')}</p>
           <p className="text-sm text-muted-foreground mt-2">
-            Click "Upload File" to add your first file
+            {t('files.uploadFileHint')}
           </p>
         </div>
       ) : (

@@ -309,6 +309,19 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbError": "Failed to load database stats",
     "admin.dbTables": "Tables",
 
+    // Storage Stats (SPEC-STORAGE-001)
+    "admin.storageStats": "File Storage Status",
+    "admin.storageStatsDesc": "Monitor file storage usage and statistics.",
+    "admin.storageTotalFiles": "Total Files",
+    "admin.storageTotalSize": "Total Size",
+    "admin.storageMaxSize": "Max Size (1 GB)",
+    "admin.storageByType": "By File Type",
+    "admin.storageLargestFile": "Largest File",
+    "admin.storageRecentFiles": "Recent Uploads",
+    "admin.storageLoading": "Loading storage stats...",
+    "admin.storageError": "Failed to load storage stats",
+    "admin.storageEmpty": "No files uploaded yet",
+
     // Trash
     "admin.trash": "Deleted Transactions",
     "admin.trashDesc": "Restore accidentally deleted transactions.",
@@ -443,6 +456,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.loading": "Loading files...",
     "files.noFiles": "No files uploaded yet",
     "files.uploadFile": "Upload File",
+    "files.uploadFileHint": 'Click "Upload File" to add your first file',
     "files.dragDrop": "Drag and drop file here, or click to select",
     "files.maxSize": "Maximum file size: {size}",
     "files.sizeExceeds": "File size exceeds {size} limit",
@@ -774,6 +788,19 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbError": "데이터베이스 통계를 불러오지 못했습니다",
     "admin.dbTables": "테이블",
 
+    // Storage Stats (SPEC-STORAGE-001)
+    "admin.storageStats": "파일 저장소 상태",
+    "admin.storageStatsDesc": "파일 저장소 사용량 및 통계를 확인합니다.",
+    "admin.storageTotalFiles": "전체 파일",
+    "admin.storageTotalSize": "전체 크기",
+    "admin.storageMaxSize": "최대 용량 (1 GB)",
+    "admin.storageByType": "파일 형식별",
+    "admin.storageLargestFile": "가장 큰 파일",
+    "admin.storageRecentFiles": "최근 업로드",
+    "admin.storageLoading": "저장소 통계 로딩 중...",
+    "admin.storageError": "저장소 통계를 불러오지 못했습니다",
+    "admin.storageEmpty": "아직 업로드된 파일이 없습니다",
+
     // Trash
     "admin.trash": "삭제된 거래",
     "admin.trashDesc": "실수로 삭제된 거래를 복원할 수 있습니다.",
@@ -908,6 +935,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.loading": "파일 로딩 중...",
     "files.noFiles": "아직 업로드된 파일이 없습니다",
     "files.uploadFile": "파일 업로드",
+    "files.uploadFileHint": '"파일 업로드"를 클릭하여 첫 번째 파일을 추가하세요',
     "files.dragDrop": "파일을 드래그하여 놓거나 클릭하여 선택하세요",
     "files.maxSize": "최대 파일 크기: {size}",
     "files.sizeExceeds": "파일 크기가 {size} 제한을 초과합니다",

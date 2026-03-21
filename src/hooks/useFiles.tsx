@@ -4,10 +4,17 @@
 // Updated: 2026-03-21 - Added file type validation, UUID paths, real-time sync, sonner
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import { ProjectFile, MAX_FILE_SIZE, SIGNED_URL_EXPIRY, isFileTypeAllowed } from '@/types/files';
+import {
+  ProjectFile,
+  MAX_FILE_SIZE,
+  SIGNED_URL_EXPIRY,
+  isFileTypeAllowed,
+  getFileExtension,
+  EXTENSION_TO_MIME,
+} from '@/types/files';
 import { toast } from 'sonner';
 import { useI18n } from '@/hooks/useI18n';
 
@@ -37,6 +44,10 @@ export const useFiles = (projectId: string) => {
     },
     enabled: !!projectId,
   });
+
+  // Download progress state
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadedBytes, setDownloadedBytes] = useState(0);
 
   // Real-time subscription for collaborative updates
   useEffect(() => {
@@ -70,8 +81,21 @@ export const useFiles = (projectId: string) => {
     mutationFn: async (params: { file: File }) => {
       const { file } = params;
 
+      // Resolve MIME type: use file.type, fallback to extension-based detection
+      let resolvedMime = file.type;
+      if (!resolvedMime || resolvedMime === '') {
+        const ext = getFileExtension(file.name);
+        resolvedMime = EXTENSION_TO_MIME[ext] || '';
+      }
+
+      // Create a File-like object with resolved MIME for validation
+      const fileForValidation = {
+        ...file,
+        type: resolvedMime,
+      } as File;
+
       // Validate file type first (before any upload/storage logic)
-      if (!isFileTypeAllowed(file)) {
+      if (!isFileTypeAllowed(fileForValidation)) {
         throw new Error(t('files.invalidFileType') || 'File type not allowed');
       }
 
@@ -102,20 +126,20 @@ export const useFiles = (projectId: string) => {
       // Build storage path: projects/{projectId}/files/{fileId}/{sanitizedFilename}
       const storagePath = `projects/${projectId}/files/${fileId}/${sanitizedFilename}`;
 
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage with resolved MIME type
       const { error: uploadError } = await supabase.storage
         .from('project-files')
         .upload(storagePath, file, {
           cacheControl: '3600',
           upsert: false,
-          contentType: file.type,
+          contentType: resolvedMime,
         });
 
       if (uploadError) {
         throw new Error(`${t('files.uploadFailed') || 'Failed to upload file'}: ${uploadError.message}`);
       }
 
-      // Insert metadata into project_files table with explicit id
+      // Insert metadata into project_files table with explicit id and resolved MIME
       const { data: fileData, error: insertError } = await supabase
         .from('project_files')
         .insert({
@@ -123,7 +147,7 @@ export const useFiles = (projectId: string) => {
           project_id: projectId,
           uploaded_by: user.id,
           file_name: file.name,
-          file_type: file.type,
+          file_type: resolvedMime, // Use resolved MIME type
           file_size: file.size,
           storage_path: storagePath,
         })
@@ -146,7 +170,7 @@ export const useFiles = (projectId: string) => {
     },
   });
 
-  // Mutation: Download file (returns Blob for progress tracking)
+  // Mutation: Download file (returns Blob with progress tracking)
   const downloadFileMutation = useMutation({
     mutationFn: async (file: ProjectFile): Promise<Blob> => {
       // Generate signed URL
@@ -158,16 +182,56 @@ export const useFiles = (projectId: string) => {
         throw new Error(`${t('files.downloadFailed') || 'Failed to generate download URL'}: ${error.message}`);
       }
 
-      // Perform actual download using fetch to enable progress tracking
+      // Reset progress state
+      setDownloadProgress(0);
+      setDownloadedBytes(0);
+
+      // Perform actual download using fetch with progress tracking
       const response = await fetch(data.signedUrl);
       if (!response.ok) {
         throw new Error(t('files.downloadError') || 'Download failed');
       }
 
-      return response.blob();
+      const contentLength = response.headers.get('Content-Length');
+      const total = contentLength ? parseInt(contentLength, 10) : 0;
+
+      // Read response body as stream for progress tracking
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error(t('files.downloadError') || 'Download failed');
+      }
+
+      const chunks: Uint8Array[] = [];
+      let received = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        received += value.length;
+        setDownloadedBytes(received);
+
+        if (total > 0) {
+          setDownloadProgress(Math.round((received / total) * 100));
+        }
+      }
+
+      // Combine chunks into single Blob
+      return new Blob(chunks);
+    },
+    onSuccess: () => {
+      setDownloadProgress(100);
+      // Reset progress after a short delay
+      setTimeout(() => {
+        setDownloadProgress(0);
+        setDownloadedBytes(0);
+      }, 1000);
     },
     onError: (error: Error) => {
       toast.error(error.message);
+      setDownloadProgress(0);
+      setDownloadedBytes(0);
     },
   });
 
@@ -222,6 +286,8 @@ export const useFiles = (projectId: string) => {
     isUploading: uploadFileMutation.isPending,
     downloadFile: downloadFileMutation.mutateAsync,
     isDownloading: downloadFileMutation.isPending,
+    downloadProgress,
+    downloadedBytes,
     deleteFile: deleteFileMutation.mutateAsync,
     isDeleting: deleteFileMutation.isPending,
   };

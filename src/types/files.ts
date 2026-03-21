@@ -15,6 +15,7 @@ export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB in bytes
 export const SIGNED_URL_EXPIRY = 60 * 60; // 60 minutes in seconds
 
 // Allowed file types for upload (MIME types)
+// Archive types removed for security: only documents and images allowed
 export const ALLOWED_FILE_TYPES = [
   // Images
   'image/jpeg',
@@ -30,13 +31,10 @@ export const ALLOWED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/csv',
   'text/plain',
-  // Archives
-  'application/zip',
-  'application/x-rar-compressed',
-  'application/x-7z-compressed',
 ] as const;
 
 // Map file extensions to MIME types (for fallback validation)
+// Archive extensions removed for security: only documents and images allowed
 export const EXTENSION_TO_MIME: Record<string, string> = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -51,9 +49,6 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
   '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   '.csv': 'text/csv',
   '.txt': 'text/plain',
-  '.zip': 'application/zip',
-  '.rar': 'application/x-rar-compressed',
-  '.7z': 'application/x-7z-compressed',
 };
 
 /**
@@ -73,7 +68,7 @@ export const getFileExtension = (filename: string): string => {
  */
 export const isFileTypeAllowed = (file: File): boolean => {
   // Check MIME type first
-  if (file.type && ALLOWED_FILE_TYPES.includes(file.type as any)) {
+  if (file.type && (ALLOWED_FILE_TYPES as readonly string[]).includes(file.type)) {
     return true;
   }
 
@@ -81,7 +76,7 @@ export const isFileTypeAllowed = (file: File): boolean => {
   const ext = getFileExtension(file.name);
   const expectedMime = EXTENSION_TO_MIME[ext];
   if (expectedMime) {
-    return ALLOWED_FILE_TYPES.includes(expectedMime as any);
+    return (ALLOWED_FILE_TYPES as readonly string[]).includes(expectedMime);
   }
 
   return false;

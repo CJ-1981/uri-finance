@@ -1,7 +1,7 @@
 -- Migration: Create project_files table for file metadata
 -- SPEC: SPEC-STORAGE-001
 -- Created: 2026-03-21
--- Updated: 2026-03-21 - Added storage path validation
+-- Updated: 2026-03-21 - Added storage path validation, real-time publication, fixed LIKE operator
 
 -- Create project_files table
 CREATE TABLE public.project_files (
@@ -37,8 +37,8 @@ ON public.project_files FOR INSERT
 WITH CHECK (
   public.is_project_member(auth.uid(), project_id) AND
   uploaded_by = auth.uid() AND
-  -- Ensure storage_path starts with "projects/{project_id}/"
-  storage_path ~ '^projects/' || project_id::text || '/%'
+  -- Ensure storage_path starts with "projects/{project_id}/" (using LIKE, not regex)
+  storage_path LIKE ('projects/' || project_id::text || '/%')
 );
 
 -- RLS Policies: Only project owner/admin can delete files
@@ -52,6 +52,9 @@ USING (
       AND project_members.role IN ('owner', 'admin')
   )
 );
+
+-- Add project_files table to Realtime publication for collaborative updates
+ALTER PUBLICATION supabase_realtime ADD TABLE public.project_files;
 
 -- Comment on table
 COMMENT ON TABLE public.project_files IS 'Stores metadata for files uploaded to project storage buckets';

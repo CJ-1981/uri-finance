@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon, Eye, Loader2 } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon, Eye, Loader2, HardDrive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -51,6 +51,15 @@ const AdminPage = () => {
     tables: Array<{ table_name: string; row_count: number; size: string }>;
   } | null>(null);
   const [dbLoading, setDbLoading] = useState(false);
+  const [storageStats, setStorageStats] = useState<{
+    total_files: number;
+    total_size: number;
+    total_size_pretty: string;
+    by_type: Array<{ file_type: string; count: number; size: number; size_pretty: string }>;
+    largest_file: { file_name: string; file_size: number; file_size_pretty: string; file_type: string } | null;
+    recent_files: Array<{ id: string; file_name: string; file_size: number; file_type: string; uploaded_at: string }>;
+  } | null>(null);
+  const [storageLoading, setStorageLoading] = useState(false);
   const [archiveFrom, setArchiveFrom] = useState("");
   const [archiveTo, setArchiveTo] = useState("");
   const [archiving, setArchiving] = useState(false);
@@ -63,6 +72,7 @@ const AdminPage = () => {
   const canAccess = isOwner || isAdmin;
 
   const DB_MAX_BYTES = 500 * 1024 * 1024; // 500 MB
+  const STORAGE_MAX_BYTES = 1024 * 1024 * 1024; // 1 GB for Supabase Storage free tier
 
   useEffect(() => {
     if (!isOwner) return;
@@ -74,6 +84,17 @@ const AdminPage = () => {
     };
     fetchStats();
   }, [isOwner]);
+
+  useEffect(() => {
+    if (!activeProject?.id) return;
+    const fetchStorageStats = async () => {
+      setStorageLoading(true);
+      const { data, error } = await supabase.rpc("get_storage_stats", { p_project_id: activeProject.id });
+      setStorageLoading(false);
+      if (!error && data) setStorageStats(data);
+    };
+    fetchStorageStats();
+  }, [activeProject?.id]);
 
   const handleCurrencyChange = async () => {
     if (!activeProject || !currency.trim()) return;
@@ -769,6 +790,108 @@ const AdminPage = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* Storage Stats - SPEC-STORAGE-001 */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <HardDrive className="h-4 w-4" />
+              {t("admin.storageStats")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("admin.storageStatsDesc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
+            {storageLoading ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t("admin.storageLoading")}</p>
+            ) : !storageStats ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t("admin.storageError")}</p>
+            ) : storageStats.total_files === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">{t("admin.storageEmpty")}</p>
+            ) : (
+              <>
+                {/* Summary Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-muted/30 px-3 py-3">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("admin.storageTotalFiles")}</p>
+                    <p className="text-2xl font-semibold text-foreground mt-1">{storageStats.total_files}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 px-3 py-3">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("admin.storageTotalSize")}</p>
+                    <p className="text-lg font-semibold text-foreground mt-1 truncate">{storageStats.total_size_pretty}</p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="space-y-2">
+                  <Progress
+                    value={Math.min((storageStats.total_size / STORAGE_MAX_BYTES) * 100, 100)}
+                    className="h-2"
+                  />
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    {t("admin.storageMaxSize")}
+                  </p>
+                </div>
+
+                {/* By File Type */}
+                {storageStats.by_type && storageStats.by_type.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">{t("admin.storageByType")}</p>
+                    <div className="space-y-1">
+                      {storageStats.by_type.map((type) => (
+                        <div key={type.file_type} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-sm text-foreground truncate">{type.file_type}</span>
+                            <span className="text-xs text-muted-foreground">({type.count})</span>
+                          </div>
+                          <span className="text-xs font-mono text-muted-foreground">{type.size_pretty}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Largest File */}
+                {storageStats.largest_file && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">{t("admin.storageLargestFile")}</p>
+                    <div className="rounded-lg bg-muted/30 px-3 py-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground truncate" title={storageStats.largest_file.file_name}>
+                            {storageStats.largest_file.file_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{storageStats.largest_file.file_type}</p>
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">{storageStats.largest_file.file_size_pretty}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recent Files */}
+                {storageStats.recent_files && storageStats.recent_files.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">{t("admin.storageRecentFiles")}</p>
+                    <div className="space-y-1">
+                      {storageStats.recent_files.map((file) => (
+                        <div key={file.id} className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground truncate" title={file.file_name}>
+                              {file.file_name}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {new Date(file.uploaded_at).toLocaleDateString()} • {file.file_type}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </>
