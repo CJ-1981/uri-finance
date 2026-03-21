@@ -25,7 +25,7 @@ export const useFiles = (projectId: string) => {
   const { t } = useI18n();
   const queryClient = useQueryClient();
 
-  // Query: List files sorted by newest first
+  // Query: List files sorted by newest first with uploader email
   const {
     data: files = [],
     isLoading,
@@ -33,6 +33,18 @@ export const useFiles = (projectId: string) => {
   } = useQuery({
     queryKey: ['project-files', projectId],
     queryFn: async () => {
+      // Try RPC function first (includes uploader email)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_project_files_with_email', {
+        p_project_id: projectId,
+      });
+
+      // If RPC function exists, use it
+      if (!rpcError && rpcData) {
+        return rpcData as (ProjectFile & { uploader_email?: string })[];
+      }
+
+      // Fallback: Use direct query (uploader email won't be available)
+      console.warn('RPC function not available, using fallback query');
       const { data, error } = await supabase
         .from('project_files')
         .select('*')
