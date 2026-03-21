@@ -488,6 +488,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.deleted": "File deleted",
     "files.previewNotAvailable": "Preview not available for this file type",
     "files.downloadToView": "Please download to view the file",
+    "files.remarkLabel": "Description",
+    "files.remarkPlaceholder": "Add a note or description (optional)",
   },
   ko: {
     // Auth
@@ -976,5 +978,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.deleted": "파일이 삭제되었습니다",
     "files.previewNotAvailable": "이 파일 형식은 미리보기를 지원하지 않습니다",
     "files.downloadToView": "파일을 다운로드하여 확인하세요",
+    "files.remarkLabel": "설명",
+    "files.remarkPlaceholder": "메모나 설명을 추가하세요 (선택사항)",
   },
 };

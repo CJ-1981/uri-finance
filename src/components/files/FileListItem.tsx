@@ -112,6 +112,11 @@ export const FileListItem = ({
             <span>•</span>
             <span>{formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}</span>
           </div>
+          {file.remark && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2" title={file.remark}>
+              {file.remark}
+            </p>
+          )}
         </div>
 
         {/* Action Buttons (hidden in selection mode) */}

@@ -1,11 +1,13 @@
 // FileUploadSheet component for uploading files with drag-and-drop
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
-// Updated: 2026-03-21 - Fixed upload button response, added proper async handling
+// Updated: 2026-03-21 - Fixed upload button response, added proper async handling, remark field
 
 import { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
   Sheet,
@@ -24,10 +26,14 @@ const generateFileInputId = () => `file-input-${Math.random().toString(36).subst
  * Props for FileUploadSheet component
  */
 interface FileUploadSheetProps {
-  /** Callback when file is selected for upload */
-  onUpload: (file: File) => Promise<void>;
+  /** Callback when file is selected for upload with remark */
+  onUpload: (file: File, remark: string) => Promise<void>;
   /** Whether upload is in progress */
   isUploading: boolean;
+  /** Current remark value */
+  remark?: string;
+  /** Callback when remark changes */
+  onRemarkChange?: (remark: string) => void;
 }
 
 /**
@@ -41,17 +47,24 @@ const formatFileSizeLimit = (bytes: number): string => {
 
 /**
  * FileUploadSheet component
- * Upload dialog with drag-and-drop zone
+ * Upload dialog with drag-and-drop zone and optional remark field
  */
-export const FileUploadSheet = ({ onUpload, isUploading }: FileUploadSheetProps) => {
+export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange }: FileUploadSheetProps) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [localRemark, setLocalRemark] = useState(remark);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const fileInputIdRef = useRef<string>(generateFileInputId());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync with external remark prop
+  const handleRemarkChange = (newRemark: string) => {
+    setLocalRemark(newRemark);
+    onRemarkChange?.(newRemark);
+  };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -75,9 +88,10 @@ export const FileUploadSheet = ({ onUpload, isUploading }: FileUploadSheetProps)
       setError(null);
 
       try {
-        await onUpload(selectedFile);
+        await onUpload(selectedFile, localRemark);
         // Success: close sheet and reset state
         setSelectedFile(null);
+        setLocalRemark('');
         setOpen(false);
         // Reset file input
         if (fileInputRef.current) {
@@ -96,6 +110,7 @@ export const FileUploadSheet = ({ onUpload, isUploading }: FileUploadSheetProps)
     if (!isUploading && !isUploadingFile) {
       setOpen(false);
       setSelectedFile(null);
+      setLocalRemark('');
       setError(null);
       // Reset file input
       if (fileInputRef.current) {
@@ -220,6 +235,18 @@ export const FileUploadSheet = ({ onUpload, isUploading }: FileUploadSheetProps)
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Remark Input */}
+          <div className="space-y-2">
+            <Label htmlFor="file-remark">{t('files.remarkLabel')}</Label>
+            <Input
+              id="file-remark"
+              placeholder={t('files.remarkPlaceholder')}
+              value={localRemark}
+              onChange={(e) => handleRemarkChange(e.target.value)}
+              disabled={isUploading || isUploadingFile}
+            />
           </div>
 
           {/* Error Message */}

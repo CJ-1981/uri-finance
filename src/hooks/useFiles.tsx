@@ -78,8 +78,8 @@ export const useFiles = (projectId: string) => {
 
   // Mutation: Upload file
   const uploadFileMutation = useMutation({
-    mutationFn: async (params: { file: File }) => {
-      const { file } = params;
+    mutationFn: async (params: { file: File; remark?: string }) => {
+      const { file, remark = '' } = params;
 
       // Resolve MIME type: use file.type, fallback to extension-based detection
       let resolvedMime = file.type;
@@ -151,6 +151,7 @@ export const useFiles = (projectId: string) => {
           file_type: resolvedMime, // Use resolved MIME type
           file_size: file.size,
           storage_path: storagePath,
+          remark: remark.trim() || null, // Add remark field
         })
         .select()
         .single();

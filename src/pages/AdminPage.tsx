@@ -88,10 +88,25 @@ const AdminPage = () => {
   useEffect(() => {
     if (!activeProject?.id) return;
     const fetchStorageStats = async () => {
+      console.log('[AdminPage] Fetching storage stats for project:', activeProject.id);
+      console.log('[AdminPage] Project ID type:', typeof activeProject.id);
       setStorageLoading(true);
+
       const { data, error } = await supabase.rpc("get_storage_stats", { p_project_id: activeProject.id });
+
       setStorageLoading(false);
-      if (!error && data) setStorageStats(data);
+
+      if (error) {
+        console.error('[AdminPage] Storage stats error:', error);
+        console.error('[AdminPage] Error name:', error.name);
+        console.error('[AdminPage] Error message:', error.message);
+        console.error('[AdminPage] Error details:', error);
+        console.error('[AdminPage] Error hint:', error.hint);
+        console.error('[AdminPage] Full error object:', JSON.stringify(error, null, 2));
+      } else {
+        console.log('[AdminPage] Storage stats success:', data);
+        setStorageStats(data);
+      }
     };
     fetchStorageStats();
   }, [activeProject?.id]);

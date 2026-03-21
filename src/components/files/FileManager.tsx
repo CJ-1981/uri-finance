@@ -36,6 +36,7 @@ export const FileManager = ({ projectId, canDelete }: { projectId: string; canDe
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
   const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
+  const [uploadRemark, setUploadRemark] = useState('');
 
   // Toggle selection mode
   const toggleSelectionMode = () => {
@@ -125,9 +126,9 @@ export const FileManager = ({ projectId, canDelete }: { projectId: string; canDe
     setPreviewFile(file);
   };
 
-  const handleUpload = async (file: File) => {
+  const handleUpload = async (file: File, remark: string) => {
     try {
-      await uploadFile({ file });
+      await uploadFile({ file, remark });
     } catch (error) {
       console.error('Upload failed:', error);
       throw error;
@@ -211,7 +212,7 @@ export const FileManager = ({ projectId, canDelete }: { projectId: string; canDe
               )}
             </>
           )}
-          <FileUploadSheet onUpload={handleUpload} isUploading={isUploading} />
+          <FileUploadSheet onUpload={handleUpload} isUploading={isUploading} remark={uploadRemark} onRemarkChange={setUploadRemark} />
         </div>
       </div>
 

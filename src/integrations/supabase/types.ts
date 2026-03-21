@@ -269,6 +269,7 @@ export interface Database {
           file_type: string
           file_size: number
           storage_path: string
+          remark: string | null
           created_at: string
         }
         Insert: {
@@ -279,6 +280,7 @@ export interface Database {
           file_type: string
           file_size: number
           storage_path: string
+          remark?: string | null
           created_at?: string
         }
         Update: {
@@ -289,6 +291,7 @@ export interface Database {
           file_type?: string
           file_size?: string
           storage_path?: string
+          remark?: string | null
           created_at?: string
         }
       }
