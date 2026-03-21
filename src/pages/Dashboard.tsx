@@ -8,6 +8,7 @@ import { useCustomColumns } from "@/hooks/useCustomColumns";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useI18n } from "@/hooks/useI18n";
 import { useSimulationVisibility } from "@/hooks/useSimulationVisibility";
+import { useFiles } from "@/hooks/useFiles";
 import ProjectSwitcher, { ProjectSwitcherHandle } from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList, { TransactionListHandle } from "@/components/TransactionList";
@@ -56,6 +57,8 @@ const Dashboard = () => {
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
   const { isViewer, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
+  // SPEC-TRANSACTION-FILES: File upload functionality for transactions
+  const { uploadFile } = useFiles(activeProject?.id || "");
   const { isVisible } = useSimulationVisibility();
   const [view, setView] = useState<"list" | "charts" | "cash" | "files">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
@@ -211,6 +214,14 @@ const Dashboard = () => {
 
   const handleNavigateTx = (tx: Transaction) => {
     setSelectedTx(tx);
+  };
+
+  // SPEC-TRANSACTION-FILES: Handle file upload for transaction attachments
+  const handleUploadFileForTransaction = async (file: File, remark?: string, transactionId?: string) => {
+    if (!activeProject?.id) {
+      throw new Error("No active project");
+    }
+    await uploadFile({ file, remark, transactionId });
   };
 
   const goToList = useCallback(() => setView("list"), []);
@@ -477,7 +488,7 @@ const Dashboard = () => {
             )}
 
             {/* FAB - hidden for viewers */}
-            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} externalOpen={addTxOpen} onExternalOpenChange={setAddTxOpen} />}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} externalOpen={addTxOpen} onExternalOpenChange={setAddTxOpen} onUploadFile={handleUploadFileForTransaction} currentProjectId={activeProject?.id} />}
 
             {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet
