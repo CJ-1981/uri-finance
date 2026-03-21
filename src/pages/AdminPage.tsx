@@ -92,7 +92,7 @@ const AdminPage = () => {
       console.log('[AdminPage] Project ID type:', typeof activeProject.id);
       setStorageLoading(true);
 
-      const { data, error } = await supabase.rpc("get_storage_stats", { p_project_id: activeProject.id });
+      const { data, error } = await supabase.rpc("get_project_storage_stats", { p_project_id: activeProject.id });
 
       setStorageLoading(false);
 

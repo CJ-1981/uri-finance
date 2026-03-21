@@ -490,6 +490,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.downloadToView": "Please download to view the file",
     "files.remarkLabel": "Description",
     "files.remarkPlaceholder": "Add a note or description (optional)",
+    "files.uploadedBy": "Uploaded by {email}",
   },
   ko: {
     // Auth
@@ -980,5 +981,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.downloadToView": "파일을 다운로드하여 확인하세요",
     "files.remarkLabel": "설명",
     "files.remarkPlaceholder": "메모나 설명을 추가하세요 (선택사항)",
+    "files.uploadedBy": "업로더: {email}",
   },
 };

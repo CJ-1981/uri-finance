@@ -1,19 +1,20 @@
 // FileListItem component for displaying individual file with actions
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
-// Updated: 2026-03-21 - Added multi-select checkbox support
+// Updated: 2026-03-21 - Added multi-select checkbox support, uploader email display
 
 import { File, FileText, ImageIcon, Download, Trash2, Eye, CheckSquare, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import type { ProjectFile } from '@/types/files';
+import { useI18n } from '@/hooks/useI18n';
 
 /**
  * Props for FileListItem component
  */
 interface FileListItemProps {
   /** File metadata and content */
-  file: ProjectFile;
+  file: ProjectFile & { uploader_email?: string };
   /** Whether current user can delete this file */
   canDelete: boolean;
   /** Whether selection mode is active */
@@ -80,6 +81,7 @@ export const FileListItem = ({
   onDelete,
   onPreview,
 }: FileListItemProps) => {
+  const { t } = useI18n();
   const showPreview = canPreview(file.file_type);
 
   return (
@@ -112,6 +114,11 @@ export const FileListItem = ({
             <span>•</span>
             <span>{formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}</span>
           </div>
+          {file.uploader_email && (
+            <p className="text-xs text-muted-foreground mt-0.5" title={file.uploader_email}>
+              {t('files.uploadedBy').replace('{email}', file.uploader_email)}
+            </p>
+          )}
           {file.remark && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-2" title={file.remark}>
               {file.remark}
