@@ -67,6 +67,7 @@ export const FileManager = ({ projectId, canDelete }: { projectId: string; canDe
     } catch (error) {
       // Error toast is already shown by useFiles hook
       console.error('Upload failed:', error);
+      throw error; // Re-throw so FileUploadSheet can handle it
     }
   };
 

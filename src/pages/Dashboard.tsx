@@ -21,7 +21,7 @@ import PinDisableDialog from "@/components/PinDisableDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus, Loader2 } from "lucide-react";
+import { BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus, Loader2, FileText } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
 import ShortcutSettings from "@/components/ShortcutSettings";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
@@ -29,6 +29,7 @@ import { UserRole } from "@/hooks/useUserRole";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { isPinSet } from "@/lib/securePinStorage";
+import { FileManager } from "@/components/files";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -56,7 +57,7 @@ const Dashboard = () => {
   const { isViewer, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
   const { isVisible } = useSimulationVisibility();
-  const [view, setView] = useState<"list" | "charts" | "cash">("list");
+  const [view, setView] = useState<"list" | "charts" | "cash" | "files">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [period, setPeriod] = useState<PeriodKey>("all");
@@ -215,6 +216,7 @@ const Dashboard = () => {
   const goToList = useCallback(() => setView("list"), []);
   const goToCharts = useCallback(() => setView("charts"), []);
   const goToCash = useCallback(() => setView("cash"), []);
+  const goToFile = useCallback(() => setView("files"), []);
 
   // Open period dropdown with '4'
   const openPeriodSelector = useCallback(() => {
@@ -232,6 +234,7 @@ const Dashboard = () => {
   useKeyboardShortcut("tabCash", goToCash, !!activeProject && noModalOpen);
   useKeyboardShortcut("openPeriod", openPeriodSelector, !!activeProject && noModalOpen);
   useKeyboardShortcut("openCategory", openCategorySelector, !!activeProject && noModalOpen);
+  useKeyboardShortcut("tabFiles", goToFile, !!activeProject && noModalOpen);
   
   // Allow navigation shortcuts even if detail sheet is open
   const canNavigate = !!activeProject && (noModalOpen || detailOpen);
@@ -452,6 +455,14 @@ const Dashboard = () => {
               >
                 <Calculator className="h-3.5 w-3.5" /> {t("cash.title")}
               </button>
+              <button
+                onClick={() => setView("files")}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
+                  view === "files" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" /> {t("files.title")}
+              </button>
             </div>
 
             {/* Content */}
@@ -459,8 +470,10 @@ const Dashboard = () => {
               <TransactionList ref={txListRef} transactions={filtered} categories={categories} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} isViewer={isViewer} />
             ) : view === "charts" ? (
               <FinanceCharts transactions={chartTransactions} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} projectCurrency={projectCurrency} />
-            ) : (
+            ) : view === "cash" ? (
               <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
+            ) : (
+              <FileManager projectId={activeProject.id} canDelete={!isViewer && (isOwner || effectiveRole === "admin")} />
             )}
 
             {/* FAB - hidden for viewers */}

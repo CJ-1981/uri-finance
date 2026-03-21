@@ -47,13 +47,26 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
   useEffect(() => {
     if (open && file && canPreview(file.file_type)) {
       setIsLoading(true);
+      console.log('[FilePreviewDialog] Requesting signed URL for:', file.storage_path);
+      console.log('[FilePreviewDialog] File metadata:', file);
+
       supabase.storage
         .from('project-files')
         .createSignedUrl(file.storage_path, 3600) // 60 minutes
-        .then(({ data }) => {
-          setPreviewUrl(data.signedUrl);
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('[FilePreviewDialog] Signed URL error:', error);
+            console.error('[FilePreviewDialog] Error details:', JSON.stringify(error, null, 2));
+            console.error('[FilePreviewDialog] Storage path:', file.storage_path);
+            setPreviewUrl(null);
+          } else {
+            console.log('[FilePreviewDialog] Signed URL generated:', data.signedUrl);
+            setPreviewUrl(data.signedUrl);
+          }
         })
-        .catch(() => {
+        .catch((err) => {
+          console.error('[FilePreviewDialog] Exception:', err);
+          console.error('[FilePreviewDialog] Exception details:', JSON.stringify(err, null, 2));
           setPreviewUrl(null);
         })
         .finally(() => {

@@ -120,11 +120,12 @@ export const useFiles = (projectId: string) => {
       // Generate UUID for this file (used for both DB row and storage path)
       const fileId = crypto.randomUUID();
 
-      // Sanitize filename (remove path characters and control chars)
-      const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      // Get file extension for content-type detection
+      const ext = getFileExtension(file.name);
 
-      // Build storage path: projects/{projectId}/files/{fileId}/{sanitizedFilename}
-      const storagePath = `projects/${projectId}/files/${fileId}/${sanitizedFilename}`;
+      // Use UUID as storage filename (Supabase Storage doesn't support Unicode in keys)
+      // Original filename is preserved in database for display
+      const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
 
       // Upload to Supabase Storage with resolved MIME type
       const { error: uploadError } = await supabase.storage

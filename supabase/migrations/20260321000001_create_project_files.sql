@@ -3,8 +3,8 @@
 -- Created: 2026-03-21
 -- Updated: 2026-03-21 - Added storage path validation, real-time publication, fixed LIKE operator
 
--- Create project_files table
-CREATE TABLE public.project_files (
+-- Create project_files table (if not exists)
+CREATE TABLE IF NOT EXISTS public.project_files (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   uploaded_by UUID NOT NULL REFERENCES auth.users(id),
@@ -19,11 +19,16 @@ CREATE TABLE public.project_files (
 );
 
 -- Create indexes for efficient queries
-CREATE INDEX project_files_project_id_idx ON public.project_files(project_id);
-CREATE INDEX project_files_created_at_idx ON public.project_files(created_at DESC);
+CREATE INDEX IF NOT EXISTS project_files_project_id_idx ON public.project_files(project_id);
+CREATE INDEX IF NOT EXISTS project_files_created_at_idx ON public.project_files(created_at DESC);
 
 -- Enable RLS
 ALTER TABLE public.project_files ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Project members can view files" ON public.project_files;
+DROP POLICY IF EXISTS "Project members can upload files" ON public.project_files;
+DROP POLICY IF EXISTS "Project owner/admin can delete files" ON public.project_files;
 
 -- RLS Policies: Project members can view files
 CREATE POLICY "Project members can view files"
@@ -54,7 +59,14 @@ USING (
 );
 
 -- Add project_files table to Realtime publication for collaborative updates
-ALTER PUBLICATION supabase_realtime ADD TABLE public.project_files;
+-- Note: This may fail if already added, which is acceptable
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.project_files;
+EXCEPTION
+  WHEN duplicate_object THEN
+    RAISE NOTICE 'Table already in publication';
+END $$;
 
 -- Comment on table
 COMMENT ON TABLE public.project_files IS 'Stores metadata for files uploaded to project storage buckets';
