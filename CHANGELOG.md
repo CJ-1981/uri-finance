@@ -20,13 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 5 MB file size limit with progress tracking
   - Download functionality with progress indicators
   - Admin page storage monitoring integration
+  - **Multi-select mode**: Select multiple files for batch operations (download/delete)
+  - **Confirmation dialogs**: AlertDialog for single and batch delete operations
+  - **Remark field**: Add descriptions/notes to file uploads with display in file list
+  - **Uploader email display**: Show who uploaded each file in the file list
 
 ### Database
 - **project_files table**: New table for file metadata with proper foreign keys and constraints
-  - Columns: id, project_id, uploaded_by, file_name, file_type, file_size, storage_path, created_at
+  - Columns: id, project_id, uploaded_by, file_name, file_type, file_size, storage_path, remark, created_at
   - CHECK constraint ensuring storage_path is scoped to project_id
   - Indexes on project_id and created_at for efficient queries
 - **get_storage_stats() function**: Returns storage statistics including file counts, sizes, and breakdown by type
+- **get_project_files_with_email() function**: SECURITY DEFINER function to fetch files with uploader emails
+  - Joins project_files with auth.users to include uploader email
+  - Type-safe casting of email field from varchar(255) to text
+- **project_files_with_email view**: Readable view for files with uploader email
+- **remark column**: Added optional TEXT field for file descriptions
 - **Updated initial_schema.sql**: Complete storage functionality included for fresh project setup
 
 ### Security
@@ -58,6 +67,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Real-time Publication**: project_files table added to supabase_realtime for collaborative updates
 - **Migration Idempotency**: All migrations updated with IF NOT EXISTS and DROP IF EXISTS for safe re-running
 - **Test File Migration**: Moved 20260315100000_add_user_preferences.test.sql to supabase/tests/ directory
+
+### User Experience
+- **Mobile camera support**: Separate "Camera" and "Files" buttons on mobile for direct photo capture
+- **Responsive file list**: Touch-friendly interface with proper spacing for mobile devices
+- **Batch operations**: Select multiple files with visual feedback and bulk actions
+- **Smart fallback**: Graceful degradation when uploader email function unavailable
+- **Keyboard shortcuts**: Files tab accessible via keyboard shortcut
+- **I18n support**: Korean and English translations for all file management features
 
 ## [1.0.1] - 2026-03-21
 
