@@ -10,7 +10,7 @@ import NumberedSelect from "@/components/NumberedSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight, CalendarIcon, Paperclip, FileText, Download, ExternalLink } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
@@ -21,6 +21,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 import ColoredBadge from "@/components/ColoredBadge";
+import { useFiles } from "@/hooks/useFiles";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
@@ -38,9 +39,11 @@ interface Props {
   onNavigate?: (tx: Transaction) => void;
   /** All transactions for historical suggestions */
   allTransactions?: Transaction[];
+  /** Current project ID for file fetch */
+  projectId?: string;
 }
 
-const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions }: Props) => {
+const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions, projectId }: Props) => {
   const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -53,6 +56,10 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const amountInputRef = useRef<HTMLInputElement>(null);
+
+  // SPEC-TRANSACTION-FILES: Fetch files associated with this transaction
+  const { files, isLoading: isLoadingFiles, downloadFile } = useFiles(projectId || "");
+  const transactionFiles = transaction && projectId ? files.filter(f => f.transaction_id === transaction.id) : [];
 
   const isOwn = !isViewer && transaction?.user_id === user?.id;
 
@@ -372,6 +379,94 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           className="bg-muted/50 border-border/50"
         />
       </div>
+
+      {/* SPEC-TRANSACTION-FILES: Attached Files Section */}
+      {projectId && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-muted-foreground text-xs flex items-center gap-1.5">
+              <Paperclip className="h-3.5 w-3.5" />
+              {t("files.attachments") || "Attachments"}
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              {transactionFiles.length} {transactionFiles.length === 1 ? t("files.file") || "file" : t("files.files") || "files"}
+            </span>
+          </div>
+
+          {isLoadingFiles ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">{t("files.loading") || "Loading..."}</p>
+            </div>
+          ) : transactionFiles.length === 0 ? (
+            <div className="text-center py-4 border border-dashed border-border/50 rounded-lg">
+              <Paperclip className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                No files attached
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {transactionFiles.map((file) => (
+                <div key={file.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate" title={file.file_name}>
+                        {file.file_name}
+                      </p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{(file.file_size / 1024).toFixed(1)} KB</span>
+                        {file.remark && (
+                          <span className="truncate" title={file.remark}>
+                            • {file.remark}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={async () => {
+                          try {
+                            const blob = await downloadFile(file);
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = file.file_name;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            setTimeout(() => URL.revokeObjectURL(url), 100);
+                          } catch (error) {
+                            console.error('Download failed:', error);
+                            toast.error('Failed to download file');
+                          }
+                        }}
+                        title={t('files.download') || 'Download'}
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                          window.open(`/files?highlight=${file.id}`, '_blank');
+                        }}
+                        title="View in Files"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Date & Currency (last before buttons) */}
       <div className="grid grid-cols-2 gap-3 overflow-hidden">

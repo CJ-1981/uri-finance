@@ -8,7 +8,6 @@ import { useCustomColumns } from "@/hooks/useCustomColumns";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useI18n } from "@/hooks/useI18n";
 import { useSimulationVisibility } from "@/hooks/useSimulationVisibility";
-import { useFiles } from "@/hooks/useFiles";
 import ProjectSwitcher, { ProjectSwitcherHandle } from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList, { TransactionListHandle } from "@/components/TransactionList";
@@ -58,7 +57,6 @@ const Dashboard = () => {
   const { isViewer, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
   const { isVisible } = useSimulationVisibility();
-  const { uploadFile } = useFiles(activeProject?.id || "");
   const [view, setView] = useState<"list" | "charts" | "cash" | "files">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -99,16 +97,6 @@ const Dashboard = () => {
   const openAddTx = useCallback(() => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
-
-  // SPEC-TRANSACTION-FILES: Handler for uploading files with transaction association
-  const handleUploadFileForTransaction = useCallback(async (file: File, remark: string, transactionId: string) => {
-    if (!activeProject) return;
-    await uploadFile({
-      file,
-      remark,
-      transactionId,
-    });
-  }, [activeProject, uploadFile]);
 
   const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen && !pinDialogOpen && !pinDisableDialogOpen;
 
@@ -205,14 +193,6 @@ const Dashboard = () => {
   const handleSelectTx = (tx: Transaction) => {
     setSelectedTx(tx);
     setDetailOpen(true);
-  };
-
-  // SPEC-TRANSACTION-FILES: Handle transaction click from file list
-  const handleTransactionClickFromFile = (transactionId: string) => {
-    const tx = transactions.find(t => t.id === transactionId);
-    if (tx) {
-      handleSelectTx(tx);
-    }
   };
 
   const handleBulkDelete = async (ids: string[]) => {
@@ -493,27 +473,11 @@ const Dashboard = () => {
             ) : view === "cash" ? (
               <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
             ) : (
-              <FileManager
-                projectId={activeProject.id}
-                canDelete={!isViewer && (isOwner || effectiveRole === "admin")}
-                onTransactionClick={handleTransactionClickFromFile}
-              />
+              <FileManager projectId={activeProject.id} canDelete={!isViewer && (isOwner || effectiveRole === "admin")} />
             )}
 
             {/* FAB - hidden for viewers */}
-            {!isViewer && (
-              <AddTransactionSheet
-                categories={categories}
-                onAdd={addTransaction}
-                customColumns={customColumns}
-                transactions={transactions}
-                projectCurrency={projectCurrency}
-                externalOpen={addTxOpen}
-                onExternalOpenChange={setAddTxOpen}
-                onUploadFile={handleUploadFileForTransaction}
-                currentProjectId={activeProject?.id}
-              />
-            )}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} externalOpen={addTxOpen} onExternalOpenChange={setAddTxOpen} />}
 
             {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet
@@ -531,6 +495,7 @@ const Dashboard = () => {
               transactionList={bulkEditTxs.length > 0 ? bulkEditTxs : navigableTxs}
               onNavigate={handleNavigateTx}
               allTransactions={transactions}
+              projectId={activeProject?.id}
             />
           </div>
         )}

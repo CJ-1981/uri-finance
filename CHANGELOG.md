@@ -24,12 +24,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Confirmation dialogs**: AlertDialog for single and batch delete operations
   - **Remark field**: Add descriptions/notes to file uploads with display in file list
   - **Uploader email display**: Show who uploaded each file in the file list
+  - **Transaction File Attachments (SPEC-TRANSACTION-FILES)**: Link files to transactions
+    - Upload files directly when creating transactions via AddTransactionSheet
+    - Deferred upload pattern: files stored locally, uploaded after transaction creation
+    - Upload progress indicator with spinner, progress bar, and percentage display
+    - Display attached files in TransactionDetailSheet with download functionality
+    - Link from file list to source transaction detail (Receipt + Link icon button)
+    - Transaction ID foreign key in project_files table with ON DELETE SET NULL
+    - Korean and English translations for file attachment features
 
 ### Database
 - **project_files table**: New table for file metadata with proper foreign keys and constraints
-  - Columns: id, project_id, uploaded_by, file_name, file_type, file_size, storage_path, remark, created_at
+  - Columns: id, project_id, uploaded_by, file_name, file_type, file_size, storage_path, remark, transaction_id, created_at
   - CHECK constraint ensuring storage_path is scoped to project_id
-  - Indexes on project_id and created_at for efficient queries
+  - Indexes on project_id, transaction_id, and created_at for efficient queries
+  - Foreign key to transactions table with ON DELETE SET NULL for transaction_id
+  - Composite index on (project_id, transaction_id) for efficient transaction file queries
 - **get_storage_stats() function**: Returns storage statistics including file counts, sizes, and breakdown by type
 - **get_project_files_with_email() function**: SECURITY DEFINER function to fetch files with uploader emails
   - Joins project_files with auth.users to include uploader email

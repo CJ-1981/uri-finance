@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CategoryNameSelector } from "@/components/CategorySelector";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag, X, Paperclip } from "lucide-react";
+import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag, X, Paperclip, Loader2, FileText } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Category } from "@/hooks/useCategories";
@@ -41,10 +41,9 @@ interface Props {
     transaction_date?: string;
     custom_values?: Record<string, number | string>;
     currency?: string;
-  }) => Promise<string | void>; // Return transaction ID for file association
-  // SPEC-TRANSACTION-FILES: Callback for file upload after transaction creation
-  onUploadFile?: (file: File, remark: string, transactionId: string) => Promise<void>;
-  // Current project ID for file upload
+  }) => Promise<void>;
+  // SPEC-TRANSACTION-FILES: File upload callback
+  onUploadFile?: (file: File, remark?: string, transactionId?: string) => Promise<void>;
   currentProjectId?: string;
 }
 
@@ -289,8 +288,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   // SPEC-TRANSACTION-FILES: State for file attachments
-  const [pendingFiles, setPendingFiles] = useState<Array<{ file: File; remark: string }>>([]);
+  const [pendingFiles, setPendingFiles] = useState<Array<{ file: File; remark: string; uploading?: boolean }>>([]);
   const [lastCreatedTransactionId, setLastCreatedTransactionId] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -315,8 +315,6 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     setAmount("");
     setDescription("");
     setCustomValues({});
-    setPendingFiles([]);
-    setLastCreatedTransactionId(null);
   };
 
   const doSubmit = async () => {
@@ -343,7 +341,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       }
     }
 
-    const result = await onAdd({
+    await onAdd({
       type,
       amount: Number(amount),
       category,
@@ -358,17 +356,25 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       const transactionId = typeof result === 'string' ? result : result;
       setLastCreatedTransactionId(transactionId);
 
-      // Upload each pending file
-      for (const pendingFile of pendingFiles) {
+      // Upload each pending file with progress tracking
+      for (let i = 0; i < pendingFiles.length; i++) {
+        const pendingFile = pendingFiles[i];
+        setUploadProgress(prev => ({ ...prev, [i]: 0 }));
+        setPendingFiles(prev => prev.map((pf, idx) => idx === i ? { ...pf, uploading: true } : pf));
+
         try {
           await onUploadFile(pendingFile.file, pendingFile.remark, transactionId);
+          setUploadProgress(prev => ({ ...prev, [i]: 100 }));
         } catch (error) {
           console.error('Failed to upload file:', error);
-          toast.error('Failed to upload one or more files');
+          setPendingFiles(prev => prev.map((pf, idx) => idx === i ? { ...pf, uploading: false } : pf));
+          toast.error(`Failed to upload ${pendingFile.file.name}`);
         }
       }
+
       // Clear pending files after upload
       setPendingFiles([]);
+      setUploadProgress({});
     }
 
     setSubmitting(false);
@@ -665,32 +671,64 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               />
             </div>
 
-            {/* Display pending files */}
+            {/* Display pending files with upload progress */}
             {pendingFiles.length > 0 && (
               <div className="space-y-2 mt-3">
-                {pendingFiles.map((pendingFile, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg border border-border/50">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate" title={pendingFile.file.name}>
-                        {pendingFile.file.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {(pendingFile.file.size / 1024).toFixed(1)} KB
-                        {pendingFile.remark && ` • ${pendingFile.remark}`}
-                      </p>
+                {pendingFiles.map((pendingFile, index) => {
+                  const progress = uploadProgress[index] || 0;
+                  const isUploading = pendingFile.uploading;
+
+                  return (
+                    <div key={index} className={`flex items-start justify-between p-2 rounded-lg border transition-colors ${
+                      isUploading ? 'bg-primary/5 border-primary/20' : 'bg-muted/50 border-border/50'
+                    }`}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          {isUploading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
+                          ) : (
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          )}
+                          <p className="text-sm font-medium text-foreground truncate" title={pendingFile.file.name}>
+                            {pendingFile.file.name}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-muted-foreground">
+                            {(pendingFile.file.size / 1024).toFixed(1)} KB
+                            {pendingFile.remark && ` • ${pendingFile.remark}`}
+                          </p>
+                          {isUploading && (
+                            <span className="text-xs text-primary font-medium">
+                              {progress}%
+                            </span>
+                          )}
+                        </div>
+                        {/* Progress bar */}
+                        {isUploading && (
+                          <div className="w-full h-1 bg-muted rounded-full overflow-hidden mt-1">
+                            <div
+                              className="h-full bg-primary transition-all duration-300"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {!isUploading && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            setPendingFiles(prev => prev.filter((_, i) => i !== index));
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => {
-                        setPendingFiles(prev => prev.filter((_, i) => i !== index));
-                      }}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
