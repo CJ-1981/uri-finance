@@ -437,6 +437,27 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // PIN Setup
     "pinSetup.failedToSetPinSecurely": "Failed to set PIN securely",
+
+    // Files (SPEC-STORAGE-001)
+    "files.title": "Files",
+    "files.loading": "Loading files...",
+    "files.noFiles": "No files uploaded yet",
+    "files.uploadFile": "Upload File",
+    "files.dragDrop": "Drag and drop file here, or click to select",
+    "files.maxSize": "Maximum file size: {size}",
+    "files.sizeExceeds": "File size exceeds {size} limit",
+    "files.uploading": "Uploading...",
+    "files.uploaded": "File uploaded successfully",
+    "files.uploadFailed": "Upload failed",
+    "files.preview": "Preview",
+    "files.download": "Download",
+    "files.delete": "Delete",
+    "files.deleteConfirm": "Delete this file?",
+    "files.deleteDesc": "This action cannot be undone",
+    "files.deleted": "File deleted",
+    "files.deleteFailed": "Delete failed",
+    "files.previewNotAvailable": "Preview not available for this file type",
+    "files.downloadToView": "Please download to view the file",
   },
   ko: {
     // Auth
@@ -874,5 +895,26 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // PIN Setup
     "pinSetup.failedToSetPinSecurely": "PIN을 안전하게 설정하지 못했습니다",
+
+    // Files (SPEC-STORAGE-001)
+    "files.title": "파일",
+    "files.loading": "파일 로딩 중...",
+    "files.noFiles": "아직 업로드된 파일이 없습니다",
+    "files.uploadFile": "파일 업로드",
+    "files.dragDrop": "파일을 드래그하여 놓거나 클릭하여 선택하세요",
+    "files.maxSize": "최대 파일 크기: {size}",
+    "files.sizeExceeds": "파일 크기가 {size} 제한을 초과합니다",
+    "files.uploading": "업로드 중...",
+    "files.uploaded": "파일이 업로드되었습니다",
+    "files.uploadFailed": "업로드에 실패했습니다",
+    "files.preview": "미리보기",
+    "files.download": "다운로드",
+    "files.delete": "삭제",
+    "files.deleteConfirm": "이 파일을 삭제하시겠습니까?",
+    "files.deleteDesc": "이 작업은 되돌릴 수 없습니다",
+    "files.deleted": "파일이 삭제되었습니다",
+    "files.deleteFailed": "삭제에 실패했습니다",
+    "files.previewNotAvailable": "이 파일 형식은 미리보기를 지원하지 않습니다",
+    "files.downloadToView": "파일을 다운로드하여 확인하세요",
   },
 };

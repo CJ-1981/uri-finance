@@ -230,10 +230,7 @@ describe('useFiles', () => {
 
       const { result } = renderHook(() => useFiles(mockProjectId), { wrapper });
 
-      await result.current.uploadFile({ file: mockFile, onProgress: (progress) => {
-        expect(progress.percentage).toBeGreaterThanOrEqual(0);
-        expect(progress.percentage).toBeLessThanOrEqual(100);
-      }});
+      await result.current.uploadFile({ file: mockFile });
 
       expect(mockStorageUpload).toHaveBeenCalled();
       expect(mockInsert).toHaveBeenCalled();

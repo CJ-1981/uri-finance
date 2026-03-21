@@ -2,9 +2,9 @@
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectFile, FileUploadProgress, MAX_FILE_SIZE, SIGNED_URL_EXPIRY } from '@/types/files';
+import { ProjectFile, MAX_FILE_SIZE, SIGNED_URL_EXPIRY } from '@/types/files';
 import { useToast } from '@/hooks/use-toast';
 
 // @MX:ANCHOR: Core file management hook with CRUD operations for project files
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 // @MX:SPEC: SPEC-STORAGE-001
 export const useFiles = (projectId: string) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Query: List files sorted by newest first
   const {
@@ -35,10 +36,7 @@ export const useFiles = (projectId: string) => {
 
   // Mutation: Upload file
   const uploadFileMutation = useMutation({
-    mutationFn: async (params: {
-      file: File;
-      onProgress?: (progress: FileUploadProgress) => void;
-    }) => {
+    mutationFn: async (params: { file: File }) => {
       const { file } = params;
 
       // Validate file size
@@ -99,6 +97,8 @@ export const useFiles = (projectId: string) => {
         title: 'File uploaded successfully',
         description: 'Your file has been uploaded and is ready to use.',
       });
+      // Invalidate queries to refresh file list
+      queryClient.invalidateQueries({ queryKey: ['project-files'] });
     },
     onError: (error: Error) => {
       toast({
@@ -145,16 +145,7 @@ export const useFiles = (projectId: string) => {
         throw new Error(`Failed to fetch file metadata: ${fetchError.message}`);
       }
 
-      // Delete from Supabase Storage
-      const { error: storageError } = await supabase.storage
-        .from('project-files')
-        .remove([fileData.storage_path]);
-
-      if (storageError) {
-        throw new Error(`Failed to delete file from storage: ${storageError.message}`);
-      }
-
-      // Delete metadata from database
+      // Delete metadata from database FIRST (safer - can rollback storage delete)
       const { error: deleteError } = await supabase
         .from('project_files')
         .delete()
@@ -163,12 +154,23 @@ export const useFiles = (projectId: string) => {
       if (deleteError) {
         throw new Error(`Failed to delete file metadata: ${deleteError.message}`);
       }
+
+      // Delete from Supabase Storage (after DB delete succeeds)
+      const { error: storageError } = await supabase.storage
+        .from('project-files')
+        .remove([fileData.storage_path]);
+
+      if (storageError) {
+        throw new Error(`Failed to delete file from storage: ${storageError.message}`);
+      }
     },
     onSuccess: () => {
       toast({
         title: 'File deleted',
         description: 'The file has been permanently deleted.',
       });
+      // Invalidate queries to refresh file list
+      queryClient.invalidateQueries({ queryKey: ['project-files'] });
     },
     onError: (error: Error) => {
       toast({

@@ -90,7 +90,7 @@ export const FileListItem = ({ file, canDelete, onDownload, onDelete, onPreview 
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-9 w-9 text-muted-foreground hover:text-foreground"
               onClick={() => onPreview(file)}
               title="Preview"
             >
@@ -102,7 +102,7 @@ export const FileListItem = ({ file, canDelete, onDownload, onDelete, onPreview 
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            className="h-9 w-9 text-muted-foreground hover:text-foreground"
             onClick={() => onDownload(file)}
             title="Download"
           >
@@ -114,7 +114,7 @@ export const FileListItem = ({ file, canDelete, onDownload, onDelete, onPreview 
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              className="h-9 w-9 text-muted-foreground hover:text-destructive"
               onClick={() => onDelete(file.id)}
               title="Delete"
             >

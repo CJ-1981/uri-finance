@@ -2,7 +2,8 @@
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
 
-import { File, Download, X } from 'lucide-react';
+import { File, Download, X, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,20 +27,6 @@ interface FilePreviewDialogProps {
 }
 
 /**
- * Get preview URL for file (public URL for images/PDFs)
- * @param file - File metadata
- * @returns Public URL or null if not previewable
- */
-const getPreviewUrl = (file: ProjectFile): string | null => {
-  const canPreview = file.file_type.startsWith('image/') || file.file_type === 'application/pdf';
-  if (canPreview) {
-    const { data } = supabase.storage.from('project-files').getPublicUrl(file.storage_path);
-    return data.publicUrl;
-  }
-  return null;
-};
-
-/**
  * Check if file type can be previewed
  * @param mimeType - MIME type of the file
  * @returns true if file can be previewed
@@ -50,22 +37,45 @@ const canPreview = (mimeType: string): boolean => {
 
 /**
  * FilePreviewDialog component
- * Modal dialog to preview files before download
+ * Modal dialog to preview files before download using signed URLs
  */
 export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialogProps) => {
-  if (!file) return null;
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const previewUrl = getPreviewUrl(file);
-  const isImage = file.file_type.startsWith('image/');
-  const isPdf = file.file_type === 'application/pdf';
-  const canPreviewFile = canPreview(file.file_type);
+  // Fetch signed URL when file or open state changes
+  useEffect(() => {
+    if (open && file && canPreview(file.file_type)) {
+      setIsLoading(true);
+      supabase.storage
+        .from('project-files')
+        .createSignedUrl(file.storage_path, 3600) // 60 minutes
+        .then(({ data }) => {
+          setPreviewUrl(data.signedUrl);
+        })
+        .catch(() => {
+          setPreviewUrl(null);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [open, file]);
 
   const handleDownload = () => {
-    // Trigger download by opening public URL in new tab
+    // Trigger download by opening signed URL in new tab
     if (previewUrl) {
       window.open(previewUrl, '_blank');
     }
   };
+
+  if (!file) return null;
+
+  const isImage = file.file_type.startsWith('image/');
+  const isPdf = file.file_type === 'application/pdf';
+  const canPreviewFile = canPreview(file.file_type);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,7 +97,12 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
         </DialogHeader>
 
         <div className="flex-1 overflow-auto flex items-center justify-center bg-muted/30 rounded-lg min-h-[400px]">
-          {!canPreviewFile ? (
+          {isLoading ? (
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
+              <p className="text-muted-foreground">Loading preview...</p>
+            </div>
+          ) : !canPreviewFile ? (
             <div className="text-center p-8">
               <File className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">Preview not available for this file type</p>
@@ -110,7 +125,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
         </div>
 
         <div className="flex-shrink-0 flex justify-end pt-4">
-          <Button onClick={handleDownload} className="gap-2">
+          <Button onClick={handleDownload} disabled={!previewUrl} className="gap-2">
             <Download className="h-4 w-4" />
             Download
           </Button>

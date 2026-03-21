@@ -6,12 +6,6 @@ import { Database } from '@/integrations/supabase/types';
 
 export type ProjectFile = Database['public']['Tables']['project_files']['Row'];
 
-export type FileUploadProgress = {
-  loaded: number;
-  total: number;
-  percentage: number;
-};
-
 export type FileUploadResult = {
   file: ProjectFile;
   path: string;

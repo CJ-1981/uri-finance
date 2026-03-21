@@ -6,7 +6,7 @@
 CREATE TABLE public.project_files (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
   project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
-  uploaded_by UUID NOT NULL,
+  uploaded_by UUID NOT NULL REFERENCES auth.users(id),
   file_name TEXT NOT NULL,
   file_type TEXT NOT NULL,
   file_size BIGINT NOT NULL,
