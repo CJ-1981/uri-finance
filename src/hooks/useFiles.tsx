@@ -1,17 +1,21 @@
 // useFiles hook for file management operations
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
+// Updated: 2026-03-21 - Added file type validation, UUID paths, real-time sync, sonner
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ProjectFile, MAX_FILE_SIZE, SIGNED_URL_EXPIRY } from '@/types/files';
-import { useToast } from '@/hooks/use-toast';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+import { ProjectFile, MAX_FILE_SIZE, SIGNED_URL_EXPIRY, isFileTypeAllowed } from '@/types/files';
+import { toast } from 'sonner';
+import { useI18n } from '@/hooks/useI18n';
 
 // @MX:ANCHOR: Core file management hook with CRUD operations for project files
 // @MX:REASON: High fan-in function used by FileManager and all file-related components
 // @MX:SPEC: SPEC-STORAGE-001
 export const useFiles = (projectId: string) => {
-  const { toast } = useToast();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
 
   // Query: List files sorted by newest first
@@ -34,14 +38,50 @@ export const useFiles = (projectId: string) => {
     enabled: !!projectId,
   });
 
+  // Real-time subscription for collaborative updates
+  useEffect(() => {
+    if (!projectId) return;
+
+    const channel: RealtimeChannel = supabase
+      .channel(`project-files-${projectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'project_files',
+          filter: `project_id=eq.${projectId}`,
+        },
+        () => {
+          // Invalidate query on any change to refresh file list
+          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup: unsubscribe on unmount
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [projectId, queryClient]);
+
   // Mutation: Upload file
   const uploadFileMutation = useMutation({
     mutationFn: async (params: { file: File }) => {
       const { file } = params;
 
+      // Validate file type first (before any upload/storage logic)
+      if (!isFileTypeAllowed(file)) {
+        throw new Error(t('files.invalidFileType') || 'File type not allowed');
+      }
+
       // Validate file size
       if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)} MB limit`);
+        const maxSizeMB = MAX_FILE_SIZE / (1024 * 1024);
+        throw new Error(
+          t('files.sizeExceeds').replace('{size}', `${maxSizeMB} MB`) ||
+          `File size exceeds ${maxSizeMB} MB limit`
+        );
       }
 
       // Get current user
@@ -50,12 +90,17 @@ export const useFiles = (projectId: string) => {
         error: userError,
       } = await supabase.auth.getUser();
       if (userError || !user) {
-        throw new Error('User not authenticated');
+        throw new Error(t('files.notAuthenticated') || 'User not authenticated');
       }
 
-      // Generate unique storage path
-      const timestamp = Date.now();
-      const storagePath = `projects/${projectId}/${user.id}-${timestamp}-${file.name}`;
+      // Generate UUID for this file (used for both DB row and storage path)
+      const fileId = crypto.randomUUID();
+
+      // Sanitize filename (remove path characters and control chars)
+      const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+      // Build storage path: projects/{projectId}/files/{fileId}/{sanitizedFilename}
+      const storagePath = `projects/${projectId}/files/${fileId}/${sanitizedFilename}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
@@ -67,13 +112,14 @@ export const useFiles = (projectId: string) => {
         });
 
       if (uploadError) {
-        throw new Error(`Failed to upload file: ${uploadError.message}`);
+        throw new Error(`${t('files.uploadFailed') || 'Failed to upload file'}: ${uploadError.message}`);
       }
 
-      // Insert metadata into project_files table
+      // Insert metadata into project_files table with explicit id
       const { data: fileData, error: insertError } = await supabase
         .from('project_files')
         .insert({
+          id: fileId, // Use the same UUID
           project_id: projectId,
           uploaded_by: user.id,
           file_name: file.name,
@@ -87,72 +133,68 @@ export const useFiles = (projectId: string) => {
       if (insertError) {
         // Cleanup: delete uploaded file if metadata insert fails
         await supabase.storage.from('project-files').remove([storagePath]);
-        throw new Error(`Failed to save file metadata: ${insertError.message}`);
+        throw new Error(`${t('files.saveMetadataFailed') || 'Failed to save file metadata'}: ${insertError.message}`);
       }
 
       return fileData as ProjectFile;
     },
     onSuccess: () => {
-      toast({
-        title: 'File uploaded successfully',
-        description: 'Your file has been uploaded and is ready to use.',
-      });
-      // Invalidate queries to refresh file list
-      queryClient.invalidateQueries({ queryKey: ['project-files'] });
+      toast.success(t('files.uploaded') || 'File uploaded successfully');
     },
     onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Upload failed',
-        description: error.message,
-      });
+      toast.error(error.message);
     },
   });
 
-  // Mutation: Download file (generate signed URL)
+  // Mutation: Download file (returns Blob for progress tracking)
   const downloadFileMutation = useMutation({
-    mutationFn: async (file: ProjectFile): Promise<string> => {
+    mutationFn: async (file: ProjectFile): Promise<Blob> => {
+      // Generate signed URL
       const { data, error } = await supabase.storage
         .from('project-files')
         .createSignedUrl(file.storage_path, SIGNED_URL_EXPIRY);
 
       if (error) {
-        throw new Error(`Failed to generate download URL: ${error.message}`);
+        throw new Error(`${t('files.downloadFailed') || 'Failed to generate download URL'}: ${error.message}`);
       }
 
-      return data.signedUrl;
+      // Perform actual download using fetch to enable progress tracking
+      const response = await fetch(data.signedUrl);
+      if (!response.ok) {
+        throw new Error(t('files.downloadError') || 'Download failed');
+      }
+
+      return response.blob();
     },
     onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Download failed',
-        description: error.message,
-      });
+      toast.error(error.message);
     },
   });
 
   // Mutation: Delete file
   const deleteFileMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      // Get file metadata first
+      // Get file metadata first (scoped to project_id)
       const { data: fileData, error: fetchError } = await supabase
         .from('project_files')
         .select('storage_path')
         .eq('id', fileId)
+        .eq('project_id', projectId) // Scope to current project
         .single();
 
       if (fetchError) {
-        throw new Error(`Failed to fetch file metadata: ${fetchError.message}`);
+        throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
       }
 
       // Delete metadata from database FIRST (safer - can rollback storage delete)
       const { error: deleteError } = await supabase
         .from('project_files')
         .delete()
-        .eq('id', fileId);
+        .eq('id', fileId)
+        .eq('project_id', projectId); // Scope to current project
 
       if (deleteError) {
-        throw new Error(`Failed to delete file metadata: ${deleteError.message}`);
+        throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
       }
 
       // Delete from Supabase Storage (after DB delete succeeds)
@@ -161,23 +203,14 @@ export const useFiles = (projectId: string) => {
         .remove([fileData.storage_path]);
 
       if (storageError) {
-        throw new Error(`Failed to delete file from storage: ${storageError.message}`);
+        throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
       }
     },
     onSuccess: () => {
-      toast({
-        title: 'File deleted',
-        description: 'The file has been permanently deleted.',
-      });
-      // Invalidate queries to refresh file list
-      queryClient.invalidateQueries({ queryKey: ['project-files'] });
+      toast.success(t('files.deleted') || 'File deleted');
     },
     onError: (error: Error) => {
-      toast({
-        variant: 'destructive',
-        title: 'Delete failed',
-        description: error.message,
-      });
+      toast.error(error.message);
     },
   });
 
@@ -188,6 +221,7 @@ export const useFiles = (projectId: string) => {
     uploadFile: uploadFileMutation.mutateAsync,
     isUploading: uploadFileMutation.isPending,
     downloadFile: downloadFileMutation.mutateAsync,
+    isDownloading: downloadFileMutation.isPending,
     deleteFile: deleteFileMutation.mutateAsync,
     isDeleting: deleteFileMutation.isPending,
   };

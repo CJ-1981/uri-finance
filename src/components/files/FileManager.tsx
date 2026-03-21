@@ -31,9 +31,17 @@ export const FileManager = ({ projectId, canDelete }: { projectId: string; canDe
 
   const handleDownload = async (file: ProjectFile) => {
     try {
-      const url = await downloadFile(file);
-      // Trigger download by opening signed URL in new tab
-      window.open(url, '_blank');
+      const blob = await downloadFile(file);
+      // Create object URL from Blob and trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      // Clean up object URL after a short delay
+      setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (error) {
       // Error toast is already shown by useFiles hook
       console.error('Download failed:', error);

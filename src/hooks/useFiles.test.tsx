@@ -1,6 +1,7 @@
 // Tests for useFiles hook
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
+// Updated: 2026-03-21 - Updated mocks for sonner and useI18n
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -18,13 +19,26 @@ vi.mock('@/integrations/supabase/client', () => ({
     auth: {
       getUser: vi.fn(),
     },
+    channel: vi.fn(() => ({
+      on: vi.fn(() => ({
+        subscribe: vi.fn(() => ({ unsubscribe: vi.fn() })),
+      })),
+    })),
   },
 }));
 
-// Mock toast
-vi.mock('@/hooks/use-toast', () => ({
-  useToast: () => ({
-    toast: vi.fn(),
+// Mock sonner
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+// Mock useI18n
+vi.mock('@/hooks/useI18n', () => ({
+  useI18n: () => ({
+    t: (key: string) => key, // Return key as translation
   }),
 }));
 
@@ -175,16 +189,17 @@ describe('useFiles', () => {
   });
 
   describe('uploadFile', () => {
-    it('should upload file successfully with progress tracking', async () => {
+    it('should upload file successfully', async () => {
       const mockFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+      const fileId = 'new-file-id';
       const mockUploadedFile = {
-        id: 'new-file-id',
+        id: fileId,
         project_id: mockProjectId,
         uploaded_by: mockUserId,
         file_name: 'test.pdf',
         file_type: 'application/pdf',
         file_size: mockFile.size,
-        storage_path: `projects/${mockProjectId}/${mockUserId}-${Date.now()}-test.pdf`,
+        storage_path: `projects/${mockProjectId}/files/${fileId}/test.pdf`,
         created_at: '2026-03-21T12:00:00Z',
       };
 
@@ -224,6 +239,14 @@ describe('useFiles', () => {
       expect(mockInsert).toHaveBeenCalled();
     });
 
+    it('should reject invalid file types', async () => {
+      const invalidFile = new File(['content'], 'test.exe', { type: 'application/exe' });
+
+      const { result } = renderHook(() => useFiles(mockProjectId), { wrapper });
+
+      await expect(result.current.uploadFile({ file: invalidFile })).rejects.toThrow();
+    });
+
     it('should reject files larger than 5 MB', async () => {
       const largeFile = new File([new ArrayBuffer(6 * 1024 * 1024)], 'large.pdf', {
         type: 'application/pdf',
@@ -255,7 +278,7 @@ describe('useFiles', () => {
   });
 
   describe('downloadFile', () => {
-    it('should generate signed URL with 60-minute expiry', async () => {
+    it('should download file as Blob', async () => {
       const mockFile = {
         id: 'file-id',
         project_id: mockProjectId,
@@ -268,10 +291,17 @@ describe('useFiles', () => {
       };
 
       const mockSignedUrl = 'https://storage.example.com/signed-url';
+      const mockBlob = new Blob(['test content'], { type: 'application/pdf' });
       const mockCreateSignedUrl = vi.fn().mockResolvedValue({
         data: { signedUrl: mockSignedUrl },
         error: null,
       });
+
+      // Mock global fetch
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        blob: async () => mockBlob,
+      } as any);
 
       vi.mocked(supabase.storage.from).mockReturnValue({
         upload: vi.fn(),
@@ -281,13 +311,14 @@ describe('useFiles', () => {
 
       const { result } = renderHook(() => useFiles(mockProjectId), { wrapper });
 
-      const url = await result.current.downloadFile(mockFile);
+      const blob = await result.current.downloadFile(mockFile);
 
-      expect(url).toBe(mockSignedUrl);
+      expect(blob).toBeInstanceOf(Blob);
       expect(mockCreateSignedUrl).toHaveBeenCalledWith(mockFile.storage_path, 3600);
+      expect(global.fetch).toHaveBeenCalledWith(mockSignedUrl);
     });
 
-    it('should handle signed URL generation errors', async () => {
+    it('should handle download errors', async () => {
       const mockFile = {
         id: 'file-id',
         project_id: mockProjectId,
@@ -331,20 +362,27 @@ describe('useFiles', () => {
         remove: mockStorageRemove,
       } as any);
 
+      // Mock delete chain with two .eq() calls (id and project_id)
+      const mockDeleteEq2 = vi.fn().mockResolvedValue({
+        error: null,
+      });
+      const mockDeleteEq1 = vi.fn().mockReturnValue({
+        eq: mockDeleteEq2,
+      });
       const mockDelete = vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({
-          error: null,
-        }),
+        eq: mockDeleteEq1,
       });
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                storage_path: 'projects/test-project-id/test.pdf',
-              },
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  storage_path: 'projects/test-project-id/test.pdf',
+                },
+                error: null,
+              }),
             }),
           }),
         }),
@@ -357,6 +395,8 @@ describe('useFiles', () => {
 
       expect(mockStorageRemove).toHaveBeenCalledWith([expect.any(String)]);
       expect(mockDelete).toHaveBeenCalled();
+      expect(mockDeleteEq1).toHaveBeenCalledWith('id', mockFileId);
+      expect(mockDeleteEq2).toHaveBeenCalledWith('project_id', mockProjectId);
     });
 
     it('should handle delete errors', async () => {
