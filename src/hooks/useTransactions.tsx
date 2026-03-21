@@ -52,7 +52,7 @@ export const useTransactions = (projectId: string | undefined) => {
     currency?: string;
   }) => {
     if (!user || !projectId) return;
-    const { error } = await supabase.from("transactions").insert({
+    const { data, error } = await supabase.from("transactions").insert({
       project_id: projectId,
       user_id: user.id,
       type: tx.type,
@@ -62,7 +62,7 @@ export const useTransactions = (projectId: string | undefined) => {
       transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
       custom_values: tx.custom_values || {},
       currency: tx.currency || "USD",
-    });
+    }).select("id").single();
 
     if (error) {
       toast.error("Failed to add transaction");
@@ -70,6 +70,8 @@ export const useTransactions = (projectId: string | undefined) => {
     }
     toast.success("Transaction added!", { duration: 2000 });
     await fetchTransactions();
+    // Return transaction ID for file association
+    return data?.id;
   };
 
   const updateTransaction = async (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>) => {

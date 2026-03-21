@@ -1,7 +1,9 @@
 // useFiles hook for file management operations
 // SPEC: SPEC-STORAGE-001
+// SPEC: SPEC-TRANSACTION-001
 // Created: 2026-03-21
 // Updated: 2026-03-21 - Added file type validation, UUID paths, real-time sync, sonner
+// Updated: 2026-03-21 - Added transaction file association support
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -90,8 +92,8 @@ export const useFiles = (projectId: string) => {
 
   // Mutation: Upload file
   const uploadFileMutation = useMutation({
-    mutationFn: async (params: { file: File; remark?: string }) => {
-      const { file, remark = '' } = params;
+    mutationFn: async (params: { file: File; remark?: string; transactionId?: string }) => {
+      const { file, remark = '', transactionId } = params;
 
       // Resolve MIME type: use file.type, fallback to extension-based detection
       let resolvedMime = file.type;
@@ -164,6 +166,7 @@ export const useFiles = (projectId: string) => {
           file_size: file.size,
           storage_path: storagePath,
           remark: remark.trim() || null, // Add remark field
+          transaction_id: transactionId || null, // Add transaction association
         })
         .select()
         .single();
@@ -296,6 +299,11 @@ export const useFiles = (projectId: string) => {
     },
   });
 
+  // NEW: Get files for a specific transaction
+  const getTransactionFiles = (transactionId: string) => {
+    return files.filter(f => f.transaction_id === transactionId);
+  };
+
   return {
     files,
     isLoading,
@@ -308,5 +316,6 @@ export const useFiles = (projectId: string) => {
     downloadedBytes,
     deleteFile: deleteFileMutation.mutateAsync,
     isDeleting: deleteFileMutation.isPending,
+    getTransactionFiles,
   };
 };

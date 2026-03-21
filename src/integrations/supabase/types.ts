@@ -271,6 +271,7 @@ export interface Database {
           storage_path: string
           remark: string | null
           created_at: string
+          transaction_id: string | null
         }
         Insert: {
           id?: string
@@ -282,6 +283,7 @@ export interface Database {
           storage_path: string
           remark?: string | null
           created_at?: string
+          transaction_id?: string | null
         }
         Update: {
           id?: string
@@ -293,6 +295,7 @@ export interface Database {
           storage_path?: string
           remark?: string | null
           created_at?: string
+          transaction_id?: string | null
         }
       }
     }

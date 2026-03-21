@@ -491,6 +491,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.remarkLabel": "Description",
     "files.remarkPlaceholder": "Add a note or description (optional)",
     "files.uploadedBy": "Uploaded by {email}",
+    // SPEC-TRANSACTION-FILES
+    "files.linkToTransaction": "View Transaction",
+    "files.attachments": "Attachments",
   },
   ko: {
     // Auth
@@ -982,5 +985,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.remarkLabel": "설명",
     "files.remarkPlaceholder": "메모나 설명을 추가하세요 (선택사항)",
     "files.uploadedBy": "업로더: {email}",
+    // SPEC-TRANSACTION-FILES
+    "files.linkToTransaction": "거래 보기",
+    "files.attachments": "첨부파일",
   },
 };

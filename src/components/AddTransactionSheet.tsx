@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CategoryNameSelector } from "@/components/CategorySelector";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag } from "lucide-react";
+import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag, X, Paperclip } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Category } from "@/hooks/useCategories";
@@ -19,6 +19,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 import ColoredBadge from "@/components/ColoredBadge";
+import { FileUploadSheet } from "@/components/files/FileUploadSheet";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
@@ -40,7 +41,11 @@ interface Props {
     transaction_date?: string;
     custom_values?: Record<string, number | string>;
     currency?: string;
-  }) => Promise<void>;
+  }) => Promise<string | void>; // Return transaction ID for file association
+  // SPEC-TRANSACTION-FILES: Callback for file upload after transaction creation
+  onUploadFile?: (file: File, remark: string, transactionId: string) => Promise<void>;
+  // Current project ID for file upload
+  currentProjectId?: string;
 }
 
 // Tree item component for inline dropdown
@@ -268,7 +273,7 @@ const InlineCategoryDropdown = ({ categories, selectedCategoryName, onCategoryCh
   );
 };
 
-const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd }: Props) => {
+const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd, onUploadFile, currentProjectId }: Props) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = (v: boolean) => {
@@ -283,6 +288,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [currency, setCurrency] = useState(projectCurrency || "USD");
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  // SPEC-TRANSACTION-FILES: State for file attachments
+  const [pendingFiles, setPendingFiles] = useState<Array<{ file: File; remark: string }>>([]);
+  const [lastCreatedTransactionId, setLastCreatedTransactionId] = useState<string | null>(null);
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -307,6 +315,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     setAmount("");
     setDescription("");
     setCustomValues({});
+    setPendingFiles([]);
+    setLastCreatedTransactionId(null);
   };
 
   const doSubmit = async () => {
@@ -333,7 +343,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       }
     }
 
-    await onAdd({
+    const result = await onAdd({
       type,
       amount: Number(amount),
       category,
@@ -342,6 +352,25 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       custom_values: Object.keys(cv).length > 0 ? cv : undefined,
       currency,
     });
+
+    // SPEC-TRANSACTION-FILES: Upload pending files after transaction is created
+    if (result && pendingFiles.length > 0 && onUploadFile) {
+      const transactionId = typeof result === 'string' ? result : result;
+      setLastCreatedTransactionId(transactionId);
+
+      // Upload each pending file
+      for (const pendingFile of pendingFiles) {
+        try {
+          await onUploadFile(pendingFile.file, pendingFile.remark, transactionId);
+        } catch (error) {
+          console.error('Failed to upload file:', error);
+          toast.error('Failed to upload one or more files');
+        }
+      }
+      // Clear pending files after upload
+      setPendingFiles([]);
+    }
+
     setSubmitting(false);
     return true;
   };
@@ -609,6 +638,63 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             />
           </div>
         </div>
+
+        {/* SPEC-TRANSACTION-FILES: File Attachments Section */}
+        {onUploadFile && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-muted-foreground text-xs flex items-center gap-1.5">
+                <Paperclip className="h-3.5 w-3.5" />
+                {t("files.attachments") || "Attachments"}
+              </Label>
+              {pendingFiles.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {pendingFiles.length} {t("files.files") || "files"}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <FileUploadSheet
+                onUpload={async (file, remark) => {
+                  // Store file as pending until transaction is created
+                  setPendingFiles(prev => [...prev, { file, remark }]);
+                }}
+                isUploading={false}
+                transactionId={lastCreatedTransactionId || undefined}
+              />
+            </div>
+
+            {/* Display pending files */}
+            {pendingFiles.length > 0 && (
+              <div className="space-y-2 mt-3">
+                {pendingFiles.map((pendingFile, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-muted/50 rounded-lg border border-border/50">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate" title={pendingFile.file.name}>
+                        {pendingFile.file.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(pendingFile.file.size / 1024).toFixed(1)} KB
+                        {pendingFile.remark && ` • ${pendingFile.remark}`}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => {
+                        setPendingFiles(prev => prev.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex gap-2">

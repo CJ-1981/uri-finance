@@ -1,9 +1,11 @@
 // FileListItem component for displaying individual file with actions
 // SPEC: SPEC-STORAGE-001
+// SPEC: SPEC-TRANSACTION-FILES
 // Created: 2026-03-21
 // Updated: 2026-03-21 - Added multi-select checkbox support, uploader email display
+// Updated: 2026-03-21 - Added transaction link button for files associated with transactions
 
-import { File, FileText, ImageIcon, Download, Trash2, Eye, CheckSquare, Square } from 'lucide-react';
+import { File, FileText, ImageIcon, Download, Trash2, Eye, CheckSquare, Square, Receipt, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import type { ProjectFile } from '@/types/files';
@@ -29,6 +31,8 @@ interface FileListItemProps {
   onDelete: () => void;
   /** Callback when preview button is clicked */
   onPreview: (file: ProjectFile) => void;
+  /** Callback when transaction link button is clicked */
+  onTransactionClick?: (transactionId: string) => void;
 }
 
 /**
@@ -70,6 +74,7 @@ const getFileIcon = (mimeType: string) => {
  * FileListItem component
  * Displays individual file with metadata and action buttons
  * Supports multi-select mode with checkbox
+ * Shows transaction link button when file is associated with a transaction
  */
 export const FileListItem = ({
   file,
@@ -80,6 +85,7 @@ export const FileListItem = ({
   onDownload,
   onDelete,
   onPreview,
+  onTransactionClick,
 }: FileListItemProps) => {
   const { t } = useI18n();
   const showPreview = canPreview(file.file_type);
@@ -129,6 +135,20 @@ export const FileListItem = ({
         {/* Action Buttons (hidden in selection mode) */}
         {!isSelectionMode && (
           <div className="flex items-center gap-1 shrink-0">
+            {/* Transaction Link Button (when file has transaction_id) */}
+            {file.transaction_id && onTransactionClick && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-primary hover:text-primary hover:bg-primary/10"
+                onClick={() => onTransactionClick(file.transaction_id!)}
+                title={t('files.linkToTransaction') || 'View Transaction'}
+              >
+                <Receipt className="h-4 w-4" />
+                <LinkIcon className="h-3 w-3 absolute -bottom-0.5 -right-0.5" />
+              </Button>
+            )}
+
             {/* Preview Button (for images and PDFs) */}
             {showPreview && (
               <Button

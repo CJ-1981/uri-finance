@@ -1,7 +1,9 @@
 // FileManager component for main file management UI
 // SPEC: SPEC-STORAGE-001
+// SPEC: SPEC-TRANSACTION-FILES
 // Created: 2026-03-21
 // Updated: 2026-03-21 - Added multi-select, confirmation dialogs, batch actions
+// Updated: 2026-03-21 - Added transaction link support
 
 import { useState } from 'react';
 import { FileUp, CheckSquare, Square, Download, Trash2, X } from 'lucide-react';
@@ -26,8 +28,17 @@ import type { ProjectFile } from '@/types/files';
 /**
  * FileManager component
  * Main container orchestrating file management with multi-select support
+ * Includes transaction link support for files associated with transactions
  */
-export const FileManager = ({ projectId, canDelete }: { projectId: string; canDelete: boolean }) => {
+export const FileManager = ({
+  projectId,
+  canDelete,
+  onTransactionClick
+}: {
+  projectId: string;
+  canDelete: boolean;
+  onTransactionClick?: (transactionId: string) => void;
+}) => {
   const { t } = useI18n();
   const { files, isLoading, uploadFile, isUploading, downloadFile, deleteFile, isDeleting } = useFiles(projectId);
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
@@ -245,6 +256,7 @@ export const FileManager = ({ projectId, canDelete }: { projectId: string; canDe
               }}
               onDelete={() => handleDeleteClick(file.id)}
               onPreview={handlePreview}
+              onTransactionClick={onTransactionClick}
             />
           ))}
         </div>

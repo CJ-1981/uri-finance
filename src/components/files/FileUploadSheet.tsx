@@ -1,7 +1,9 @@
 // FileUploadSheet component for uploading files with drag-and-drop
 // SPEC: SPEC-STORAGE-001
+// SPEC: SPEC-TRANSACTION-FILES
 // Created: 2026-03-21
 // Updated: 2026-03-21 - Fixed upload button response, added proper async handling, remark field
+// Updated: 2026-03-21 - Added transactionId prop for transaction file association
 
 import { useState, useRef } from 'react';
 import { Upload, X } from 'lucide-react';
@@ -34,6 +36,8 @@ interface FileUploadSheetProps {
   remark?: string;
   /** Callback when remark changes */
   onRemarkChange?: (remark: string) => void;
+  /** Optional transaction ID to associate the uploaded file with */
+  transactionId?: string;
 }
 
 /**
@@ -48,8 +52,9 @@ const formatFileSizeLimit = (bytes: number): string => {
 /**
  * FileUploadSheet component
  * Upload dialog with drag-and-drop zone and optional remark field
+ * Accepts optional transactionId for associating uploads with transactions
  */
-export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange }: FileUploadSheetProps) => {
+export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange, transactionId }: FileUploadSheetProps) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
