@@ -1,6 +1,7 @@
 -- Migration: Add storage stats function for file monitoring
 -- SPEC: SPEC-STORAGE-001
 -- Created: 2026-03-21
+-- Updated: 2026-03-21 - Fixed auth.users access issue
 
 -- Get storage stats for the current project
 -- Returns file count, total size, breakdown by file type, and largest file
@@ -51,9 +52,7 @@ BEGIN
         'file_size', file_size,
         'file_type', file_type,
         'uploaded_at', created_at,
-        'uploaded_by_email', (
-          SELECT email FROM auth.users WHERE id = project_files.uploaded_by LIMIT 1
-        )
+        'uploaded_by', uploaded_by
       ))
       FROM project_files
       WHERE project_id = p_project_id
