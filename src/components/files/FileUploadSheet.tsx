@@ -164,7 +164,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       }
     }}>
       <SheetTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" className="gap-2" data-tab-stop>
           <Upload className="h-4 w-4" />
           {t('files.uploadFile')}
         </Button>
