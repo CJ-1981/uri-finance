@@ -48,9 +48,9 @@ const RouteRestoration = () => {
     sessionStorage.removeItem(sessionKey);
 
     // Ensure we strip the basename from the path before navigating internally
-    const basename = "/uri-finance";
+    const basename = import.meta.env.DEV ? "/" : "/uri-finance";
     let finalPath = savedPath;
-    if (finalPath.startsWith(basename)) {
+    if (!import.meta.env.DEV && finalPath.startsWith(basename)) {
       finalPath = finalPath.slice(basename.length);
     }
     // Ensure it starts with /
@@ -116,7 +116,7 @@ const App = () => {
                 <Toaster />
                 <Sonner />
                 <AppLockGate>
-                  <BrowserRouter basename="/uri-finance" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <BrowserRouter basename={import.meta.env.DEV ? "/" : "/uri-finance"} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <RouteRestoration />
                     <Routes>
                       <Route path="/" element={<Index />} />
