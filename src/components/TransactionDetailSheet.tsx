@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +46,6 @@ interface Props {
 
 const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions, projectId }: Props) => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
@@ -403,10 +401,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 onUpload={async (file, remark) => {
                   try {
                     await uploadFile({ file, remark, transactionId: transaction.id });
-                    // Explicitly invalidate queries to refresh file list
-                    if (projectId) {
-                      queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-                    }
+                    // Note: Query invalidation happens automatically in useFiles hook's onSuccess handler
+                    // This ensures the file list refreshes to show the newly uploaded file
                   } catch (error) {
                     console.error('Failed to upload file:', error);
                     toast.error(t("files.uploadError") || "Failed to upload file");

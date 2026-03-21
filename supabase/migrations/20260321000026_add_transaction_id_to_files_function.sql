@@ -1,14 +1,14 @@
--- Migration: Add function to get files with uploader email
--- SPEC: SPEC-STORAGE-001
+-- Migration: Add transaction_id to get_project_files_with_email function
 -- SPEC: SPEC-TRANSACTION-FILES
 -- Created: 2026-03-21
--- Updated: 2026-03-21 - Fixed type casting for email field, drop view first
--- Updated: 2026-03-21 - Added transaction_id field to support transaction file associations
+-- Description: Updates the RPC function and view to include transaction_id field
+-- This is needed for files uploaded via transaction modals to show their transaction association
 
--- Drop existing view if it exists
+-- Drop existing view and function to recreate them
 DROP VIEW IF EXISTS public.project_files_with_email;
+DROP FUNCTION IF EXISTS public.get_project_files_with_email(UUID);
 
--- Create function to get project files with uploader email
+-- Create function to get project files with uploader email and transaction association
 -- SECURITY DEFINER allows access to auth.users email while maintaining RLS
 CREATE OR REPLACE FUNCTION public.get_project_files_with_email(p_project_id UUID)
 RETURNS TABLE (
@@ -52,7 +52,7 @@ $$;
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION public.get_project_files_with_email(UUID) TO authenticated;
 
--- Create view for easy access (optional, for direct querying)
+-- Recreate view for easy access (optional, for direct querying)
 CREATE VIEW public.project_files_with_email AS
 SELECT
   pf.id,
