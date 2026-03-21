@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 import ColoredBadge from "@/components/ColoredBadge";
 import { useFiles } from "@/hooks/useFiles";
+import { FileUploadSheet } from "@/components/files/FileUploadSheet";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
@@ -58,7 +59,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   // SPEC-TRANSACTION-FILES: Fetch files associated with this transaction
-  const { files, isLoading: isLoadingFiles, downloadFile } = useFiles(projectId || "");
+  const { files, isLoading: isLoadingFiles, downloadFile, uploadFile, isUploading } = useFiles(projectId || "");
   const transactionFiles = transaction && projectId ? files.filter(f => f.transaction_id === transaction.id) : [];
 
   const isOwn = !isViewer && transaction?.user_id === user?.id;
@@ -392,6 +393,25 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               {transactionFiles.length} {transactionFiles.length === 1 ? t("files.file") || "file" : t("files.files") || "files"}
             </span>
           </div>
+
+          {/* File upload button - only show for non-viewers who own the transaction */}
+          {isOwn && transaction && (
+            <div className="flex items-center gap-2">
+              <FileUploadSheet
+                onUpload={async (file, remark) => {
+                  try {
+                    await uploadFile({ file, remark, transactionId: transaction.id });
+                    toast.success(t("files.uploaded") || "File uploaded successfully");
+                  } catch (error) {
+                    console.error('Failed to upload file:', error);
+                    toast.error(t("files.uploadError") || "Failed to upload file");
+                  }
+                }}
+                isUploading={isUploading}
+                transactionId={transaction.id}
+              />
+            </div>
+          )}
 
           {isLoadingFiles ? (
             <div className="text-center py-4">
