@@ -1,8 +1,9 @@
 // FileListItem component for displaying individual file with actions
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
+// Updated: 2026-03-21 - Added multi-select checkbox support
 
-import { File, FileText, ImageIcon, Download, Trash2, Eye } from 'lucide-react';
+import { File, FileText, ImageIcon, Download, Trash2, Eye, CheckSquare, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import type { ProjectFile } from '@/types/files';
@@ -15,10 +16,16 @@ interface FileListItemProps {
   file: ProjectFile;
   /** Whether current user can delete this file */
   canDelete: boolean;
+  /** Whether selection mode is active */
+  isSelectionMode?: boolean;
+  /** Whether this file is selected */
+  isSelected?: boolean;
+  /** Callback when checkbox is toggled */
+  onToggleSelect?: () => void;
   /** Callback when download button is clicked */
-  onDownload: (file: ProjectFile) => void;
+  onDownload: () => void;
   /** Callback when delete button is clicked */
-  onDelete: (fileId: string) => void;
+  onDelete: () => void;
   /** Callback when preview button is clicked */
   onPreview: (file: ProjectFile) => void;
 }
@@ -61,13 +68,37 @@ const getFileIcon = (mimeType: string) => {
 /**
  * FileListItem component
  * Displays individual file with metadata and action buttons
+ * Supports multi-select mode with checkbox
  */
-export const FileListItem = ({ file, canDelete, onDownload, onDelete, onPreview }: FileListItemProps) => {
+export const FileListItem = ({
+  file,
+  canDelete,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
+  onDownload,
+  onDelete,
+  onPreview,
+}: FileListItemProps) => {
   const showPreview = canPreview(file.file_type);
 
   return (
-    <div className="glass-card p-4 hover:bg-card/90 transition-colors">
+    <div className={`glass-card p-4 transition-colors ${isSelected ? 'bg-primary/10 border-primary/30' : 'hover:bg-card/90'}`}>
       <div className="flex items-start gap-3">
+        {/* Selection Checkbox */}
+        {isSelectionMode && (
+          <button
+            onClick={onToggleSelect}
+            className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {isSelected ? (
+              <CheckSquare className="h-5 w-5 text-primary" />
+            ) : (
+              <Square className="h-5 w-5" />
+            )}
+          </button>
+        )}
+
         {/* File Icon */}
         <div className="shrink-0 mt-0.5">{getFileIcon(file.file_type)}</div>
 
@@ -83,45 +114,47 @@ export const FileListItem = ({ file, canDelete, onDownload, onDelete, onPreview 
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1 shrink-0">
-          {/* Preview Button (for images and PDFs) */}
-          {showPreview && (
+        {/* Action Buttons (hidden in selection mode) */}
+        {!isSelectionMode && (
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Preview Button (for images and PDFs) */}
+            {showPreview && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                onClick={() => onPreview(file)}
+                title="Preview"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* Download Button */}
             <Button
               variant="ghost"
               size="icon"
               className="h-9 w-9 text-muted-foreground hover:text-foreground"
-              onClick={() => onPreview(file)}
-              title="Preview"
+              onClick={onDownload}
+              title="Download"
             >
-              <Eye className="h-4 w-4" />
+              <Download className="h-4 w-4" />
             </Button>
-          )}
 
-          {/* Download Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-muted-foreground hover:text-foreground"
-            onClick={() => onDownload(file)}
-            title="Download"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
-
-          {/* Delete Button (only if canDelete) */}
-          {canDelete && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-muted-foreground hover:text-destructive"
-              onClick={() => onDelete(file.id)}
-              title="Delete"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+            {/* Delete Button (only if canDelete) */}
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                onClick={onDelete}
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
