@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CategoryNameSelector } from "@/components/CategorySelector";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag, X, Paperclip, Loader2, FileText } from "lucide-react";
+import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag, X, Paperclip, Loader2, FileText, Eye } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Category } from "@/hooks/useCategories";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 import ColoredBadge from "@/components/ColoredBadge";
 import { FileUploadSheet } from "@/components/files/FileUploadSheet";
+import { FilePreviewDialog, type FilePreviewInfo } from "@/components/files/FilePreviewDialog";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
@@ -293,6 +294,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
   const { t } = useI18n();
   const isMobile = useIsMobile();
+  const [previewFile, setPreviewFile] = useState<FilePreviewInfo | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -715,16 +718,34 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                         )}
                       </div>
                       {!isUploading && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            setPendingFiles(prev => prev.filter((_, i) => i !== index));
-                          }}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-muted-foreground"
+                            onClick={() => {
+                              setPreviewFile({
+                                file_name: pendingFile.file.name,
+                                file_type: pendingFile.file.type,
+                                localFile: pendingFile.file
+                              });
+                              setPreviewOpen(true);
+                            }}
+                            title={t('files.preview') || 'Preview'}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              setPendingFiles(prev => prev.filter((_, i) => i !== index));
+                            }}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       )}
                     </div>
                   );
@@ -825,6 +846,11 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           </SheetContent>
         </Sheet>
       )}
+      <FilePreviewDialog
+        file={previewFile}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </>
   );
 };

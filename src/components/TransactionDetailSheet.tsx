@@ -10,7 +10,7 @@ import NumberedSelect from "@/components/NumberedSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight, CalendarIcon, Paperclip, FileText, Download, ExternalLink } from "lucide-react";
+import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight, CalendarIcon, Paperclip, FileText, Download, ExternalLink, Eye } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
@@ -23,6 +23,8 @@ import AutoSuggestInput from "@/components/AutoSuggestInput";
 import ColoredBadge from "@/components/ColoredBadge";
 import { useFiles } from "@/hooks/useFiles";
 import { FileUploadSheet } from "@/components/files/FileUploadSheet";
+import { FilePreviewDialog, type FilePreviewInfo } from "@/components/files/FilePreviewDialog";
+import type { ProjectFile } from "@/types/files";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
 
@@ -58,6 +60,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
   const isMobile = useIsMobile();
+  const [previewFile, setPreviewFile] = useState<FilePreviewInfo | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
 
   // SPEC-TRANSACTION-FILES: Fetch files associated with this transaction
@@ -451,6 +455,18 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
+                        onClick={() => {
+                          setPreviewFile(file);
+                          setPreviewOpen(true);
+                        }}
+                        title={t('files.preview') || 'Preview'}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                         onClick={async () => {
                           try {
                             const blob = await downloadFile(file);
@@ -614,6 +630,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           </SheetContent>
         </Sheet>
       )}
+      <FilePreviewDialog
+        file={previewFile}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </>
   );
 };

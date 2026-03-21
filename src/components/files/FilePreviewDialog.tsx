@@ -12,14 +12,22 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import type { ProjectFile } from '@/types/files';
+/**
+ * Info required for previewing a file
+ */
+export interface FilePreviewInfo {
+  file_name: string;
+  file_type: string;
+  storage_path?: string | null;
+  localFile?: File | null;
+}
 
 /**
  * Props for FilePreviewDialog component
  */
 interface FilePreviewDialogProps {
   /** File to preview (null = dialog closed) */
-  file: ProjectFile | null;
+  file: FilePreviewInfo | null;
   /** Whether dialog is open */
   open: boolean;
   /** Callback when dialog open state changes */
@@ -43,38 +51,48 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch signed URL when file or open state changes
+  // Fetch signed URL or create local URL when file or open state changes
   useEffect(() => {
-    if (open && file && canPreview(file.file_type)) {
-      setIsLoading(true);
-      console.log('[FilePreviewDialog] Requesting signed URL for:', file.storage_path);
-      console.log('[FilePreviewDialog] File metadata:', file);
+    let objectUrl: string | null = null;
 
-      supabase.storage
-        .from('project-files')
-        .createSignedUrl(file.storage_path, 3600) // 60 minutes
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('[FilePreviewDialog] Signed URL error:', error);
-            console.error('[FilePreviewDialog] Error details:', JSON.stringify(error, null, 2));
-            console.error('[FilePreviewDialog] Storage path:', file.storage_path);
+    if (open && file && canPreview(file.file_type)) {
+      if (file.localFile) {
+        // Local file preview via Object URL
+        objectUrl = URL.createObjectURL(file.localFile);
+        setPreviewUrl(objectUrl);
+        setIsLoading(false);
+      } else if (file.storage_path) {
+        // Remote file preview via Signed URL
+        setIsLoading(true);
+        supabase.storage
+          .from('project-files')
+          .createSignedUrl(file.storage_path, 3600)
+          .then(({ data, error }) => {
+            if (error) {
+              console.error('[FilePreviewDialog] Signed URL error:', error);
+              setPreviewUrl(null);
+            } else {
+              setPreviewUrl(data.signedUrl);
+            }
+          })
+          .catch((err) => {
+            console.error('[FilePreviewDialog] Exception:', err);
             setPreviewUrl(null);
-          } else {
-            console.log('[FilePreviewDialog] Signed URL generated:', data.signedUrl);
-            setPreviewUrl(data.signedUrl);
-          }
-        })
-        .catch((err) => {
-          console.error('[FilePreviewDialog] Exception:', err);
-          console.error('[FilePreviewDialog] Exception details:', JSON.stringify(err, null, 2));
-          setPreviewUrl(null);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+      }
     } else {
       setPreviewUrl(null);
     }
+
+    // Cleanup: revoke object URL if created
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
   }, [open, file]);
 
   const handleDownload = () => {
