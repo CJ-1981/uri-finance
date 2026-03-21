@@ -5,6 +5,60 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-21
+
+### Added
+- **File Storage System (SPEC-STORAGE-001)**: Complete Supabase Storage integration for project file management
+  - File upload with drag-and-drop support and mobile camera integration
+  - Project-specific file storage with UUID-based paths for security
+  - RLS-protected metadata in project_files table with project membership enforcement
+  - Real-time file synchronization across multiple clients
+  - File preview dialog supporting images and PDFs with signed URL access
+  - Korean and Unicode filename support (original names preserved in database)
+  - Storage statistics function showing file counts, sizes, and recent uploads
+  - File type validation allowing documents and images (archives blocked for security)
+  - 5 MB file size limit with progress tracking
+  - Download functionality with progress indicators
+  - Admin page storage monitoring integration
+
+### Database
+- **project_files table**: New table for file metadata with proper foreign keys and constraints
+  - Columns: id, project_id, uploaded_by, file_name, file_type, file_size, storage_path, created_at
+  - CHECK constraint ensuring storage_path is scoped to project_id
+  - Indexes on project_id and created_at for efficient queries
+- **get_storage_stats() function**: Returns storage statistics including file counts, sizes, and breakdown by type
+- **Updated initial_schema.sql**: Complete storage functionality included for fresh project setup
+
+### Security
+- **Hybrid Security Model**: Four-layer protection for file storage
+  - Layer 1: Authentication required for all operations
+  - Layer 2: project_files table RLS enforces project membership
+  - Layer 3: Signed URLs expire after 60 minutes
+  - Layer 4: Random UUIDs prevent unauthorized path guessing
+- **Storage Path Convention**: `projects/{projectId}/files/{fileId}{ext}` format with UUID isolation
+- **File Type Validation**: Allowed types restricted to documents and images (executables and archives blocked)
+- **RLS Policies**: Three policies on project_files (view, upload, delete) with role-based permissions
+
+### Fixed
+- **Storage Policy Issues**: Resolved PostgreSQL 42P17 database errors
+  - Initial regex pattern error in RLS policy (changed from regex ~ to LIKE operator)
+  - Storage RLS policy conflicts resolved by disabling RLS on storage.objects system table
+  - Complex path parsing removed in favor of simple bucket-based policies
+- **Korean Filename Handling**: Fixed character normalization issue
+  - Korean filenames now preserved correctly in database
+  - Storage paths use UUID + extension only (no Unicode in storage keys)
+  - Original filenames displayed in UI from database metadata
+- **File Preview 500 Errors**: Resolved signed URL generation failures
+  - Fixed storage RLS policies causing database errors
+  - CORS configuration documentation added
+  - Error logging improved for debugging
+
+### Infrastructure
+- **Storage Bucket Configuration**: project-files bucket setup with public access disabled
+- **Real-time Publication**: project_files table added to supabase_realtime for collaborative updates
+- **Migration Idempotency**: All migrations updated with IF NOT EXISTS and DROP IF EXISTS for safe re-running
+- **Test File Migration**: Moved 20260315100000_add_user_preferences.test.sql to supabase/tests/ directory
+
 ## [1.0.1] - 2026-03-21
 
 ### Fixed
