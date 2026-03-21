@@ -41,7 +41,7 @@ interface Props {
     transaction_date?: string;
     custom_values?: Record<string, number | string>;
     currency?: string;
-  }) => Promise<void>;
+  }) => Promise<string | undefined>; // Return transaction ID for file association
   // SPEC-TRANSACTION-FILES: File upload callback
   onUploadFile?: (file: File, remark?: string, transactionId?: string) => Promise<void>;
   currentProjectId?: string;
@@ -341,7 +341,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       }
     }
 
-    await onAdd({
+    const result = await onAdd({
       type,
       amount: Number(amount),
       category,
