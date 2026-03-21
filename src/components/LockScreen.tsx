@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
 import { Lock, Delete, ShieldAlert } from "lucide-react";
-import { 
+import {
   verifyPin,
-  isPinSet,
   loadLockState,
   saveLockState,
-  hashPin
 } from "@/lib/securePinStorage";
 
 interface LockScreenProps {
@@ -34,7 +32,6 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
   });
   const { t } = useI18n();
 
-  const hasPin = isPinSet();
   const isBlocked = remainingMs > 0;
 
   // Countdown timer
@@ -83,7 +80,7 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
         });
       }
     },
-    [pin, onUnlock, isBlocked, lockState.failCount]
+    [pin, onUnlock, lockState.failCount, lockState.blockedUntil]
   );
 
   const handleDelete = () => {
@@ -156,16 +153,17 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
         </div>
 
         {/* Numpad */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-4">
           {digits.map((d, i) => {
             if (d === "") return <div key={i} />;
             if (d === "del")
               return (
                 <button
                   key={i}
-                  onClick={handleDelete}
+                  onPointerDown={handleDelete}
                   disabled={isBlocked}
-                  className="flex h-16 w-16 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  style={{ touchAction: "manipulation" }}
+                  className="flex h-20 w-20 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none"
                 >
                   <Delete className="h-5 w-5" />
                 </button>
@@ -173,9 +171,10 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
             return (
               <button
                 key={i}
-                onClick={() => handleDigit(d)}
+                onPointerDown={() => handleDigit(d)}
                 disabled={isBlocked}
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-muted/50 text-xl font-semibold text-foreground hover:bg-muted transition-colors active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
+                style={{ touchAction: "manipulation" }}
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50 text-xl font-semibold text-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none"
               >
                 {d}
               </button>
