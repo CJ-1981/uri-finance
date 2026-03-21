@@ -1,7 +1,10 @@
 -- Migration: Add function to get files with uploader email
 -- SPEC: SPEC-STORAGE-001
 -- Created: 2026-03-21
--- Updated: 2026-03-21 - Fixed type casting for email field
+-- Updated: 2026-03-21 - Fixed type casting for email field, drop view first
+
+-- Drop existing view if it exists
+DROP VIEW IF EXISTS public.project_files_with_email;
 
 -- Create function to get project files with uploader email
 -- SECURITY DEFINER allows access to auth.users email while maintaining RLS
@@ -46,7 +49,7 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_project_files_with_email(UUID) TO authenticated;
 
 -- Create view for easy access (optional, for direct querying)
-CREATE OR REPLACE VIEW public.project_files_with_email AS
+CREATE VIEW public.project_files_with_email AS
 SELECT
   pf.id,
   pf.project_id,
