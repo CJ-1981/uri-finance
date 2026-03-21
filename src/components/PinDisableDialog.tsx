@@ -128,18 +128,18 @@ const PinDisableDialog = ({ open, onOpenChange, onDisableSuccess }: PinDisableDi
         </div>
 
         {/* Numpad */}
-        <div className="grid grid-cols-3 gap-2 place-items-center">
+        <div className="grid grid-cols-3 gap-4 place-items-center">
           {digits.map((d, i) => {
             if (d === "") return <div key={i} />;
             if (d === "del")
               return (
                 <button
                   key={i}
-                  onPointerDown={(e) => e.preventDefault()}
-                  onClick={handleDelete}
+                  onPointerDown={handleDelete}
                   disabled={verifying}
                   tabIndex={-1}
-                  className="flex h-12 w-12 items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-muted transition-colors focus:outline-none disabled:opacity-50"
+                  style={{ touchAction: "manipulation" }}
+                  className="flex h-20 w-20 items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-muted transition-colors active:scale-90 transition-transform focus:outline-none disabled:opacity-50"
                 >
                   ←
                 </button>
@@ -147,11 +147,11 @@ const PinDisableDialog = ({ open, onOpenChange, onDisableSuccess }: PinDisableDi
             return (
               <button
                 key={i}
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() => handleDigit(d)}
+                onPointerDown={() => handleDigit(d)}
                 disabled={verifying}
                 tabIndex={-1}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 text-lg font-semibold text-foreground hover:bg-muted transition-colors active:scale-95 focus:outline-none disabled:opacity-50"
+                style={{ touchAction: "manipulation" }}
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50 text-lg font-semibold text-foreground hover:bg-muted transition-colors active:scale-90 transition-transform focus:outline-none disabled:opacity-50"
               >
                 {d}
               </button>
