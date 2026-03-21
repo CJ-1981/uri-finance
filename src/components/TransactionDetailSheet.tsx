@@ -42,9 +42,11 @@ interface Props {
   allTransactions?: Transaction[];
   /** Current project ID for file fetch */
   projectId?: string;
+  /** Callback to navigate to files view with optional file highlight */
+  onViewInFiles?: (fileId?: string) => void;
 }
 
-const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions, projectId }: Props) => {
+const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions, projectId, onViewInFiles }: Props) => {
   const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -474,7 +476,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                         size="icon"
                         className="h-8 w-8"
                         onClick={() => {
-                          window.open(`/files?highlight=${file.id}`, '_blank');
+                          onOpenChange(false); // Close the detail sheet
+                          onViewInFiles?.(file.id); // Navigate to files view with file highlight
                         }}
                         title="View in Files"
                       >

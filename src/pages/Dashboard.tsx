@@ -233,6 +233,13 @@ const Dashboard = () => {
     }
   };
 
+  // SPEC-TRANSACTION-FILES: Handle viewing file in file manager from transaction detail
+  const handleViewInFiles = (fileId?: string) => {
+    setView("files");
+    // TODO: Could add file highlighting functionality in the future
+    // For now, just navigate to the files view
+  };
+
   const goToList = useCallback(() => setView("list"), []);
   const goToCharts = useCallback(() => setView("charts"), []);
   const goToCash = useCallback(() => setView("cash"), []);
@@ -520,6 +527,7 @@ const Dashboard = () => {
               onNavigate={handleNavigateTx}
               allTransactions={transactions}
               projectId={activeProject?.id}
+              onViewInFiles={handleViewInFiles}
             />
           </div>
         )}
