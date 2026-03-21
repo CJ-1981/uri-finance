@@ -7,6 +7,7 @@ import { useColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useCustomColumns } from "@/hooks/useCustomColumns";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { useI18n } from "@/hooks/useI18n";
+import { useSimulationVisibility } from "@/hooks/useSimulationVisibility";
 import CategoryManager from "@/components/CategoryManager";
 import CustomColumnManager from "@/components/CustomColumnManager";
 import TrashManager from "@/components/TrashManager";
@@ -56,6 +57,7 @@ const AdminPage = () => {
 
   const realOwner = activeProject && user && activeProject.owner_id === user.id;
   const { role: userRole, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
+  const { isVisible, toggleVisibility } = useSimulationVisibility();
   const isAdmin = effectiveRole === "admin";
   const isOwner = (!isSimulating && realOwner) || false;
   const canAccess = isOwner || isAdmin;
@@ -270,24 +272,37 @@ const AdminPage = () => {
             <p className="text-xs text-muted-foreground">{activeProject.name}</p>
           </div>
           {realOwner && (
-            <div className="flex items-center gap-0.5 shrink-0">
-              <Eye className="h-3 w-3 text-muted-foreground mr-0.5" />
-              {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
-                const active = isSimulating ? simulatedRole === r : (r === "owner");
-                return (
-                  <button
-                    key={r}
-                    onClick={() => setSimulatedRole(r === "owner" ? null : r)}
-                    className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-all ${
-                      active
-                        ? "bg-primary/15 text-primary ring-1 ring-primary/30"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {t(`admin.${r}`)}
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleVisibility}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                title={isVisible ? "Hide simulation buttons" : "Show simulation buttons"}
+              >
+                {isVisible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+              </Button>
+              {isVisible && (
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <Eye className="h-3 w-3 text-muted-foreground mr-0.5" />
+                  {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
+                    const active = isSimulating ? simulatedRole === r : (r === "owner");
+                    return (
+                      <button
+                        key={r}
+                        onClick={() => setSimulatedRole(r === "owner" ? null : r)}
+                        className={`rounded px-1.5 py-0.5 text-[9px] font-medium transition-all ${
+                          active
+                            ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {t(`admin.${r}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

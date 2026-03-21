@@ -7,6 +7,7 @@ import { useColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useCustomColumns } from "@/hooks/useCustomColumns";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useI18n } from "@/hooks/useI18n";
+import { useSimulationVisibility } from "@/hooks/useSimulationVisibility";
 import ProjectSwitcher, { ProjectSwitcherHandle } from "@/components/ProjectSwitcher";
 import AddTransactionSheet from "@/components/AddTransactionSheet";
 import TransactionList, { TransactionListHandle } from "@/components/TransactionList";
@@ -54,6 +55,7 @@ const Dashboard = () => {
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
   const { isViewer, effectiveRole, isSimulating, simulatedRole, setSimulatedRole } = useUserRole(activeProject?.id);
   const { t, locale, setLocale } = useI18n();
+  const { isVisible } = useSimulationVisibility();
   const [view, setView] = useState<"list" | "charts" | "cash">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -324,7 +326,7 @@ const Dashboard = () => {
         {activeProject && (
           <div className="flex items-center gap-2 mt-1">
             <p className="text-[10px] text-muted-foreground truncate flex-1">{activeProject.name}</p>
-            {realOwner && (
+            {realOwner && isVisible && (
               <div className="flex items-center gap-0.5 shrink-0">
                 <Eye className="h-3 w-3 text-muted-foreground" />
                 {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
