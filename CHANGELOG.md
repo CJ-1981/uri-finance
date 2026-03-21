@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-03-21
+
+### Fixed
+- **Development Mode SPA Routing**: Fixed 404 error when refreshing pages in development mode
+  - Configured base path to use `/` for development and `/uri-finance/` for production
+  - Added middleware to redirect `/uri-finance` requests to `/` in development mode
+  - Made React Router basename dynamic based on environment
+  - Fixes issue where page refresh resulted in "server is configured with a public base URL of /uri-finance/" error
+- **Keyboard Navigation**: Multiple fixes for category selector keyboard navigation
+  - Platform-appropriate keyboard shortcuts now display correctly for Windows and macOS
+  - Fixed focus indicator styling using box-shadow instead of outline/ring
+  - Prevented layout shift in category selector focus indicator
+  - Prevented duplicate focus on expanded parent with children
+  - Parent buttons now always render correctly without special case handling
+  - Fixed navigation to skip hidden children and show correct shortcut numbers
+- **Category Tree Structure**: Fixed tree navigation and focus issues
+  - Updated CategoryNameSelector to use categoryOptions lookup
+  - Fixed categoryOptions passing to child TreeItems in normal expanded case
+  - Fixed globalIndex calculation using categoryOptions instead of parent offset
+- **CodeRabbit Review Comments**: Addressed critical issues from CodeRabbit review
+
+### Code Quality
+- **ESLint Cleanup**: Completed comprehensive ESLint error fixes
+  - Fixed 98 ESLint errors (80.3% reduction)
+  - Fixed remaining 12 ESLint errors (100% completion)
+  - All code now passes linting checks
+
 ## [1.0.0] - 2026-03-16
 
 ### Added
