@@ -25,7 +25,7 @@ export const useFiles = (projectId: string) => {
   const { t } = useI18n();
   const queryClient = useQueryClient();
 
-  // Query: List files sorted by newest first with uploader email
+  // Query: List files sorted by newest first
   const {
     data: files = [],
     isLoading,
@@ -33,13 +33,14 @@ export const useFiles = (projectId: string) => {
   } = useQuery({
     queryKey: ['project-files', projectId],
     queryFn: async () => {
-      // Use RPC function to get files with uploader email
-      const { data, error } = await supabase.rpc('get_project_files_with_email', {
-        p_project_id: projectId,
-      });
+      const { data, error } = await supabase
+        .from('project_files')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as (ProjectFile & { uploader_email?: string })[];
+      return data as ProjectFile[];
     },
     enabled: !!projectId,
   });
