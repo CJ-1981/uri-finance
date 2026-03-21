@@ -401,7 +401,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 onUpload={async (file, remark) => {
                   try {
                     await uploadFile({ file, remark, transactionId: transaction.id });
-                    toast.success(t("files.uploaded") || "File uploaded successfully");
+                    // Note: Success toast is shown by useFiles hook's onSuccess handler
+                    // Query invalidation also happens automatically in the hook
                   } catch (error) {
                     console.error('Failed to upload file:', error);
                     toast.error(t("files.uploadError") || "Failed to upload file");

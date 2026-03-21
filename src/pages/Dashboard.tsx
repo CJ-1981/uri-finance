@@ -224,6 +224,15 @@ const Dashboard = () => {
     await uploadFile({ file, remark, transactionId });
   };
 
+  // SPEC-TRANSACTION-FILES: Handle clicking transaction link from file list
+  const handleTransactionClickFromFile = (transactionId: string) => {
+    const transaction = transactions.find(tx => tx.id === transactionId);
+    if (transaction) {
+      setSelectedTx(transaction);
+      setDetailOpen(true);
+    }
+  };
+
   const goToList = useCallback(() => setView("list"), []);
   const goToCharts = useCallback(() => setView("charts"), []);
   const goToCash = useCallback(() => setView("cash"), []);
@@ -484,7 +493,11 @@ const Dashboard = () => {
             ) : view === "cash" ? (
               <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
             ) : (
-              <FileManager projectId={activeProject.id} canDelete={!isViewer && (isOwner || effectiveRole === "admin")} />
+              <FileManager
+                projectId={activeProject.id}
+                canDelete={!isViewer && (isOwner || effectiveRole === "admin")}
+                onTransactionClick={handleTransactionClickFromFile}
+              />
             )}
 
             {/* FAB - hidden for viewers */}
