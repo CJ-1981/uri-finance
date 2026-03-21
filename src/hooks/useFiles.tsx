@@ -165,6 +165,8 @@ export const useFiles = (projectId: string) => {
     },
     onSuccess: () => {
       toast.success(t('files.uploaded') || 'File uploaded successfully');
+      // Invalidate query to refresh file list
+      queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -273,6 +275,8 @@ export const useFiles = (projectId: string) => {
     },
     onSuccess: () => {
       toast.success(t('files.deleted') || 'File deleted');
+      // Invalidate query to refresh file list
+      queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
     },
     onError: (error: Error) => {
       toast.error(error.message);

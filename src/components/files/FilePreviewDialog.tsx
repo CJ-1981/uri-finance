@@ -2,7 +2,7 @@
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
 
-import { File, Download, X, Loader2 } from 'lucide-react';
+import { File, Download, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -92,24 +92,14 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="truncate flex-1 mr-4" title={file.file_name}>
-              {file.file_name}
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="truncate pr-8" title={file.file_name}>
+            {file.file_name}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-muted/30 rounded-lg min-h-[400px]">
+        <div className="flex items-center justify-center bg-muted/30 rounded-lg min-h-[400px] max-h-[55vh] overflow-auto">
           {isLoading ? (
             <div className="text-center">
               <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
@@ -131,13 +121,13 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
             <iframe
               src={previewUrl ?? ''}
               title={file.file_name}
-              className="w-full h-full border-0"
+              className="w-full h-full border-0 min-h-[400px]"
               sandbox="allow-scripts allow-same-origin"
             />
           ) : null}
         </div>
 
-        <div className="flex-shrink-0 flex justify-end pt-4">
+        <div className="flex justify-end pt-4">
           <Button onClick={handleDownload} disabled={!previewUrl} className="gap-2">
             <Download className="h-4 w-4" />
             Download
