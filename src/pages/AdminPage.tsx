@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -34,6 +35,7 @@ const AdminPage = () => {
   const { members, invites, removeMember, banMember, createInvite, deleteInvite, updateMemberRole, transferOwnership } = useProjectMembers(activeProject?.id);
   const { t } = useI18n();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currency, setCurrency] = useState(activeProject?.currency || "USD");
   
   // Sync currency when activeProject updates
@@ -250,6 +252,22 @@ const AdminPage = () => {
         .update({ deleted_at: new Date().toISOString() })
         .in("id", batch);
     }
+
+    // Unlink all files associated with archived transactions
+    for (let i = 0; i < ids.length; i += batchSize) {
+      const batch = ids.slice(i, i + batchSize);
+      const { error: unlinkError } = await supabase
+        .from("project_files")
+        .update({ transaction_id: null })
+        .in("transaction_id", batch);
+
+      if (unlinkError) {
+        console.error("Failed to unlink files from archived transactions:", unlinkError);
+      }
+    }
+
+    // Invalidate file list cache to refresh UI with unlinked files
+    queryClient.invalidateQueries({ queryKey: ["project-files", activeProject.id] });
 
     setArchiving(false);
     setArchiveFrom("");

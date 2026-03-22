@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ export interface Transaction {
 
 export const useTransactions = (projectId: string | undefined) => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -107,6 +109,11 @@ export const useTransactions = (projectId: string | undefined) => {
     if (unlinkError) {
       console.error("Failed to unlink files from transaction:", unlinkError);
       // Don't fail the delete if unlink fails, just log it
+    }
+
+    // Invalidate file list cache to refresh UI with unlinked files
+    if (projectId) {
+      queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
     }
 
     toast.success("Transaction deleted");

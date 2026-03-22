@@ -7,10 +7,13 @@ import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NumberedSelect from "@/components/NumberedSelect";
 import ColoredBadge from "@/components/ColoredBadge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   transactions: Transaction[];
@@ -32,6 +35,7 @@ export interface TransactionListHandle {
 const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }, ref) => {
   const { t } = useI18n();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const searchRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({ focusSearch: () => searchRef.current?.focus() }));
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +47,102 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
     const saved = localStorage.getItem("tx_page_size");
     return saved ? Number(saved) : 25;
   });
+
+  // Long press state for mobile
+  const [longPressTx, setLongPressTx] = useState<Transaction | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number } | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const LONG_PRESS_DURATION = 500; // ms
+  const lastPopupCloseTimeRef = useRef(0);
+  const TOUCH_BLOCK_DURATION = 500; // ms - increased to be safer
+
+  // Clear long press timer
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  // Check if touch is blocked (popup recently closed)
+  const isTouchBlocked = () => {
+    return Date.now() - lastPopupCloseTimeRef.current < TOUCH_BLOCK_DURATION;
+  };
+
+  // Handle long press on transaction item
+  const handleTouchStart = (tx: Transaction, e: React.TouchEvent) => {
+    if (!isMobile || isViewer || !ownTxIds.has(tx.id) || isTouchBlocked()) return;
+
+    const touch = e.touches[0];
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = touch.clientX;
+    const y = rect.top; // Position at top of the item
+
+    longPressTimerRef.current = setTimeout(() => {
+      setLongPressTx(tx);
+      setPopupPosition({ x, y });
+      // Provide haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50); // Short vibration
+      }
+    }, LONG_PRESS_DURATION);
+  };
+
+  // Handle touch move (cancel long press if finger moves)
+  const handleTouchMove = () => {
+    clearLongPress();
+  };
+
+  // Handle touch end (clear timer, don't close popup if it's already open)
+  const handleTouchEnd = () => {
+    clearLongPress();
+  };
+
+  // Close popup
+  const closePopup = () => {
+    setLongPressTx(null);
+    setPopupPosition(null);
+    // Record close time to block subsequent touches
+    lastPopupCloseTimeRef.current = Date.now();
+  };
+
+  // Delete single transaction
+  const handleDeleteTransaction = async (tx: Transaction) => {
+    setDeleting(true);
+    try {
+      // Soft delete transaction
+      const { error } = await supabase
+        .from("transactions")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", tx.id);
+
+      if (error) {
+        toast.error("Failed to delete transaction");
+        return;
+      }
+
+      // Unlink all files associated with this transaction
+      const { error: unlinkError } = await supabase
+        .from("project_files")
+        .update({ transaction_id: null })
+        .eq("transaction_id", tx.id);
+
+      if (unlinkError) {
+        console.error("Failed to unlink files from transaction:", unlinkError);
+      }
+
+      toast.success("Transaction deleted");
+
+      setSelected(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tx.id);
+        return newSet;
+      });
+    } finally {
+      setDeleting(false);
+      setLongPressTx(null);
+    }
+  };
 
   const categoryIconMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -245,7 +345,10 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
       {paginatedTransactions.map((tx, i) => (
         <div
           key={tx.id}
-          onClick={() => selectMode ? toggleSelect(tx.id) : onSelect(tx)}
+          onClick={() => {
+            if (isTouchBlocked()) return;
+            selectMode ? toggleSelect(tx.id) : onSelect(tx);
+          }}
           onContextMenu={(e) => {
             if (!isViewer && !selectMode && ownTxIds.has(tx.id)) {
               e.preventDefault();
@@ -253,6 +356,9 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
               setSelected(new Set([tx.id]));
             }
           }}
+          onTouchStart={(e) => handleTouchStart(tx, e)}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           className={`flex items-center gap-3 rounded-xl px-4 py-3 animate-fade-in cursor-pointer active:scale-[0.98] transition-all ${
             selected.has(tx.id)
               ? "bg-primary/10 ring-1 ring-primary/30"
@@ -393,6 +499,51 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
             })}
           </div>
         </div>
+      )}
+
+      {/* Long press delete popup */}
+      {longPressTx && popupPosition && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[50] bg-black/20"
+            onClick={(e) => {
+              e.stopPropagation();
+              closePopup();
+            }}
+            onTouchEnd={(e) => {
+              e.stopPropagation();
+              closePopup();
+            }}
+            style={{ touchAction: 'none', cursor: 'pointer' }}
+          />
+          {/* Popup button */}
+          <div
+            className="fixed z-[51] animate-fade-in"
+            style={{
+              left: `${Math.min(Math.max(popupPosition.x - 60, 10), window.innerWidth - 130)}px`,
+              top: `${popupPosition.y}px`,
+            }}
+          >
+            <button
+              onClick={() => longPressTx && handleDeleteTransaction(longPressTx)}
+              disabled={deleting}
+              className="flex items-center gap-2 bg-destructive text-destructive-foreground px-4 py-2.5 rounded-full shadow-lg hover:bg-destructive/90 active:scale-95 transition-all font-medium text-sm"
+            >
+              {deleting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  {t("common.deleting") || "Deleting..."}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  {t("tx.delete") || "Delete"}
+                </>
+              )}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

@@ -627,6 +627,15 @@ USING (
   )
 );
 
+-- RLS Policies: Project members can update file metadata (transaction_id, remark)
+-- This allows unlinking files from transactions when transactions are deleted
+CREATE POLICY "Project members can update files"
+ON public.project_files FOR UPDATE
+USING (public.is_project_member(auth.uid(), project_id))
+WITH CHECK (
+  public.is_project_member(auth.uid(), project_id)
+);
+
 -- Add project_files table to Realtime publication for collaborative updates
 ALTER PUBLICATION supabase_realtime ADD TABLE public.project_files;
 
