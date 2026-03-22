@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-03-22
+
+### Added
+- **Image Compression Threshold**: Added 1MB threshold for automatic image compression
+  - Images over 1MB are automatically compressed before upload
+  - Reduces storage costs and improves upload performance
+- **Download Progress Tracking**: Real-time progress indicators for file downloads
+  - Shows download progress with percentage and status
+  - Enhanced user feedback during download operations
+- **Inline File Remark Editing**: Edit file descriptions directly from the file list
+  - Click on remark field to edit file descriptions in-place
+  - Saves changes automatically with optimistic updates
+  - Improved UX without opening edit dialogs
+- **File Metadata Update Functionality**: Comprehensive file metadata management
+  - Update file remarks inline with validation
+  - Real-time sync with Supabase for metadata changes
+  - English and Korean translations for inline editing
+
+### Changed
+- **File Preview Dialog Layout**: Improved responsiveness with flexbox
+  - Better mobile responsiveness for image preview
+  - Improved layout stability across different screen sizes
+  - More consistent spacing and alignment
+
+### Infrastructure
+- **File Mock Structure**: Updated mock structure with new fields for testing
+- **Test Coverage**: Enhanced test coverage for file operations
+
 ## [1.1.1] - 2026-03-22
 
 ### Fixed
