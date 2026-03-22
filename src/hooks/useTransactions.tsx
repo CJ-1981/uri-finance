@@ -88,6 +88,7 @@ export const useTransactions = (projectId: string | undefined) => {
   };
 
   const deleteTransaction = async (id: string) => {
+    // Soft delete transaction
     const { error } = await supabase
       .from("transactions")
       .update({ deleted_at: new Date().toISOString() })
@@ -96,6 +97,18 @@ export const useTransactions = (projectId: string | undefined) => {
       toast.error("Failed to delete transaction");
       return;
     }
+
+    // Unlink all files associated with this transaction (set transaction_id to NULL)
+    const { error: unlinkError } = await supabase
+      .from("project_files")
+      .update({ transaction_id: null })
+      .eq("transaction_id", id);
+
+    if (unlinkError) {
+      console.error("Failed to unlink files from transaction:", unlinkError);
+      // Don't fail the delete if unlink fails, just log it
+    }
+
     toast.success("Transaction deleted");
     await fetchTransactions();
   };
