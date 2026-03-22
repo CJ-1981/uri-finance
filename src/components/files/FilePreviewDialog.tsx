@@ -131,7 +131,6 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
     // Only allow dragging down
     if (deltaY > 0) {
       setCurrentDragY(touch.clientY);
-      e.preventDefault();
     }
   };
 
