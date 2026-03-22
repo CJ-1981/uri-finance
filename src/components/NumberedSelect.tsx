@@ -35,8 +35,7 @@ const NumberedSelect = ({
   const isMobile = useIsMobile();
 
   const selectedItem = items.find((i) => i.value === value);
-  const selectedLabel = selectedItem?.label ?? placeholder;
-  const displaySelectedLabel = typeof selectedLabel === "string" ? selectedLabel : value;
+  const displayLabel = selectedItem ? selectedItem.label : (value || placeholder);
 
   const select = useCallback(
     (val: string) => {
@@ -157,7 +156,7 @@ const NumberedSelect = ({
           onClick={() => !disabled && setOpen(true)}
           className={cn("w-full h-10 justify-between font-normal", className)}
         >
-          <span className="truncate">{displaySelectedLabel}</span>
+          <span className="truncate">{displayLabel}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
 
@@ -206,7 +205,7 @@ const NumberedSelect = ({
           onKeyDown={handleKeyDown}
           className={cn("w-full h-10 justify-between font-normal", className)}
         >
-          <span className="truncate">{displaySelectedLabel}</span>
+          <span className="truncate">{displayLabel}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
