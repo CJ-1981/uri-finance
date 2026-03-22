@@ -179,7 +179,7 @@ export const FileManager = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {isSelectionMode && selectedCount > 0 && (
+          {isSelectionMode && (
             <>
               <Button
                 variant="outline"
@@ -195,7 +195,7 @@ export const FileManager = ({
                 ) : (
                   <>
                     <CheckSquare className="h-4 w-4" />
-                    Select All ({selectedCount}/{files.length})
+                    Select All
                   </>
                 )}
               </Button>
@@ -207,7 +207,7 @@ export const FileManager = ({
                 disabled={selectedCount === 0}
               >
                 <Download className="h-4 w-4" />
-                Download ({selectedCount})
+                Download {selectedCount > 0 ? `(${selectedCount})` : ''}
               </Button>
               {canDelete && (
                 <Button
@@ -218,7 +218,7 @@ export const FileManager = ({
                   disabled={selectedCount === 0 || isDeleting}
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete ({selectedCount})
+                  Delete {selectedCount > 0 ? `(${selectedCount})` : ''}
                 </Button>
               )}
             </>
