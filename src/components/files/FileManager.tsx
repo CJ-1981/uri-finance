@@ -4,12 +4,14 @@
 // Created: 2026-03-21
 // Updated: 2026-03-21 - Added multi-select, confirmation dialogs, batch actions
 // Updated: 2026-03-21 - Added transaction link support
+// Updated: 2026-03-22 - Added text search functionality
 
-import { useState } from 'react';
-import { FileUp, CheckSquare, Square, Download, Trash2, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { FileUp, CheckSquare, Square, Download, Trash2, X, Search } from 'lucide-react';
 import { useFiles } from '@/hooks/useFiles';
 import { useI18n } from '@/hooks/useI18n';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +50,22 @@ export const FileManager = ({
   const [fileToDelete, setFileToDelete] = useState<string | null>(null);
   const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
   const [uploadRemark, setUploadRemark] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter files based on search query
+  const filteredFiles = useMemo(() => {
+    if (!searchQuery.trim()) return files;
+    const q = searchQuery.toLowerCase();
+    return files.filter((file) => {
+      // Search in file name
+      if (file.file_name.toLowerCase().includes(q)) return true;
+      // Search in remark
+      if (file.remark?.toLowerCase().includes(q)) return true;
+      // Search in uploader email
+      if ((file as any).uploader_email?.toLowerCase().includes(q)) return true;
+      return false;
+    });
+  }, [files, searchQuery]);
 
   // Toggle selection mode
   const toggleSelectionMode = () => {
@@ -68,10 +86,11 @@ export const FileManager = ({
 
   // Select all files
   const selectAll = () => {
-    if (selectedIds.size === files.length) {
+    const selectableFiles = filteredFiles;
+    if (selectedIds.size === selectableFiles.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(files.map(f => f.id)));
+      setSelectedIds(new Set(selectableFiles.map(f => f.id)));
     }
   };
 
@@ -148,7 +167,7 @@ export const FileManager = ({
 
   // Selected files count
   const selectedCount = selectedIds.size;
-  const allSelected = selectedCount > 0 && selectedCount === files.length;
+  const allSelected = selectedCount > 0 && selectedCount === filteredFiles.length;
 
   return (
     <div className="space-y-4">
@@ -156,7 +175,7 @@ export const FileManager = ({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl font-bold">{t('files.title')}</h2>
-          {files.length > 0 && (
+          {filteredFiles.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -195,7 +214,7 @@ export const FileManager = ({
                 ) : (
                   <>
                     <CheckSquare className="h-4 w-4" />
-                    Select All
+                    Select All ({selectedCount}/{filteredFiles.length})
                   </>
                 )}
               </Button>
@@ -227,22 +246,49 @@ export const FileManager = ({
         </div>
       </div>
 
+      {/* Search Bar */}
+      {files.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('files.search') || 'Search files by name, remark, or uploader email...'}
+            className="pl-9 h-9"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors"
+              title={t('common.clear') || 'Clear'}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* File List */}
       {isLoading ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground">{t('files.loading')}</p>
         </div>
-      ) : files.length === 0 ? (
+      ) : filteredFiles.length === 0 ? (
         <div className="text-center py-12">
           <FileUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">{t('files.noFiles')}</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            {t('files.uploadFileHint')}
-          </p>
+          <p className="text-muted-foreground">{searchQuery ? 'No files match your search' : t('files.noFiles')}</p>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-sm text-primary hover:underline mt-2"
+            >
+              Clear search
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
-          {files.map((file) => (
+          {filteredFiles.map((file) => (
             <FileListItem
               key={file.id}
               file={file}
