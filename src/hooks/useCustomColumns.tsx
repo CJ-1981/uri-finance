@@ -14,6 +14,7 @@ export interface CustomColumn {
   sort_order: number;
   suggestions: string[];
   suggestion_colors: Record<string, string>;
+  default_value?: string;
   created_at: string;
 }
 
@@ -94,10 +95,13 @@ export const useCustomColumns = (projectId: string | undefined) => {
     await fetchColumns();
   };
 
-  const updateSuggestions = async (id: string, suggestions: string[], suggestionColors?: Record<string, string>) => {
-    const updateData: { suggestions: string[]; suggestion_colors?: Record<string, string> } = { suggestions };
+  const updateSuggestions = async (id: string, suggestions: string[], suggestionColors?: Record<string, string>, defaultValue?: string) => {
+    const updateData: { suggestions: string[]; suggestion_colors?: Record<string, string>; default_value?: string | null } = { suggestions };
     if (suggestionColors !== undefined) {
       updateData.suggestion_colors = suggestionColors;
+    }
+    if (defaultValue !== undefined) {
+      updateData.default_value = defaultValue || null;
     }
     const { error } = await supabase
       .from("custom_columns")

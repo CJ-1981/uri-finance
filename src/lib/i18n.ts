@@ -205,6 +205,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cc.manageSuggestions": "Manage suggestions",
     "cc.suggestionsHint": "Enter one suggestion per line. These will appear as auto-complete options.",
     "cc.suggestionsPlaceholder": "John\nJane\nBob",
+    "cc.setDefault": "Set as default",
 
     // Global Admin
     "global.title": "System Administration",
@@ -729,6 +730,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cc.suggestionsPlaceholder": "홍길동\n김철수\n이영희",
     "cc.saveSuggestions": "저장",
     "cc.suggestionsUpdated": "자동완성 데이터가 업데이트되었습니다",
+    "cc.setDefault": "기본값으로 설정",
 
     // Categories
     "cat.newPlaceholder": "새 카테고리 이름",

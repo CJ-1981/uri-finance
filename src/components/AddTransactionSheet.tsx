@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
@@ -287,17 +287,30 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [currency, setCurrency] = useState(projectCurrency || "USD");
   const [submitting, setSubmitting] = useState(false);
-  const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const [customValues, setCustomValues] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    customColumns.forEach(col => {
+      if (col.default_value) initial[col.name] = col.default_value;
+    });
+    return initial;
+  });
   // SPEC-TRANSACTION-FILES: State for file attachments
   const [pendingFiles, setPendingFiles] = useState<Array<{ file: File; remark: string; uploading?: boolean }>>([]);
   const [lastCreatedTransactionId, setLastCreatedTransactionId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Record<number, number>>({});
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const [previewFile, setPreviewFile] = useState<FilePreviewInfo | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Reset form with defaults when opening
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open, customColumns]);
 
   // Build suggestion lists per text column: imported + historical
   const columnSuggestions = useMemo(() => {
@@ -317,7 +330,13 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const resetForm = () => {
     setAmount("");
     setDescription("");
-    setCustomValues({});
+    const defaults: Record<string, string> = {};
+    customColumns.forEach((col) => {
+      if (col.default_value) {
+        defaults[col.name] = col.default_value;
+      }
+    });
+    setCustomValues(defaults);
   };
 
   const doSubmit = async () => {

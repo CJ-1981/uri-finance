@@ -29,7 +29,7 @@ interface Props {
   onDelete: (id: string) => Promise<void>;
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
   onToggleRequired?: (id: string, required: boolean) => Promise<void>;
-  onUpdateSuggestions?: (id: string, suggestions: string[], suggestionColors?: Record<string, string>) => Promise<void>;
+  onUpdateSuggestions?: (id: string, suggestions: string[], suggestionColors?: Record<string, string>, defaultValue?: string) => Promise<void>;
   onReorder?: (id: string, direction: "up" | "down") => Promise<void>;
   onReorderAll?: (orderedIds: string[]) => Promise<void>;
   onRename?: (id: string, newName: string) => Promise<void>;
@@ -48,6 +48,8 @@ const SortableColumnItem = ({
   setSuggestionsText,
   optionColors,
   setOptionColors,
+  defaultValues,
+  setDefaultValues,
   handleSaveSuggestions,
   t,
 }: {
@@ -55,7 +57,7 @@ const SortableColumnItem = ({
   onDelete: (id: string) => Promise<void>;
   onToggleMasked?: (id: string, masked: boolean) => Promise<void>;
   onToggleRequired?: (id: string, required: boolean) => Promise<void>;
-  onUpdateSuggestions?: (id: string, suggestions: string[], suggestionColors?: Record<string, string>) => Promise<void>;
+  onUpdateSuggestions?: (id: string, suggestions: string[], suggestionColors?: Record<string, string>, defaultValue?: string) => Promise<void>;
   onRename?: (id: string, newName: string) => Promise<void>;
   expandedCol: string | null;
   toggleExpand: (col: CustomColumn) => void;
@@ -63,6 +65,8 @@ const SortableColumnItem = ({
   setSuggestionsText: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   optionColors: Record<string, Record<string, string>>;
   setOptionColors: React.Dispatch<React.SetStateAction<Record<string, Record<string, string>>>>;
+  defaultValues: Record<string, string>;
+  setDefaultValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   handleSaveSuggestions: (colId: string) => void;
   t: (key: string) => string;
 }) => {
@@ -90,6 +94,7 @@ const SortableColumnItem = ({
     .map((s) => s.trim())
     .filter(Boolean);
   const colColors = optionColors[col.id] || {};
+  const colDefaultValue = defaultValues[col.id] || "";
 
   return (
     <div ref={setNodeRef} style={style} className="space-y-1">
@@ -193,6 +198,23 @@ const SortableColumnItem = ({
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${colorDef.bg} ${colorDef.text}`}>
                       {opt}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDefaultValues((prev) => ({
+                          ...prev,
+                          [col.id]: prev[col.id] === opt ? "" : opt,
+                        }))
+                      }
+                      className={`p-1 rounded-md transition-all shrink-0 ${
+                        colDefaultValue === opt 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : "text-muted-foreground hover:bg-muted"
+                      }`}
+                      title={t("cc.setDefault") || "Set as default"}
+                    >
+                      <Check className="h-3 w-3" />
+                    </button>
                     <div className="flex gap-0.5 flex-wrap">
                       {OPTION_COLOR_PALETTE.map((c) => (
                         <button
@@ -237,6 +259,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
   const [expandedCol, setExpandedCol] = useState<string | null>(null);
   const [suggestionsText, setSuggestionsText] = useState<Record<string, string>>({});
   const [optionColors, setOptionColors] = useState<Record<string, Record<string, string>>>({});
+  const [defaultValues, setDefaultValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
 
   const sensors = useSensors(
@@ -270,6 +293,13 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
           [col.id]: (col.suggestion_colors as Record<string, string>) || {},
         }));
       }
+      // Initialize default value from saved data
+      if (defaultValues[col.id] === undefined) {
+        setDefaultValues((prev) => ({
+          ...prev,
+          [col.id]: col.default_value || "",
+        }));
+      }
     }
   };
 
@@ -281,7 +311,8 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
       .map((s) => s.trim())
       .filter(Boolean);
     const colors = optionColors[colId] || {};
-    await onUpdateSuggestions(colId, entries, colors);
+    const defaultValue = defaultValues[colId] || "";
+    await onUpdateSuggestions(colId, entries, colors, defaultValue);
     setExpandedCol(null);
   };
 
@@ -362,6 +393,8 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
                   setSuggestionsText={setSuggestionsText}
                   optionColors={optionColors}
                   setOptionColors={setOptionColors}
+                  defaultValues={defaultValues}
+                  setDefaultValues={setDefaultValues}
                   handleSaveSuggestions={handleSaveSuggestions}
                   t={t}
                 />
