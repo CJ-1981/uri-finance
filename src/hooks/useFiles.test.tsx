@@ -97,6 +97,8 @@ describe('useFiles', () => {
           file_type: 'application/pdf',
           file_size: 1024,
           storage_path: 'projects/test-project-id/recent.pdf',
+          remark: null,
+          transaction_id: null,
           created_at: '2026-03-21T12:00:00Z',
         },
         {
@@ -107,6 +109,8 @@ describe('useFiles', () => {
           file_type: 'application/pdf',
           file_size: 512,
           storage_path: 'projects/test-project-id/old.pdf',
+          remark: null,
+          transaction_id: null,
           created_at: '2026-03-20T12:00:00Z',
         },
       ];
@@ -200,6 +204,8 @@ describe('useFiles', () => {
         file_type: 'application/pdf',
         file_size: mockFile.size,
         storage_path: `projects/${mockProjectId}/files/${fileId}/test.pdf`,
+        remark: null,
+        transaction_id: null,
         created_at: '2026-03-21T12:00:00Z',
       };
 
@@ -287,6 +293,8 @@ describe('useFiles', () => {
         file_type: 'application/pdf',
         file_size: 1024,
         storage_path: 'projects/test-project-id/test.pdf',
+        remark: null,
+        transaction_id: null,
         created_at: '2026-03-21T12:00:00Z',
       };
 
@@ -297,10 +305,19 @@ describe('useFiles', () => {
         error: null,
       });
 
-      // Mock global fetch
+      // Mock global fetch with progress tracking support
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        blob: async () => mockBlob,
+        headers: {
+          get: vi.fn().mockReturnValue(mockBlob.size.toString()),
+        },
+        body: {
+          getReader: vi.fn().mockReturnValue({
+            read: vi.fn()
+              .mockResolvedValueOnce({ done: false, value: new Uint8Array([1, 2, 3]) })
+              .mockResolvedValueOnce({ done: true, value: undefined }),
+          }),
+        },
       } as any);
 
       vi.mocked(supabase.storage.from).mockReturnValue({
@@ -327,6 +344,8 @@ describe('useFiles', () => {
         file_type: 'application/pdf',
         file_size: 1024,
         storage_path: 'projects/test-project-id/test.pdf',
+        remark: null,
+        transaction_id: null,
         created_at: '2026-03-21T12:00:00Z',
       };
 

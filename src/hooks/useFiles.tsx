@@ -12,6 +12,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import {
   ProjectFile,
   MAX_FILE_SIZE,
+  IMAGE_COMPRESSION_THRESHOLD,
   SIGNED_URL_EXPIRY,
   isFileTypeAllowed,
   getFileExtension,
@@ -31,8 +32,9 @@ const COMPRESSIBLE_IMAGE_TYPES = [
 // Compression quality (0.1 to 1.0, where 1.0 is maximum quality)
 const COMPRESSION_QUALITY = 0.8;
 
-// Maximum size before attempting compression (5MB)
-const COMPRESSION_THRESHOLD = MAX_FILE_SIZE;
+// Maximum size before attempting compression (1MB)
+const COMPRESSION_THRESHOLD = IMAGE_COMPRESSION_THRESHOLD;
+
 
 /**
  * Compress an image file using Canvas API
@@ -217,7 +219,7 @@ export const useFiles = (projectId: string) => {
         resolvedMime = EXTENSION_TO_MIME[ext] || '';
       }
 
-      // SPEC-STORAGE-001: Auto-compress images over 5MB
+      // SPEC-STORAGE-001: Auto-compress images over 1MB
       const fileToUpload = await autoCompressImageIfNeeded(file);
 
       // Create a File-like object with resolved MIME for validation
@@ -338,7 +340,7 @@ export const useFiles = (projectId: string) => {
         throw new Error(t('files.downloadError') || 'Download failed');
       }
 
-      const chunks: Uint8Array[] = [];
+      const chunks: BlobPart[] = [];
       let received = 0;
 
       while (true) {
