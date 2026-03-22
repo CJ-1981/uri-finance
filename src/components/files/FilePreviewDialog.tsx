@@ -1,9 +1,10 @@
 // FilePreviewDialog component for previewing files before download
 // SPEC: SPEC-STORAGE-001
 // Created: 2026-03-21
+// Updated: 2026-03-22 - Added drag-to-close functionality for mobile
 
 import { File, Download, Loader2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, TouchEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 /**
  * Info required for previewing a file
  */
@@ -50,6 +52,16 @@ const canPreview = (mimeType: string): boolean => {
 export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialogProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
+
+  // Drag-to-close state for mobile
+  const [dragStartY, setDragStartY] = useState(0);
+  const [currentDragY, setCurrentDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Threshold for closing dialog (in pixels)
+  const CLOSE_THRESHOLD = 100;
 
   // Fetch signed URL or create local URL when file or open state changes
   useEffect(() => {
@@ -102,6 +114,47 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
     }
   };
 
+  // Touch handlers for drag-to-close on mobile
+  const handleTouchStart = (e: TouchEvent) => {
+    if (!isMobile) return;
+    const touch = e.touches[0];
+    setDragStartY(touch.clientY);
+    setCurrentDragY(touch.clientY);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!isMobile || !isDragging) return;
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - dragStartY;
+    // Only allow dragging down
+    if (deltaY > 0) {
+      setCurrentDragY(touch.clientY);
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobile || !isDragging) return;
+    const dragDistance = currentDragY - dragStartY;
+
+    if (dragDistance > CLOSE_THRESHOLD) {
+      // Close dialog if dragged down beyond threshold
+      onOpenChange(false);
+    }
+
+    // Reset drag state
+    setDragStartY(0);
+    setCurrentDragY(0);
+    setIsDragging(false);
+  };
+
+  // Calculate opacity and transform based on drag distance
+  const dragDistance = currentDragY - dragStartY;
+  const dragProgress = Math.min(dragDistance / CLOSE_THRESHOLD, 1);
+  const opacity = isDragging ? 1 - dragProgress * 0.5 : 1;
+  const translateY = isDragging ? Math.min(dragDistance, CLOSE_THRESHOLD) : 0;
+
   if (!file) return null;
 
   const isImage = file.file_type.startsWith('image/');
@@ -110,11 +163,28 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        ref={contentRef}
+        className="max-w-4xl max-h-[85vh] overflow-y-auto"
+        style={{
+          opacity,
+          transform: isMobile ? `translateY(${translateY}px)` : undefined,
+          transition: isDragging ? 'none' : undefined,
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="truncate pr-8" title={file.file_name}>
             {file.file_name}
           </DialogTitle>
+          {/* Visual indicator for drag-to-close on mobile */}
+          {isMobile && (
+            <div className="flex justify-center pb-2">
+              <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
+            </div>
+          )}
         </DialogHeader>
 
         <div className="flex items-center justify-center bg-muted/30 rounded-lg min-h-[400px] max-h-[55vh] overflow-auto">
