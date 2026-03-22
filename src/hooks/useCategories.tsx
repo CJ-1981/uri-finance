@@ -247,6 +247,138 @@ export const useCategories = (projectId: string | undefined) => {
     await fetchCategories();
   };
 
+  const bulkUpdateCategories = async (entries: { code: string; icon: string; name: string; level: number }[]) => {
+    if (!projectId) return;
+
+    try {
+      // 1. Fetch current categories to ensure we have the latest state
+      const { data: currentCategories, error: fetchError } = await supabase
+        .from("project_categories")
+        .select("*")
+        .eq("project_id", projectId);
+
+      if (fetchError) throw fetchError;
+
+      const existing = (currentCategories || []) as Category[];
+      
+      // Map existing by code and by name for better matching
+      const existingByCode = new Map<string, Category>();
+      const existingByName = new Map<string, Category>();
+      existing.forEach(cat => {
+        if (cat.code) existingByCode.set(cat.code, cat);
+        existingByName.set(cat.name, cat);
+      });
+
+      // 2. First Pass: Upsert all entries to ensure they exist and have IDs
+      // We uniqueify by matched ID or by code-name key to avoid duplicate rows in same batch
+      const firstPassMap = new Map<string, any>();
+      
+      entries.forEach((entry, index) => {
+        const matchedCat = (entry.code && existingByCode.get(entry.code)) || existingByName.get(entry.name);
+        
+        // Use existing ID if matched, otherwise generate a new UUID on the client side
+        // to be absolutely sure the 'id' column is never null.
+        const id = matchedCat?.id || crypto.randomUUID();
+        
+        const data: any = {
+          id,
+          project_id: projectId,
+          name: entry.name,
+          code: entry.code,
+          icon: entry.icon,
+          sort_order: index,
+          parent_id: matchedCat?.parent_id || null 
+        };
+        
+        // If multiple entries in the input match the same existing category,
+        // we only take the first occurrence to avoid "ON CONFLICT cannot affect row twice"
+        if (!firstPassMap.has(id)) {
+          firstPassMap.set(id, data);
+        }
+      });
+
+      const firstPassData = Array.from(firstPassMap.values());
+
+      const { data: upsertedResult, error: upsertError } = await supabase
+        .from("project_categories")
+        .upsert(firstPassData, { onConflict: 'id' })
+        .select();
+      
+      if (upsertError) throw upsertError;
+
+      const allCatsAfterFirstPass = (upsertedResult || []) as Category[];
+      const processedIds = new Set(allCatsAfterFirstPass.map(c => c.id));
+
+      // 3. Second Pass: Determine and update parent_id based on levels
+      const secondPassMap = new Map<string, any>();
+      let parentStack: string[] = []; // index is level, value is ID
+
+      entries.forEach((entry, index) => {
+        // Find the record we just upserted to get its ID
+        const matchedRecord = allCatsAfterFirstPass.find(c => 
+          (entry.code && c.code === entry.code) || c.name === entry.name
+        );
+
+        if (matchedRecord) {
+          const id = matchedRecord.id;
+          const level = entry.level;
+          const parentId = level > 0 ? (parentStack[level - 1] || null) : null;
+
+          secondPassMap.set(id, {
+            id,
+            project_id: projectId,
+            name: entry.name,
+            code: entry.code,
+            icon: entry.icon,
+            sort_order: index,
+            parent_id: parentId
+          });
+
+          // Update stack for children
+          parentStack[level] = id;
+          parentStack = parentStack.slice(0, level + 1);
+        }
+      });
+
+      const secondPassData = Array.from(secondPassMap.values());
+
+      // Update hierarchies
+      if (secondPassData.length > 0) {
+        const { error: hierarchyError } = await supabase
+          .from("project_categories")
+          .upsert(secondPassData, { onConflict: 'id' });
+        
+        if (hierarchyError) throw hierarchyError;
+      }
+
+      // 4. Identify and delete categories not in the new list
+      const toDelete = existing.filter(cat => !processedIds.has(cat.id));
+      if (toDelete.length > 0) {
+        const deleteIds = toDelete.map(cat => cat.id);
+        const { error: deleteError } = await supabase
+          .from("project_categories")
+          .delete()
+          .in("id", deleteIds);
+        
+        if (deleteError) throw deleteError;
+
+        // Update transactions for deleted categories
+        for (const cat of toDelete) {
+          await supabase
+            .from("transactions")
+            .update({ category: "General" })
+            .eq("category", cat.name);
+        }
+      }
+
+      toast.success("Categories updated successfully");
+      await fetchCategories();
+    } catch (error: any) {
+      console.error("Bulk update error:", error);
+      toast.error("Failed to update categories: " + error.message);
+    }
+  };
+
   return {
     categories,
     loading,
@@ -259,8 +391,9 @@ export const useCategories = (projectId: string | undefined) => {
     reorderCategory,
     reorderCategories,
     updateCategoryParent,
+    bulkUpdateCategories,
     buildCategoryTree,
     flattenCategoryTree,
     fetchCategories,
   };
-}
+};

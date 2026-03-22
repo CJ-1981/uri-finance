@@ -28,6 +28,8 @@ interface ProjectSetupExport {
     code: string;
     icon: string;
     sort_order: number;
+    parent_code?: string;
+    parent_name?: string;
   }>;
   customColumns: Array<{
     name: string;
@@ -66,12 +68,17 @@ const ExportProjectSetup = ({
       exportedAt: new Date().toISOString(),
       currency,
       columnHeaders,
-      categories: categories.map((cat) => ({
-        name: cat.name,
-        code: cat.code,
-        icon: cat.icon,
-        sort_order: cat.sort_order,
-      })),
+      categories: categories.map((cat) => {
+        const parent = categories.find(c => c.id === cat.parent_id);
+        return {
+          name: cat.name,
+          code: cat.code,
+          icon: cat.icon,
+          sort_order: cat.sort_order,
+          parent_code: parent?.code,
+          parent_name: parent?.name,
+        };
+      }),
       customColumns: customColumns.map((col) => ({
         name: col.name,
         column_type: col.column_type,
@@ -113,9 +120,11 @@ const ExportProjectSetup = ({
         throw new Error(t("setup.invalidFormat") || "Invalid file format");
       }
 
-      // Import categories
+      // Import categories - Pass 1: Insert all categories
+      const categoryMap = new Map<string, string>(); // (code, name) -> id
+      
       for (const cat of importData.categories) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("project_categories")
           .insert({
             project_id: projectId,
@@ -123,9 +132,32 @@ const ExportProjectSetup = ({
             code: cat.code,
             icon: cat.icon,
             sort_order: cat.sort_order,
-          });
+          })
+          .select()
+          .single();
+          
         if (error) {
           console.error("Failed to import category:", cat.name, error);
+        } else if (data) {
+          const key = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
+          categoryMap.set(key, data.id);
+        }
+      }
+      // Import categories - Pass 2: Set parent_id
+      for (const cat of importData.categories) {
+        if (cat.parent_code || cat.parent_name) {
+          const childKey = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
+          const childId = categoryMap.get(childKey);
+          
+          const parentKey = Array.from(categoryMap.keys()).find(k => k.endsWith(`-${cat.parent_code || ""}-${cat.parent_name || ""}`));
+          const parentId = parentKey ? categoryMap.get(parentKey) : null;
+          
+          if (childId && parentId) {
+            await supabase
+              .from("project_categories")
+              .update({ parent_id: parentId })
+              .eq("id", childId);
+          }
         }
       }
 

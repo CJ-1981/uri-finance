@@ -2,7 +2,8 @@ import { useState, useMemo, useCallback, useRef } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings2, Plus, X, GripVertical, ChevronRight, ChevronDown, Tag } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Settings2, Plus, X, GripVertical, ChevronRight, ChevronDown, Tag, FileEdit, Save, RotateCcw } from "lucide-react";
 import { Category, CategoryTreeNode } from "@/hooks/useCategories";
 import { useI18n } from "@/hooks/useI18n";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ interface Props {
   onUpdateIcon?: (id: string, icon: string) => Promise<void>;
   onReorderAll?: (orderedIds: string[]) => Promise<void>;
   onUpdateParent?: (id: string, newParentId: string | null) => Promise<void>;
+  onBulkUpdate?: (entries: { code: string; icon: string; name: string; level: number }[]) => Promise<void>;
   inline?: boolean;
 }
 
@@ -107,7 +109,7 @@ const CategoryTreeItem = ({ node, depth, onDelete, onUpdateName, onUpdateCode, o
             className="text-[10px] font-mono text-muted-foreground bg-muted/50 rounded px-1.5 hover:bg-muted shrink-0"
             title={t("cat.editCode") || "Edit code"}
           >
-            {node.code}
+            {node.code || "—"}
           </button>
         )}
         {/* Category emoji */}
@@ -377,7 +379,7 @@ const SortableCategoryItem = ({
   );
 };
 
-const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll }: Omit<Props, "inline" | "onReorder">) => {
+const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll, onBulkUpdate }: Omit<Props, "inline">) => {
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [adding, setAdding] = useState(false);
@@ -387,6 +389,9 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
   const [editCodeValue, setEditCodeValue] = useState("");
   const [editingIconId, setEditingIconId] = useState<string | null>(null);
   const [editIconValue, setEditIconValue] = useState("");
+  const [isBulkEdit, setIsBulkEdit] = useState(false);
+  const [bulkText, setBulkText] = useState("");
+  const [savingBulk, setSavingBulk] = useState(false);
   const { t } = useI18n();
 
   // Build tree structure
@@ -464,8 +469,105 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
     await onReorderAll(reordered.map((c) => c.id));
   };
 
+  const handleEnterBulkEdit = () => {
+    const flattened: { code: string; icon: string; name: string; level: number }[] = [];
+    const traverse = (node: CategoryTreeNode, level: number) => {
+      flattened.push({ code: node.code, icon: node.icon, name: node.name, level });
+      node.children.forEach(child => traverse(child, level + 1));
+    };
+    treeStructure.forEach(root => traverse(root, 0));
+
+    const text = flattened
+      .map((c) => {
+        const prefix = c.level > 0 ? "-".repeat(c.level) + " " : "";
+        return `${prefix}${c.code || ""}, ${c.icon || ""}, ${c.name}`;
+      })
+      .join("\n");
+    setBulkText(text);
+    setIsBulkEdit(true);
+  };
+
+  const handleSaveBulk = async () => {
+    if (!onBulkUpdate) return;
+    setSavingBulk(true);
+    const lines = bulkText.split("\n").filter((l) => l.trim());
+    const entries = lines.map((line) => {
+      const commentIdx = line.indexOf("#");
+      const contentWithLevel = commentIdx !== -1 ? line.substring(0, commentIdx) : line;
+      
+      if (!contentWithLevel.trim()) return null;
+
+      // Find indentation/hyphens
+      const match = contentWithLevel.match(/^([ \t]*-*)[ \t]*(.*)/);
+      const prefix = match?.[1] || "";
+      const content = match?.[2] || "";
+      const level = (prefix.match(/-/g) || []).length;
+
+      // Determine delimiter (TAB, Comma, or Multiple Spaces)
+      let code = "";
+      let icon = "";
+      let name = "";
+
+      if (content.includes(",")) {
+        const parts = content.split(",");
+        code = parts[0]?.trim() || "";
+        if (parts.length === 2) {
+          name = parts[1]?.trim() || code || "Unnamed";
+          icon = "";
+        } else {
+          icon = parts[1]?.trim() || "";
+          name = parts.slice(2).join(",").trim() || code || "Unnamed";
+        }
+      } else if (content.includes("\t")) {
+        const parts = content.split("\t");
+        code = parts[0]?.trim() || "";
+        name = parts.slice(1).join(" ").trim() || code || "Unnamed";
+      } else {
+        // Fallback: try splitting by 2+ spaces if no comma or tab
+        const parts = content.split(/[ ]{2,}/);
+        if (parts.length > 1) {
+          code = parts[0]?.trim() || "";
+          name = parts.slice(1).join(" ").trim() || code || "Unnamed";
+        } else {
+          name = content.trim() || "Unnamed";
+        }
+      }
+      
+      return { code, icon, name, level };
+    }).filter((e): e is { code: string; icon: string; name: string; level: number } => e !== null);
+    await onBulkUpdate(entries);
+    setSavingBulk(false);
+    setIsBulkEdit(false);
+  };
+
+  if (isBulkEdit) {
+    return (
+      <div className="space-y-3 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-muted-foreground">
+            {t("cat.bulkEditLabel") || "Bulk Edit (Code, Emoji, Name)"}
+          </label>
+          <Button variant="ghost" size="sm" onClick={() => setIsBulkEdit(false)} className="h-7 text-xs">
+            <RotateCcw className="h-3.5 w-3.5 mr-1" />
+            {t("tx.cancel") || "Cancel"}
+          </Button>
+        </div>
+        <Textarea
+          value={bulkText}
+          onChange={(e) => setBulkText(e.target.value)}
+          placeholder="100, 🍔, Food"
+          className="min-h-[250px] font-mono text-xs bg-muted/30 border-border/50"
+        />
+        <Button onClick={handleSaveBulk} disabled={savingBulk} className="w-full gradient-primary">
+          <Save className="h-4 w-4 mr-1" />
+          {savingBulk ? (t("tx.saving") || "Saving...") : (t("admin.save") || "Save")}
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 animate-fade-in">
       <div className="flex gap-2">
         <Input
           value={newCode}
@@ -481,9 +583,14 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
           className="bg-muted/50 border-border/50 flex-1"
           onKeyDown={(e) => e.key === "Enter" && handleAdd()}
         />
-        <Button size="icon" onClick={handleAdd} disabled={adding || !newName.trim()} className="shrink-0 gradient-primary">
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-1 shrink-0">
+          <Button size="icon" onClick={handleAdd} disabled={adding || !newName.trim()} className="gradient-primary">
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={handleEnterBulkEdit} className="border-border/50">
+            <FileEdit className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       {hasSubCategories ? (
         <div className="space-y-1 max-h-[40vh] overflow-y-auto">
@@ -557,14 +664,14 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
   );
 };
 
-const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll, inline }: Props) => {
+const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll, onBulkUpdate, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
-
+ 
   if (inline) {
-    return <CategoryContent categories={categories} onAdd={onAdd} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />;
+    return <CategoryContent categories={categories} onAdd={onAdd} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} onBulkUpdate={onBulkUpdate} />;
   }
-
+ 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -578,7 +685,7 @@ const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
           <SheetDescription className="sr-only">{t("cat.manageCategoriesDesc")}</SheetDescription>
         </SheetHeader>
         <div className="mt-4">
-          <CategoryContent categories={categories} onAdd={onAdd} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} />
+          <CategoryContent categories={categories} onAdd={onAdd} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} onBulkUpdate={onBulkUpdate} />
         </div>
       </SheetContent>
     </Sheet>

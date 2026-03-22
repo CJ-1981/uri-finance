@@ -244,6 +244,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.manageCategoriesDesc": "Add, remove, or reorder transaction categories.",
     "cat.addSubCategory": "Add sub-category",
     "cat.subCategoryPrompt": "Enter sub-category name:",
+    "cat.bulkEditLabel": "Bulk Edit (Code, Emoji, Name)",
+    "cat.bulkEditDesc": "One entry per line: code, emoji, name. Use - for hierarchy (e.g. - Level 2, -- Level 3).",
 
     // Export
     "export.csv": "Export as CSV",
@@ -743,6 +745,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.manageCategoriesDesc": "거래 카테고리를 추가, 삭제 또는 순서를 변경합니다.",
     "cat.addSubCategory": "하위 카테고리 추가",
     "cat.subCategoryPrompt": "하위 카테고리 이름을 입력하세요:",
+    "cat.bulkEditLabel": "일괄 편집 (코드, 이모지, 이름)",
+    "cat.bulkEditDesc": "한 줄에 하나씩: 코드, 이모지, 이름. -로 하위 단계를 표시하세요 (- 2단계, -- 3단계).",
 
     // Export
     "export.csv": "CSV로 내보내기",
