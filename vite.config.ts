@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 // @MX:NOTE: Dev server plugin to redirect /uri-finance to / in development
 // This allows accessing the app with either http://localhost:8080 or http://localhost:8080/uri-finance
@@ -46,6 +48,7 @@ export default defineConfig(({ mode }) => ({
   base: mode === 'development' ? '/' : (process.env.VITE_BASE_URL || "/uri-finance/"),
   define: {
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || JSON.parse(readFileSync(resolve(__dirname, './package.json'), 'utf-8')).version),
   },
   server: {
     host: "::",

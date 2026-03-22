@@ -931,7 +931,7 @@ const AdminPage = () => {
             </div>
             <div className="flex justify-between">
               <span>{t("admin.buildVersion") || "Version"}</span>
-              <span className="font-mono">1.0.0</span>
+              <span className="font-mono">{__APP_VERSION__}</span>
             </div>
           </div>
         </section>
