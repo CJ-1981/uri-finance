@@ -42,7 +42,7 @@ export const FileManager = ({
   onTransactionClick?: (transactionId: string) => void;
 }) => {
   const { t } = useI18n();
-  const { files, isLoading, uploadFile, isUploading, downloadFile, deleteFile, isDeleting } = useFiles(projectId);
+  const { files, isLoading, uploadFile, isUploading, downloadFile, deleteFile, isDeleting, updateFile } = useFiles(projectId);
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -302,6 +302,7 @@ export const FileManager = ({
               }}
               onDelete={() => handleDeleteClick(file.id)}
               onPreview={handlePreview}
+              onUpdate={async (remark) => { await updateFile({ fileId: file.id, remark }); }}
               onTransactionClick={onTransactionClick}
             />
           ))}

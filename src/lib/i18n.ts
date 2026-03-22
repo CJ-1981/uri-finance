@@ -495,6 +495,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     // SPEC-TRANSACTION-FILES
     "files.linkToTransaction": "View Transaction",
     "files.attachments": "Attachments",
+    "files.addDescription": "Add description...",
+    "files.updateFailed": "Update failed",
   },
   ko: {
     // Auth
@@ -990,5 +992,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // SPEC-TRANSACTION-FILES
     "files.linkToTransaction": "거래 보기",
     "files.attachments": "첨부파일",
+    "files.addDescription": "설명 추가...",
+    "files.updateFailed": "업데이트 실패",
   },
 };

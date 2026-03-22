@@ -5,9 +5,11 @@
 // Updated: 2026-03-21 - Added multi-select checkbox support, uploader email display
 // Updated: 2026-03-21 - Added transaction link button for files associated with transactions
 
-import { File, FileText, ImageIcon, Download, Trash2, Eye, CheckSquare, Square, Receipt, Link as LinkIcon } from 'lucide-react';
+import { File, FileText, ImageIcon, Download, Trash2, Eye, CheckSquare, Square, Receipt, Link as LinkIcon, Edit2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { formatDistanceToNow } from 'date-fns';
+import { useState } from 'react';
 import type { ProjectFile } from '@/types/files';
 import { useI18n } from '@/hooks/useI18n';
 
@@ -33,6 +35,8 @@ interface FileListItemProps {
   onPreview: (file: ProjectFile) => void;
   /** Callback when transaction link button is clicked */
   onTransactionClick?: (transactionId: string) => void;
+  /** Callback when description (remark) is updated */
+  onUpdate?: (remark: string | null) => Promise<void>;
 }
 
 /**
@@ -86,9 +90,24 @@ export const FileListItem = ({
   onDelete,
   onPreview,
   onTransactionClick,
+  onUpdate,
 }: FileListItemProps) => {
   const { t } = useI18n();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(file.remark || '');
   const showPreview = canPreview(file.file_type);
+
+  const handleSave = async () => {
+    if (onUpdate) {
+      await onUpdate(editValue);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditValue(file.remark || '');
+    setIsEditing(false);
+  };
 
   return (
     <div className={`glass-card p-4 transition-colors ${isSelected ? 'bg-primary/10 border-primary/30' : 'hover:bg-card/90'}`}>
@@ -120,15 +139,58 @@ export const FileListItem = ({
             <span>•</span>
             <span>{formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}</span>
           </div>
-          {file.uploader_email && (
+           {file.uploader_email && (
             <p className="text-xs text-muted-foreground mt-0.5" title={file.uploader_email}>
               {t('files.uploadedBy').replace('{email}', file.uploader_email)}
             </p>
           )}
-          {file.remark && (
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2" title={file.remark}>
-              {file.remark}
-            </p>
+          
+          {/* Editable Remark/Description */}
+          {isEditing ? (
+            <div className="flex items-center gap-1 mt-1.5" onClick={(e) => e.stopPropagation()}>
+              <Input
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSave();
+                  if (e.key === 'Escape') handleCancel();
+                }}
+                placeholder={t('files.addDescription') || 'Add description...'}
+                className="h-7 text-xs py-1 px-2 focus-visible:ring-1"
+                autoFocus
+              />
+              <div className="flex items-center">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-7 w-7 text-primary hover:bg-primary/10" 
+                  onClick={handleSave}
+                  title={t('admin.save') || 'Save'}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-7 w-7 text-muted-foreground hover:bg-muted" 
+                  onClick={handleCancel}
+                  title={t('tx.cancel') || 'Cancel'}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div 
+              className="group flex items-start gap-1 mt-1 cursor-pointer hover:bg-primary/5 rounded px-1 -ml-1 py-0.5 transition-colors"
+              onClick={() => setIsEditing(true)}
+              title={file.remark ? file.remark : (t('files.addDescription') || 'Add description')}
+            >
+              <p className={`text-xs ${file.remark ? 'text-muted-foreground' : 'text-muted-foreground/40 italic'} line-clamp-2 flex-1`}>
+                {file.remark || t('files.addDescription') || 'Add description...'}
+              </p>
+              <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground mt-0.5 shrink-0" />
+            </div>
           )}
         </div>
 

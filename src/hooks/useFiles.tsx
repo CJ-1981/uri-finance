@@ -419,6 +419,33 @@ export const useFiles = (projectId: string) => {
     },
   });
 
+  // Mutation: Update file metadata
+  const updateFileMutation = useMutation({
+    mutationFn: async (params: { fileId: string; remark: string | null }) => {
+      const { fileId, remark } = params;
+      const { data, error } = await supabase
+        .from('project_files')
+        .update({ remark: remark?.trim() || null })
+        .eq('id', fileId)
+        .eq('project_id', projectId)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`${t('files.updateFailed') || 'Failed to update file metadata'}: ${error.message}`);
+      }
+
+      return data as ProjectFile;
+    },
+    onSuccess: () => {
+      toast.success(t('files.updated') || 'File updated');
+      queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
   // NEW: Get files for a specific transaction
   const getTransactionFiles = (transactionId: string) => {
     return files.filter(f => f.transaction_id === transactionId);
@@ -436,6 +463,8 @@ export const useFiles = (projectId: string) => {
     downloadedBytes,
     deleteFile: deleteFileMutation.mutateAsync,
     isDeleting: deleteFileMutation.isPending,
+    updateFile: updateFileMutation.mutateAsync,
+    isUpdating: updateFileMutation.isPending,
     getTransactionFiles,
   };
 };
