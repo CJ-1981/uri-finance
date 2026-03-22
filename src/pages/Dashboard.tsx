@@ -51,7 +51,7 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
 const Dashboard = () => {
   const { user } = useAuth();
   const { projects, activeProject, setActiveProject, createProject, joinProject, loading, isSystemAdmin } = useProjects();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions } = useTransactions(activeProject?.id);
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions, fetchTransactions } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
@@ -494,7 +494,7 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList ref={txListRef} transactions={filtered} categories={categories} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} headers={headers} customColumns={customColumns} isViewer={isViewer} />
+              <TransactionList ref={txListRef} transactions={filtered} categories={categories} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} onTransactionDeleted={fetchTransactions} headers={headers} customColumns={customColumns} isViewer={isViewer} />
             ) : view === "charts" ? (
               <FinanceCharts transactions={chartTransactions} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} projectCurrency={projectCurrency} />
             ) : view === "cash" ? (

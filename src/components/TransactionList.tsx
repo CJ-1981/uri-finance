@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useImperativeHandle, forwardRef } from "react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
-import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
@@ -12,6 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NumberedSelect from "@/components/NumberedSelect";
 import ColoredBadge from "@/components/ColoredBadge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,6 +31,7 @@ interface Props {
   onSelect: (tx: Transaction) => void;
   onBulkDelete: (ids: string[]) => Promise<void>;
   onBulkEditOpen: (txs: Transaction[]) => void;
+  onTransactionDeleted?: () => void; // Callback to refresh transaction list
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
   isViewer?: boolean;
@@ -32,7 +43,7 @@ export interface TransactionListHandle {
   focusSearch: () => void;
 }
 
-const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, headers, customColumns, isViewer }, ref) => {
+const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, onTransactionDeleted, headers, customColumns, isViewer }, ref) => {
   const { t } = useI18n();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -42,6 +53,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmTx, setDeleteConfirmTx] = useState<Transaction | null>(null);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState<number>(() => {
     const saved = localStorage.getItem("tx_page_size");
@@ -108,16 +120,25 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
 
   // Delete single transaction
   const handleDeleteTransaction = async (tx: Transaction) => {
+    // Show confirmation dialog
+    setDeleteConfirmTx(tx);
+    setLongPressTx(null);
+  };
+
+  // Execute delete after confirmation
+  const executeDelete = async () => {
+    if (!deleteConfirmTx) return;
+
     setDeleting(true);
     try {
       // Soft delete transaction
       const { error } = await supabase
         .from("transactions")
         .update({ deleted_at: new Date().toISOString() })
-        .eq("id", tx.id);
+        .eq("id", deleteConfirmTx.id);
 
       if (error) {
-        toast.error("Failed to delete transaction");
+        toast.error(t("tx.deleteFailed") || "Failed to delete transaction");
         return;
       }
 
@@ -125,22 +146,25 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
       const { error: unlinkError } = await supabase
         .from("project_files")
         .update({ transaction_id: null })
-        .eq("transaction_id", tx.id);
+        .eq("transaction_id", deleteConfirmTx.id);
 
       if (unlinkError) {
         console.error("Failed to unlink files from transaction:", unlinkError);
       }
 
-      toast.success("Transaction deleted");
+      toast.success(t("tx.deleted") || "Transaction deleted");
 
       setSelected(prev => {
         const newSet = new Set(prev);
-        newSet.delete(tx.id);
+        newSet.delete(deleteConfirmTx.id);
         return newSet;
       });
+
+      // Call callback to refresh transaction list
+      onTransactionDeleted?.();
     } finally {
       setDeleting(false);
-      setLongPressTx(null);
+      setDeleteConfirmTx(null);
     }
   };
 
@@ -500,6 +524,46 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteConfirmTx} onOpenChange={(open) => !open && setDeleteConfirmTx(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("tx.deleteTitle") || "Delete transaction?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteConfirmTx && (
+                <span className="font-medium">
+                  {deleteConfirmTx.description || deleteConfirmTx.category} · {Number(deleteConfirmTx.amount).toLocaleString()} {deleteConfirmTx.currency}
+                </span>
+              )}
+              <br />
+              <span className="text-destructive">{t("tx.deleteDesc") || "This action cannot be undone."}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("tx.cancel") || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                  {t("common.deleting") || "Deleting..."}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("tx.delete") || "Delete"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Long press delete popup */}
       {longPressTx && popupPosition && (
