@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CategoryNameSelector } from "@/components/CategorySelector";
 import NumberedSelect from "@/components/NumberedSelect";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Minus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag, X, Paperclip, Loader2, FileText, Eye } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, CalendarIcon, ChevronDown, ChevronRight, Tag, X, Paperclip, Loader2, FileText, Eye } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Category } from "@/hooks/useCategories";
@@ -81,11 +81,7 @@ const InlineTreeItem = ({ node, depth, selectedCategoryName, expandedNodes, onTo
             )}
             title={isExpanded ? "Collapse" : "Expand"}
           >
-            {isMobile ? (
-              isExpanded ? <Plus className="h-3.5 w-3.5" /> : <Minus className="h-3.5 w-3.5" />
-            ) : (
-              isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
-            )}
+            {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </button>
         )}
         {/* Spacer if no children */}

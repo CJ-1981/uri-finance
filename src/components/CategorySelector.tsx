@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useImperativeHandle, forwardRef, useRef } from "react";
-import { ChevronDown, ChevronRight, Tag, Plus, Minus } from "lucide-react";
+import { ChevronDown, ChevronRight, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/hooks/useI18n";
@@ -87,11 +87,7 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
             )}
             title={isExpanded ? t("tx.collapse") || "Collapse" : t("tx.expand") || "Expand"}
           >
-            {isMobile ? (
-              isExpanded ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />
-            ) : (
-              isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
-            )}
+            {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </button>
         )}
         {/* Spacer if no children */}
