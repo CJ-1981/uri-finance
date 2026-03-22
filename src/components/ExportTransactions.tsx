@@ -17,7 +17,7 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 import { Category } from "@/hooks/useCategories";
 import { useI18n } from "@/hooks/useI18n";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "ROL", "SGD", "PLN"];
 const VALID_TYPES = ["income", "expense"];
 
 interface Props {
@@ -258,7 +258,6 @@ function validateRow(row: ImportRow, categories: Category[], projectCurrency: st
   let dateStr = row.date || new Date().toISOString().split("T")[0];
   if (row.date) { const d = new Date(row.date); if (isNaN(d.getTime())) { errors.push(t("import.errDate")); dateStr = new Date().toISOString().split("T")[0]; } else { dateStr = d.toISOString().split("T")[0]; } }
   const currency = row.currency?.toUpperCase() || projectCurrency;
-  if (row.currency && !CURRENCIES.includes(currency)) errors.push(t("import.errCurrency").replace("{v}", row.currency));
 
   // Parse custom values
   const custom_values: Record<string, number | string> = {};
@@ -278,7 +277,7 @@ function validateRow(row: ImportRow, categories: Category[], projectCurrency: st
 
   const valid = errors.length === 0;
   const matchedCategory = categories.find((c) => c.name.toLowerCase() === category.toLowerCase())?.name || category;
-  return { row, errors, valid, parsed: valid ? { type: typeLower as "income" | "expense", amount, category: matchedCategory, description: row.description || undefined, transaction_date: dateStr, currency: CURRENCIES.includes(currency) ? currency : projectCurrency, custom_values: Object.keys(custom_values).length > 0 ? custom_values : undefined } : undefined };
+  return { row, errors, valid, parsed: valid ? { type: typeLower as "income" | "expense", amount, category: matchedCategory, description: row.description || undefined, transaction_date: dateStr, currency: currency || projectCurrency, custom_values: Object.keys(custom_values).length > 0 ? custom_values : undefined } : undefined };
 }
 
 // --- Component ---

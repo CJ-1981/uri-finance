@@ -100,6 +100,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.bulkApply": "Apply to {n} items",
     "tx.expand": "Expand",
     "tx.collapse": "Collapse",
+    "tx.customCurrency": "Custom / Manual",
 
     // Projects
     "proj.projects": "Projects",
@@ -598,6 +599,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.bulkApply": "{n}개 항목에 적용",
     "tx.expand": "펼치기",
     "tx.collapse": "접기",
+    "tx.customCurrency": "직접 입력",
 
     // Projects
     "proj.projects": "프로젝트",

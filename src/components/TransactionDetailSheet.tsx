@@ -10,7 +10,7 @@ import NumberedSelect from "@/components/NumberedSelect";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight, CalendarIcon, Paperclip, FileText, Download, ExternalLink, Eye } from "lucide-react";
+import { TrendingUp, TrendingDown, Trash2, Save, ChevronLeft, ChevronRight, CalendarIcon, Paperclip, FileText, Download, ExternalLink, Eye, X } from "lucide-react";
 import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
@@ -26,7 +26,7 @@ import { FileUploadSheet } from "@/components/files/FileUploadSheet";
 import { FilePreviewDialog, type FilePreviewInfo } from "@/components/files/FilePreviewDialog";
 import type { ProjectFile } from "@/types/files";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "ROL", "SGD", "PLN"];
 
 interface Props {
   transaction: Transaction | null;
@@ -56,6 +56,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [isCustomCurrency, setIsCustomCurrency] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
   const { t } = useI18n();
@@ -63,6 +64,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [previewFile, setPreviewFile] = useState<FilePreviewInfo | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const customCurrencyInputRef = useRef<HTMLInputElement>(null);
 
   // SPEC-TRANSACTION-FILES: Fetch files associated with this transaction
   const { files, isLoading: isLoadingFiles, downloadFile, uploadFile, isUploading } = useFiles(projectId || "");
@@ -100,6 +102,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     setDescription(tx.description || "");
     setDate(tx.transaction_date);
     setCurrency(tx.currency || "USD");
+    setIsCustomCurrency(!!tx.currency && !CURRENCIES.includes(tx.currency));
     const cv: Record<string, string> = {};
     if (tx.custom_values) {
       for (const [k, v] of Object.entries(tx.custom_values)) {
@@ -542,14 +545,57 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
         </div>
         <div className="space-y-2 min-w-0">
           <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
-          <NumberedSelect
-            value={currency}
-            onValueChange={setCurrency}
-            disabled={!isOwn}
-            items={CURRENCIES.map((c) => ({ value: c, label: c }))}
-            className="bg-muted/50 border-border/50 min-w-0"
-            showNumbers
-          />
+          <div className="flex gap-2">
+            {isCustomCurrency ? (
+              <div className="flex-1 flex gap-1.5">
+                <Input
+                  ref={customCurrencyInputRef}
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                  placeholder="XYZ"
+                  disabled={!isOwn}
+                  className="bg-muted/50 border-border/50 h-10 flex-1"
+                  autoFocus
+                />
+                {isOwn && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setIsCustomCurrency(false);
+                      if (!CURRENCIES.includes(currency)) {
+                        setCurrency("USD");
+                      }
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <NumberedSelect
+                value={currency}
+                onValueChange={(v) => {
+                  if (v === "CUSTOM") {
+                    setIsCustomCurrency(true);
+                    setCurrency("");
+                    setTimeout(() => customCurrencyInputRef.current?.focus(), 0);
+                  } else {
+                    setCurrency(v);
+                  }
+                }}
+                disabled={!isOwn}
+                items={[
+                  ...CURRENCIES.map((c) => ({ value: c, label: c })),
+                  { value: "CUSTOM", label: t("tx.customCurrency") || "Custom..." }
+                ]}
+                className="bg-muted/50 border-border/50 min-w-0"
+                showNumbers
+              />
+            )}
+          </div>
         </div>
       </div>
 

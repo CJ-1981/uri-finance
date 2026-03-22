@@ -22,7 +22,7 @@ import ColoredBadge from "@/components/ColoredBadge";
 import { FileUploadSheet } from "@/components/files/FileUploadSheet";
 import { FilePreviewDialog, type FilePreviewInfo } from "@/components/files/FilePreviewDialog";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN"];
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "ROL", "SGD", "PLN"];
 
 // Platform detection for keyboard shortcuts
 const isMac = typeof window !== "undefined" && window.navigator.userAgent.includes("Mac");
@@ -286,6 +286,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [currency, setCurrency] = useState(projectCurrency || "USD");
+  const [isCustomCurrency, setIsCustomCurrency] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -304,6 +305,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [previewFile, setPreviewFile] = useState<FilePreviewInfo | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const customCurrencyInputRef = useRef<HTMLInputElement>(null);
 
   // Reset form with defaults when opening
   useEffect(() => {
@@ -657,13 +659,54 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           </div>
           <div className="space-y-2 min-w-0">
             <Label className="text-muted-foreground text-xs">{t("tx.currency") || "Currency"}</Label>
-            <NumberedSelect
-              value={currency}
-              onValueChange={setCurrency}
-              items={CURRENCIES.map((c) => ({ value: c, label: c }))}
-              className="bg-muted/50 border-border/50 min-w-0"
-              showNumbers
-            />
+            <div className="flex gap-2">
+              {isCustomCurrency ? (
+                <div className="flex-1 flex gap-1.5">
+                  <Input
+                    ref={customCurrencyInputRef}
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                    placeholder="XYZ"
+                    className="bg-muted/50 border-border/50 h-10 flex-1"
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setIsCustomCurrency(false);
+                      if (!CURRENCIES.includes(currency)) {
+                        setCurrency(projectCurrency || "USD");
+                      }
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <NumberedSelect
+                  value={currency}
+                  onValueChange={(v) => {
+                    if (v === "CUSTOM") {
+                      setIsCustomCurrency(true);
+                      setCurrency("");
+                      // Small timeout to ensure input is rendered before focusing
+                      setTimeout(() => customCurrencyInputRef.current?.focus(), 0);
+                    } else {
+                      setCurrency(v);
+                    }
+                  }}
+                  items={[
+                    ...CURRENCIES.map((c) => ({ value: c, label: c })),
+                    { value: "CUSTOM", label: t("tx.customCurrency") || "Custom..." }
+                  ]}
+                  className="bg-muted/50 border-border/50 min-w-0"
+                  showNumbers
+                />
+              )}
+            </div>
           </div>
         </div>
 
