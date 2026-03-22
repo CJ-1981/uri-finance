@@ -172,7 +172,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl max-h-[85vh] overflow-y-auto"
+        className="max-w-[95vw] md:max-w-5xl max-h-[95vh] p-4 sm:p-6 overflow-hidden flex flex-col"
         style={{
           opacity: opacity || 1,
           transition: isDragging ? 'none' : 'opacity 0.2s',
@@ -182,7 +182,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
         onTouchEnd={handleTouchEnd}
       >
         {/* Wrapper div for drag animation - doesn't interfere with DialogContent positioning */}
-        <div ref={contentRef} style={dragWrapperStyle}>
+        <div ref={contentRef} style={dragWrapperStyle} className="flex flex-col flex-1 min-h-0 gap-4">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="truncate pr-8" title={file.file_name}>
               {file.file_name}
@@ -195,7 +195,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
             )}
           </DialogHeader>
 
-          <div className="flex items-center justify-center bg-muted/30 rounded-lg min-h-[400px] max-h-[55vh] overflow-auto">
+          <div className="flex-1 min-h-0 flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden">
             {isLoading ? (
               <div className="text-center">
                 <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
@@ -217,13 +217,13 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
               <iframe
                 src={previewUrl ?? ''}
                 title={file.file_name}
-                className="w-full h-full border-0 min-h-[400px]"
+                className="w-full h-full border-0"
                 sandbox="allow-scripts allow-same-origin"
               />
             ) : null}
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end flex-shrink-0">
             <Button onClick={handleDownload} disabled={!previewUrl} className="gap-2">
               <Download className="h-4 w-4" />
               Download
