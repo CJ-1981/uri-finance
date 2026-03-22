@@ -20,6 +20,121 @@ import {
 import { toast } from 'sonner';
 import { useI18n } from '@/hooks/useI18n';
 
+// Image MIME types that can be compressed
+const COMPRESSIBLE_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+];
+
+// Compression quality (0.1 to 1.0, where 1.0 is maximum quality)
+const COMPRESSION_QUALITY = 0.8;
+
+// Maximum size before attempting compression (5MB)
+const COMPRESSION_THRESHOLD = MAX_FILE_SIZE;
+
+/**
+ * Compress an image file using Canvas API
+ * @param file - Original image file
+ * @param quality - Compression quality (0-1)
+ * @returns Promise<File> - Compressed file
+ */
+async function compressImage(file: File, quality: number = COMPRESSION_QUALITY): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      // Create canvas with original dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+
+      // Draw image to canvas
+      ctx.drawImage(img, 0, 0);
+
+      // Compress and get blob
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Failed to compress image'));
+            return;
+          }
+
+          // Create new File object with compressed data
+          const compressedFile = new File(
+            [blob],
+            file.name,
+            {
+              type: file.type,
+              lastModified: Date.now(),
+            }
+          );
+
+          resolve(compressedFile);
+        },
+        file.type,
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      reject(new Error('Failed to load image'));
+    };
+
+    // Load image from file
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Auto-compress image if it exceeds size threshold
+ * @param file - File to potentially compress
+ * @returns Promise<File> - Original or compressed file
+ */
+async function autoCompressImageIfNeeded(file: File): Promise<File> {
+  // Only compress images over threshold
+  if (!COMPRESSIBLE_IMAGE_TYPES.includes(file.type) || file.size <= COMPRESSION_THRESHOLD) {
+    return file;
+  }
+
+  const originalSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+  try {
+    const compressed = await compressImage(file, COMPRESSION_QUALITY);
+    const compressedSizeMB = (compressed.size / (1024 * 1024)).toFixed(2);
+    const savings = ((1 - compressed.size / file.size) * 100).toFixed(0);
+
+    console.log(
+      `Image compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB (${savings}% reduction)`
+    );
+
+    // Show notification to user
+    toast.info(
+      `Image compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB (${savings}% smaller)`
+    );
+
+    // If compression didn't help much, still use compressed version
+    return compressed;
+  } catch (error) {
+    console.error('Image compression failed:', error);
+    // Fall back to original file if compression fails
+    return file;
+  }
+}
+
 // @MX:ANCHOR: Core file management hook with CRUD operations for project files
 // @MX:REASON: High fan-in function used by FileManager and all file-related components
 // @MX:SPEC: SPEC-STORAGE-001
@@ -102,9 +217,12 @@ export const useFiles = (projectId: string) => {
         resolvedMime = EXTENSION_TO_MIME[ext] || '';
       }
 
+      // SPEC-STORAGE-001: Auto-compress images over 5MB
+      const fileToUpload = await autoCompressImageIfNeeded(file);
+
       // Create a File-like object with resolved MIME for validation
       const fileForValidation = {
-        ...file,
+        ...fileToUpload,
         type: resolvedMime,
       } as File;
 
@@ -113,8 +231,8 @@ export const useFiles = (projectId: string) => {
         throw new Error(t('files.invalidFileType') || 'File type not allowed');
       }
 
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
+      // Validate file size (after compression)
+      if (fileToUpload.size > MAX_FILE_SIZE) {
         const maxSizeMB = MAX_FILE_SIZE / (1024 * 1024);
         throw new Error(
           t('files.sizeExceeds').replace('{size}', `${maxSizeMB} MB`) ||
@@ -144,7 +262,7 @@ export const useFiles = (projectId: string) => {
       // Upload to Supabase Storage with resolved MIME type
       const { error: uploadError } = await supabase.storage
         .from('project-files')
-        .upload(storagePath, file, {
+        .upload(storagePath, fileToUpload, {
           cacheControl: '3600',
           upsert: false,
           contentType: resolvedMime,
@@ -161,9 +279,9 @@ export const useFiles = (projectId: string) => {
           id: fileId, // Use the same UUID
           project_id: projectId,
           uploaded_by: user.id,
-          file_name: file.name,
+          file_name: file.name, // Keep original filename
           file_type: resolvedMime, // Use resolved MIME type
-          file_size: file.size,
+          file_size: fileToUpload.size, // Use compressed file size
           storage_path: storagePath,
           remark: remark.trim() || null, // Add remark field
           transaction_id: transactionId || null, // Add transaction association
