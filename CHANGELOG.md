@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-03-22
+
+### Fixed
+- **Orphaned Transaction Links**: Fixed files remaining linked to deleted transactions
+  - Added file unlinking logic to AdminPage archive function
+  - Added cache invalidation to refresh UI after unlinking
+  - Migration cleanup for existing orphaned links
+  - Ensures transaction_id set to NULL when transaction is soft-deleted
+- **Delete Transaction UX**: Improved delete operation with confirmation and list refresh
+  - Added AlertDialog confirmation dialog for delete operations
+  - Fixed transaction list not refreshing after delete
+  - Replaced dynamic hook imports with direct Supabase calls in event handlers
+  - Fixed React Hooks violations in delete functionality
+  - Added onTransactionDeleted callback prop to TransactionList
+- **Passive Event Listener Violations**: Removed preventDefault() calls from passive touch handlers
+  - Fixed FilePreviewDialog drag-to-close functionality
+  - Fixed TransactionList long-press backdrop touch handling
+  - Resolved React 18+ passive event listener warnings
+- **Selection Toolbar Visibility**: Fixed toolbar not showing until items selected
+  - Selection toolbar now immediately visible when select mode enabled
+  - Buttons are disabled until items are selected (better UX)
+  - Select All button shows current count (X/Y format)
+
+### Added
+- **Files List Search**: Text search functionality for file management
+  - Search across file name, remark/description, and uploader email
+  - Real-time filtering with useMemo optimization
+  - Clear button to reset search
+  - English and Korean translations for search placeholder
+
+### Infrastructure
+- **Migration**: Added UPDATE policy on project_files table for transaction unlinking
+- **Translation**: Added "files.search" key to i18n (en/ko)
+
 ## [1.1.0] - 2026-03-21
 
 ### Added
