@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+
 /**
  * Info required for previewing a file
  */
@@ -149,11 +150,19 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
     setIsDragging(false);
   };
 
-  // Calculate opacity and transform based on drag distance
+  // Calculate opacity and wrapper transform based on drag distance
   const dragDistance = currentDragY - dragStartY;
   const dragProgress = Math.min(dragDistance / CLOSE_THRESHOLD, 1);
   const opacity = isDragging ? 1 - dragProgress * 0.5 : 1;
   const translateY = isDragging ? Math.min(dragDistance, CLOSE_THRESHOLD) : 0;
+
+  // Wrapper style for drag animation (applied to inner content wrapper)
+  const dragWrapperStyle = isDragging ? {
+    transform: `translateY(${translateY}px)`,
+    transition: 'none',
+  } : {
+    transition: 'transform 0.2s ease-out',
+  };
 
   if (!file) return null;
 
@@ -164,62 +173,63 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        ref={contentRef}
         className="max-w-4xl max-h-[85vh] overflow-y-auto"
         style={{
-          opacity,
-          transform: isMobile ? `translateY(${translateY}px)` : undefined,
-          transition: isDragging ? 'none' : undefined,
+          opacity: opacity || 1,
+          transition: isDragging ? 'none' : 'opacity 0.2s',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="truncate pr-8" title={file.file_name}>
-            {file.file_name}
-          </DialogTitle>
-          {/* Visual indicator for drag-to-close on mobile */}
-          {isMobile && (
-            <div className="flex justify-center pb-2">
-              <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
-            </div>
-          )}
-        </DialogHeader>
+        {/* Wrapper div for drag animation - doesn't interfere with DialogContent positioning */}
+        <div ref={contentRef} style={dragWrapperStyle}>
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="truncate pr-8" title={file.file_name}>
+              {file.file_name}
+            </DialogTitle>
+            {/* Visual indicator for drag-to-close on mobile */}
+            {isMobile && (
+              <div className="flex justify-center pb-2">
+                <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
+              </div>
+            )}
+          </DialogHeader>
 
-        <div className="flex items-center justify-center bg-muted/30 rounded-lg min-h-[400px] max-h-[55vh] overflow-auto">
-          {isLoading ? (
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
-              <p className="text-muted-foreground">Loading preview...</p>
-            </div>
-          ) : !canPreviewFile ? (
-            <div className="text-center p-8">
-              <File className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Preview not available for this file type</p>
-              <p className="text-sm text-muted-foreground mt-2">Please download to view the file</p>
-            </div>
-          ) : isImage ? (
-            <img
-              src={previewUrl ?? ''}
-              alt={file.file_name}
-              className="max-w-full max-h-full object-contain"
-            />
-          ) : isPdf ? (
-            <iframe
-              src={previewUrl ?? ''}
-              title={file.file_name}
-              className="w-full h-full border-0 min-h-[400px]"
-              sandbox="allow-scripts allow-same-origin"
-            />
-          ) : null}
-        </div>
+          <div className="flex items-center justify-center bg-muted/30 rounded-lg min-h-[400px] max-h-[55vh] overflow-auto">
+            {isLoading ? (
+              <div className="text-center">
+                <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
+                <p className="text-muted-foreground">Loading preview...</p>
+              </div>
+            ) : !canPreviewFile ? (
+              <div className="text-center p-8">
+                <File className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Preview not available for this file type</p>
+                <p className="text-sm text-muted-foreground mt-2">Please download to view the file</p>
+              </div>
+            ) : isImage ? (
+              <img
+                src={previewUrl ?? ''}
+                alt={file.file_name}
+                className="max-w-full max-h-full object-contain"
+              />
+            ) : isPdf ? (
+              <iframe
+                src={previewUrl ?? ''}
+                title={file.file_name}
+                className="w-full h-full border-0 min-h-[400px]"
+                sandbox="allow-scripts allow-same-origin"
+              />
+            ) : null}
+          </div>
 
-        <div className="flex justify-end pt-4">
-          <Button onClick={handleDownload} disabled={!previewUrl} className="gap-2">
-            <Download className="h-4 w-4" />
-            Download
-          </Button>
+          <div className="flex justify-end pt-4">
+            <Button onClick={handleDownload} disabled={!previewUrl} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
