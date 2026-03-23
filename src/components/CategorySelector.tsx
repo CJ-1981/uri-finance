@@ -441,8 +441,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
         align="start"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
-          "max-h-[50vh]",
-          isMobile && "max-h-[60vh]"
+          isMobile && "max-h-[60vh] z-[100]"
         )}
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -464,19 +463,26 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{t("tx.selectAllCategories")}</span>
         </button>
-        {/* Tree items with scrollable container */}
+        {/* Tree items with native scroll for Safari compatibility */}
         <div
           data-category-scroll="true"
           className={cn(
-            "overflow-y-auto overflow-x-hidden",
+            "overflow-y-auto",
             "max-h-[calc(50vh-50px)]",
             isMobile && "max-h-[calc(60vh-50px)]"
           )}
-          style={isMobile ? {
+          style={{
             WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y',
-            overscrollBehavior: 'contain'
-          } : undefined}
+            overscrollBehavior: 'contain',
+            position: 'relative',
+            zIndex: 1
+          }}
+          onWheel={(e) => {
+            // Safari blocks wheel events on portaled popovers inside modals.
+            // Imperatively scroll to ensure mouse wheel works on Safari desktop.
+            e.stopPropagation();
+            e.currentTarget.scrollTop += e.deltaY;
+          }}
         >
           {categoryTree.map((node) => (
             <TreeItem
@@ -514,37 +520,25 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverContentRef = useRef<HTMLDivElement>(null);
 
-  // Force touch scrolling on mobile when popover opens
+  // Handle open/close state
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (!newOpen) {
       setFocusedIndex(null);
     }
     setOpen(newOpen);
 
-    // Force enable touch scrolling on mobile
-    if (newOpen && isMobile && popoverContentRef.current) {
-      const scrollableElement = popoverContentRef.current.querySelector('[data-category-scroll="true"]') as HTMLElement;
-      if (scrollableElement) {
-        scrollableElement.style.touchAction = 'pan-y';
-        (scrollableElement.style as CSSStyleDeclaration & { WebkitOverflowScrolling?: string }).WebkitOverflowScrolling = 'touch';
-        scrollableElement.style.overscrollBehavior = 'contain';
-      }
-    }
-
     // Auto-scroll modal to position category selector at top of viewport
     // This ensures the full dropdown list is visible on mobile
     if (newOpen && isMobile && triggerRef.current) {
-      // Use setTimeout to allow Drawer to fully render before scrolling
       setTimeout(() => {
         if (!triggerRef.current) return;
 
-        // Use scrollIntoView (simplest and most reliable)
         triggerRef.current.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
           inline: 'nearest'
         });
-      }, 100); // 100ms delay for Drawer to render
+      }, 100);
     }
   }, [isMobile]);
 
@@ -839,9 +833,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
         align="start"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
-          "max-h-[50vh]",
-          isMobile && "max-h-[60vh]",
-          isMobile && "z-[100]"
+          isMobile && "max-h-[60vh] z-[100]"
         )}
         onKeyDown={handleKeyDown}
         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -863,19 +855,26 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{t("tx.selectAllCategories")}</span>
         </button>
-        {/* Tree items with scrollable container */}
+        {/* Tree items with native scroll for Safari compatibility */}
         <div
           data-category-scroll="true"
           className={cn(
-            "overflow-y-auto overflow-x-hidden",
+            "overflow-y-auto",
             "max-h-[calc(50vh-50px)]",
             isMobile && "max-h-[calc(60vh-50px)]"
           )}
-          style={isMobile ? {
+          style={{
             WebkitOverflowScrolling: 'touch',
-            touchAction: 'pan-y',
-            overscrollBehavior: 'contain'
-          } : undefined}
+            overscrollBehavior: 'contain',
+            position: 'relative',
+            zIndex: 1
+          }}
+          onWheel={(e) => {
+            // Safari blocks wheel events on portaled popovers inside modals.
+            // Imperatively scroll to ensure mouse wheel works on Safari desktop.
+            e.stopPropagation();
+            e.currentTarget.scrollTop += e.deltaY;
+          }}
         >
           {categoryTree.map((node) => (
             <TreeItem
