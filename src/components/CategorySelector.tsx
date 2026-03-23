@@ -48,16 +48,6 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
   }, [categoryOptions, node.id]);
 
   const isFocused = focusedIndex === globalIndex;
-
-  // Debug: log when this item is focused
-  if (!isMobile) {
-    console.log(`[CategorySelector] Rendering: "${node.name}" (globalIndex=${globalIndex}, depth=${depth}, hasChildren=${hasChildren}, isExpanded=${isExpanded}, visibleShortcutNumber=${visibleShortcutNumber})`);
-  }
-
-  // Debug: log when this item is focused
-  if (isFocused && !isMobile) {
-    console.log(`[CategorySelector] >>> FOCUSED: "${node.name}" (globalIndex=${globalIndex}, focusedIndex=${focusedIndex})`);
-  }
   const getShortcutLabel = () => {
     // Only show shortcuts for level 1 parent categories (depth === 0)
     // Use the provided visibleShortcutNumber (1-9, with 0 for the 10th)
@@ -332,8 +322,6 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
             next++;
           }
           if (next >= categoryTreeOptions.length) next = Math.max(0, prev ?? 0);
-          const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
@@ -346,8 +334,6 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
             next--;
           }
           if (next < 0) next = Math.min(categoryTreeOptions.length - 1, prev ?? 0);
-          const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
@@ -455,6 +441,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
         align="start"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
+          "max-h-[50vh]",
           isMobile && "max-h-[60vh]"
         )}
         onKeyDown={handleKeyDown}
@@ -482,6 +469,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
           data-category-scroll="true"
           className={cn(
             "overflow-y-auto overflow-x-hidden",
+            "max-h-[calc(50vh-50px)]",
             isMobile && "max-h-[calc(60vh-50px)]"
           )}
           style={isMobile ? {
@@ -541,6 +529,22 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
         (scrollableElement.style as CSSStyleDeclaration & { WebkitOverflowScrolling?: string }).WebkitOverflowScrolling = 'touch';
         scrollableElement.style.overscrollBehavior = 'contain';
       }
+    }
+
+    // Auto-scroll modal to position category selector at top of viewport
+    // This ensures the full dropdown list is visible on mobile
+    if (newOpen && isMobile && triggerRef.current) {
+      // Use setTimeout to allow Drawer to fully render before scrolling
+      setTimeout(() => {
+        if (!triggerRef.current) return;
+
+        // Use scrollIntoView (simplest and most reliable)
+        triggerRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        });
+      }, 100); // 100ms delay for Drawer to render
     }
   }, [isMobile]);
 
@@ -716,8 +720,6 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
             next++;
           }
           if (next >= categoryTreeOptions.length) next = Math.max(0, prev ?? 0);
-          const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowDown: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
@@ -730,8 +732,6 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
             next--;
           }
           if (next < 0) next = Math.min(categoryTreeOptions.length - 1, prev ?? 0);
-          const nextItem = categoryTreeOptions[next];
-          console.log(`[CategorySelector] ArrowUp: ${prev} -> ${next} | "${nextItem?.name}" depth:${nextItem?.depth} visible:${isItemVisible(next)}`);
           return next;
         });
         break;
@@ -839,6 +839,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
         align="start"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
+          "max-h-[50vh]",
           isMobile && "max-h-[60vh]",
           isMobile && "z-[100]"
         )}
@@ -867,6 +868,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
           data-category-scroll="true"
           className={cn(
             "overflow-y-auto overflow-x-hidden",
+            "max-h-[calc(50vh-50px)]",
             isMobile && "max-h-[calc(60vh-50px)]"
           )}
           style={isMobile ? {
