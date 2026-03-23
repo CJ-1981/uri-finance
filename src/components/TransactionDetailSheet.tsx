@@ -26,7 +26,8 @@ import { FileUploadSheet } from "@/components/files/FileUploadSheet";
 import { FilePreviewDialog, type FilePreviewInfo } from "@/components/files/FilePreviewDialog";
 import type { ProjectFile } from "@/types/files";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "ROL", "SGD", "PLN"];
+// Valid ISO 4217 currency codes (ROL was replaced by RON in 2005)
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "RON", "SGD", "PLN"];
 
 interface Props {
   transaction: Transaction | null;
@@ -46,16 +47,18 @@ interface Props {
   projectId?: string;
   /** Callback to navigate to files view with optional file highlight */
   onViewInFiles?: (fileId?: string) => void;
+  /** Project currency for default selection */
+  projectCurrency?: string;
 }
 
-const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions, projectId, onViewInFiles }: Props) => {
+const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions, projectId, onViewInFiles, projectCurrency }: Props) => {
   const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
-  const [currency, setCurrency] = useState("USD");
+  const [currency, setCurrency] = useState(projectCurrency || "USD");
   const [isCustomCurrency, setIsCustomCurrency] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
@@ -566,7 +569,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                     onClick={() => {
                       setIsCustomCurrency(false);
                       if (!CURRENCIES.includes(currency)) {
-                        setCurrency("USD");
+                        setCurrency(projectCurrency || "USD");
                       }
                     }}
                   >

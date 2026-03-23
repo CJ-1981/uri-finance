@@ -22,7 +22,8 @@ import ColoredBadge from "@/components/ColoredBadge";
 import { FileUploadSheet } from "@/components/files/FileUploadSheet";
 import { FilePreviewDialog, type FilePreviewInfo } from "@/components/files/FilePreviewDialog";
 
-const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "ROL", "SGD", "PLN"];
+// Valid ISO 4217 currency codes (ROL was replaced by RON in 2005)
+const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "RON", "SGD", "PLN"];
 
 // Platform detection for keyboard shortcuts
 const isMac = typeof window !== "undefined" && window.navigator.userAgent.includes("Mac");

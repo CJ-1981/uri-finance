@@ -528,6 +528,7 @@ const Dashboard = () => {
               allTransactions={transactions}
               projectId={activeProject?.id}
               onViewInFiles={handleViewInFiles}
+              projectCurrency={projectCurrency}
             />
           </div>
         )}

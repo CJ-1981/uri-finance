@@ -39,6 +39,17 @@ interface Props {
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 
+// List of valid ISO 4217 currency codes (ROL was replaced by RON in 2005)
+const VALID_CURRENCIES = new Set(["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "RON", "SGD", "PLN"]);
+
+// Helper to safely format currency with validation
+function formatCurrencySafe(amount: number, currencyCode: string | undefined): string {
+  const currency = currencyCode || "USD";
+  // Validate currency code to avoid RangeError with toLocaleString
+  const validCurrency = VALID_CURRENCIES.has(currency) ? currency : "USD";
+  return amount.toLocaleString("en-US", { style: "currency", currency: validCurrency });
+}
+
 export interface TransactionListHandle {
   focusSearch: () => void;
 }
@@ -452,7 +463,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
               tx.type === "income" ? "text-income" : "text-expense"
             }`}
           >
-            {tx.type === "income" ? "+" : "-"}{Number(tx.amount).toLocaleString("en-US", { style: "currency", currency: tx.currency || "USD" })}
+            {tx.type === "income" ? "+" : "-"}{formatCurrencySafe(Number(tx.amount), tx.currency)}
           </p>
         </div>
       ))}
@@ -507,16 +518,16 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
                 <div key={cur} className="flex items-center gap-3 tabular-nums">
                   {income > 0 && (
                     <span className="text-income font-semibold">
-                      +{income.toLocaleString("en-US", { style: "currency", currency: cur })}
+                      +{formatCurrencySafe(income, cur)}
                     </span>
                   )}
                   {expense > 0 && (
                     <span className="text-expense font-semibold">
-                      -{expense.toLocaleString("en-US", { style: "currency", currency: cur })}
+                      -{formatCurrencySafe(expense, cur)}
                     </span>
                   )}
                   <span className={`font-bold ${net >= 0 ? "text-income" : "text-expense"}`}>
-                    = {net.toLocaleString("en-US", { style: "currency", currency: cur })}
+                    = {formatCurrencySafe(net, cur)}
                   </span>
                 </div>
               );
