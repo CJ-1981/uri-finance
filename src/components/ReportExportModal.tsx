@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 import { useI18n } from "@/hooks/useI18n";
 import { ReportSummaryByCurrency } from "@/hooks/useReportData";
-import { captureCharts } from "@/lib/chartCapture";
+import { captureCharts, captureElementAtWidth, CAPTURE_WIDTH } from "@/lib/chartCapture";
 import { generatePdfReport } from "@/lib/pdfGenerator";
 import { generateMarkdownReport } from "@/lib/markdownGenerator";
 import { PeriodKey, DateRange } from "@/components/PeriodSelector";
@@ -126,26 +126,17 @@ export default function ReportExportModal({
       const filename = getReportFilename(exportFormat, projectName, period, customRange);
 
       if (exportFormat === "pdf") {
-        // Capture the rendered summary table as an image so CJK text renders correctly
+        // Capture the rendered summary table at consistent width for PDF export
         let summaryImageData: string | null = null;
         let summaryImageWidth = 0;
         let summaryImageHeight = 0;
         const summaryEl = document.querySelector<HTMLElement>("[data-report-summary='true']");
         if (summaryEl) {
-          try {
-            const html2canvas = (await import("html2canvas")).default;
-            const canvas = await html2canvas(summaryEl, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: null,
-              logging: false,
-            });
-            summaryImageData = canvas.toDataURL("image/png");
-            summaryImageWidth = summaryEl.offsetWidth;
-            summaryImageHeight = summaryEl.offsetHeight;
-          } catch (e) {
-            console.warn("[ReportExportModal] summary table capture failed:", e);
+          const summaryCapture = await captureElementAtWidth(summaryEl, CAPTURE_WIDTH, "summary-table", false);
+          if (summaryCapture) {
+            summaryImageData = summaryCapture.imageData;
+            summaryImageWidth = summaryCapture.width;
+            summaryImageHeight = summaryCapture.height;
           }
         }
 
