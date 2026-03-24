@@ -1,5 +1,5 @@
 // SPEC-REPORT-001: ReportSummaryTable component – spreadsheet-like category breakdown
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -40,6 +40,22 @@ function NetCell({ value }: { value: number }) {
 
 export default function ReportSummaryTable({ summaryData, projectCurrency }: Props) {
   const { t } = useI18n();
+
+  // State for row comments - keyed by currency-categoryName
+  const [comments, setComments] = useState<Record<string, string>>(() => {
+    // Load saved comments from localStorage
+    const saved = localStorage.getItem("report-summary-comments");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  // Save comments to localStorage whenever they change
+  const updateComment = (key: string, value: string) => {
+    const updated = { ...comments, [key]: value };
+    setComments(updated);
+    localStorage.setItem("report-summary-comments", JSON.stringify(updated));
+  };
+
+  const getCommentKey = (currency: string, categoryName: string) => `${currency}-${categoryName}`;
 
   const hasData = useMemo(
     () => summaryData.some((g) => g.rows.length > 0),
@@ -101,6 +117,9 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                   <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5 w-14">
                     {t("report.percent")}
                   </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 min-w-[150px]">
+                    {t("report.comment")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -140,6 +159,15 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                         {row.percentage.toFixed(1)}%
                       </span>
                     </TableCell>
+                    <TableCell className="py-2">
+                      <input
+                        type="text"
+                        value={comments[getCommentKey(row.currency, row.categoryName)] || ""}
+                        onChange={(e) => updateComment(getCommentKey(row.currency, row.categoryName), e.target.value)}
+                        placeholder={t("report.addComment") || "Add comment..."}
+                        className="w-full px-2 py-1 text-[11px] border border-border/30 rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/50"
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
 
@@ -164,6 +192,7 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                   <TableCell className="text-right py-2 text-[12px]">
                     <NetCell value={group.totalNet} />
                   </TableCell>
+                  <TableCell className="py-2" />
                   <TableCell className="py-2" />
                 </TableRow>
               </TableBody>

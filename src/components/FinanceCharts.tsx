@@ -283,9 +283,9 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
             <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
             <GroupSelector options={groupOptions} value={pieGroupBy} onChange={handlePieGroup} />
           </div>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={360}>
             <PieChart>
-              <Pie data={filteredPieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" strokeWidth={0}>
+              <Pie data={filteredPieData} cx="50%" cy="50%" innerRadius={100} outerRadius={150} dataKey="value" strokeWidth={0}>
                 {filteredPieData.map((entry) => {
                   const origIndex = pieData.findIndex((d) => d.name === entry.name);
                   return <Cell key={entry.name} fill={COLORS[origIndex % COLORS.length]} />;

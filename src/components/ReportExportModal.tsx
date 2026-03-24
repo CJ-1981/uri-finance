@@ -132,11 +132,75 @@ export default function ReportExportModal({
         let summaryImageHeight = 0;
         const summaryEl = document.querySelector<HTMLElement>("[data-report-summary='true']");
         if (summaryEl) {
-          const summaryCapture = await captureElementAtWidth(summaryEl, CAPTURE_WIDTH, "summary-table", false);
+          // Store original values for restoration
+          const inputModifications: Array<{
+            input: HTMLInputElement;
+            originalPlaceholder: string;
+            originalValue: string;
+            originalWidth: string;
+            originalMinWidth: string;
+          }> = [];
+
+          // Temporarily expand comment columns and hide placeholders for capture
+          const commentInputs = summaryEl.querySelectorAll("input[type='text']");
+          commentInputs.forEach((input) => {
+            const htmlInput = input as HTMLInputElement;
+            inputModifications.push({
+              input: htmlInput,
+              originalPlaceholder: htmlInput.placeholder,
+              originalValue: htmlInput.value,
+              originalWidth: htmlInput.style.width || "",
+              originalMinWidth: htmlInput.style.minWidth || "",
+            });
+            // Hide placeholder during capture
+            htmlInput.placeholder = "";
+            // Ensure value is set
+            htmlInput.value = inputModifications[inputModifications.length - 1].originalValue;
+            // Set proper width and height for text visibility
+            htmlInput.style.width = "200px";
+            htmlInput.style.minWidth = "200px";
+            htmlInput.style.height = "auto";
+            htmlInput.style.lineHeight = "1.5";
+            htmlInput.style.padding = "4px 8px";
+            htmlInput.style.textOverflow = "ellipsis";
+            htmlInput.style.overflow = "visible";
+            htmlInput.style.whiteSpace = "nowrap";
+          });
+
+          // Also expand the comment column header
+          const commentHeader = summaryEl.querySelector("th:last-child");
+          const headerOriginalMinWidth = commentHeader ? (commentHeader as HTMLElement).style.minWidth : "";
+          const headerOriginalWidth = commentHeader ? (commentHeader as HTMLElement).style.width : "";
+          if (commentHeader) {
+            (commentHeader as HTMLElement).style.minWidth = "200px";
+            (commentHeader as HTMLElement).style.width = "200px";
+          }
+
+          // Use wider capture width for summary table to accommodate comment column
+          const summaryCapture = await captureElementAtWidth(summaryEl, 900, "summary-table", false);
           if (summaryCapture) {
             summaryImageData = summaryCapture.imageData;
             summaryImageWidth = summaryCapture.width;
             summaryImageHeight = summaryCapture.height;
+          }
+
+          // Restore original values
+          inputModifications.forEach((mod) => {
+            mod.input.placeholder = mod.originalPlaceholder;
+            mod.input.style.width = mod.originalWidth;
+            mod.input.style.minWidth = mod.originalMinWidth;
+            // Clear inline styles that were added for capture
+            mod.input.style.height = "";
+            mod.input.style.lineHeight = "";
+            mod.input.style.padding = "";
+            mod.input.style.textOverflow = "";
+            mod.input.style.overflow = "";
+            mod.input.style.whiteSpace = "";
+          });
+
+          if (commentHeader) {
+            (commentHeader as HTMLElement).style.minWidth = headerOriginalMinWidth;
+            (commentHeader as HTMLElement).style.width = headerOriginalWidth;
           }
         }
 

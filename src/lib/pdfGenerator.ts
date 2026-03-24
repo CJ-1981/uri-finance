@@ -206,7 +206,9 @@ export async function generatePdfReport(config: PdfReportConfig): Promise<Blob> 
         doc.text("(Chart capture unavailable)", margin, y);
         y += 10;
       } else {
-        const hMm = embedImage(capture.imageData, capture.width, capture.height, 85);
+        // Pie chart is taller (360px), so use larger maxHeight
+        const maxHeight = capture.chartType === "pie" ? 120 : 85;
+        const hMm = embedImage(capture.imageData, capture.width, capture.height, maxHeight);
         y += hMm + 8;
       }
     }
