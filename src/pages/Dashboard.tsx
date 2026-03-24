@@ -31,6 +31,10 @@ import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { isPinSet } from "@/lib/securePinStorage";
 import { FileManager } from "@/components/files";
+import ReportSummaryTable from "@/components/ReportSummaryTable";
+import ReportExportModal from "@/components/ReportExportModal";
+import { useReportData } from "@/hooks/useReportData";
+import { Download } from "lucide-react";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -76,6 +80,7 @@ const Dashboard = () => {
   const [addTxOpen, setAddTxOpen] = useState(false);
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [reportExportOpen, setReportExportOpen] = useState(false);
   const txListRef = useRef<TransactionListHandle>(null);
   const periodSelectorRef = useRef<PeriodSelectorHandle>(null);
   const categorySelectorRef = useRef<CategorySelectorHandle>(null);
@@ -168,6 +173,14 @@ const Dashboard = () => {
     () => filtered.filter((tx) => (tx.currency || projectCurrency) === projectCurrency),
     [filtered, projectCurrency]
   );
+
+  // Report summary data (all currencies, uses all filtered transactions)
+  const reportSummaryData = useReportData({
+    transactions: filtered,
+    categories,
+    projectCurrency,
+  });
+  const hasReportData = reportSummaryData.some((g) => g.rows.length > 0);
 
   // j/k to navigate and open transactions in list view
   const navigableTxs = filtered;
@@ -496,7 +509,44 @@ const Dashboard = () => {
             {view === "list" ? (
               <TransactionList ref={txListRef} transactions={filtered} categories={categories} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} onTransactionDeleted={fetchTransactions} headers={headers} customColumns={customColumns} isViewer={isViewer} />
             ) : view === "charts" ? (
-              <FinanceCharts transactions={chartTransactions} customColumns={customColumns} period={period} customRange={customRange} isViewer={isViewer} projectCurrency={projectCurrency} />
+              <div className="space-y-4">
+                {/* Export button row */}
+                <div className="flex justify-end">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReportExportOpen(true)}
+                        disabled={!hasReportData}
+                        className="gap-1.5 text-xs border-border/40 text-muted-foreground hover:text-foreground"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        {t("report.exportBtn")}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {hasReportData ? t("report.exportTooltip") : t("report.noDataTooltip")}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+
+                {/* Summary table */}
+                <ReportSummaryTable
+                  summaryData={reportSummaryData}
+                  projectCurrency={projectCurrency}
+                />
+
+                {/* Charts */}
+                <FinanceCharts
+                  transactions={chartTransactions}
+                  customColumns={customColumns}
+                  period={period}
+                  customRange={customRange}
+                  isViewer={isViewer}
+                  projectCurrency={projectCurrency}
+                />
+              </div>
             ) : view === "cash" ? (
               <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
             ) : (
@@ -535,6 +585,15 @@ const Dashboard = () => {
       </main>
       <PinSetupDialog open={pinDialogOpen} onOpenChange={setPinDialogOpen} onComplete={() => setHasPin(true)} />
       <PinDisableDialog open={pinDisableDialogOpen} onOpenChange={setPinDisableDialogOpen} onDisableSuccess={handleRemovePin} />
+      <ReportExportModal
+        open={reportExportOpen}
+        onOpenChange={setReportExportOpen}
+        summaryData={reportSummaryData}
+        projectName={activeProject?.name || ""}
+        period={period}
+        customRange={customRange}
+        hasData={hasReportData}
+      />
     </div>
   );
 };

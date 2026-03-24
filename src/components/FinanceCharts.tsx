@@ -278,7 +278,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
     <div className="space-y-6">
       {/* Pie Chart */}
       {pieData.length > 0 && (
-        <div className="glass-card p-4">
+        <div className="glass-card p-4" data-chart-type="pie">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
             <GroupSelector options={groupOptions} value={pieGroupBy} onChange={handlePieGroup} />
@@ -299,7 +299,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
       )}
 
       {/* Filled Area Chart - Trend */}
-      <div className="glass-card p-4">
+      <div className="glass-card p-4" data-chart-type="trend">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
           <GroupSelector options={groupOptions} value={trendGroupBy} onChange={handleTrendGroup} />
@@ -326,7 +326,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
       </div>
 
       {/* Bar Chart - Cumulative */}
-      <div className="glass-card p-4">
+      <div className="glass-card p-4" data-chart-type="cumulative">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-medium text-muted-foreground">{t("chart.cumulative")}</h3>
           <GroupSelector options={groupOptions} value={cumulativeGroupBy} onChange={handleCumulativeGroup} />
