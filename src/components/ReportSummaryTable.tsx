@@ -8,8 +8,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/hooks/useI18n";
 import { ReportSummaryByCurrency } from "@/hooks/useReportData";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 
 interface Props {
   summaryData: ReportSummaryByCurrency[];
@@ -57,6 +69,17 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
 
   const getCommentKey = (currency: string, categoryName: string) => `${currency}-${categoryName}`;
 
+  // Clear comments dialog state
+  const [showClearDialog, setShowClearDialog] = useState(false);
+
+  const handleClearComments = () => {
+    setComments({});
+    localStorage.removeItem("report-summary-comments");
+    setShowClearDialog(false);
+  };
+
+  const hasComments = Object.keys(comments).some(key => comments[key].trim() !== "");
+
   const hasData = useMemo(
     () => summaryData.some((g) => g.rows.length > 0),
     [summaryData]
@@ -75,12 +98,27 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
   return (
     <div className="glass-card overflow-hidden" data-report-summary="true">
       <div className="px-4 pt-4 pb-2 border-b border-border/30">
-        <h3 className="text-sm font-semibold text-foreground">
-          {t("report.summaryTitle")}
-        </h3>
-        <p className="text-[11px] text-muted-foreground mt-0.5">
-          {t("report.summaryDesc")}
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">
+              {t("report.summaryTitle")}
+            </h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {t("report.summaryDesc")}
+            </p>
+          </div>
+          {hasComments && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowClearDialog(true)}
+              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              {t("report.clearComments")}
+            </Button>
+          )}
+        </div>
       </div>
 
       {summaryData.map((group) => (
@@ -200,6 +238,24 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
           </div>
         </div>
       ))}
+
+      {/* Clear Comments Confirmation Dialog */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("report.clearCommentsTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("report.clearCommentsDesc")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearComments} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {t("report.clearCommentsConfirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

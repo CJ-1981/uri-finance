@@ -132,39 +132,38 @@ export default function ReportExportModal({
         let summaryImageHeight = 0;
         const summaryEl = document.querySelector<HTMLElement>("[data-report-summary='true']");
         if (summaryEl) {
-          // Store original values for restoration
-          const inputModifications: Array<{
+          // Replace input elements with spans for better text rendering during capture
+          const replacements: Array<{
+            parent: HTMLElement;
             input: HTMLInputElement;
-            originalPlaceholder: string;
-            originalValue: string;
-            originalWidth: string;
-            originalMinWidth: string;
+            span: HTMLSpanElement;
           }> = [];
 
-          // Temporarily expand comment columns and hide placeholders for capture
           const commentInputs = summaryEl.querySelectorAll("input[type='text']");
           commentInputs.forEach((input) => {
             const htmlInput = input as HTMLInputElement;
-            inputModifications.push({
-              input: htmlInput,
-              originalPlaceholder: htmlInput.placeholder,
-              originalValue: htmlInput.value,
-              originalWidth: htmlInput.style.width || "",
-              originalMinWidth: htmlInput.style.minWidth || "",
-            });
-            // Hide placeholder during capture
-            htmlInput.placeholder = "";
-            // Ensure value is set
-            htmlInput.value = inputModifications[inputModifications.length - 1].originalValue;
-            // Set proper width and height for text visibility
-            htmlInput.style.width = "200px";
-            htmlInput.style.minWidth = "200px";
-            htmlInput.style.height = "auto";
-            htmlInput.style.lineHeight = "1.5";
-            htmlInput.style.padding = "4px 8px";
-            htmlInput.style.textOverflow = "ellipsis";
-            htmlInput.style.overflow = "visible";
-            htmlInput.style.whiteSpace = "nowrap";
+            const parent = htmlInput.parentElement;
+            if (!parent) return;
+
+            // Create span to replace input
+            const span = document.createElement("span");
+            span.className = htmlInput.className;
+            span.textContent = htmlInput.value || "";
+            span.style.cssText = `
+              display: inline-block;
+              width: 200px;
+              min-width: 200px;
+              padding: 4px 8px;
+              font-size: 11px;
+              line-height: 1.5;
+              word-wrap: break-word;
+              white-space: pre-wrap;
+            `;
+
+            // Store for restoration
+            replacements.push({ parent: parent as HTMLElement, input: htmlInput, span });
+            // Replace input with span
+            parent.replaceChild(span, htmlInput);
           });
 
           // Also expand the comment column header
@@ -184,18 +183,9 @@ export default function ReportExportModal({
             summaryImageHeight = summaryCapture.height;
           }
 
-          // Restore original values
-          inputModifications.forEach((mod) => {
-            mod.input.placeholder = mod.originalPlaceholder;
-            mod.input.style.width = mod.originalWidth;
-            mod.input.style.minWidth = mod.originalMinWidth;
-            // Clear inline styles that were added for capture
-            mod.input.style.height = "";
-            mod.input.style.lineHeight = "";
-            mod.input.style.padding = "";
-            mod.input.style.textOverflow = "";
-            mod.input.style.overflow = "";
-            mod.input.style.whiteSpace = "";
+          // Restore original input elements
+          replacements.forEach(({ parent, input, span }) => {
+            parent.replaceChild(input, span);
           });
 
           if (commentHeader) {

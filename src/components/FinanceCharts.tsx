@@ -283,18 +283,25 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
             <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
             <GroupSelector options={groupOptions} value={pieGroupBy} onChange={handlePieGroup} />
           </div>
-          <ResponsiveContainer width="100%" height={360}>
-            <PieChart>
-              <Pie data={filteredPieData} cx="50%" cy="50%" innerRadius={100} outerRadius={150} dataKey="value" strokeWidth={0}>
-                {filteredPieData.map((entry) => {
-                  const origIndex = pieData.findIndex((d) => d.name === entry.name);
-                  return <Cell key={entry.name} fill={COLORS[origIndex % COLORS.length]} />;
-                })}
-              </Pie>
-              <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
-            </PieChart>
-          </ResponsiveContainer>
-          <ClickablePieLegend data={pieData} hidden={pieHidden.hidden} onToggle={pieHidden.toggle} fmt={fmt} />
+          {/* Desktop: Chart left, Legend right | Mobile: Stacked */}
+          <div className="flex flex-col md:flex-row md:items-center md:gap-6">
+            <div className="flex-1 w-full">
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie data={filteredPieData} cx="50%" cy="50%" innerRadius={70} outerRadius={120} dataKey="value" strokeWidth={0}>
+                    {filteredPieData.map((entry) => {
+                      const origIndex = pieData.findIndex((d) => d.name === entry.name);
+                      return <Cell key={entry.name} fill={COLORS[origIndex % COLORS.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="md:w-48 w-full">
+              <ClickablePieLegend data={pieData} hidden={pieHidden.hidden} onToggle={pieHidden.toggle} fmt={fmt} />
+            </div>
+          </div>
         </div>
       )}
 
