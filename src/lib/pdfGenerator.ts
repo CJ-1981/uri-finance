@@ -68,9 +68,9 @@ async function buildHeaderImage(
   div.innerHTML = `
     <div style="font-size:22px;font-weight:700;margin-bottom:6px;">Financial Report</div>
     <div style="font-size:13px;color:#555;line-height:1.6;">
-      <span style="font-weight:600;">Project:</span> ${projectName}<br/>
-      <span style="font-weight:600;">Period:</span> ${periodLabel}<br/>
-      <span style="font-weight:600;">Generated:</span> ${generatedAt.toLocaleString()}
+      <span style="font-weight:600;">Project :</span> ${projectName}<br/>
+      <span style="font-weight:600;">Period :</span> ${periodLabel}<br/>
+      <span style="font-weight:600;">Generated :</span> ${generatedAt.toLocaleString()}
     </div>
   `;
   document.body.appendChild(div);
@@ -186,6 +186,12 @@ export async function generatePdfReport(config: PdfReportConfig): Promise<Blob> 
       trend: "Trend Over Time",
       cumulative: "Cumulative Chart",
     };
+
+    // Force a page break before charts so they start on a new page (e.g. 2nd page)
+    if (y > margin) {
+      doc.addPage();
+      y = margin;
+    }
 
     for (const capture of chartCaptures) {
       const label = chartLabels[capture.chartType] || capture.chartType;
