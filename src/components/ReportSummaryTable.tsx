@@ -144,6 +144,9 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                   <TableHead className="text-[11px] font-semibold text-muted-foreground min-w-[120px] py-2.5">
                     {t("report.category")}
                   </TableHead>
+                  <TableHead className="text-[11px] font-semibold text-muted-foreground min-w-[150px] py-2.5">
+                    {t("report.description")}
+                  </TableHead>
                   <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5">
                     {t("report.income")} ({group.currency})
                   </TableHead>
@@ -180,6 +183,11 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                         {row.categoryName}
                       </span>
                     </TableCell>
+                    <TableCell className="py-2">
+                      <span className="text-[11px] text-muted-foreground line-clamp-3 leading-snug">
+                        {row.descriptions.join(", ") || <span className="opacity-30">—</span>}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-right py-2">
                       <span className="text-[12px] text-income font-medium">
                         {row.income > 0 ? formatAmount(row.income) : "—"}
@@ -199,12 +207,21 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                       </span>
                     </TableCell>
                     <TableCell className="py-2">
-                      <input
-                        type="text"
+                      <textarea
                         value={comments[getCommentKey(row.currency, row.categoryName)] || ""}
-                        onChange={(e) => updateComment(getCommentKey(row.currency, row.categoryName), e.target.value)}
+                        onChange={(e) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = e.target.scrollHeight + 'px';
+                          updateComment(getCommentKey(row.currency, row.categoryName), e.target.value);
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
                         placeholder={t("report.addComment") || "Add comment..."}
-                        className="w-full px-2 py-1 text-[11px] border border-border/30 rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/50"
+                        rows={1}
+                        style={{ overflow: "hidden", resize: "none" }}
+                        className="w-full px-2 py-1.5 min-h-[28px] text-[11px] border border-border/30 rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/50 align-top"
                       />
                     </TableCell>
                   </TableRow>
@@ -218,6 +235,7 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                       {t("report.total")}
                     </span>
                   </TableCell>
+                  <TableCell className="py-2" />
                   <TableCell className="text-right py-2">
                     <span className="text-[12px] font-bold text-income">
                       {formatAmount(group.totalIncome)}

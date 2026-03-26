@@ -135,13 +135,13 @@ export default function ReportExportModal({
           // Replace input elements with spans for better text rendering during capture
           const replacements: Array<{
             parent: HTMLElement;
-            input: HTMLInputElement;
+            input: HTMLInputElement | HTMLTextAreaElement;
             span: HTMLSpanElement;
           }> = [];
 
-          const commentInputs = summaryEl.querySelectorAll("input[type='text']");
+          const commentInputs = summaryEl.querySelectorAll("input[type='text'], textarea");
           commentInputs.forEach((input) => {
-            const htmlInput = input as HTMLInputElement;
+            const htmlInput = input as HTMLInputElement | HTMLTextAreaElement;
             const parent = htmlInput.parentElement;
             if (!parent) return;
 

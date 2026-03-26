@@ -7,6 +7,7 @@ export interface ReportSummaryRow {
   categoryCode: string;
   categoryName: string;
   categoryEmoji: string;
+  descriptions: string[];
   income: number;
   expense: number;
   net: number;
@@ -40,7 +41,7 @@ export function useReportData({
       {
         byCat: Record<
           string,
-          { income: number; expense: number; catObj: Category | null }
+          { income: number; expense: number; catObj: Category | null; descriptions: Set<string> }
         >;
         totalIncome: number;
         totalExpense: number;
@@ -56,7 +57,12 @@ export function useReportData({
 
       if (!currGroup.byCat[tx.category]) {
         const catObj = categories.find((c) => c.name === tx.category) || null;
-        currGroup.byCat[tx.category] = { income: 0, expense: 0, catObj };
+        currGroup.byCat[tx.category] = { income: 0, expense: 0, catObj, descriptions: new Set() };
+      }
+
+      const desc = tx.description?.trim();
+      if (desc) {
+        currGroup.byCat[tx.category].descriptions.add(desc);
       }
 
       const amount = Number(tx.amount);
@@ -81,7 +87,7 @@ export function useReportData({
       const totalAbsolute = totalIncome + totalExpense;
 
       const rows: ReportSummaryRow[] = Object.entries(byCat)
-        .map(([catName, { income, expense, catObj }]) => {
+        .map(([catName, { income, expense, catObj, descriptions }]) => {
           const net = income - expense;
           const catTotal = income + expense;
           const percentage =
@@ -93,6 +99,7 @@ export function useReportData({
             categoryCode: catObj?.code || "",
             categoryName: catName,
             categoryEmoji: catObj?.icon || "",
+            descriptions: Array.from(descriptions),
             income,
             expense,
             net,
@@ -101,7 +108,17 @@ export function useReportData({
           };
         })
         .sort((a, b) => {
-          // Sort by total amount descending
+          const getGroup = (inc: number, exp: number) => {
+            if (inc > 0 && exp === 0) return 0; // income only
+            if (inc === 0 && exp > 0) return 1; // expense only
+            return 2; // combined
+          };
+
+          const groupA = getGroup(a.income, a.expense);
+          const groupB = getGroup(b.income, b.expense);
+          if (groupA !== groupB) return groupA - groupB;
+
+          // Tie-breaker: by total amount descending
           const aTotal = a.income + a.expense;
           const bTotal = b.income + b.expense;
           return bTotal - aTotal;
