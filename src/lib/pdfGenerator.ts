@@ -29,11 +29,11 @@ async function captureElementToPng(
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: null,
+      backgroundColor: "#ffffff",
       logging: false,
     });
     return {
-      data: canvas.toDataURL("image/png"),
+      data: canvas.toDataURL("image/jpeg", 0.85),
       w: el.offsetWidth,
       h: el.offsetHeight,
     };
@@ -82,7 +82,7 @@ async function buildHeaderImage(
       logging: false,
     });
     return {
-      data: canvas.toDataURL("image/png"),
+      data: canvas.toDataURL("image/jpeg", 0.85),
       w: div.offsetWidth,
       h: div.offsetHeight,
     };
@@ -114,7 +114,7 @@ export async function generatePdfReport(config: PdfReportConfig): Promise<Blob> 
   let y = margin;
 
   /**
-   * Helper: embed a PNG image, scaling it to fit contentWidth.
+   * Helper: embed a JPEG image, scaling it to fit contentWidth.
    * Returns the height in mm that was used, or 0 on skip.
    */
   function embedImage(
@@ -128,7 +128,7 @@ export async function generatePdfReport(config: PdfReportConfig): Promise<Blob> 
     const imgWidthMm = contentWidth;
     const imgHeightMm = Math.min(imgWidthMm * aspect, maxHeightMm);
     try {
-      doc.addImage(imgData, "PNG", margin, y, imgWidthMm, imgHeightMm);
+      doc.addImage(imgData, "JPEG", margin, y, imgWidthMm, imgHeightMm);
     } catch (e) {
       console.warn("[pdfGenerator] addImage failed:", e);
       return 0;

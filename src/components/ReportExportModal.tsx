@@ -147,13 +147,20 @@ export default function ReportExportModal({
 
             // Create span to replace input
             const span = document.createElement("span");
-            span.className = htmlInput.className;
-            span.textContent = htmlInput.value || "";
+            const val = htmlInput.value.trim();
+            
+            if (val) {
+              span.className = htmlInput.className;
+              span.textContent = val;
+            } else {
+              span.textContent = "";
+            }
+            
             span.style.cssText = `
               display: inline-block;
               width: 200px;
               min-width: 200px;
-              padding: 4px 8px;
+              ${val ? "padding: 4px 8px;" : ""}
               font-size: 11px;
               line-height: 1.5;
               word-wrap: break-word;

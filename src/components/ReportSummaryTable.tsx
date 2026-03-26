@@ -113,6 +113,7 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
               size="sm"
               onClick={() => setShowClearDialog(true)}
               className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+              data-html2canvas-ignore="true"
             >
               <Trash2 className="h-3 w-3 mr-1" />
               {t("report.clearComments")}

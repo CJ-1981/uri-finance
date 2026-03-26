@@ -47,7 +47,7 @@ export async function captureElementAtWidth(
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: null,
+        backgroundColor: "#ffffff",
         logging: false,
       });
 
@@ -59,7 +59,7 @@ export async function captureElementAtWidth(
       element.style.maxWidth = originalMaxWidth;
 
       return {
-        imageData: canvas.toDataURL("image/png"),
+        imageData: canvas.toDataURL("image/jpeg", 0.85),
         width: renderedWidth,
         height: renderedHeight,
       };
@@ -124,7 +124,7 @@ export async function captureElementAtWidth(
       scale: 2,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: null,
+      backgroundColor: "#ffffff",
       logging: false,
     });
 
@@ -144,7 +144,7 @@ export async function captureElementAtWidth(
     window.dispatchEvent(new Event("resize"));
 
     return {
-      imageData: canvas.toDataURL("image/png"),
+      imageData: canvas.toDataURL("image/jpeg", 0.85),
       width: renderedWidth,
       height: renderedHeight,
     };
@@ -208,7 +208,7 @@ function createPlaceholder(label: string): string {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(`Chart unavailable: ${label}`, canvas.width / 2, canvas.height / 2);
-  return canvas.toDataURL("image/png");
+  return canvas.toDataURL("image/jpeg", 0.85);
 }
 
 /**
