@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.5] - 2026-03-26
+
+### Added
+- **Keyboard Shortcut Labels**: Visual keyboard shortcut indicators on transaction modal buttons
+  - Save & Close button now displays keyboard shortcut (⌘/Ctrl+Enter)
+  - Save & Next button now displays keyboard shortcut (⌘/Ctrl+Shift+Enter)
+  - Platform-specific display: Mac (⌘ symbols) vs Windows/Linux (Ctrl text)
+  - Hidden on mobile devices to maintain clean UI
+  - Consistent with existing Add Transaction modal keyboard shortcut design
+
+### Fixed
+- **Currency Selector Keyboard Shortcuts**: Number keys (1-9,0) now work properly in transaction modals
+  - Fixed event handler placement to ensure keyboard events are captured when dropdown is open
+  - NumberedSelect component now properly focuses list container when popover opens
+  - Enables quick currency selection via keyboard in both Add and Edit transaction modals
+  - Improves accessibility and keyboard-only workflow efficiency
+
 ## [1.1.4] - 2026-03-26
 
 ### Security
