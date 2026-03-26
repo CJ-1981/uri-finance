@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2026-03-26
+
+### Security
+- **CRITICAL: Supabase Security Vulnerabilities Fixed (Issue #13)**
+  - **auth_users_exposed vulnerability**: Removed insecure `project_files_with_email` view that exposed all user emails to any authenticated user
+  - **security_definer_view vulnerability**: Eliminated improper use of SECURITY DEFINER semantics without access control
+  - **OWASP A01:2021 (Broken Access Control)**: Fixed - View granted SELECT to all authenticated users without RLS policies
+  - **OWASP A05:2021 (Security Misconfiguration)**: Fixed - Removed unnecessary privileged access to auth.users data
+  - **Migration**: `20260326000001_fix_security_vulnerabilities_issue_13.sql`
+  - **Impact**: Eliminated unauthorized access to auth.users.email data across all projects
+  - **Alternative**: Application now exclusively uses secure RPC function `get_project_files_with_email(p_project_id)` with proper access control
+
+### Changed
+- **Security Documentation**: Added comprehensive security rationale to `get_project_files_with_email()` function
+  - Documents why SECURITY DEFINER is safe (filtered by project_id, RLS enforced)
+  - Explains access control through is_project_member() check
+  - Provides usage examples and security model details
+
 ## [1.1.3] - 2026-03-22
 
 ### Fixed
