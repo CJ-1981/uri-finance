@@ -125,7 +125,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     onOpenChange(val);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (closeAfterSave = false) => {
     if (!transaction || !amount || Number(amount) <= 0) return;
 
     // Validate required custom columns
@@ -158,8 +158,9 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     });
     setSaving(false);
 
-    // In multi-edit mode, auto-advance to next; otherwise close
-    if (transactionList && hasNext && onNavigate) {
+    if (closeAfterSave) {
+      onOpenChange(false);
+    } else if (transactionList && hasNext && onNavigate) {
       onNavigate(transactionList[currentIndex + 1]);
     } else {
       onOpenChange(false);
@@ -198,10 +199,14 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const formRef = useRef<HTMLDivElement>(null);
 
   const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
-    // Ctrl+Enter or Cmd+Enter → save
+    // Ctrl+Enter or Cmd+Enter
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      handleSave();
+      if (e.shiftKey) {
+        handleSave(false); // save and next
+      } else {
+        handleSave(true); // save and close
+      }
       return;
     }
 
@@ -604,10 +609,10 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
       {/* Action buttons */}
       {isOwn && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" data-tab-stop className="h-12 px-4">
+              <Button variant="destructive" data-tab-stop className="h-12 px-4 w-full sm:w-auto">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -624,13 +629,23 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           </AlertDialog>
 
           <Button
-            onClick={handleSave}
+            onClick={() => handleSave(false)}
             disabled={saving}
             data-tab-stop
-            className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+            variant="outline"
+            className="flex-1 font-semibold h-12 w-full sm:w-auto"
           >
             <Save className="h-4 w-4 mr-1" />
-            {saving ? t("tx.saving") : t("tx.saveChanges")}
+            {saving ? t("tx.saving") : (t("tx.saveAndNext") || "Save & Next")}
+          </Button>
+          <Button
+            onClick={() => handleSave(true)}
+            disabled={saving}
+            data-tab-stop
+            className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 w-full sm:w-auto"
+          >
+            <Save className="h-4 w-4 mr-1" />
+            {saving ? t("tx.saving") : (t("tx.saveAndClose") || "Save & Close")}
           </Button>
         </div>
       )}
@@ -659,7 +674,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
         <Sheet open={open} onOpenChange={handleOpenChange}>
           <SheetContent
             side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh]"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
               if (!isMobile) {
