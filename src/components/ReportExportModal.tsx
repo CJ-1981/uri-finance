@@ -145,26 +145,27 @@ export default function ReportExportModal({
             const parent = htmlInput.parentElement;
             if (!parent) return;
 
-            // Create span to replace input
-            const span = document.createElement("span");
+            // Create div to replace textarea
+            const span = document.createElement("div");
             const val = htmlInput.value.trim();
             
             if (val) {
-              span.className = htmlInput.className;
               span.textContent = val;
             } else {
               span.textContent = "";
             }
             
+            // Render as plain text inside the table cell (no background or border)
             span.style.cssText = `
-              display: inline-block;
-              width: 200px;
+              display: block;
+              width: 100%;
               min-width: 200px;
-              ${val ? "padding: 4px 8px;" : ""}
+              color: hsl(var(--foreground));
               font-size: 11px;
               line-height: 1.5;
               word-wrap: break-word;
               white-space: pre-wrap;
+              box-sizing: border-box;
             `;
 
             // Store for restoration
