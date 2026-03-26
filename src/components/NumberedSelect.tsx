@@ -212,14 +212,19 @@ const NumberedSelect = ({
       <PopoverContent
         className="min-w-[180px] max-w-[300px] w-auto p-1"
         align="start"
-        onKeyDown={handleKeyDown}
-        onOpenAutoFocus={(e) => e.preventDefault()}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          // Focus the list container instead of individual items
+          listRef.current?.focus();
+        }}
         onWheel={(e) => e.stopPropagation()}
       >
         <div
           ref={listRef}
           role="listbox"
-          className="max-h-60 overflow-y-auto"
+          className="max-h-60 overflow-y-auto outline-none"
+          tabIndex={-1}
+          onKeyDown={handleKeyDown}
           onWheel={(e) => {
             e.stopPropagation();
           }}
