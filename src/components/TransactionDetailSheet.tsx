@@ -29,6 +29,9 @@ import type { ProjectFile } from "@/types/files";
 // Valid ISO 4217 currency codes (ROL was replaced by RON in 2005)
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "RON", "SGD", "PLN"];
 
+// Platform detection for keyboard shortcuts
+const isMac = typeof window !== "undefined" && window.navigator.userAgent.includes("Mac");
+
 interface Props {
   transaction: Transaction | null;
   categories: Category[];
@@ -636,7 +639,20 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             className="flex-1 font-semibold h-12 w-full sm:w-auto"
           >
             <Save className="h-4 w-4 mr-1" />
-            {saving ? t("tx.saving") : (t("tx.saveAndNext") || "Save & Next")}
+            {saving ? t("tx.saving") : (
+              <>
+                <span>{t("tx.saveAndNext") || "Save & Next"}</span>
+                <kbd className="hidden sm:inline-flex h-5 px-1.5 items-center gap-1 rounded bg-muted/70 text-[10px] font-mono text-muted-foreground pointer-events-none border border-border/50 ml-2">
+                  {isMac ? (
+                    <>
+                      <span>⌘</span><span>⇧</span><span>⏎</span>
+                    </>
+                  ) : (
+                    <span>Ctrl+⇧+Enter</span>
+                  )}
+                </kbd>
+              </>
+            )}
           </Button>
           <Button
             onClick={() => handleSave(true)}
@@ -645,7 +661,20 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 w-full sm:w-auto"
           >
             <Save className="h-4 w-4 mr-1" />
-            {saving ? t("tx.saving") : (t("tx.saveAndClose") || "Save & Close")}
+            {saving ? t("tx.saving") : (
+              <>
+                <span>{t("tx.saveAndClose") || "Save & Close"}</span>
+                <kbd className="hidden sm:inline-flex h-5 px-1.5 items-center gap-1 rounded bg-primary-foreground/20 text-[10px] font-mono text-primary-foreground/80 pointer-events-none border border-primary-foreground/20 ml-2">
+                  {isMac ? (
+                    <>
+                      <span>⌘</span><span>⏎</span>
+                    </>
+                  ) : (
+                    <span>Ctrl+Enter</span>
+                  )}
+                </kbd>
+              </>
+            )}
           </Button>
         </div>
       )}
