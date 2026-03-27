@@ -91,9 +91,9 @@ const getCustomVal = (tx: Transaction, col: CustomColumn) => {
 
 const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colHeaders = cols.map((c) => c.name).join(",");
-  const header = `${h.date},${h.type},${h.category},Code,${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
+  const header = `${h.date},${h.type},${h.category},Code,${h.description},${h.amount},Currency${cols.length ? "," + colHeaders : ""}`;
   const rows = transactions.map((tx) => {
-    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${getCategoryCode(tx, categories)}","${tx.description || ""}",${formatAmount(tx)}`;
+    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${getCategoryCode(tx, categories)}","${tx.description || ""}",${formatAmount(tx)},"${tx.currency || ""}"`;
     const custom = cols.map((c) => `"${getCustomVal(tx, c)}"`).join(",");
     return cols.length ? `${base},${custom}` : base;
   });
@@ -110,6 +110,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
     <Cell><Data ss:Type="String">Code</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.description)}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXML(h.amount)}</Data></Cell>
+    <Cell><Data ss:Type="String">Currency</Data></Cell>
     ${colNames.map((name) => `<Cell><Data ss:Type="String">${escapeXML(name)}</Data></Cell>`).join("")}
   </Row>`;
 
@@ -126,12 +127,13 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
       <Cell><Data ss:Type="String">${escapeXML(getCategoryCode(tx, categories))}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.description || "")}</Data></Cell>
       <Cell><Data ss:Type="Number">${Number(tx.amount)}</Data></Cell>
+      <Cell><Data ss:Type="String">${escapeXML(tx.currency || "")}</Data></Cell>
       ${customCells}
     </Row>`;
   }).join("\n");
 
   const totalRows = transactions.length + 1; // header + data rows
-  const totalCols = 6 + cols.length; // 6 base columns + custom columns
+  const totalCols = 7 + cols.length; // 7 base columns + custom columns
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
@@ -165,12 +167,12 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
 
 const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
   const colH = cols.map((c) => ` ${c.name} |`).join("");
-  const header = `| ${h.date} | ${h.type} | ${h.category} | Code | ${h.description} | ${h.amount} |${colH}`;
+  const header = `| ${h.date} | ${h.type} | ${h.category} | Code | ${h.description} | ${h.amount} | Currency |${colH}`;
   const colSep = cols.map(() => " ---: |").join("");
-  const sep = `| --- | --- | --- | --- | --- | ---: |${colSep}`;
+  const sep = `| --- | --- | --- | --- | --- | ---: | --- |${colSep}`;
   const rows = transactions.map((tx) => {
     const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
-    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${getCategoryCode(tx, categories) || "-"} | ${tx.description || "-"} | ${formatAmount(tx)} |${colVals}`;
+    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${getCategoryCode(tx, categories) || "-"} | ${tx.description || "-"} | ${formatAmount(tx)} | ${tx.currency || "-"} |${colVals}`;
   });
   const timestamp = getExportTimestamp();
   downloadFile([header, sep, ...rows].join("\n"), `transactions_${timestamp}.md`, "text/markdown", msg);
