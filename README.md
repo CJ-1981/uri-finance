@@ -74,6 +74,16 @@ Export transactions in multiple formats (CSV, XLS, Markdown) with custom column 
 
 ![Export Modal](docs/screenshots/export-modal-light.png)
 
+### Keyboard Shortcuts
+Customize keyboard shortcuts for quick access to common actions.
+
+![Keyboard Shortcuts](docs/screenshots/keyboard-shortcuts-light.png)
+
+### PIN Setup
+Set up a PIN code to lock the application for enhanced security.
+
+![PIN Setup](docs/screenshots/pin-setup-light.png)
+
 ## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS

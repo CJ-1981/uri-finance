@@ -8,7 +8,7 @@
  * Run with: npm run screenshots
  */
 
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -103,6 +103,7 @@ test.describe('App Screenshots', () => {
       await page.waitForLoadState('networkidle');
       await page.waitForSelector('[data-testid="dashboard"]');
 
+      // Switch to cash calculator view
       await page.click('[data-testid="view-cash"]');
       await page.waitForSelector('[data-testid="cash-calculator"]');
       await page.waitForLoadState('networkidle');
@@ -125,7 +126,6 @@ test.describe('App Screenshots', () => {
       if (await fabButton.isVisible().catch(() => false)) {
         await fabButton.click();
       } else {
-        // Alternative: click by position (bottom right FAB)
         await page.click('body', { position: { x: 1250, y: 750 } });
       }
       await page.waitForTimeout(500);
@@ -241,6 +241,46 @@ test.describe('App Screenshots', () => {
 
       await page.screenshot({
         path: 'docs/screenshots/export-modal-light.png',
+        fullPage: false,
+      });
+    });
+
+    test('keyboard shortcut settings light mode', async ({ page }) => {
+      await page.goto('/');
+      await page.addInitScript('localStorage.setItem("theme", "light")');
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForSelector('[data-testid="dashboard"]');
+
+      // Click keyboard shortcut button
+      await page.click('[data-testid="keyboard-shortcuts-button"]');
+
+      // Wait for the popover to appear
+      await page.waitForSelector('[data-testid="keyboard-shortcuts-popover"]', { timeout: 5000 });
+      await page.waitForTimeout(500);
+
+      await page.screenshot({
+        path: 'docs/screenshots/keyboard-shortcuts-light.png',
+        fullPage: false,
+      });
+    });
+
+    test('pin setup settings light mode', async ({ page }) => {
+      await page.goto('/');
+      await page.addInitScript('localStorage.setItem("theme", "light")');
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForSelector('[data-testid="dashboard"]');
+
+      // Click PIN setup button
+      await page.click('[data-testid="pin-setup-button"]');
+
+      // Wait for the dialog to appear
+      await page.waitForSelector('[data-testid="pin-setup-dialog"]', { timeout: 5000 });
+      await page.waitForTimeout(500);
+
+      await page.screenshot({
+        path: 'docs/screenshots/pin-setup-light.png',
         fullPage: false,
       });
     });

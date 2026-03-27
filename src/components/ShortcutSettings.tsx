@@ -73,11 +73,12 @@ const ShortcutSettings = () => {
           size="icon"
           className="text-muted-foreground hover:text-foreground hidden md:inline-flex"
           title={t("shortcut.title")}
+          data-testid="keyboard-shortcuts-button"
         >
           <Keyboard className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto" align="end">
+      <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto" align="end" data-testid="keyboard-shortcuts-popover">
         <div className="space-y-3 pb-2">
           <h4 className="font-medium text-sm">{t("shortcut.title")}</h4>
 

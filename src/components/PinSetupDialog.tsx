@@ -101,7 +101,7 @@ const PinSetupDialog = ({ open, onOpenChange, onComplete }: PinSetupDialogProps)
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-xs">
+      <DialogContent className="max-w-xs" data-testid="pin-setup-dialog">
         <DialogHeader>
           <DialogTitle>{t("lock.setupTitle")}</DialogTitle>
           <DialogDescription>

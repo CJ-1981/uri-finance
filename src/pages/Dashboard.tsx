@@ -332,6 +332,7 @@ const Dashboard = () => {
               onClick={() => hasPin ? setPinDisableDialogOpen(true) : setPinDialogOpen(true)}
               className="text-muted-foreground hover:text-foreground"
               title={hasPin ? t("lock.disable") : t("lock.enable")}
+              data-testid="pin-setup-button"
             >
               {hasPin ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
             </Button>
