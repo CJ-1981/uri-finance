@@ -244,5 +244,41 @@ test.describe('App Screenshots', () => {
         fullPage: false,
       });
     });
+
+    test('keyboard shortcut settings light mode', async ({ page }) => {
+      await page.goto('/');
+      await page.addInitScript('localStorage.setItem("theme", "light")');
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForSelector('[data-testid="dashboard"]');
+
+      // Click keyboard shortcut button - find by title or aria-label
+      const keyboardButton = page.locator('button[title*="keyboard" i], button[aria-label*="keyboard" i], button:has(svg)').filter({ hasText: '' }).nth(2);
+      await keyboardButton.click();
+      await page.waitForTimeout(500);
+
+      await page.screenshot({
+        path: 'docs/screenshots/keyboard-shortcuts-light.png',
+        fullPage: false,
+      });
+    });
+
+    test('pin setup settings light mode', async ({ page }) => {
+      await page.goto('/');
+      await page.addInitScript('localStorage.setItem("theme", "light")');
+      await page.reload();
+      await page.waitForLoadState('networkidle');
+      await page.waitForSelector('[data-testid="dashboard"]');
+
+      // Click PIN setup button - find by title or icon button near the end
+      const lockButton = page.locator('button[title*="pin" i], button[title*="lock" i]').or(page.locator('button').filter({ hasText: '' }).nth(3));
+      await lockButton.first().click();
+      await page.waitForTimeout(500);
+
+      await page.screenshot({
+        path: 'docs/screenshots/pin-setup-light.png',
+        fullPage: false,
+      });
+    });
   });
 });
