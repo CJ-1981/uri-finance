@@ -275,7 +275,7 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="finance-charts">
       {/* Pie Chart */}
       {pieData.length > 0 && (
         <div className="glass-card p-4" data-chart-type="pie">

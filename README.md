@@ -18,6 +18,62 @@ A React application for tracking team finances with custom categories, columns, 
 - **Multi-Language**: English and Korean (ko) support
 - **Theme Support**: Light and dark mode with system preference detection
 
+## Screenshots
+
+### Dashboard (Light & Dark Mode)
+Main dashboard showing transaction list, balance summary, and quick actions.
+
+| Light Mode | Dark Mode |
+|------------|-----------|
+| ![Dashboard Light](docs/screenshots/dashboard-light.png) | ![Dashboard Dark](docs/screenshots/dashboard-dark.png) |
+
+### Charts View
+Visual breakdown of income and expenses by category.
+
+![Charts](docs/screenshots/charts-light.png)
+
+### Cash Calculator
+Multi-currency cash denomination tracking with named/anonymous breakdown.
+
+![Cash Calculator](docs/screenshots/cash-calculator-light.png)
+
+### Add Transaction
+Modal form for adding new transactions with category selection and custom fields.
+
+![Add Transaction](docs/screenshots/add-transaction-light.png)
+
+### Custom Columns / Category Management
+Add custom fields to transactions (numeric, text, or list types) with masking and required options.
+
+Create and manage transaction categories with codes, icons, and hierarchical structure.
+
+![Categories](docs/screenshots/admin-categories-light.png)
+
+### Authentication
+Clean login interface with email/password authentication and registration support.
+
+![Auth](docs/screenshots/auth-light.png)
+
+### Files List
+File attachment management for transactions with upload and organization features.
+
+![Files List](docs/screenshots/files-list-light.png)
+
+### Period Selector
+Date range filtering with preset options (Today, This Week, This Month, Custom, etc.).
+
+![Period Selector](docs/screenshots/period-selector-light.png)
+
+### Category Selector
+Quick category filtering with hierarchical category selection.
+
+![Category Selector](docs/screenshots/category-selector-light.png)
+
+### Export Modal
+Export transactions in multiple formats (CSV, XLS, Markdown) with custom column support.
+
+![Export Modal](docs/screenshots/export-modal-light.png)
+
 ## Tech Stack
 
 - **Frontend**: React 18, TypeScript, Vite, Tailwind CSS

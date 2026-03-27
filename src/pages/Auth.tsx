@@ -119,7 +119,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 gradient-dark">
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 gradient-dark" data-testid="auth-page">
       {/* Language toggle */}
       <button
         onClick={() => setLocale(locale === "en" ? "ko" : "en")}

@@ -292,7 +292,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24" data-testid="dashboard">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -473,6 +473,7 @@ const Dashboard = () => {
             <div className="flex gap-1 rounded-xl bg-muted/30 p-1">
               <button
                 onClick={() => setView("list")}
+                data-testid="view-list"
                 className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
                   view === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
@@ -481,6 +482,7 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={() => setView("charts")}
+                data-testid="view-charts"
                 className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
                   view === "charts" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
@@ -489,6 +491,7 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={() => setView("cash")}
+                data-testid="view-cash"
                 className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
                   view === "cash" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
@@ -497,6 +500,7 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={() => setView("files")}
+                data-testid="view-files"
                 className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
                   view === "files" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
                 }`}

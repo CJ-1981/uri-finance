@@ -327,7 +327,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="custom-column-manager">
       <div className="flex gap-2">
         <div className="flex rounded-lg border border-input overflow-hidden shrink-0">
           <button

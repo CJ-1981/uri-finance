@@ -214,7 +214,7 @@ const CashCalculator = ({ currency, targetAmount = 0 }: CashCalculatorProps) => 
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="cash-calculator">
       {/* Header row */}
       <div className="grid grid-cols-[1fr_1fr_1fr] gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sticky top-0 bg-background z-10 py-1 border-b border-border/30">
         <div className="flex items-center justify-center"></div>

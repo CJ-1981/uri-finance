@@ -224,3 +224,8 @@ dist-ssr
 .moai/
 .mcp.json
 supabase/.temp/
+.auth-storage.json
+# Playwright test results
+test-results/
+playwright-report/
+playwright/.cache/

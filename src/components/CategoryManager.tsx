@@ -679,7 +679,7 @@ const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
           <Settings2 className="h-4 w-4" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[70vh]">
+      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[70vh]" data-testid="category-manager">
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("cat.manageCategories")}</SheetTitle>
           <SheetDescription className="sr-only">{t("cat.manageCategoriesDesc")}</SheetDescription>

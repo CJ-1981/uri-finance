@@ -663,6 +663,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <SheetContent
             side="bottom"
             className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
+            data-testid="add-transaction-form"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
               if (!isMobile) {
