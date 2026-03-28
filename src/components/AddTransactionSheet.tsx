@@ -46,10 +46,9 @@ interface Props {
   }) => Promise<string | undefined>; // Return transaction ID for file association
   // SPEC-TRANSACTION-FILES: File upload callback
   onUploadFile?: (file: File, remark?: string, transactionId?: string) => Promise<void>;
-  currentProjectId?: string;
 }
 
-const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd, onUploadFile, currentProjectId }: Props) => {
+const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd, onUploadFile }: Props) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = (v: boolean) => {
@@ -654,9 +653,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             </Button>
           </DrawerTrigger>
           <DrawerContent
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] flex flex-col"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
           >
-            <div className="px-6 overflow-y-auto flex-1 pb-8">
+            <div className="overflow-y-auto px-6 pb-8">
               {FormContent}
             </div>
           </DrawerContent>
@@ -670,7 +669,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           </SheetTrigger>
           <SheetContent
             side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh]"
             data-testid="add-transaction-form"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
@@ -679,7 +678,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               }
             }}
           >
-            <div className="px-6 overflow-y-auto flex-1 pb-8">
+            <div className="overflow-y-auto px-6 pb-8">
               {FormContent}
             </div>
           </SheetContent>

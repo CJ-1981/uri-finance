@@ -163,7 +163,7 @@ const NumberedSelect = ({
 
         {open && (
           <div
-            className="fixed inset-0 z-50 flex flex-col"
+            className="fixed inset-0 z-[100] flex flex-col"
             onClick={() => setOpen(false)}
           >
             {/* Backdrop */}
