@@ -287,6 +287,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           type="button"
           data-tab-stop
           onClick={() => isOwn && setType("income")}
+          onPointerDown={(e) => isMobile && e.stopPropagation()}
           disabled={!isOwn}
           className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
             type === "income" ? "income-badge ring-1 ring-income/30" : "bg-muted text-muted-foreground"
@@ -298,6 +299,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           type="button"
           data-tab-stop
           onClick={() => isOwn && setType("expense")}
+          onPointerDown={(e) => isMobile && e.stopPropagation()}
           disabled={!isOwn}
           className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
             type === "expense" ? "expense-badge ring-1 ring-expense/30" : "bg-muted text-muted-foreground"
@@ -466,6 +468,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
@@ -478,6 +481,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
@@ -502,6 +506,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                         <Download className="h-4 w-4" />
                       </Button>
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
@@ -529,9 +534,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                type="button"
                 variant="outline"
                 data-tab-stop
                 disabled={!isOwn}
+                onPointerDown={(e) => isMobile && e.stopPropagation()}
                 className={cn(
                   "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
                   !date && "text-muted-foreground"
@@ -615,7 +622,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
         <div className="flex flex-wrap sm:flex-nowrap gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" data-tab-stop className="h-12 px-4 w-full sm:w-auto">
+              <Button type="button" variant="destructive" data-tab-stop className="h-12 px-4 w-full sm:w-auto" onPointerDown={(e) => isMobile && e.stopPropagation()}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -632,9 +639,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           </AlertDialog>
 
           <Button
+            type="button"
             onClick={() => handleSave(false)}
             disabled={saving}
             data-tab-stop
+            onPointerDown={(e) => isMobile && e.stopPropagation()}
             variant="outline"
             className="flex-1 font-semibold h-12 w-full sm:w-auto"
           >
@@ -655,9 +664,11 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
             )}
           </Button>
           <Button
+            type="button"
             onClick={() => handleSave(true)}
             disabled={saving}
             data-tab-stop
+            onPointerDown={(e) => isMobile && e.stopPropagation()}
             className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 w-full sm:w-auto"
           >
             <Save className="h-4 w-4 mr-1" />

@@ -279,6 +279,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             variant="ghost"
             data-tab-stop
             onClick={() => setType("income")}
+            onPointerDown={(e) => isMobile && e.stopPropagation()}
             className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
               type === "income"
                 ? "income-badge ring-1 ring-income/30"
@@ -292,6 +293,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             variant="ghost"
             data-tab-stop
             onClick={() => setType("expense")}
+            onPointerDown={(e) => isMobile && e.stopPropagation()}
             className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-medium transition-all ${
               type === "expense"
                 ? "expense-badge ring-1 ring-expense/30"
@@ -401,12 +403,14 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <Popover>
               <PopoverTrigger asChild>
                 <Button
+                  type="button"
                   variant="outline"
                   data-tab-stop
                   className={cn(
                     "w-full h-10 justify-start text-left font-normal bg-muted/50 border-border/50 min-w-0 px-3",
                     !date && "text-muted-foreground"
                   )}
+                  onPointerDown={(e) => isMobile && e.stopPropagation()}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="truncate text-sm">
@@ -550,6 +554,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                       {!isUploading && (
                         <div className="flex items-center gap-1">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 shrink-0 text-muted-foreground"
@@ -566,6 +571,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
@@ -592,6 +598,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             data-tab-stop
             disabled={submitting}
             onClick={handleAddAndContinue}
+            onPointerDown={(e) => isMobile && e.stopPropagation()}
             variant="outline"
             className="flex-1 font-semibold h-12 justify-center gap-2"
           >
@@ -614,6 +621,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             type="submit"
             data-tab-stop
             disabled={submitting}
+            onPointerDown={(e) => isMobile && e.stopPropagation()}
             className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 justify-center gap-2"
           >
             {submitting ? t("tx.adding") : (

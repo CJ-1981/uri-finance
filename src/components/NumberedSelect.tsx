@@ -154,6 +154,7 @@ const NumberedSelect = ({
           disabled={disabled}
           data-tab-stop
           onClick={() => !disabled && setOpen(true)}
+          onPointerDown={(e) => isMobile && e.stopPropagation()}
           className={cn("w-full h-10 justify-between font-normal", className)}
         >
           <span className="truncate">{displayLabel}</span>

@@ -164,7 +164,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       }
     }}>
       <SheetTrigger asChild>
-        <Button size="sm" className="gap-2" data-tab-stop>
+        <Button size="sm" type="button" className="gap-2" data-tab-stop onClick={() => setOpen(true)} onPointerDown={(e) => e.stopPropagation()}>
           <Upload className="h-4 w-4" />
           {t('files.uploadFile')}
         </Button>
@@ -180,6 +180,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
             {/* Mobile: Camera and file buttons */}
             <div className="grid grid-cols-2 gap-2 sm:hidden">
               <Button
+                type="button"
                 variant="outline"
                 className="h-auto py-4 flex flex-col gap-2"
                 onClick={() => {
@@ -195,15 +196,18 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                   };
                   cameraInput.click();
                 }}
+                onPointerDown={(e) => e.stopPropagation()}
                 disabled={isUploading || isUploadingFile}
               >
                 <Upload className="h-5 w-5" />
                 <span className="text-xs">{t('files.camera')}</span>
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 className="h-auto py-4 flex flex-col gap-2"
                 onClick={() => fileInputRef.current?.click()}
+                onPointerDown={(e) => e.stopPropagation()}
                 disabled={isUploading || isUploadingFile}
               >
                 <Upload className="h-5 w-5" />
@@ -274,6 +278,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                   </p>
                 </div>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 shrink-0"
@@ -297,6 +302,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
           {/* Upload Button */}
           <div className="flex justify-end gap-2">
             <Button
+              type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isUploading || isUploadingFile}
@@ -304,6 +310,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
               {t('tx.cancel')}
             </Button>
             <Button
+              type="button"
               onClick={handleUpload}
               disabled={!selectedFile || isUploading || isUploadingFile}
             >
