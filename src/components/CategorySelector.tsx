@@ -97,7 +97,11 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
               : "text-foreground hover:bg-muted",
             isFocused && !isMobile && "shadow-[inset_0_0_0_2px_hsl(var(--primary))]"
           )}
-          style={{ paddingLeft: `${12 + depth * 16}px` }}
+          style={{
+            paddingLeft: `${12 + depth * 16}px`,
+            touchAction: "manipulation",
+            minHeight: isMobile ? "44px" : "auto"
+          } as React.CSSProperties}
         >
           {displayShortcut && !isMobile && (
             <span className="text-xs text-muted-foreground/50 font-mono w-4">{displayShortcut}</span>
@@ -822,7 +826,14 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
   return (
     <Popover open={open} onOpenChange={handleOpenChange} modal={isMobile}>
       <PopoverTrigger asChild>
-        <button ref={triggerRef} tabIndex={0} data-tab-stop={!open ? "" : undefined} onKeyDown={handleKeyDown} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]">
+        <button
+          ref={triggerRef}
+          tabIndex={0}
+          data-tab-stop={!open ? "" : undefined}
+          onKeyDown={handleKeyDown}
+          className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors whitespace-nowrap overflow-hidden max-w-[200px]"
+          style={{ touchAction: "manipulation", minWidth: "44px", minHeight: "44px" } as React.CSSProperties}
+        >
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{activeLabel}</span>
           <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -850,6 +861,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
               : "text-foreground hover:bg-muted",
             focusedIndex === 0 && !isMobile && "shadow-[inset_0_0_0_2px_hsl(var(--primary))]"
           )}
+          style={{ touchAction: "manipulation", minHeight: isMobile ? "44px" : "auto" } as React.CSSProperties}
         >
           {!isMobile && <span className="text-xs text-muted-foreground/50 font-mono w-4">0</span>}
           <Tag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

@@ -124,6 +124,7 @@ const NumberedSelect = ({
           idx === highlightIdx && !isMobile && "bg-accent text-accent-foreground",
           item.value === value && "font-medium"
         )}
+        style={{ touchAction: "manipulation", minHeight: isMobile ? "44px" : "auto" } as React.CSSProperties}
         onMouseEnter={() => !isMobile && setHighlightIdx(idx)}
         onClick={() => select(item.value)}
       >
@@ -155,6 +156,7 @@ const NumberedSelect = ({
           data-tab-stop
           onClick={() => !disabled && setOpen(true)}
           className={cn("w-full h-10 justify-between font-normal", className)}
+          style={{ touchAction: "manipulation" } as React.CSSProperties}
         >
           <span className="truncate">{displayLabel}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -204,6 +206,7 @@ const NumberedSelect = ({
           data-tab-stop
           onKeyDown={handleKeyDown}
           className={cn("w-full h-10 justify-between font-normal", className)}
+          style={{ touchAction: "manipulation" } as React.CSSProperties}
         >
           <span className="truncate">{displayLabel}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
