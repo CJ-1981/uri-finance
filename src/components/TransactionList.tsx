@@ -294,7 +294,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
   }
 
   return (
-    <div className="space-y-2 max-w-3xl mx-auto" data-testid="transaction-list">
+    <div className="space-y-2 max-w-3xl mx-auto overflow-x-auto pb-4 scrollbar-hide" data-testid="transaction-list">
       {/* Search */}
       <div className="relative px-1">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -356,18 +356,19 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
           </div>
         ) : (
           <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground w-full">
-            {!isViewer && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectMode(true)}
-                className="text-muted-foreground h-7 w-8 px-0 text-[10px] shrink-0"
-              >
-                <CheckSquare className="h-3.5 w-3.5" />
-              </Button>
-            )}
-            <div className="w-10 shrink-0 hidden sm:block" />
-            <span className="flex-1 min-w-0 truncate">{headers.description}</span>
+            <div className="w-10 shrink-0 flex items-center justify-center">
+              {!isViewer && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectMode(true)}
+                  className="text-muted-foreground h-7 w-8 px-0 text-[10px]"
+                >
+                  <CheckSquare className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+            <div className="flex-1 min-w-[100px] truncate">{headers.description}</div>
             <span className="hidden sm:block w-24 text-right shrink-0">{headers.category}</span>
             {customColumns.filter(col => !(isViewer && col.masked)).map((col) => (
               <span key={col.id} className="hidden sm:block w-24 text-right shrink-0">{col.name}</span>
@@ -428,13 +429,13 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
               )}
             </div>
           )}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-[100px] overflow-hidden">
             <p className="text-sm font-medium text-foreground truncate">
-              {tx.description || tx.category}
+              {isMobile ? (tx.description || tx.category) : (tx.description || <span className="opacity-0">.</span>)}
             </p>
-            <p className="text-xs text-muted-foreground">
-              {categoryCodeMap.has(tx.category) ? (
-                <span className="font-mono text-[10px] text-muted-foreground/70 mr-1">{categoryCodeMap.get(tx.category)}</span>
+            <p className="text-xs text-muted-foreground truncate">
+              {categoryCodeMap.get(tx.category)?.trim() ? (
+                <span className="font-mono text-[10px] text-muted-foreground/70 mr-1 whitespace-nowrap">{categoryCodeMap.get(tx.category)}</span>
               ) : null}
               {tx.category} · {format(parseISO(tx.transaction_date), "MMM d")}
             </p>
