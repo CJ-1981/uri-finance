@@ -242,7 +242,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       const next = currentIdx < 0 || currentIdx >= stops.length - 1 ? 0 : currentIdx + 1;
       stops[next].focus();
     }
-  }, []);
+  }, [handleAddAndContinue]);
 
   // Handle sheet open to blur trigger button
   const handleOpenChange = useCallback((newOpen: boolean) => {
@@ -643,7 +643,12 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetTrigger asChild>
-          <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
+          <Button
+            ref={triggerRef}
+            size="icon"
+            className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30"
+            aria-label={t("tx.addTransaction") || "Add transaction"}
+          >
             <Plus className="h-6 w-6" />
           </Button>
         </SheetTrigger>
@@ -653,10 +658,14 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           side="bottom"
           className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
           data-testid="add-transaction-form"
+          tabIndex={-1}
           onOpenAutoFocus={(e) => {
-            e.preventDefault();
-            if (!isMobile) {
-              amountInputRef.current?.focus();
+            if (!isMobile && amountInputRef.current) {
+              e.preventDefault();
+              amountInputRef.current.focus();
+            } else if (isMobile && sheetRef.current) {
+              e.preventDefault();
+              sheetRef.current.focus();
             }
           }}
         >

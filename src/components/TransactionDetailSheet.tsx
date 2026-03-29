@@ -214,6 +214,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
     if (e.key !== "Tab") return;
     if (document.querySelector('[data-radix-popper-content-wrapper]')) return;
+    // Don't intercept Tab when custom category dropdown is open
+    if (document.querySelector('[data-category-dropdown-open="true"]')) return;
 
     const container = sheetRef.current;
     if (!container) return;
@@ -682,10 +684,14 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           onKeyDown={handleFormKeyDown}
           side="bottom"
           className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
+          tabIndex={-1}
           onOpenAutoFocus={(e) => {
-            e.preventDefault();
-            if (!isMobile) {
-              amountInputRef.current?.focus();
+            if (!isMobile && amountInputRef.current && !amountInputRef.current.disabled) {
+              e.preventDefault();
+              amountInputRef.current.focus();
+            } else if (isMobile && sheetRef.current) {
+              e.preventDefault();
+              sheetRef.current.focus();
             }
           }}
         >
