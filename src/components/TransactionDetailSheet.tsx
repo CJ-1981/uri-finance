@@ -198,7 +198,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     }
   }, [hasNext, transactionList, onNavigate, currentIndex]);
 
-  const formRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
   const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Ctrl+Enter or Cmd+Enter
@@ -215,7 +215,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     if (e.key !== "Tab") return;
     if (document.querySelector('[data-radix-popper-content-wrapper]')) return;
 
-    const container = formRef.current;
+    const container = sheetRef.current;
     if (!container) return;
 
     const stops = Array.from(
@@ -242,7 +242,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const visibleCustomCols = customColumns.filter(col => !(isViewer && col.masked));
 
   const FormContent = (
-    <div ref={formRef} onKeyDown={handleFormKeyDown} className="space-y-4 pb-16">
+    <div className="space-y-4 pb-16">
       {/* Type toggle */}
       <div className="flex gap-2">
         <button
@@ -585,7 +585,14 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <div className="flex gap-2 w-full sm:w-auto">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button type="button" variant="destructive" data-tab-stop className="h-12 px-4 flex-1 sm:flex-none" onPointerDown={(e) => isMobile && e.stopPropagation()}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  data-tab-stop
+                  className="h-12 px-4 flex-1 sm:flex-none"
+                  onPointerDown={(e) => isMobile && e.stopPropagation()}
+                  aria-label={t("tx.delete") || "Delete transaction"}
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
@@ -671,6 +678,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
         <SheetContent
+          ref={sheetRef}
+          onKeyDown={handleFormKeyDown}
           side="bottom"
           className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
           onOpenAutoFocus={(e) => {
@@ -686,20 +695,36 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 <SheetTitle className="text-foreground text-xl">{t("tx.editTransaction")}</SheetTitle>
                 {totalCount > 1 && (
                   <div className="flex items-center gap-1 mr-8">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev} disabled={!hasPrev}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      data-tab-stop
+                      className="h-8 w-8"
+                      onClick={goPrev}
+                      disabled={!hasPrev}
+                      aria-label={t("shortcut.prevTx") || "Previous transaction"}
+                    >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
                       {currentIndex + 1}/{totalCount}
                     </span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} disabled={!hasNext}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      data-tab-stop
+                      className="h-8 w-8"
+                      onClick={goNext}
+                      disabled={!hasNext}
+                      aria-label={t("shortcut.nextTx") || "Next transaction"}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
                 )}
               </div>
               <SheetDescription className="sr-only">
-                Edit transaction details including amount, category, and custom fields.
+                {t("tx.editTransactionDesc")}
               </SheetDescription>
             </SheetHeader>
           </div>

@@ -197,6 +197,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const formRef = useRef<HTMLFormElement>(null);
 
+  const sheetRef = useRef<HTMLDivElement>(null);
+
   const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Ctrl+Enter or Cmd+Enter → submit
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
@@ -220,11 +222,11 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     // Don't intercept Tab when custom category dropdown is open
     if (document.querySelector('[data-category-dropdown-open="true"]')) return;
 
-    const form = formRef.current;
-    if (!form) return;
+    const container = sheetRef.current;
+    if (!container) return;
 
     const stops = Array.from(
-      form.querySelectorAll<HTMLElement>('[data-tab-stop]')
+      container.querySelectorAll<HTMLElement>('[data-tab-stop]')
     ).filter((el) => el.offsetParent !== null && !el.hasAttribute('disabled'));
 
     if (stops.length === 0) return;
@@ -253,7 +255,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const FormContent = (
     <>
-      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4 pb-16">
+      <form ref={formRef} onSubmit={handleSubmit} className="mt-4 space-y-4 pb-16">
         {/* Type toggle */}
         <div className="flex gap-2">
           <Button
@@ -646,6 +648,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           </Button>
         </SheetTrigger>
         <SheetContent
+          ref={sheetRef}
+          onKeyDown={handleFormKeyDown}
           side="bottom"
           className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
           data-testid="add-transaction-form"
@@ -660,7 +664,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             <SheetHeader className="p-0 text-left sm:text-left">
               <SheetTitle className="text-foreground text-xl">{t("tx.addTransaction")}</SheetTitle>
               <SheetDescription className="sr-only">
-                Add a new transaction to track your income or expenses.
+                {t("tx.addTransactionDesc")}
               </SheetDescription>
             </SheetHeader>
           </div>
