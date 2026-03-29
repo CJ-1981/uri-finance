@@ -534,6 +534,7 @@ const Dashboard = () => {
                 <ReportSummaryTable
                   summaryData={reportSummaryData}
                   projectCurrency={projectCurrency}
+                  onTransactionClick={handleSelectTx}
                 />
 
                 {/* Charts */}

@@ -28,6 +28,7 @@ import {
 interface Props {
   summaryData: ReportSummaryByCurrency[];
   projectCurrency: string;
+  onTransactionClick?: (tx: Transaction) => void;
 }
 
 function formatAmount(amount: number): string {
@@ -52,7 +53,7 @@ function NetCell({ value }: { value: number }) {
   );
 }
 
-export default function ReportSummaryTable({ summaryData, projectCurrency }: Props) {
+export default function ReportSummaryTable({ summaryData, projectCurrency, onTransactionClick }: Props) {
   const { t, locale } = useI18n();
 
   // State for summary title and description
@@ -302,7 +303,8 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                     {showDetails && row.transactions.map((tx) => (
                       <TableRow
                         key={tx.id}
-                        className="border-none bg-muted/5 hover:bg-muted/10 transition-colors"
+                        className={`border-none bg-muted/5 transition-colors ${onTransactionClick ? "cursor-pointer hover:bg-muted/15" : "hover:bg-muted/10"}`}
+                        onClick={() => onTransactionClick?.(tx)}
                       >
                         <TableCell className="py-1 font-mono text-[9px] text-muted-foreground/50">
                           {tx.transaction_date.slice(5)}
