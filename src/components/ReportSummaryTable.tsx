@@ -1,5 +1,5 @@
 // SPEC-REPORT-001: ReportSummaryTable component – spreadsheet-like category breakdown
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -51,7 +51,34 @@ function NetCell({ value }: { value: number }) {
 }
 
 export default function ReportSummaryTable({ summaryData, projectCurrency }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+
+  // State for summary title and description
+  const [summaryTitle, setSummaryTitle] = useState(() => 
+    localStorage.getItem(`report-summary-title-${locale}`) || t("report.summaryTitle")
+  );
+  const [summaryDesc, setSummaryDesc] = useState(() => 
+    localStorage.getItem(`report-summary-desc-${locale}`) || t("report.summaryDesc")
+  );
+
+  // Update when locale changes if not customized
+  useEffect(() => {
+    const savedTitle = localStorage.getItem(`report-summary-title-${locale}`);
+    setSummaryTitle(savedTitle || t("report.summaryTitle"));
+    
+    const savedDesc = localStorage.getItem(`report-summary-desc-${locale}`);
+    setSummaryDesc(savedDesc || t("report.summaryDesc"));
+  }, [locale, t]);
+
+  const updateSummaryTitle = (val: string) => {
+    setSummaryTitle(val);
+    localStorage.setItem(`report-summary-title-${locale}`, val);
+  };
+
+  const updateSummaryDesc = (val: string) => {
+    setSummaryDesc(val);
+    localStorage.setItem(`report-summary-desc-${locale}`, val);
+  };
 
   // State for row comments - keyed by currency-categoryName
   const [comments, setComments] = useState<Record<string, string>>(() => {
@@ -75,10 +102,19 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
   const handleClearComments = () => {
     setComments({});
     localStorage.removeItem("report-summary-comments");
+    
+    // Also reset title and description customizations for current locale
+    localStorage.removeItem(`report-summary-title-${locale}`);
+    localStorage.removeItem(`report-summary-desc-${locale}`);
+    setSummaryTitle(t("report.summaryTitle"));
+    setSummaryDesc(t("report.summaryDesc"));
+    
     setShowClearDialog(false);
   };
 
   const hasComments = Object.keys(comments).some(key => comments[key].trim() !== "");
+  const hasCustomHeader = !!localStorage.getItem(`report-summary-title-${locale}`) || !!localStorage.getItem(`report-summary-desc-${locale}`);
+  const canReset = hasComments || hasCustomHeader;
 
   const hasData = useMemo(
     () => summaryData.some((g) => g.rows.length > 0),
@@ -99,20 +135,36 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
     <div className="glass-card overflow-hidden" data-report-summary="true">
       <div className="px-4 pt-4 pb-2 border-b border-border/30">
         <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">
-              {t("report.summaryTitle")}
-            </h3>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t("report.summaryDesc")}
-            </p>
+          <div className="flex-1 mr-4">
+            <input
+              value={summaryTitle}
+              onChange={(e) => updateSummaryTitle(e.target.value)}
+              className="w-full text-sm font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -ml-1"
+              placeholder={t("report.summaryTitle")}
+            />
+            <textarea
+              value={summaryDesc}
+              onChange={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+                updateSummaryDesc(e.target.value);
+              }}
+              onFocus={(e) => {
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+              rows={1}
+              style={{ overflow: "hidden", resize: "none" }}
+              className="w-full text-[11px] text-muted-foreground mt-0.5 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -ml-1 block leading-tight min-h-[1.5em]"
+              placeholder={t("report.summaryDesc")}
+            />
           </div>
-          {hasComments && (
+          {canReset && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowClearDialog(true)}
-              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive"
+              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive whitespace-nowrap"
               data-html2canvas-ignore="true"
             >
               <Trash2 className="h-3 w-3 mr-1" />

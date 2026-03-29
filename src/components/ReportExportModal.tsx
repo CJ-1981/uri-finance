@@ -139,39 +139,42 @@ export default function ReportExportModal({
             span: HTMLSpanElement;
           }> = [];
 
-          const commentInputs = summaryEl.querySelectorAll("input[type='text'], textarea");
-          commentInputs.forEach((input) => {
-            const htmlInput = input as HTMLInputElement | HTMLTextAreaElement;
+          const interactiveElements = summaryEl.querySelectorAll("input:not([type='checkbox']), textarea");
+          interactiveElements.forEach((el) => {
+            const htmlInput = el as HTMLInputElement | HTMLTextAreaElement;
             const parent = htmlInput.parentElement;
             if (!parent) return;
 
-            // Create div to replace textarea
-            const span = document.createElement("div");
+            const replacement = document.createElement("div");
             const val = htmlInput.value.trim();
+            replacement.textContent = val || "";
             
-            if (val) {
-              span.textContent = val;
-            } else {
-              span.textContent = "";
-            }
+            // Copy the className to preserve text styles (font-size, weight, etc.)
+            replacement.className = htmlInput.className;
             
-            // Render as plain text inside the table cell (no background or border)
-            span.style.cssText = `
+            // Ensure formatting is correct for SVG/Canvas capture
+            replacement.style.cssText = `
               display: block;
               width: 100%;
-              min-width: 200px;
-              color: hsl(var(--foreground));
-              font-size: 11px;
-              line-height: 1.5;
-              word-wrap: break-word;
               white-space: pre-wrap;
+              word-wrap: break-word;
               box-sizing: border-box;
+              background: transparent;
+              border: none;
+              padding: ${htmlInput.tagName === "TEXTAREA" ? "4px 8px" : "1px 4px"};
             `;
 
+            // Table comments specific styling
+            if (htmlInput.closest("td")) {
+              replacement.style.minWidth = "200px";
+              replacement.style.fontSize = "11px";
+              replacement.style.lineHeight = "1.5";
+            }
+
             // Store for restoration
-            replacements.push({ parent: parent as HTMLElement, input: htmlInput, span });
-            // Replace input with span
-            parent.replaceChild(span, htmlInput);
+            replacements.push({ parent: parent as HTMLElement, input: htmlInput, span: replacement });
+            // Replace input with replacement div
+            parent.replaceChild(replacement, htmlInput);
           });
 
           // Also expand the comment column header
