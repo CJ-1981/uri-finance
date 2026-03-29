@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback, Fragment } from "react";
-import { Trash2, ChevronRight, ChevronDown } from "lucide-react";
+import { Trash2, ChevronRight, ChevronDown, Pencil } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Transaction } from "@/hooks/useTransactions";
@@ -146,28 +146,34 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
       <div className="px-4 pt-4 pb-2 border-b border-border/30">
         <div className="flex items-center justify-between">
           <div className="flex-1 mr-4">
-            <input
-              value={summaryTitle}
-              onChange={(e) => updateSummaryTitle(e.target.value)}
-              className="w-full text-sm font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -ml-1"
-              placeholder={t("report.summaryTitle")}
-            />
-            <textarea
-              value={summaryDesc}
-              onChange={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-                updateSummaryDesc(e.target.value);
-              }}
-              onFocus={(e) => {
-                e.target.style.height = 'auto';
-                e.target.style.height = e.target.scrollHeight + 'px';
-              }}
-              rows={1}
-              style={{ overflow: "hidden", resize: "none" }}
-              className="w-full text-[11px] text-muted-foreground mt-0.5 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -ml-1 block leading-tight min-h-[1.5em]"
-              placeholder={t("report.summaryDesc")}
-            />
+            <div className="relative group flex items-center">
+              <input
+                value={summaryTitle}
+                onChange={(e) => updateSummaryTitle(e.target.value)}
+                className="w-full text-sm font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -ml-1"
+                placeholder={t("report.summaryTitle")}
+              />
+              <Pencil className="h-3 w-3 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity ml-1 flex-shrink-0" data-html2canvas-ignore="true" />
+            </div>
+            <div className="relative group flex items-start mt-0.5">
+              <textarea
+                value={summaryDesc}
+                onChange={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                  updateSummaryDesc(e.target.value);
+                }}
+                onFocus={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
+                rows={1}
+                style={{ overflow: "hidden", resize: "none" }}
+                className="w-full text-[11px] text-muted-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -ml-1 block leading-tight min-h-[1.5em]"
+                placeholder={t("report.summaryDesc")}
+              />
+              <Pencil className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity ml-1 mt-0.5 flex-shrink-0" data-html2canvas-ignore="true" />
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20" data-html2canvas-ignore="true">
