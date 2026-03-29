@@ -603,6 +603,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
             <Button
               type="button"
+              data-tab-stop
               onClick={() => onOpenChange(false)}
               onPointerDown={(e) => isMobile && e.stopPropagation()}
               className="h-12 px-4 flex-1 sm:flex-none gradient-violet font-semibold text-white hover:opacity-90 transition-opacity justify-center gap-2"

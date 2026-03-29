@@ -59,6 +59,9 @@
     --sidebar-border: 220 14% 88%;
     --sidebar-ring: 168 60% 40%;
 
+    --violet-1: #8b5cf6;
+    --violet-2: #6d28d9;
+
     font-family: 'Space Grotesk', sans-serif;
   }
 
@@ -113,6 +116,9 @@
     --sidebar-accent-foreground: 210 20% 80%;
     --sidebar-border: 220 14% 18%;
     --sidebar-ring: 168 60% 48%;
+
+    --violet-1: #9f67ff;
+    --violet-2: #7c3aed;
   }
 }
 
@@ -180,7 +186,7 @@
   }
 
   .gradient-violet {
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    background: linear-gradient(135deg, var(--violet-1), var(--violet-2));
   }
 
   .gradient-dark {

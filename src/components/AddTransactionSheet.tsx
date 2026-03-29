@@ -578,6 +578,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm z-20 pt-4 pb-2 mt-6 flex flex-wrap sm:flex-nowrap gap-2 border-t border-border/20">
           <Button
             type="button"
+            data-tab-stop
             onClick={() => setOpen(false)}
             onPointerDown={(e) => isMobile && e.stopPropagation()}
             className="w-full sm:w-auto gradient-violet font-semibold text-white hover:opacity-90 transition-opacity h-12 justify-center gap-2"
