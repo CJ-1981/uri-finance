@@ -260,7 +260,11 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
                       </TableCell>
                       <TableCell className="py-2">
                         <span className="text-[11px] text-muted-foreground leading-snug">
-                          {row.descriptions.join(", ") || <span className="opacity-30">—</span>}
+                          {showDetails ? (
+                            <span className="opacity-30">—</span>
+                          ) : (
+                            row.descriptions.join(", ") || <span className="opacity-30">—</span>
+                          )}
                         </span>
                       </TableCell>
                       <TableCell className="text-right py-2">
