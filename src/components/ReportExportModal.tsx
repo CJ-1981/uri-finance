@@ -19,8 +19,8 @@ import { ReportSummaryByCurrency } from "@/hooks/useReportData";
 import { captureCharts, captureElementAtWidth, CAPTURE_WIDTH } from "@/lib/chartCapture";
 import { generatePdfReport } from "@/lib/pdfGenerator";
 import { generateMarkdownReport } from "@/lib/markdownGenerator";
-import { PeriodKey, DateRange } from "@/components/PeriodSelector";
 import { format } from "date-fns";
+import { PeriodKey, DateRange, getStartDate } from "@/components/PeriodSelector";
 
 interface ChartSelection {
   pie: boolean;
@@ -45,12 +45,31 @@ const CHART_SELECTORS: Record<"pie" | "trend" | "cumulative", string> = {
 };
 
 function getPeriodLabel(period: PeriodKey, customRange: DateRange, t: (k: string) => string): string {
-  if (period === "custom" && customRange.from) {
-    const from = format(customRange.from, "yyyy-MM-dd");
-    const to = customRange.to ? format(customRange.to, "yyyy-MM-dd") : from;
-    return `${from} to ${to}`;
+  const pLabel = t(`period.${period}`);
+  if (period === "all") return pLabel;
+
+  const f = (d: Date | undefined) => {
+    if (!d) return "...";
+    return format(d, "MMM d");
+  };
+
+  let range = "";
+  if (period === "today") {
+    range = f(new Date());
+  } else if (period === "custom") {
+    if (customRange.from && customRange.to && 
+        customRange.from.getTime() === customRange.to.getTime()) {
+      range = f(customRange.from);
+    } else {
+      range = `${f(customRange.from || undefined)} - ${f(customRange.to || undefined)}`;
+    }
+  } else {
+    const start = getStartDate(period);
+    const end = new Date();
+    range = `${f(start)} - ${f(end)}`;
   }
-  return t(`period.${period}`);
+
+  return `${pLabel} (${range})`;
 }
 
 function getReportFilename(

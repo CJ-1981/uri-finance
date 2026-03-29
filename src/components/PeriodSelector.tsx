@@ -107,6 +107,33 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
     return t("period.end");
   }, [customRange.to, t, monthNames]);
 
+  const formatRange = useCallback((pKey: PeriodKey) => {
+    if (pKey === "all") return "";
+    
+    const f = (d: Date | undefined) => {
+      if (!d) return "...";
+      const monthName = monthNames[d.getMonth()].substring(0, 3);
+      return `${monthName} ${d.getDate()}`;
+    };
+
+    if (pKey === "today") {
+      return f(new Date());
+    }
+
+    if (pKey === "custom") {
+      if (customRange.from && customRange.to && 
+          customRange.from.getTime() === customRange.to.getTime()) {
+        return f(customRange.from);
+      }
+      return `${startDateLabel} - ${endDateLabel}`;
+    }
+
+    const start = getStartDate(pKey);
+    const end = new Date();
+
+    return `${f(start)} - ${f(end)}`;
+  }, [monthNames, startDateLabel, endDateLabel, customRange.from, customRange.to]);
+
   const handleSelect = (key: PeriodKey) => {
     if (key === "custom") {
       setMenuOpen(false);
@@ -168,13 +195,20 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
       {/* Main period dropdown */}
       <Popover open={menuOpen} onOpenChange={setMenuOpen}>
         <PopoverTrigger asChild>
-          <button ref={triggerRef} onKeyDown={handleKeyDown} onClick={handleMenuClick} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer">
-            <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-medium">{activeLabel}</span>
-            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          <button ref={triggerRef} onKeyDown={handleKeyDown} onClick={handleMenuClick} className="flex items-center gap-1.5 rounded-lg bg-muted/40 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer max-w-[200px] sm:max-w-none">
+            <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs font-medium truncate">
+              {activeLabel}
+              {period !== "all" && (
+                <span className="text-muted-foreground font-normal ml-1.5 opacity-80">
+                  ({formatRange(period)})
+                </span>
+              )}
+            </span>
+            <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-36 p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
+        <PopoverContent align="start" className="w-56 p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
           {presets.map((p, idx) => (
             <button
               key={p.key}
@@ -191,7 +225,12 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
                   {indexToKey(idx)}
                 </span>
               )}
-              {p.label}
+              <span className="truncate">{p.label}</span>
+              {period === p.key && p.key !== "all" && (
+                <span className="text-[10px] text-muted-foreground ml-auto whitespace-nowrap opacity-70 font-normal">
+                  ({formatRange(p.key)})
+                </span>
+              )}
             </button>
           ))}
         </PopoverContent>
