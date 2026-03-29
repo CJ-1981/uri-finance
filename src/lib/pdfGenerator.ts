@@ -132,11 +132,22 @@ export async function generatePdfReport(config: PdfReportConfig): Promise<Blob> 
     maxHeightMm = 120
   ): number {
     if (!imgData || srcPxW === 0) return 0;
+    
     const aspect = srcPxH / srcPxW;
-    const imgWidthMm = contentWidth;
-    const imgHeightMm = Math.min(imgWidthMm * aspect, maxHeightMm);
+    let imgWidthMm = contentWidth;
+    let imgHeightMm = imgWidthMm * aspect;
+    
+    // Preserve aspect ratio if height exceeds limit
+    if (imgHeightMm > maxHeightMm) {
+      imgHeightMm = maxHeightMm;
+      imgWidthMm = imgHeightMm / aspect;
+    }
+    
+    // Center horizontally if shrunk in width
+    const xOffset = margin + (contentWidth - imgWidthMm) / 2;
+    
     try {
-      doc.addImage(imgData, "JPEG", margin, y, imgWidthMm, imgHeightMm);
+      doc.addImage(imgData, "JPEG", xOffset, y, imgWidthMm, imgHeightMm);
     } catch (e) {
       console.warn("[pdfGenerator] addImage failed:", e);
       return 0;
@@ -175,58 +186,73 @@ export async function generatePdfReport(config: PdfReportConfig): Promise<Blob> 
   doc.line(margin, y, pageWidth - margin, y);
   y += 5;
 
-  // ── Summary Table (captured as image) ─────────────────────────────────────
-  if (summaryImageData) {
-    ensureSpace(20);
-    const tMm = embedImage(
-      summaryImageData,
-      summaryImageWidth,
-      summaryImageHeight,
-      200
-    );
-    y += tMm + 6;
-  }
-
-  // ── Charts ─────────────────────────────────────────────────────────────────
-  if (chartCaptures.length > 0) {
-    const chartLabels: Record<string, string> = {
-      pie: "Distribution by Category",
-      trend: "Trend Over Time",
-      cumulative: "Cumulative Chart",
-    };
-
-    // Force a page break before charts so they start on a new page (e.g. 2nd page)
-    if (y > margin) {
-      doc.addPage();
-      y = margin;
+    // ── Summary Table (captured as image) ─────────────────────────────────────
+    if (summaryImageData) {
+      const tAspect = summaryImageHeight / summaryImageWidth;
+      let tWidthMm = contentWidth;
+      let tHeightMm = Math.min(tWidthMm * tAspect, 250);
+      
+      ensureSpace(tHeightMm + 6);
+      
+      const tMm = embedImage(
+        summaryImageData,
+        summaryImageWidth,
+        summaryImageHeight,
+        250
+      );
+      y += tMm + 6;
     }
 
-    for (const capture of chartCaptures) {
-      const label = chartLabels[capture.chartType] || capture.chartType;
+    // ── Charts ─────────────────────────────────────────────────────────────────
+    if (chartCaptures.length > 0) {
+      const chartLabels: Record<string, string> = {
+        pie: "Distribution by Category",
+        trend: "Trend Over Time",
+        cumulative: "Cumulative Chart",
+      };
 
-      ensureSpace(40);
+      // Force a page break before charts so they start on a new page (e.g. 2nd page)
+      if (y > margin) {
+        doc.addPage();
+        y = margin;
+      }
 
-      // Chart label (ASCII-safe, label is hardcoded English)
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(60, 60, 60);
-      doc.text(label, margin, y);
-      y += 4;
+      for (const capture of chartCaptures) {
+        const label = chartLabels[capture.chartType] || capture.chartType;
 
-      if (capture.captureMethod === "placeholder") {
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "italic");
-        doc.setTextColor(150, 150, 150);
-        doc.text("(Chart capture unavailable)", margin, y);
-        y += 10;
-      } else {
-        // Pie chart uses side-by-side layout on desktop, so smaller maxHeight
-        const maxHeight = capture.chartType === "pie" ? 100 : 85;
-        const hMm = embedImage(capture.imageData, capture.width, capture.height, maxHeight);
-        y += hMm + 8;
+        // Calculate expected height before rendering title/body
+        const aspect = capture.height / capture.width;
+        let imgWidthMm = contentWidth;
+        let imgHeightMm = imgWidthMm * aspect;
+        const maxHeight = 230;
+        if (imgHeightMm > maxHeight) {
+          imgHeightMm = maxHeight;
+          imgWidthMm = imgHeightMm / aspect;
+        }
+
+        const totalNeeded = capture.captureMethod === "placeholder" ? 20 : (imgHeightMm + 15);
+        ensureSpace(totalNeeded);
+
+        // Chart label (ASCII-safe, label is hardcoded English)
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(60, 60, 60);
+        doc.text(label, margin, y);
+        y += 4;
+
+        if (capture.captureMethod === "placeholder") {
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "italic");
+          doc.setTextColor(150, 150, 150);
+          doc.text("(Chart capture unavailable)", margin, y);
+          y += 10;
+        } else {
+          // Pass null if we already calculated the values but hMm is more robust
+          const hMm = embedImage(capture.imageData, capture.width, capture.height, maxHeight);
+          y += hMm + 8;
+        }
       }
     }
-  }
 
   // ── Footer on each page ────────────────────────────────────────────────────
   const totalPages = (doc.internal as any).getNumberOfPages();
