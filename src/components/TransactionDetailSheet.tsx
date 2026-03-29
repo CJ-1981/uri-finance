@@ -242,45 +242,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   const visibleCustomCols = customColumns.filter(col => !(isViewer && col.masked));
 
-  const HeaderContent = (
-    <>
-      <div className="flex items-center justify-between">
-        {isMobile ? (
-          <DrawerTitle className="text-foreground">{t("tx.editTransaction")}</DrawerTitle>
-        ) : (
-          <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
-        )}
-        {totalCount > 1 && (
-          <div className="flex items-center gap-1 mr-8">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={goPrev}
-              disabled={!hasPrev}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
-              {currentIndex + 1}/{totalCount}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={goNext}
-              disabled={!hasNext}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </div>
-    </>
-  );
-
   const FormContent = (
-    <div ref={formRef} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
+    <div ref={formRef} onKeyDown={handleFormKeyDown} className="space-y-4">
       {/* Type toggle */}
       <div className="flex gap-2">
         <button
@@ -699,13 +662,33 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           <DrawerContent
             className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
           >
-            <div className="overflow-y-auto flex-1 px-6 pb-8">
-              <DrawerHeader>
-                {HeaderContent}
+            <div className="px-6 pt-6">
+              <DrawerHeader className="p-0">
+                <div className="flex items-center justify-between">
+                  <DrawerTitle className="text-foreground">{t("tx.editTransaction")}</DrawerTitle>
+                  {totalCount > 1 && (
+                    <div className="flex items-center gap-1 mr-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev} disabled={!hasPrev}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
+                        {currentIndex + 1}/{totalCount}
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} disabled={!hasNext}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="h-8 w-8 p-0 rounded-full">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
                 <DrawerDescription className="sr-only">
                   Edit transaction details including amount, category, and custom fields.
                 </DrawerDescription>
               </DrawerHeader>
+            </div>
+            <div className="overflow-y-auto flex-1 px-6 pb-8">
               {FormContent}
             </div>
           </DrawerContent>
@@ -722,13 +705,33 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               }
             }}
           >
-            <div className="overflow-y-auto flex-1 px-6 pb-8">
-              <SheetHeader>
-                {HeaderContent}
+            <div className="px-6 pt-6 shrink-0">
+              <SheetHeader className="p-0">
+                <div className="flex items-center justify-between">
+                  <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
+                  {totalCount > 1 && (
+                    <div className="flex items-center gap-1 mr-8">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev} disabled={!hasPrev}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
+                        {currentIndex + 1}/{totalCount}
+                      </span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} disabled={!hasNext}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="h-8 w-8 p-0 rounded-full">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
                 <SheetDescription className="sr-only">
                   Edit transaction details including amount, category, and custom fields.
                 </SheetDescription>
               </SheetHeader>
+            </div>
+            <div className="overflow-y-auto flex-1 px-6 pb-8 mt-4">
               {FormContent}
             </div>
           </SheetContent>

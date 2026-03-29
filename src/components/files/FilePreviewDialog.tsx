@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -187,6 +188,9 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
             <DialogTitle className="truncate pr-8" title={file.file_name}>
               {file.file_name}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              File preview window for {file.file_name} showing file content or download options.
+            </DialogDescription>
             {/* Visual indicator for drag-to-close on mobile */}
             {isMobile && (
               <div className="flex justify-center pb-2">

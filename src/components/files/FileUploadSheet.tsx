@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -172,6 +173,9 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8">
         <SheetHeader>
           <SheetTitle>{t('files.uploadFile')}</SheetTitle>
+          <SheetDescription className="sr-only">
+            Drag and drop a file or click to select a file to upload to the project.
+          </SheetDescription>
         </SheetHeader>
 
         <div className="mt-6 space-y-4">

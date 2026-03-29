@@ -41,10 +41,14 @@ export async function captureElementAtWidth(
     element.style.minWidth = `${targetWidth}px`;
     element.style.maxWidth = `${targetWidth}px`;
 
+    const isMobile = typeof window !== "undefined" && 
+      (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768);
+    const scale = isMobile ? 1.5 : 2;
+
     try {
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: scale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
@@ -119,9 +123,13 @@ export async function captureElementAtWidth(
       console.warn(`[chartCapture] SVG width ${finalSvgWidth}px is less than target ${targetSvgWidth}px`);
     }
 
+    const isMobile = typeof window !== "undefined" && 
+      (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768);
+    const scale = isMobile ? 1.5 : 2;
+
     const html2canvas = (await import("html2canvas")).default;
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: scale,
       useCORS: true,
       allowTaint: true,
       backgroundColor: "#ffffff",

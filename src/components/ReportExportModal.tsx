@@ -1,6 +1,6 @@
 // SPEC-REPORT-001: ReportExportModal - export configuration modal
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -219,8 +219,15 @@ export default function ReportExportModal({
         const a = document.createElement("a");
         a.href = url;
         a.download = filename;
+        a.style.display = "none";
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        
+        // SPEC-REPORT-001: Delay revocation for Safari compatibility
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
       } else {
         const content = generateMarkdownReport({
           projectName,
@@ -234,8 +241,15 @@ export default function ReportExportModal({
         const a = document.createElement("a");
         a.href = url;
         a.download = filename;
+        a.style.display = "none";
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        
+        // SPEC-REPORT-001: Delay revocation for Safari compatibility
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
       }
 
       setProgress(t("report.progressDone"));
@@ -264,11 +278,16 @@ export default function ReportExportModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-md bg-card border-border/50"
-        aria-modal="true"
-        aria-labelledby="report-export-modal-title"
-      >
+      <DialogContent className="sm:max-w-md bg-card border-border/50">
+        <DialogHeader>
+          <DialogTitle className="text-foreground text-base font-semibold">
+            {t("report.exportTitle")}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("report.exportDesc")}
+          </DialogDescription>
+        </DialogHeader>
+
         {/* Screen reader live region for progress announcements */}
         <div
           ref={liveRegionRef}
@@ -276,13 +295,6 @@ export default function ReportExportModal({
           aria-atomic="true"
           className="sr-only"
         />
-
-        <DialogTitle id="report-export-modal-title" className="text-foreground text-base font-semibold">
-          {t("report.exportTitle")}
-        </DialogTitle>
-        <DialogDescription className="sr-only">
-          {t("report.exportDesc")}
-        </DialogDescription>
 
         <div className="space-y-5 pt-1">
           {/* Format selection */}

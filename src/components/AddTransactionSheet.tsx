@@ -254,22 +254,6 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const FormContent = (
     <>
-      {isMobile ? (
-        <DrawerHeader>
-          <DrawerTitle className="text-foreground">{t("tx.addTransaction")}</DrawerTitle>
-          <DrawerDescription className="sr-only">
-            Add a new transaction to track your income or expenses.
-          </DrawerDescription>
-        </DrawerHeader>
-      ) : (
-        <SheetHeader>
-          <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
-          <SheetDescription className="sr-only">
-            Add a new transaction to track your income or expenses.
-          </SheetDescription>
-        </SheetHeader>
-      )}
-
       <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
         {/* Type toggle */}
         <div className="flex gap-2">
@@ -655,6 +639,14 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <DrawerContent
             className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
           >
+            <div className="px-6 pt-6">
+              <DrawerHeader className="p-0">
+                <DrawerTitle className="text-foreground">{t("tx.addTransaction")}</DrawerTitle>
+                <DrawerDescription className="sr-only">
+                  Add a new transaction to track your income or expenses.
+                </DrawerDescription>
+              </DrawerHeader>
+            </div>
             <div className="overflow-y-auto px-6 pb-8">
               {FormContent}
             </div>
@@ -678,6 +670,14 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               }
             }}
           >
+            <div className="px-6 pt-6">
+              <SheetHeader className="p-0">
+                <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
+                <SheetDescription className="sr-only">
+                  Add a new transaction to track your income or expenses.
+                </SheetDescription>
+              </SheetHeader>
+            </div>
             <div className="overflow-y-auto px-6 pb-8">
               {FormContent}
             </div>

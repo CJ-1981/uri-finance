@@ -24,9 +24,13 @@ async function captureElementToPng(
   const el = document.querySelector<HTMLElement>(selector);
   if (!el) return null;
   try {
+    const isMobile = typeof window !== "undefined" && 
+      (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768);
+    const scale = isMobile ? 1.5 : 2;
+
     const html2canvas = (await import("html2canvas")).default;
     const canvas = await html2canvas(el, {
-      scale: 2,
+      scale: scale,
       useCORS: true,
       allowTaint: true,
       backgroundColor: "#ffffff",
@@ -75,9 +79,13 @@ async function buildHeaderImage(
   `;
   document.body.appendChild(div);
   try {
+    const isMobile = typeof window !== "undefined" && 
+      (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768);
+    const scale = isMobile ? 1.5 : 2;
+
     const html2canvas = (await import("html2canvas")).default;
     const canvas = await html2canvas(div, {
-      scale: 2,
+      scale: scale,
       backgroundColor: "#ffffff",
       logging: false,
     });
