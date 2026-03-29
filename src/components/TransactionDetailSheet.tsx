@@ -679,9 +679,6 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                       </Button>
                     </div>
                   )}
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="h-8 w-8 p-0 rounded-full">
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
                 <DrawerDescription className="sr-only">
                   Edit transaction details including amount, category, and custom fields.
@@ -722,9 +719,6 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                       </Button>
                     </div>
                   )}
-                  <Button variant="ghost" size="sm" onClick={() => handleOpenChange(false)} className="h-8 w-8 p-0 rounded-full">
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
                 <SheetDescription className="sr-only">
                   Edit transaction details including amount, category, and custom fields.
