@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -630,61 +629,36 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   return (
     <>
-      {isMobile ? (
-        <Drawer open={open} onOpenChange={handleOpenChange} snapPoints={["400px", "85vh", 1]}>
-          <DrawerTrigger asChild>
-            <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
-              <Plus className="h-6 w-6" />
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
-          >
-            <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
-              <DrawerHeader className="p-0">
-                <DrawerTitle className="text-foreground">{t("tx.addTransaction")}</DrawerTitle>
-                <DrawerDescription className="sr-only">
-                  Add a new transaction to track your income or expenses.
-                </DrawerDescription>
-              </DrawerHeader>
-            </div>
-            <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8">
-              {FormContent}
-            </div>
-          </DrawerContent>
-        </Drawer>
-      ) : (
-        <Sheet open={open} onOpenChange={handleOpenChange}>
-          <SheetTrigger asChild>
-            <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
-              <Plus className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
-            data-testid="add-transaction-form"
-            onOpenAutoFocus={(e) => {
-              e.preventDefault();
-              if (!isMobile) {
-                amountInputRef.current?.focus();
-              }
-            }}
-          >
-            <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
-              <SheetHeader className="p-0">
-                <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
-                <SheetDescription className="sr-only">
-                  Add a new transaction to track your income or expenses.
-                </SheetDescription>
-              </SheetHeader>
-            </div>
-            <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8">
-              {FormContent}
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetTrigger asChild>
+          <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
+            <Plus className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
+          data-testid="add-transaction-form"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            if (!isMobile) {
+              amountInputRef.current?.focus();
+            }
+          }}
+        >
+          <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
+            <SheetHeader className="p-0 text-left sm:text-left">
+              <SheetTitle className="text-foreground text-xl">{t("tx.addTransaction")}</SheetTitle>
+              <SheetDescription className="sr-only">
+                Add a new transaction to track your income or expenses.
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8 overscroll-contain">
+            {FormContent}
+          </div>
+        </SheetContent>
+      </Sheet>
       <FilePreviewDialog
         file={previewFile}
         open={previewOpen}

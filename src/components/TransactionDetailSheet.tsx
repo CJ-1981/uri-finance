@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -657,80 +656,45 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   return (
     <>
-      {isMobile ? (
-        <Drawer open={open} onOpenChange={handleOpenChange} snapPoints={["400px", "85vh", 1]}>
-          <DrawerContent
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
-          >
-            <div className="px-6 pt-6">
-              <DrawerHeader className="p-0">
-                <div className="flex items-center justify-between">
-                  <DrawerTitle className="text-foreground">{t("tx.editTransaction")}</DrawerTitle>
-                  {totalCount > 1 && (
-                    <div className="flex items-center gap-1 mr-8">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev} disabled={!hasPrev}>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
-                        {currentIndex + 1}/{totalCount}
-                      </span>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} disabled={!hasNext}>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <DrawerDescription className="sr-only">
-                  Edit transaction details including amount, category, and custom fields.
-                </DrawerDescription>
-              </DrawerHeader>
-            </div>
-            <div className="overflow-y-auto flex-1 px-6 pb-8">
-              {FormContent}
-            </div>
-          </DrawerContent>
-        </Drawer>
-      ) : (
-        <Sheet open={open} onOpenChange={handleOpenChange}>
-          <SheetContent
-            side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
-            onOpenAutoFocus={(e) => {
-              e.preventDefault();
-              if (!isMobile) {
-                amountInputRef.current?.focus();
-              }
-            }}
-          >
-            <div className="px-6 pt-6 pb-6 shrink-0 border-b border-border/10">
-              <SheetHeader className="p-0">
-                <div className="flex items-center justify-between">
-                  <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
-                  {totalCount > 1 && (
-                    <div className="flex items-center gap-1 mr-8">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev} disabled={!hasPrev}>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
-                        {currentIndex + 1}/{totalCount}
-                      </span>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} disabled={!hasNext}>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                <SheetDescription className="sr-only">
-                  Edit transaction details including amount, category, and custom fields.
-                </SheetDescription>
-              </SheetHeader>
-            </div>
-            <div className="overflow-y-auto flex-1 min-h-0 px-6 pt-6 pb-8">
-              {FormContent}
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            if (!isMobile) {
+              amountInputRef.current?.focus();
+            }
+          }}
+        >
+          <div className="px-6 pt-6 pb-4 shrink-0 border-b border-border/10">
+            <SheetHeader className="p-0">
+              <div className="flex items-center justify-between">
+                <SheetTitle className="text-foreground text-xl">{t("tx.editTransaction")}</SheetTitle>
+                {totalCount > 1 && (
+                  <div className="flex items-center gap-1 mr-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goPrev} disabled={!hasPrev}>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground tabular-nums min-w-[3ch] text-center">
+                      {currentIndex + 1}/{totalCount}
+                    </span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={goNext} disabled={!hasNext}>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <SheetDescription className="sr-only">
+                Edit transaction details including amount, category, and custom fields.
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="overflow-y-auto flex-1 min-h-0 px-6 pt-6 pb-8 overscroll-contain">
+            {FormContent}
+          </div>
+        </SheetContent>
+      </Sheet>
       <FilePreviewDialog
         file={previewFile}
         open={previewOpen}
