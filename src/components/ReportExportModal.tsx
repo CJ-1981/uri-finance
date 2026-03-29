@@ -12,8 +12,6 @@ import {
   BarChart3,
   TrendingUp,
   PieChart,
-  CheckSquare,
-  Square,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/hooks/useI18n";
@@ -96,6 +94,7 @@ export default function ReportExportModal({
   }, [progress]);
 
   const anyChartSelected = Object.values(chartSelection).some(Boolean);
+  const allChartsSelected = Object.values(chartSelection).every(Boolean);
 
   const toggleChart = (key: keyof ChartSelection) => {
     setChartSelection((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -131,7 +130,7 @@ export default function ReportExportModal({
         let summaryImageWidth = 0;
         let summaryImageHeight = 0;
         const summaryEl = document.querySelector<HTMLElement>("[data-report-summary='true']");
-        
+
         if (summaryEl) {
           // Replace input elements with divs for better text rendering during capture
           const replacements: Array<{
@@ -144,9 +143,9 @@ export default function ReportExportModal({
           const headers = summaryEl.querySelectorAll("th");
           const descHeader = headers[2] as HTMLElement; // Description column
           const commentHeader = summaryEl.querySelector("th:last-child") as HTMLElement; // Comment column
-          
+
           const headerOriginals = new Map<HTMLElement, { minWidth: string; width: string }>();
-          
+
           [descHeader, commentHeader].forEach(h => {
             if (h) {
               headerOriginals.set(h, { minWidth: h.style.minWidth, width: h.style.width });
@@ -164,10 +163,10 @@ export default function ReportExportModal({
             const replacement = document.createElement("div");
             const val = htmlInput.value.trim();
             replacement.textContent = val || "";
-            
+
             // Copy the className to preserve text styles (font-size, weight, etc.)
             replacement.className = htmlInput.className;
-            
+
             // Ensure formatting is correct for SVG/Canvas capture
             replacement.style.cssText = `
               display: block;
@@ -237,7 +236,7 @@ export default function ReportExportModal({
         a.style.display = "none";
         document.body.appendChild(a);
         a.click();
-        
+
         // SPEC-REPORT-001: Delay revocation for Safari compatibility
         setTimeout(() => {
           document.body.removeChild(a);
@@ -259,7 +258,7 @@ export default function ReportExportModal({
         a.style.display = "none";
         document.body.appendChild(a);
         a.click();
-        
+
         // SPEC-REPORT-001: Delay revocation for Safari compatibility
         setTimeout(() => {
           document.body.removeChild(a);
@@ -324,11 +323,10 @@ export default function ReportExportModal({
             >
               <Label
                 htmlFor="fmt-pdf"
-                className={`flex flex-1 items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${
-                  exportFormat === "pdf"
+                className={`flex flex-1 items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${exportFormat === "pdf"
                     ? "border-primary bg-primary/5"
                     : "border-border/40 hover:border-border"
-                }`}
+                  }`}
               >
                 <RadioGroupItem value="pdf" id="fmt-pdf" />
                 <FileDown className="h-4 w-4 text-primary" />
@@ -336,11 +334,10 @@ export default function ReportExportModal({
               </Label>
               <Label
                 htmlFor="fmt-md"
-                className={`flex flex-1 items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${
-                  exportFormat === "markdown"
+                className={`flex flex-1 items-center gap-2 rounded-lg border p-3 cursor-pointer transition-colors ${exportFormat === "markdown"
                     ? "border-primary bg-primary/5"
                     : "border-border/40 hover:border-border"
-                }`}
+                  }`}
               >
                 <RadioGroupItem value="markdown" id="fmt-md" />
                 <FileText className="h-4 w-4 text-primary" />
@@ -354,28 +351,21 @@ export default function ReportExportModal({
             role="group"
             aria-label={t("report.chartSelectionLabel")}
           >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center gap-2 mb-2.5">
+              <Checkbox
+                id="master-chart-select"
+                checked={allChartsSelected ? true : (!anyChartSelected ? false : "indeterminate")}
+                onCheckedChange={(checked) => {
+                  if (checked) selectAll();
+                  else deselectAll();
+                }}
+              />
+              <Label
+                htmlFor="master-chart-select"
+                className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground cursor-pointer"
+              >
                 {t("report.chartsLabel")}
-              </p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={selectAll}
-                  className="flex items-center gap-1 text-[10px] text-primary hover:underline"
-                >
-                  <CheckSquare className="h-3 w-3" />
-                  {t("report.selectAll")}
-                </button>
-                <button
-                  type="button"
-                  onClick={deselectAll}
-                  className="flex items-center gap-1 text-[10px] text-muted-foreground hover:underline"
-                >
-                  <Square className="h-3 w-3" />
-                  {t("report.deselectAll")}
-                </button>
-              </div>
+              </Label>
             </div>
 
             <div className="space-y-2">
@@ -401,11 +391,10 @@ export default function ReportExportModal({
                 <label
                   key={key}
                   htmlFor={`chart-${key}`}
-                  className={`flex items-center gap-3 rounded-lg border p-2.5 cursor-pointer transition-colors ${
-                    chartSelection[key]
+                  className={`flex items-center gap-3 rounded-lg border p-2.5 cursor-pointer transition-colors ${chartSelection[key]
                       ? "border-primary/40 bg-primary/5"
                       : "border-border/30 hover:border-border"
-                  }`}
+                    }`}
                 >
                   <Checkbox
                     id={`chart-${key}`}
@@ -418,11 +407,11 @@ export default function ReportExportModal({
               ))}
             </div>
 
-            {!anyChartSelected && (
+            {/* {!anyChartSelected && (
               <p className="mt-2 text-[11px] text-amber-600 dark:text-amber-400">
                 {t("report.noChartsHint")}
               </p>
-            )}
+            )} */}
           </div>
 
           {/* Actions */}
