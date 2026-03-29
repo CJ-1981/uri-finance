@@ -236,7 +236,7 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
                       </span>
                     </TableCell>
                     <TableCell className="py-2">
-                      <span className="text-[11px] text-muted-foreground line-clamp-3 leading-snug">
+                      <span className="text-[11px] text-muted-foreground leading-snug">
                         {row.descriptions.join(", ") || <span className="opacity-30">—</span>}
                       </span>
                     </TableCell>

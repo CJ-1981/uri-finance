@@ -131,13 +131,29 @@ export default function ReportExportModal({
         let summaryImageWidth = 0;
         let summaryImageHeight = 0;
         const summaryEl = document.querySelector<HTMLElement>("[data-report-summary='true']");
+        
         if (summaryEl) {
-          // Replace input elements with spans for better text rendering during capture
+          // Replace input elements with divs for better text rendering during capture
           const replacements: Array<{
             parent: HTMLElement;
             input: HTMLInputElement | HTMLTextAreaElement;
-            span: HTMLSpanElement;
+            span: HTMLElement;
           }> = [];
+
+          // Expand specific columns for better rendering in PDF
+          const headers = summaryEl.querySelectorAll("th");
+          const descHeader = headers[2] as HTMLElement; // Description column
+          const commentHeader = summaryEl.querySelector("th:last-child") as HTMLElement; // Comment column
+          
+          const headerOriginals = new Map<HTMLElement, { minWidth: string; width: string }>();
+          
+          [descHeader, commentHeader].forEach(h => {
+            if (h) {
+              headerOriginals.set(h, { minWidth: h.style.minWidth, width: h.style.width });
+              h.style.minWidth = "220px";
+              h.style.width = "220px";
+            }
+          });
 
           const interactiveElements = summaryEl.querySelectorAll("input:not([type='checkbox']), textarea");
           interactiveElements.forEach((el) => {
@@ -156,6 +172,9 @@ export default function ReportExportModal({
             replacement.style.cssText = `
               display: block;
               width: 100%;
+              height: auto;
+              min-height: auto;
+              overflow: visible;
               white-space: pre-wrap;
               word-wrap: break-word;
               box-sizing: border-box;
@@ -164,11 +183,15 @@ export default function ReportExportModal({
               padding: ${htmlInput.tagName === "TEXTAREA" ? "4px 8px" : "1px 4px"};
             `;
 
-            // Table comments specific styling
+            // Table specific styling for comments/text fields inside cells
             if (htmlInput.closest("td")) {
               replacement.style.minWidth = "200px";
               replacement.style.fontSize = "11px";
               replacement.style.lineHeight = "1.5";
+            } else {
+              // For top summary title/desc
+              replacement.style.fontSize = htmlInput.tagName === "TEXTAREA" ? "11px" : "14px";
+              replacement.style.fontWeight = htmlInput.tagName === "TEXTAREA" ? "normal" : "600";
             }
 
             // Store for restoration
@@ -177,17 +200,8 @@ export default function ReportExportModal({
             parent.replaceChild(replacement, htmlInput);
           });
 
-          // Also expand the comment column header
-          const commentHeader = summaryEl.querySelector("th:last-child");
-          const headerOriginalMinWidth = commentHeader ? (commentHeader as HTMLElement).style.minWidth : "";
-          const headerOriginalWidth = commentHeader ? (commentHeader as HTMLElement).style.width : "";
-          if (commentHeader) {
-            (commentHeader as HTMLElement).style.minWidth = "200px";
-            (commentHeader as HTMLElement).style.width = "200px";
-          }
-
-          // Use wider capture width for summary table to accommodate comment column
-          const summaryCapture = await captureElementAtWidth(summaryEl, 900, "summary-table", false);
+          // Use wider capture width for summary table to accommodate expanded columns
+          const summaryCapture = await captureElementAtWidth(summaryEl, 1000, "summary-table", false);
           if (summaryCapture) {
             summaryImageData = summaryCapture.imageData;
             summaryImageWidth = summaryCapture.width;
@@ -199,10 +213,11 @@ export default function ReportExportModal({
             parent.replaceChild(input, span);
           });
 
-          if (commentHeader) {
-            (commentHeader as HTMLElement).style.minWidth = headerOriginalMinWidth;
-            (commentHeader as HTMLElement).style.width = headerOriginalWidth;
-          }
+          // Restore original header styles
+          headerOriginals.forEach((original, h) => {
+            h.style.minWidth = original.minWidth;
+            h.style.width = original.width;
+          });
         }
 
         const blob = await generatePdfReport({
