@@ -294,7 +294,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
   }
 
   return (
-    <div className="space-y-2 max-w-3xl mx-auto" data-testid="transaction-list">
+    <div className="space-y-2 w-full" data-testid="transaction-list">
       {/* Search */}
       <div className="relative px-1">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
