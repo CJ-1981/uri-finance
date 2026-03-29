@@ -243,7 +243,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const visibleCustomCols = customColumns.filter(col => !(isViewer && col.masked));
 
   const FormContent = (
-    <div ref={formRef} onKeyDown={handleFormKeyDown} className="space-y-4">
+    <div ref={formRef} onKeyDown={handleFormKeyDown} className="space-y-4 pb-16">
       {/* Type toggle */}
       <div className="flex gap-2">
         <button
@@ -580,9 +580,9 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
         </div>
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons - sticky to bottom */}
       {isOwn && (
-        <div className="flex flex-wrap sm:flex-nowrap gap-2">
+        <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm z-20 pt-4 pb-2 mt-6 flex flex-wrap sm:flex-nowrap gap-2 border-t border-border/20">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button type="button" variant="destructive" data-tab-stop className="h-12 px-4 w-full sm:w-auto" onPointerDown={(e) => isMobile && e.stopPropagation()}>
@@ -694,7 +694,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
         <Sheet open={open} onOpenChange={handleOpenChange}>
           <SheetContent
             side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] overflow-y-auto"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
               if (!isMobile) {
@@ -702,7 +702,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
               }
             }}
           >
-            <div className="px-6 pt-6 shrink-0">
+            <div className="px-6 pt-6 pb-6 shrink-0 border-b border-border/10">
               <SheetHeader className="p-0">
                 <div className="flex items-center justify-between">
                   <SheetTitle className="text-foreground">{t("tx.editTransaction")}</SheetTitle>
@@ -725,7 +725,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                 </SheetDescription>
               </SheetHeader>
             </div>
-            <div className="overflow-y-auto flex-1 px-6 pb-8 mt-4">
+            <div className="overflow-y-auto flex-1 min-h-0 px-6 pt-6 pb-8">
               {FormContent}
             </div>
           </SheetContent>

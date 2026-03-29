@@ -50,17 +50,19 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[60vh] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-foreground">
-            {t("tx.bulkEditTitle").replace("{n}", String(transactions.length))}
-          </SheetTitle>
-          <SheetDescription className="text-xs text-muted-foreground">
-            {t("tx.bulkEditDesc")}
-          </SheetDescription>
-        </SheetHeader>
+      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[60vh] flex flex-col">
+        <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
+          <SheetHeader>
+            <SheetTitle className="text-foreground">
+              {t("tx.bulkEditTitle").replace("{n}", String(transactions.length))}
+            </SheetTitle>
+            <SheetDescription className="text-xs text-muted-foreground">
+              {t("tx.bulkEditDesc")}
+            </SheetDescription>
+          </SheetHeader>
+        </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8 mt-4 space-y-4">
 
 
           <div className="space-y-2">
@@ -85,14 +87,16 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
             />
           </div>
 
-          <Button
-            onClick={handleSave}
-            disabled={saving || (!category && !type)}
-            className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
-          >
-            <Save className="h-4 w-4 mr-1" />
-            {saving ? t("tx.saving") : t("tx.bulkApply").replace("{n}", String(transactions.length))}
-          </Button>
+          <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm z-20 pt-4 pb-2 mt-6 border-t border-border/20">
+            <Button
+              onClick={handleSave}
+              disabled={saving || (!category && !type)}
+              className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12"
+            >
+              <Save className="h-4 w-4 mr-1" />
+              {saving ? t("tx.saving") : t("tx.bulkApply").replace("{n}", String(transactions.length))}
+            </Button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

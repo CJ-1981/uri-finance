@@ -254,7 +254,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const FormContent = (
     <>
-      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4">
+      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4 pb-16">
         {/* Type toggle */}
         <div className="flex gap-2">
           <Button
@@ -575,7 +575,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2">
+        {/* Action buttons - sticky to bottom */}
+        <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm z-20 pt-4 pb-2 mt-6 flex gap-2 border-t border-border/20">
           <Button
             type="button"
             data-tab-stop
@@ -639,7 +640,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           <DrawerContent
             className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
           >
-            <div className="px-6 pt-6">
+            <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
               <DrawerHeader className="p-0">
                 <DrawerTitle className="text-foreground">{t("tx.addTransaction")}</DrawerTitle>
                 <DrawerDescription className="sr-only">
@@ -661,7 +662,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           </SheetTrigger>
           <SheetContent
             side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh]"
+            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
             data-testid="add-transaction-form"
             onOpenAutoFocus={(e) => {
               e.preventDefault();
@@ -670,7 +671,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
               }
             }}
           >
-            <div className="px-6 pt-6">
+            <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
               <SheetHeader className="p-0">
                 <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
                 <SheetDescription className="sr-only">
@@ -678,7 +679,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 </SheetDescription>
               </SheetHeader>
             </div>
-            <div className="overflow-y-auto px-6 pb-8">
+            <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8">
               {FormContent}
             </div>
           </SheetContent>
