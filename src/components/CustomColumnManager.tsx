@@ -9,7 +9,7 @@ import { OPTION_COLOR_PALETTE, getOptionColor } from "@/lib/optionColors";
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -99,7 +99,23 @@ const SortableColumnItem = ({
   return (
     <div ref={setNodeRef} style={style} className="space-y-1">
       <div className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-sm text-foreground">
-        <button {...attributes} {...listeners} className="touch-none text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing shrink-0 mr-0.5">
+        <button 
+          {...attributes} 
+          {...listeners} 
+          onPointerDown={(e) => {
+            // This covers both mouse and touch in many modern browsers
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            listeners?.onMouseDown?.(e);
+          }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            listeners?.onTouchStart?.(e);
+          }}
+          className="touch-none text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing shrink-0 mr-0.5"
+        >
           <GripVertical className="h-4 w-4" />
         </button>
         {col.column_type === "numeric" ? (
@@ -263,7 +279,7 @@ const CustomColumnManager = ({ columns, onAdd, onDelete, onToggleMasked, onToggl
   const { t } = useI18n();
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 

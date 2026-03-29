@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -281,7 +281,22 @@ const SortableCategoryItem = ({
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-center gap-2 rounded-lg bg-muted/30 px-3 py-2.5">
-      <button {...attributes} {...listeners} className="touch-none text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing shrink-0">
+      <button 
+        {...attributes} 
+        {...listeners} 
+        onPointerDown={(e) => {
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          listeners?.onMouseDown?.(e);
+        }}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          listeners?.onTouchStart?.(e);
+        }}
+        className="touch-none text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing shrink-0"
+      >
         <GripVertical className="h-4 w-4" />
       </button>
       {editingCodeId === cat.id ? (
@@ -425,7 +440,7 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
   const hasSubCategories = categories.some((cat) => cat.parent_id !== null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
   );
 
