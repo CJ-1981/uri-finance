@@ -582,23 +582,35 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
       {/* Action buttons - sticky to bottom */}
       {isOwn && (
         <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm z-20 pt-4 pb-2 mt-6 flex flex-wrap sm:flex-nowrap gap-2 border-t border-border/20">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button type="button" variant="destructive" data-tab-stop className="h-12 px-4 w-full sm:w-auto" onPointerDown={(e) => isMobile && e.stopPropagation()}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="destructive" data-tab-stop className="h-12 px-4 flex-1 sm:flex-none" onPointerDown={(e) => isMobile && e.stopPropagation()}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("tx.deleteTitle")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("tx.deleteDesc")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("tx.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>{t("tx.delete")}</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              onPointerDown={(e) => isMobile && e.stopPropagation()}
+              className="h-12 px-4 flex-1 sm:flex-none gradient-violet font-semibold text-white hover:opacity-90 transition-opacity justify-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              <span>{t("tx.cancel") || "Cancel"}</span>
+            </Button>
+          </div>
 
           <Button
             type="button"
