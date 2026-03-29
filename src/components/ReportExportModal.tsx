@@ -243,12 +243,14 @@ export default function ReportExportModal({
           URL.revokeObjectURL(url);
         }, 100);
       } else {
+        const showDetails = localStorage.getItem("report-summary-show-details") === "true";
         const content = generateMarkdownReport({
           projectName,
           periodLabel,
           summaryData,
           chartCaptures,
           generatedAt,
+          showDetails,
         });
         const blob = new Blob([content], { type: "text/markdown" });
         const url = URL.createObjectURL(blob);

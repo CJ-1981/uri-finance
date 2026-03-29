@@ -8,6 +8,7 @@ interface MarkdownReportConfig {
   summaryData: ReportSummaryByCurrency[];
   chartCaptures: ChartCaptureResult[];
   generatedAt: Date;
+  showDetails?: boolean;
 }
 
 function formatAmount(amount: number, currency: string): string {
@@ -17,14 +18,32 @@ function formatAmount(amount: number, currency: string): string {
   })}`;
 }
 
-function buildSummaryTable(group: ReportSummaryByCurrency): string {
+function buildSummaryTable(group: ReportSummaryByCurrency, showDetails = false): string {
   const header = `| Code | Category | Income (${group.currency}) | Expense (${group.currency}) | Net (${group.currency}) | % |`;
   const sep = `| --- | --- | ---: | ---: | ---: | ---: |`;
 
-  const rows = group.rows.map((row) => {
+  const rows: string[] = [];
+  
+  for (const row of group.rows) {
     const emoji = row.categoryEmoji ? `${row.categoryEmoji} ` : "";
-    return `| ${row.categoryCode || "-"} | ${emoji}${row.categoryName} | ${row.income.toLocaleString("en-US", { minimumFractionDigits: 2 })} | ${row.expense.toLocaleString("en-US", { minimumFractionDigits: 2 })} | ${row.net.toLocaleString("en-US", { minimumFractionDigits: 2 })} | ${row.percentage.toFixed(1)}% |`;
-  });
+    const categoryLabel = showDetails ? `**${emoji}${row.categoryName}**` : `${emoji}${row.categoryName}`;
+    
+    // Header row for the category
+    rows.push(`| ${row.categoryCode || "-"} | ${categoryLabel} | ${row.income.toLocaleString("en-US", { minimumFractionDigits: 2 })} | ${row.expense.toLocaleString("en-US", { minimumFractionDigits: 2 })} | ${row.net.toLocaleString("en-US", { minimumFractionDigits: 2 })} | ${row.percentage.toFixed(1)}% |`);
+    
+    // Detail rows if requested
+    if (showDetails && row.transactions.length > 0) {
+      for (const tx of row.transactions) {
+        const date = tx.transaction_date.slice(5); // MM-DD
+        const desc = tx.description || "-";
+        const income = tx.type === "income" ? Number(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2 }) : "-";
+        const expense = tx.type === "expense" ? Number(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2 }) : "-";
+        
+        // Use non-breaking space and italics for detail rows
+        rows.push(`| | &nbsp;&nbsp;&nbsp;&nbsp;*${date}* _${desc}_ | ${income} | ${expense} | | |`);
+      }
+    }
+  }
 
   const totalsRow = `| | **Total** | **${group.totalIncome.toLocaleString("en-US", { minimumFractionDigits: 2 })}** | **${group.totalExpense.toLocaleString("en-US", { minimumFractionDigits: 2 })}** | **${group.totalNet.toLocaleString("en-US", { minimumFractionDigits: 2 })}** | |`;
 
@@ -32,7 +51,7 @@ function buildSummaryTable(group: ReportSummaryByCurrency): string {
 }
 
 export function generateMarkdownReport(config: MarkdownReportConfig): string {
-  const { projectName, periodLabel, summaryData, chartCaptures, generatedAt } =
+  const { projectName, periodLabel, summaryData, chartCaptures, generatedAt, showDetails = false } =
     config;
 
   const lines: string[] = [];
@@ -51,7 +70,7 @@ export function generateMarkdownReport(config: MarkdownReportConfig): string {
       lines.push(`### ${group.currency}`);
       lines.push("");
     }
-    lines.push(buildSummaryTable(group));
+    lines.push(buildSummaryTable(group, showDetails));
     lines.push("");
   }
 
