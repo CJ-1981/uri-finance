@@ -12,7 +12,10 @@ import {
   eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval,
   subMonths, subDays, endOfDay, parseISO, isWithinInterval,
 } from "date-fns";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
 
 interface Props {
   transactions: Transaction[];
@@ -176,7 +179,31 @@ function useHiddenSeries() {
 
 const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer, projectCurrency = "USD" }: Props) => {
   const { t } = useI18n();
-  const fmt = (value: number) => `${projectCurrency} ${value.toLocaleString()}`;
+  const [showOtherCurrencies, setShowOtherCurrencies] = useState(() => 
+    localStorage.getItem("chart-show-other-currencies") === "true"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("chart-show-other-currencies", String(showOtherCurrencies));
+  }, [showOtherCurrencies]);
+
+  const currencies = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach(tx => set.add(tx.currency || projectCurrency));
+    const list = Array.from(set).sort();
+    // Move project currency to the front
+    const idx = list.indexOf(projectCurrency);
+    if (idx > -1) {
+      list.splice(idx, 1);
+      list.unshift(projectCurrency);
+    }
+    return list;
+  }, [transactions, projectCurrency]);
+
+  const activeCurrencies = showOtherCurrencies ? currencies : [projectCurrency];
+
+  const fmt = (value: number, currency: string = projectCurrency) => 
+    `${currency} ${value.toLocaleString()}`;
 
   const visibleColumns = useMemo(() =>
     isViewer ? customColumns.filter((col) => !col.masked) : customColumns,
@@ -210,13 +237,14 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
 
   const buckets = useMemo(() => getTimeBuckets(period, customRange), [period, customRange]);
 
-  const buildGroupedData = (groupBy: GroupKey) => {
+  const buildGroupedData = (groupBy: GroupKey, currency: string) => {
+    const currencyTxs = transactions.filter((tx) => (tx.currency || projectCurrency) === currency);
     const allGroups = new Set<string>();
-    transactions.forEach((tx) => allGroups.add(getGroupValue(tx, groupBy, t)));
+    currencyTxs.forEach((tx) => allGroups.add(getGroupValue(tx, groupBy, t)));
     const groups = Array.from(allGroups).sort();
 
     const data = buckets.map((bucket) => {
-      const bucketTxs = transactions.filter((tx) => {
+      const bucketTxs = currencyTxs.filter((tx) => {
         const d = parseISO(tx.transaction_date);
         return isWithinInterval(d, { start: bucket.start, end: bucket.end });
       });
@@ -237,34 +265,50 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
     return { data, series };
   };
 
-  const trendData = useMemo(() => buildGroupedData(trendGroupBy), [transactions, trendGroupBy, buckets, t]);
-  const cumulativeRaw = useMemo(() => buildGroupedData(cumulativeGroupBy), [transactions, cumulativeGroupBy, buckets, t]);
-
-  const cumulativeData = useMemo(() => {
-    const cumulative: Record<string, number> = {};
-    const data = cumulativeRaw.data.map((row) => {
-      const cumRow: Record<string, string | number> = { name: row.name };
-      for (const s of cumulativeRaw.series) {
-        cumulative[s.key] = (cumulative[s.key] || 0) + Number(row[s.key] || 0);
-        cumRow[s.key] = cumulative[s.key];
-      }
-      return cumRow;
+  const pieDataByCurrency = useMemo(() => {
+    const result: Record<string, { name: string; value: number }[]> = {};
+    activeCurrencies.forEach(cur => {
+      const map: Record<string, number> = {};
+      transactions
+        .filter(tx => (tx.currency || projectCurrency) === cur)
+        .forEach((tx) => {
+          const g = getGroupValue(tx, pieGroupBy, t);
+          map[g] = (map[g] || 0) + Number(tx.amount);
+        });
+      result[cur] = Object.entries(map)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
     });
-    return { data, series: cumulativeRaw.series };
-  }, [cumulativeRaw]);
+    return result;
+  }, [transactions, activeCurrencies, pieGroupBy, projectCurrency, t]);
 
-  const pieData = useMemo(() => {
-    const map: Record<string, number> = {};
-    transactions.forEach((tx) => {
-      const g = getGroupValue(tx, pieGroupBy, t);
-      map[g] = (map[g] || 0) + Number(tx.amount);
+  const trendDataByCurrency = useMemo(() => {
+    const result: Record<string, ReturnType<typeof buildGroupedData>> = {};
+    activeCurrencies.forEach(cur => {
+      result[cur] = buildGroupedData(trendGroupBy, cur);
     });
-    return Object.entries(map)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value);
-  }, [transactions, pieGroupBy, t]);
+    return result;
+  }, [transactions, activeCurrencies, trendGroupBy, buckets, t]);
 
-  const filteredPieData = useMemo(() => pieData.filter((d) => !pieHidden.hidden.has(d.name)), [pieData, pieHidden.hidden]);
+  const cumulativeDataByCurrency = useMemo(() => {
+    const result: Record<string, { data: Record<string, any>[], series: any[] }> = {};
+    activeCurrencies.forEach(cur => {
+      const raw = buildGroupedData(cumulativeGroupBy, cur);
+      const cumulative: Record<string, number> = {};
+      const data = raw.data.map((row) => {
+        const cumRow: Record<string, string | number> = { name: row.name };
+        for (const s of raw.series) {
+          cumulative[s.key] = (cumulative[s.key] || 0) + Number(row[s.key] || 0);
+          cumRow[s.key] = cumulative[s.key];
+        }
+        return cumRow;
+      });
+      result[cur] = { data, series: raw.series };
+    });
+    return result;
+  }, [transactions, activeCurrencies, cumulativeGroupBy, buckets, t]);
+
+  const hasOtherCurrencies = currencies.length > 1;
 
   if (transactions.length === 0) {
     return (
@@ -276,31 +320,74 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
 
   return (
     <div className="space-y-6" data-testid="finance-charts">
+      {/* Settings row */}
+      {hasOtherCurrencies && (
+        <div className="flex items-center justify-end px-1">
+          <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20">
+            <Switch
+              id="show-other-currency"
+              checked={showOtherCurrencies}
+              onCheckedChange={setShowOtherCurrencies}
+              className="h-4 w-8"
+            />
+            <Label htmlFor="show-other-currency" className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider cursor-pointer">
+              {t("chart.showOtherCurrency")}
+            </Label>
+          </div>
+        </div>
+      )}
+
       {/* Pie Chart */}
-      {pieData.length > 0 && (
+      {activeCurrencies.some(cur => (pieDataByCurrency[cur] || []).length > 0) && (
         <div className="glass-card p-4" data-chart-type="pie">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-medium text-muted-foreground">{t("chart.byCategory")}</h3>
             <GroupSelector options={groupOptions} value={pieGroupBy} onChange={handlePieGroup} />
           </div>
-          {/* Desktop: Chart left, Legend right | Mobile: Stacked */}
-          <div className="flex flex-col md:flex-row md:items-center md:gap-6">
-            <div className="flex-1 w-full">
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={filteredPieData} cx="50%" cy="50%" innerRadius={70} outerRadius={120} dataKey="value" strokeWidth={0}>
-                    {filteredPieData.map((entry) => {
-                      const origIndex = pieData.findIndex((d) => d.name === entry.name);
-                      return <Cell key={entry.name} fill={COLORS[origIndex % COLORS.length]} />;
-                    })}
-                  </Pie>
-                  <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="md:w-48 w-full">
-              <ClickablePieLegend data={pieData} hidden={pieHidden.hidden} onToggle={pieHidden.toggle} fmt={fmt} />
-            </div>
+          <div className="space-y-8">
+            {activeCurrencies.map(cur => {
+              const pieData = pieDataByCurrency[cur] || [];
+              if (pieData.length === 0) return null;
+              const filteredPieData = pieData.filter((d) => !pieHidden.hidden.has(d.name));
+              
+              return (
+                <div key={cur}>
+                  {activeCurrencies.length > 1 && (
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 border-l-2 border-primary pl-2">
+                      {cur}
+                    </div>
+                  )}
+                  {/* Desktop: Chart left, Legend right | Mobile: Stacked */}
+                  <div className="flex flex-col md:flex-row md:items-center md:gap-6">
+                    <div className="flex-1 w-full">
+                      <ResponsiveContainer width="100%" height={280}>
+                        <PieChart>
+                          <Pie 
+                            data={filteredPieData} 
+                            cx="50%" 
+                            cy="50%" 
+                            innerRadius={70} 
+                            outerRadius={120} 
+                            dataKey="value" 
+                            strokeWidth={0}
+                            animationDuration={800}
+                          >
+                            {filteredPieData.map((entry) => {
+                              const origIndex = pieData.findIndex((d) => d.name === entry.name);
+                              return <Cell key={entry.name} fill={COLORS[origIndex % COLORS.length]} />;
+                            })}
+                          </Pie>
+                          <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value, cur), name]} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="md:w-48 w-full">
+                      <ClickablePieLegend data={pieData} hidden={pieHidden.hidden} onToggle={pieHidden.toggle} fmt={(v) => fmt(v, cur)} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -311,25 +398,41 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
           <h3 className="text-sm font-medium text-muted-foreground">{t("chart.trend")}</h3>
           <GroupSelector options={groupOptions} value={trendGroupBy} onChange={handleTrendGroup} />
         </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <AreaChart data={trendData.data}>
-            <defs>
-              {trendData.series.map((s) => (
-                <linearGradient key={s.key} id={`grad-trend-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={s.color} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
-                </linearGradient>
-              ))}
-            </defs>
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
-            <YAxis hide />
-            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
-            {trendData.series.filter((s) => !trendHidden.hidden.has(s.key)).map((s) => (
-              <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.color} strokeWidth={2} fill={`url(#grad-trend-${s.key})`} name={s.key} />
-            ))}
-          </AreaChart>
-        </ResponsiveContainer>
-        <ClickableLegend series={trendData.series} hidden={trendHidden.hidden} onToggle={trendHidden.toggle} />
+        <div className="space-y-8">
+          {activeCurrencies.map(cur => {
+            const trendData = trendDataByCurrency[cur];
+            if (!trendData || trendData.series.length === 0) return null;
+            
+            return (
+              <div key={cur}>
+                {activeCurrencies.length > 1 && (
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 border-l-2 border-primary pl-2">
+                    {cur}
+                  </div>
+                )}
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={trendData.data}>
+                    <defs>
+                      {trendData.series.map((s) => (
+                        <linearGradient key={s.key} id={`grad-trend-${cur}-${s.key}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={s.color} stopOpacity={0.3} />
+                          <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
+                        </linearGradient>
+                      ))}
+                    </defs>
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
+                    <YAxis hide />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value, cur), name]} />
+                    {trendData.series.filter((s) => !trendHidden.hidden.has(s.key)).map((s) => (
+                      <Area key={s.key} type="monotone" dataKey={s.key} stroke={s.color} strokeWidth={2} fill={`url(#grad-trend-${cur}-${s.key})`} name={s.key} />
+                    ))}
+                  </AreaChart>
+                </ResponsiveContainer>
+                <ClickableLegend series={trendData.series} hidden={trendHidden.hidden} onToggle={trendHidden.toggle} />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Bar Chart - Cumulative */}
@@ -338,19 +441,36 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
           <h3 className="text-sm font-medium text-muted-foreground">{t("chart.cumulative")}</h3>
           <GroupSelector options={groupOptions} value={cumulativeGroupBy} onChange={handleCumulativeGroup} />
         </div>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={cumulativeData.data} barGap={2}>
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
-            <YAxis hide />
-            <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value), name]} />
-            {cumulativeData.series.filter((s) => !cumulativeHidden.hidden.has(s.key)).map((s) => (
-              <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} name={s.key} />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-        <ClickableLegend series={cumulativeData.series} hidden={cumulativeHidden.hidden} onToggle={cumulativeHidden.toggle} />
+        <div className="space-y-8">
+          {activeCurrencies.map(cur => {
+            const cumulativeData = cumulativeDataByCurrency[cur];
+            if (!cumulativeData || cumulativeData.series.length === 0) return null;
+
+            return (
+              <div key={cur}>
+                {activeCurrencies.length > 1 && (
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-3 border-l-2 border-primary pl-2">
+                    {cur}
+                  </div>
+                )}
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={cumulativeData.data} barGap={2}>
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "hsl(215, 12%, 50%)", fontSize: 11 }} />
+                    <YAxis hide />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={ITEM_STYLE} labelStyle={ITEM_STYLE} formatter={(value: number, name: string) => [fmt(value, cur), name]} />
+                    {cumulativeData.series.filter((s) => !cumulativeHidden.hidden.has(s.key)).map((s) => (
+                      <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[4, 4, 0, 0]} name={s.key} />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+                <ClickableLegend series={cumulativeData.series} hidden={cumulativeHidden.hidden} onToggle={cumulativeHidden.toggle} />
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
+
   );
 };
 

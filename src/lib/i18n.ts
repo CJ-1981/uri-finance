@@ -276,6 +276,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "chart.expenseByCategory": "By Category",
     "chart.byCategory": "By Category",
     "chart.addToSee": "Add transactions to see charts",
+    "chart.showOtherCurrency": "Show Other Currencies",
 
     // Period
     "period.today": "Today",
@@ -543,6 +544,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "report.progressDone": "Report generated successfully",
     "report.successMsg": "Report exported:",
     "report.exportFailed": "Failed to generate report. Please try again.",
+    "report.showDetails": "Show Details",
   },
   ko: {
     // Auth
@@ -819,6 +821,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "chart.expenseByCategory": "카테고리별",
     "chart.byCategory": "카테고리별",
     "chart.addToSee": "차트를 보려면 거래를 추가하세요",
+    "chart.showOtherCurrency": "다른 통화 보기",
 
     // Period
     "period.today": "오늘",
@@ -1086,5 +1089,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     "report.progressDone": "보고서가 생성되었습니다",
     "report.successMsg": "보고서 내보내기 완료:",
     "report.exportFailed": "보고서 생성에 실패했습니다. 다시 시도해주세요.",
+    "report.showDetails": "상세 보기",
   },
 };

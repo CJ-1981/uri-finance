@@ -1,5 +1,8 @@
-// SPEC-REPORT-001: ReportSummaryTable component – spreadsheet-like category breakdown
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, Fragment } from "react";
+import { Trash2, ChevronRight, ChevronDown } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Transaction } from "@/hooks/useTransactions";
 import {
   Table,
   TableBody,
@@ -21,7 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
 
 interface Props {
   summaryData: ReportSummaryByCurrency[];
@@ -60,6 +62,13 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
   const [summaryDesc, setSummaryDesc] = useState(() => 
     localStorage.getItem(`report-summary-desc-${locale}`) || t("report.summaryDesc")
   );
+  const [showDetails, setShowDetails] = useState(() => 
+    localStorage.getItem("report-summary-show-details") === "true"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("report-summary-show-details", String(showDetails));
+  }, [showDetails]);
 
   // Update when locale changes if not customized
   useEffect(() => {
@@ -159,18 +168,31 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
               placeholder={t("report.summaryDesc")}
             />
           </div>
-          {canReset && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowClearDialog(true)}
-              className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive whitespace-nowrap"
-              data-html2canvas-ignore="true"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              {t("report.clearComments")}
-            </Button>
-          )}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20">
+              <Switch
+                id="show-details"
+                checked={showDetails}
+                onCheckedChange={setShowDetails}
+                className="h-4 w-8"
+              />
+              <Label htmlFor="show-details" className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider cursor-pointer">
+                {t("report.showDetails")}
+              </Label>
+            </div>
+            {canReset && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowClearDialog(true)}
+                className="h-7 px-2 text-[11px] text-muted-foreground hover:text-destructive whitespace-nowrap"
+                data-html2canvas-ignore="true"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                {t("report.clearComments")}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -218,65 +240,92 @@ export default function ReportSummaryTable({ summaryData, projectCurrency }: Pro
               </TableHeader>
               <TableBody>
                 {group.rows.map((row) => (
-                  <TableRow
-                    key={`${row.currency}-${row.categoryName}`}
-                    className="border-border/20 hover:bg-muted/10 transition-colors"
-                  >
-                    <TableCell className="font-mono text-[11px] text-muted-foreground py-2">
-                      {row.categoryCode || (
-                        <span className="opacity-30">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <span className="text-[12px] font-medium text-foreground">
-                        {row.categoryEmoji && (
-                          <span className="mr-1">{row.categoryEmoji}</span>
+                  <Fragment key={`${row.currency}-${row.categoryName}`}>
+                    <TableRow
+                      className="border-border/20 hover:bg-muted/10 transition-colors"
+                    >
+                      <TableCell className="font-mono text-[11px] text-muted-foreground py-2">
+                        {row.categoryCode || (
+                          <span className="opacity-30">—</span>
                         )}
-                        {row.categoryName}
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <span className="text-[11px] text-muted-foreground leading-snug">
-                        {row.descriptions.join(", ") || <span className="opacity-30">—</span>}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right py-2">
-                      <span className="text-[12px] text-income font-medium">
-                        {row.income > 0 ? formatAmount(row.income) : "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right py-2">
-                      <span className="text-[12px] text-expense font-medium">
-                        {row.expense > 0 ? formatAmount(row.expense) : "—"}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right py-2 text-[12px]">
-                      <NetCell value={row.net} />
-                    </TableCell>
-                    <TableCell className="text-right py-2">
-                      <span className="text-[11px] text-muted-foreground">
-                        {row.percentage.toFixed(1)}%
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <textarea
-                        value={comments[getCommentKey(row.currency, row.categoryName)] || ""}
-                        onChange={(e) => {
-                          e.target.style.height = 'auto';
-                          e.target.style.height = e.target.scrollHeight + 'px';
-                          updateComment(getCommentKey(row.currency, row.categoryName), e.target.value);
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.height = 'auto';
-                          e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
-                        placeholder={t("report.addComment") || "Add comment..."}
-                        rows={1}
-                        style={{ overflow: "hidden", resize: "none" }}
-                        className="w-full px-2 py-1.5 min-h-[28px] text-[11px] border border-border/30 rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/50 align-top"
-                      />
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <span className="text-[12px] font-medium text-foreground">
+                          {row.categoryEmoji && (
+                            <span className="mr-1">{row.categoryEmoji}</span>
+                          )}
+                          {row.categoryName}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <span className="text-[11px] text-muted-foreground leading-snug">
+                          {row.descriptions.join(", ") || <span className="opacity-30">—</span>}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right py-2">
+                        <span className="text-[12px] text-income font-medium">
+                          {row.income > 0 ? formatAmount(row.income) : "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right py-2">
+                        <span className="text-[12px] text-expense font-medium">
+                          {row.expense > 0 ? formatAmount(row.expense) : "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right py-2 text-[12px]">
+                        <NetCell value={row.net} />
+                      </TableCell>
+                      <TableCell className="text-right py-2">
+                        <span className="text-[11px] text-muted-foreground">
+                          {row.percentage.toFixed(1)}%
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <textarea
+                          value={comments[getCommentKey(row.currency, row.categoryName)] || ""}
+                          onChange={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                            updateComment(getCommentKey(row.currency, row.categoryName), e.target.value);
+                          }}
+                          onFocus={(e) => {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                          }}
+                          placeholder={t("report.addComment") || "Add comment..."}
+                          rows={1}
+                          style={{ overflow: "hidden", resize: "none" }}
+                          className="w-full px-2 py-1.5 min-h-[28px] text-[11px] border border-border/30 rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary/50 placeholder:text-muted-foreground/50 align-top"
+                        />
+                      </TableCell>
+                    </TableRow>
+                    {showDetails && row.transactions.map((tx) => (
+                      <TableRow
+                        key={tx.id}
+                        className="border-none bg-muted/5 hover:bg-muted/10 transition-colors"
+                      >
+                        <TableCell className="py-1 font-mono text-[9px] text-muted-foreground/50">
+                          {tx.transaction_date.slice(5)}
+                        </TableCell>
+                        <TableCell className="py-1" colSpan={2}>
+                          <span className="text-[10px] text-muted-foreground leading-tight italic ml-4 block">
+                            {tx.description || <span className="opacity-30">—</span>}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right py-1">
+                          <span className="text-[10px] text-income/70">
+                            {tx.type === "income" ? formatAmount(Number(tx.amount)) : "—"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right py-1">
+                          <span className="text-[10px] text-expense/70">
+                            {tx.type === "expense" ? formatAmount(Number(tx.amount)) : "—"}
+                          </span>
+                        </TableCell>
+                        <TableCell colSpan={3} />
+                      </TableRow>
+                    ))}
+                  </Fragment>
                 ))}
 
                 {/* Totals row */}

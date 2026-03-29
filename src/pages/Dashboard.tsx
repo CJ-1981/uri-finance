@@ -168,12 +168,6 @@ const Dashboard = () => {
     [currencyTotals, projectCurrency]
   );
 
-  // Filter chart transactions to project currency only
-  const chartTransactions = useMemo(
-    () => filtered.filter((tx) => (tx.currency || projectCurrency) === projectCurrency),
-    [filtered, projectCurrency]
-  );
-
   // Report summary data (all currencies, uses all filtered transactions)
   const reportSummaryData = useReportData({
     transactions: filtered,
@@ -544,7 +538,7 @@ const Dashboard = () => {
 
                 {/* Charts */}
                 <FinanceCharts
-                  transactions={chartTransactions}
+                  transactions={filtered}
                   customColumns={customColumns}
                   period={period}
                   customRange={customRange}
@@ -563,7 +557,7 @@ const Dashboard = () => {
             )}
 
             {/* FAB - hidden for viewers */}
-            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} externalOpen={addTxOpen} onExternalOpenChange={setAddTxOpen} onUploadFile={handleUploadFileForTransaction} currentProjectId={activeProject?.id} />}
+            {!isViewer && <AddTransactionSheet categories={categories} onAdd={addTransaction} customColumns={customColumns} transactions={transactions} projectCurrency={projectCurrency} externalOpen={addTxOpen} onExternalOpenChange={setAddTxOpen} onUploadFile={handleUploadFileForTransaction} />}
 
             {/* Detail sheet (also used for multi-edit with prev/next) */}
             <TransactionDetailSheet

@@ -13,6 +13,7 @@ export interface ReportSummaryRow {
   net: number;
   percentage: number;
   currency: string;
+  transactions: Transaction[];
 }
 
 export interface ReportSummaryByCurrency {
@@ -41,7 +42,7 @@ export function useReportData({
       {
         byCat: Record<
           string,
-          { income: number; expense: number; catObj: Category | null; descriptions: Set<string> }
+          { income: number; expense: number; catObj: Category | null; descriptions: Set<string>; transactions: Transaction[] }
         >;
         totalIncome: number;
         totalExpense: number;
@@ -57,8 +58,10 @@ export function useReportData({
 
       if (!currGroup.byCat[tx.category]) {
         const catObj = categories.find((c) => c.name === tx.category) || null;
-        currGroup.byCat[tx.category] = { income: 0, expense: 0, catObj, descriptions: new Set() };
+        currGroup.byCat[tx.category] = { income: 0, expense: 0, catObj, descriptions: new Set(), transactions: [] };
       }
+      
+      currGroup.byCat[tx.category].transactions.push(tx);
 
       const desc = tx.description?.trim();
       if (desc) {
@@ -87,7 +90,7 @@ export function useReportData({
       const totalAbsolute = totalIncome + totalExpense;
 
       const rows: ReportSummaryRow[] = Object.entries(byCat)
-        .map(([catName, { income, expense, catObj, descriptions }]) => {
+        .map(([catName, { income, expense, catObj, descriptions, transactions }]) => {
           const net = income - expense;
           const catTotal = income + expense;
           const percentage =
@@ -105,6 +108,9 @@ export function useReportData({
             net,
             percentage,
             currency,
+            transactions: transactions.sort((a, b) => 
+              new Date(a.transaction_date).getTime() - new Date(b.transaction_date).getTime()
+            ),
           };
         })
         .sort((a, b) => {
