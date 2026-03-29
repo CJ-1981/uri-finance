@@ -203,49 +203,51 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
         </div>
       </div>
 
-      {summaryData.map((group) => (
-        <div key={group.currency}>
-          {/* Currency group header (only shown when multiple currencies) */}
-          {summaryData.length > 1 && (
-            <div className="px-4 py-2 bg-muted/20 border-b border-border/20">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {group.currency}
-              </span>
-            </div>
-          )}
+      {/* Consolidated Table for all currencies to ensure alignment */}
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/30 hover:bg-transparent">
+              <TableHead className="text-[11px] font-semibold text-muted-foreground w-16 py-2.5">
+                {t("report.code")}
+              </TableHead>
+              <TableHead className="text-[11px] font-semibold text-muted-foreground min-w-[120px] py-2.5">
+                {t("report.category")}
+              </TableHead>
+              <TableHead className="text-[11px] font-semibold text-muted-foreground min-w-[150px] py-2.5">
+                {t("report.description")}
+              </TableHead>
+              <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5">
+                {t("report.income")}{summaryData.length === 1 ? ` (${summaryData[0].currency})` : ""}
+              </TableHead>
+              <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5">
+                {t("report.expense")}{summaryData.length === 1 ? ` (${summaryData[0].currency})` : ""}
+              </TableHead>
+              <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5">
+                {t("report.net")}{summaryData.length === 1 ? ` (${summaryData[0].currency})` : ""}
+              </TableHead>
+              <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5 w-14">
+                {t("report.percent")}
+              </TableHead>
+              <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 min-w-[150px]">
+                {t("report.comment")}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {summaryData.map((group) => (
+              <Fragment key={group.currency}>
+                {/* Currency group separator row (only shown when multiple currencies) */}
+                {summaryData.length > 1 && (
+                  <TableRow className="bg-muted/30 border-b border-border/20 hover:bg-muted/30">
+                    <TableCell colSpan={8} className="py-2.5 px-4">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-foreground/70">
+                        {group.currency}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                )}
 
-          {/* Scrollable table */}
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/30 hover:bg-transparent">
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground w-16 py-2.5">
-                    {t("report.code")}
-                  </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground min-w-[120px] py-2.5">
-                    {t("report.category")}
-                  </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground min-w-[150px] py-2.5">
-                    {t("report.description")}
-                  </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5">
-                    {t("report.income")} ({group.currency})
-                  </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5">
-                    {t("report.expense")} ({group.currency})
-                  </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5">
-                    {t("report.net")} ({group.currency})
-                  </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground text-right py-2.5 w-14">
-                    {t("report.percent")}
-                  </TableHead>
-                  <TableHead className="text-[11px] font-semibold text-muted-foreground py-2.5 min-w-[150px]">
-                    {t("report.comment")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
                 {group.rows.map((row) => (
                   <Fragment key={`${row.currency}-${row.categoryName}`}>
                     <TableRow
@@ -384,11 +386,11 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
                   <TableCell className="py-2" />
                   <TableCell className="py-2" />
                 </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      ))}
+              </Fragment>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Clear Comments Confirmation Dialog */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
