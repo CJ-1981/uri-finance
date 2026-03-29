@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -198,6 +197,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const formRef = useRef<HTMLFormElement>(null);
 
+  const sheetRef = useRef<HTMLDivElement>(null);
+
   const handleFormKeyDown = useCallback((e: React.KeyboardEvent) => {
     // Ctrl+Enter or Cmd+Enter → submit
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
@@ -221,11 +222,11 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     // Don't intercept Tab when custom category dropdown is open
     if (document.querySelector('[data-category-dropdown-open="true"]')) return;
 
-    const form = formRef.current;
-    if (!form) return;
+    const container = sheetRef.current;
+    if (!container) return;
 
     const stops = Array.from(
-      form.querySelectorAll<HTMLElement>('[data-tab-stop]')
+      container.querySelectorAll<HTMLElement>('[data-tab-stop]')
     ).filter((el) => el.offsetParent !== null && !el.hasAttribute('disabled'));
 
     if (stops.length === 0) return;
@@ -241,7 +242,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       const next = currentIdx < 0 || currentIdx >= stops.length - 1 ? 0 : currentIdx + 1;
       stops[next].focus();
     }
-  }, []);
+  }, [handleAddAndContinue]);
 
   // Handle sheet open to blur trigger button
   const handleOpenChange = useCallback((newOpen: boolean) => {
@@ -254,7 +255,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   const FormContent = (
     <>
-      <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleFormKeyDown} className="mt-4 space-y-4 pb-16">
+      <form ref={formRef} onSubmit={handleSubmit} className="mt-4 space-y-4 pb-16">
         {/* Type toggle */}
         <div className="flex gap-2">
           <Button
@@ -576,7 +577,17 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
         {/* Action buttons */}
         {/* Action buttons - sticky to bottom */}
-        <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm z-20 pt-4 pb-2 mt-6 flex gap-2 border-t border-border/20">
+        <div className="sticky bottom-0 bg-card/95 backdrop-blur-sm z-20 pt-4 pb-2 mt-6 flex flex-wrap sm:flex-nowrap gap-2 border-t border-border/20">
+          <Button
+            type="button"
+            data-tab-stop
+            onClick={() => setOpen(false)}
+            onPointerDown={(e) => isMobile && e.stopPropagation()}
+            className="w-full sm:w-auto gradient-violet font-semibold text-white hover:opacity-90 transition-opacity h-12 justify-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            <span>{t("tx.cancel") || "Cancel"}</span>
+          </Button>
           <Button
             type="button"
             data-tab-stop
@@ -630,61 +641,47 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
   return (
     <>
-      {isMobile ? (
-        <Drawer open={open} onOpenChange={handleOpenChange} snapPoints={["400px", "85vh", 1]}>
-          <DrawerTrigger asChild>
-            <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
-              <Plus className="h-6 w-6" />
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
+      <Sheet open={open} onOpenChange={handleOpenChange}>
+        <SheetTrigger asChild>
+          <Button
+            ref={triggerRef}
+            size="icon"
+            className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30"
+            aria-label={t("tx.addTransaction") || "Add transaction"}
           >
-            <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
-              <DrawerHeader className="p-0">
-                <DrawerTitle className="text-foreground">{t("tx.addTransaction")}</DrawerTitle>
-                <DrawerDescription className="sr-only">
-                  Add a new transaction to track your income or expenses.
-                </DrawerDescription>
-              </DrawerHeader>
-            </div>
-            <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8">
-              {FormContent}
-            </div>
-          </DrawerContent>
-        </Drawer>
-      ) : (
-        <Sheet open={open} onOpenChange={handleOpenChange}>
-          <SheetTrigger asChild>
-            <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
-              <Plus className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="bottom"
-            className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh] sm:max-h-[95vh] flex flex-col"
-            data-testid="add-transaction-form"
-            onOpenAutoFocus={(e) => {
+            <Plus className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent
+          ref={sheetRef}
+          onKeyDown={handleFormKeyDown}
+          side="bottom"
+          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
+          data-testid="add-transaction-form"
+          tabIndex={-1}
+          onOpenAutoFocus={(e) => {
+            if (!isMobile && amountInputRef.current) {
               e.preventDefault();
-              if (!isMobile) {
-                amountInputRef.current?.focus();
-              }
-            }}
-          >
-            <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
-              <SheetHeader className="p-0">
-                <SheetTitle className="text-foreground">{t("tx.addTransaction")}</SheetTitle>
-                <SheetDescription className="sr-only">
-                  Add a new transaction to track your income or expenses.
-                </SheetDescription>
-              </SheetHeader>
-            </div>
-            <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8">
-              {FormContent}
-            </div>
-          </SheetContent>
-        </Sheet>
-      )}
+              amountInputRef.current.focus();
+            } else if (isMobile && sheetRef.current) {
+              e.preventDefault();
+              sheetRef.current.focus();
+            }
+          }}
+        >
+          <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
+            <SheetHeader className="p-0 text-left sm:text-left">
+              <SheetTitle className="text-foreground text-xl">{t("tx.addTransaction")}</SheetTitle>
+              <SheetDescription className="sr-only">
+                {t("tx.addTransactionDesc")}
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8 overscroll-contain">
+            {FormContent}
+          </div>
+        </SheetContent>
+      </Sheet>
       <FilePreviewDialog
         file={previewFile}
         open={previewOpen}
