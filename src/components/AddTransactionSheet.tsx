@@ -630,7 +630,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   return (
     <>
       {isMobile ? (
-        <Drawer open={open} onOpenChange={handleOpenChange}>
+        <Drawer open={open} onOpenChange={handleOpenChange} snapPoints={["400px", "85vh", 1]}>
           <DrawerTrigger asChild>
             <Button ref={triggerRef} size="icon" className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30">
               <Plus className="h-6 w-6" />
@@ -647,7 +647,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                 </DrawerDescription>
               </DrawerHeader>
             </div>
-            <div className="overflow-y-auto px-6 pb-8">
+            <div className="overflow-y-auto flex-1 min-h-0 px-6 pb-8">
               {FormContent}
             </div>
           </DrawerContent>

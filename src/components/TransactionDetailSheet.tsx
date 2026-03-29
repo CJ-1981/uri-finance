@@ -658,7 +658,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   return (
     <>
       {isMobile ? (
-        <Drawer open={open} onOpenChange={handleOpenChange}>
+        <Drawer open={open} onOpenChange={handleOpenChange} snapPoints={["400px", "85vh", 1]}>
           <DrawerContent
             className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[85vh]"
           >
