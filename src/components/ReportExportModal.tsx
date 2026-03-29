@@ -185,8 +185,10 @@ export default function ReportExportModal({
             // Table specific styling for comments/text fields inside cells
             if (htmlInput.closest("td")) {
               replacement.style.minWidth = "200px";
-              replacement.style.fontSize = "11px";
-              replacement.style.lineHeight = "1.5";
+              // Use computed font size to preserve the relative sizing (e.g. 9px vs 11px)
+              const computedFontSize = window.getComputedStyle(htmlInput).fontSize;
+              replacement.style.fontSize = computedFontSize || "11px";
+              replacement.style.lineHeight = "1.3";
             } else {
               // For top summary title/desc
               replacement.style.fontSize = htmlInput.tagName === "TEXTAREA" ? "11px" : "14px";

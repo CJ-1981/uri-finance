@@ -328,7 +328,26 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
                             {tx.type === "expense" ? formatAmount(Number(tx.amount)) : "—"}
                           </span>
                         </TableCell>
-                        <TableCell colSpan={3} />
+                        <TableCell colSpan={2} />
+                        <TableCell className="py-1">
+                          <textarea
+                            value={comments[tx.id] || ""}
+                            onChange={(e) => {
+                              e.target.style.height = 'auto';
+                              e.target.style.height = e.target.scrollHeight + 'px';
+                              updateComment(tx.id, e.target.value);
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.height = 'auto';
+                              e.target.style.height = e.target.scrollHeight + 'px';
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            placeholder={t("report.addComment")}
+                            rows={1}
+                            style={{ overflow: "hidden", resize: "none" }}
+                            className="w-full px-1.5 py-1 min-h-[22px] text-[9px] border border-border/20 rounded bg-background/50 focus:outline-none focus:ring-1 focus:ring-primary/30 placeholder:text-muted-foreground/30 align-top"
+                          />
+                        </TableCell>
                       </TableRow>
                     ))}
                   </Fragment>
