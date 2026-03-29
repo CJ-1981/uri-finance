@@ -323,14 +323,14 @@ const FinanceCharts = ({ transactions, customColumns, period, customRange, isVie
       {/* Settings row */}
       {hasOtherCurrencies && (
         <div className="flex items-center justify-end px-1">
-          <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20">
+          <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20" data-html2canvas-ignore="true">
             <Switch
               id="show-other-currency"
               checked={showOtherCurrencies}
               onCheckedChange={setShowOtherCurrencies}
-              className="h-4 w-8"
+              className="scale-75 origin-left"
             />
-            <Label htmlFor="show-other-currency" className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider cursor-pointer">
+            <Label htmlFor="show-other-currency" className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider cursor-pointer -ml-1.5">
               {t("chart.showOtherCurrency")}
             </Label>
           </div>

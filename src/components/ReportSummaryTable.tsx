@@ -170,14 +170,14 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
             />
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20">
+            <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20" data-html2canvas-ignore="true">
               <Switch
                 id="show-details"
                 checked={showDetails}
                 onCheckedChange={setShowDetails}
-                className="h-4 w-8"
+                className="scale-75 origin-left"
               />
-              <Label htmlFor="show-details" className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider cursor-pointer">
+              <Label htmlFor="show-details" className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider cursor-pointer -ml-1.5">
                 {t("report.showDetails")}
               </Label>
             </div>
