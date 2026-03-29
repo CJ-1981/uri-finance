@@ -126,6 +126,7 @@ const NumberedSelect = ({
         )}
         onMouseEnter={() => !isMobile && setHighlightIdx(idx)}
         onClick={() => select(item.value)}
+        onPointerDown={(e) => isMobile && e.stopPropagation()}
       >
         {displayNumbers && idx < 10 && (
           <span className="text-xs text-muted-foreground font-mono w-4 shrink-0">
@@ -165,6 +166,7 @@ const NumberedSelect = ({
           <div
             className="fixed inset-0 z-[100] flex flex-col"
             onClick={() => setOpen(false)}
+            onPointerDown={(e) => e.stopPropagation()}
           >
             {/* Backdrop */}
             <div className="flex-1 bg-black/50" />
@@ -172,6 +174,7 @@ const NumberedSelect = ({
             <div
               className="bg-popover border-t border-border rounded-t-xl max-h-[60vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200"
               onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-center py-2">
                 <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />

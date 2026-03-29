@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   value: string;
@@ -18,6 +20,7 @@ const AutoSuggestInput = ({ value, onChange, suggestions, placeholder, disabled,
   const [activeIdx, setActiveIdx] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const isMobile = useIsMobile();
 
   const filtered = useMemo(() => {
     if (!value.trim()) return [];
@@ -106,6 +109,7 @@ const AutoSuggestInput = ({ value, onChange, suggestions, placeholder, disabled,
               <li
                 key={item + i}
                 onMouseDown={() => select(item)}
+                onPointerDown={(e) => isMobile && e.stopPropagation()}
                 className={cn(
                   "px-3 py-1.5 text-sm cursor-pointer transition-colors",
                   i === activeIdx

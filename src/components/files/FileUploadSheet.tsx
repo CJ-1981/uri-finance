@@ -305,6 +305,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
               type="button"
               variant="outline"
               onClick={handleClose}
+              onPointerDown={(e) => e.stopPropagation()}
               disabled={isUploading || isUploadingFile}
             >
               {t('tx.cancel')}
@@ -312,6 +313,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
             <Button
               type="button"
               onClick={handleUpload}
+              onPointerDown={(e) => e.stopPropagation()}
               disabled={!selectedFile || isUploading || isUploadingFile}
             >
               {t('files.uploadFile')}

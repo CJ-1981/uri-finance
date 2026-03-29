@@ -92,6 +92,7 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
           type="button"
           onClick={() => onSelect(node.id)}
           onFocus={() => onSetFocus(globalIndex)}
+          onPointerDown={(e) => isMobile && e.stopPropagation()}
           className={cn(
             "flex-1 text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
             selectedCategoryId === node.id
@@ -454,6 +455,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
           type="button"
           onClick={() => handleSelect(null)}
           onFocus={() => setFocusedIndex(0)}
+          onPointerDown={(e) => isMobile && e.stopPropagation()}
           className={cn(
             "w-full text-left rounded-md px-3 py-2 text-xs font-medium transition-colors flex items-center gap-2",
             selectedCategoryId === null
