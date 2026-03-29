@@ -208,7 +208,7 @@ describe("Integration Tests - User Preferences", () => {
       await supabase.from("user_preferences").upsert({
         user_id: mockUserA.id,
         default_project_id: mockProject1.id,
-      });
+      }, { onConflict: 'user_id' });
 
       // THEN preference is saved
       expect(upsertMock).toHaveBeenCalledWith({
@@ -244,12 +244,12 @@ describe("Integration Tests - User Preferences", () => {
       await supabase.from("user_preferences").upsert({
         user_id: mockUserA.id,
         default_project_id: mockProject1.id,
-      });
+      }, { onConflict: 'user_id' });
 
       await supabase.from("user_preferences").upsert({
         user_id: mockUserA.id,
         default_project_id: mockProject2.id, // Changed project
-      });
+      }, { onConflict: 'user_id' });
 
       // THEN upsert is called twice (handles both create and update)
       expect(upsertMock).toHaveBeenCalledTimes(2);
@@ -274,7 +274,7 @@ describe("Integration Tests - User Preferences", () => {
         await supabase.from("user_preferences").upsert({
           user_id: mockUserA.id,
           default_project_id: mockProject1.id,
-        });
+        }, { onConflict: 'user_id' });
         // Should have thrown error
         expect(true).toBe(false);
       } catch (error) {
@@ -382,7 +382,7 @@ describe("Integration Tests - User Preferences", () => {
       await supabase.from("user_preferences").upsert({
         user_id: mockUserA.id,
         default_project_id: mockProject1.id,
-      });
+      }, { onConflict: 'user_id' });
 
       // THEN only one upsert query is made
       expect(supabase.from).toHaveBeenCalledTimes(1);
@@ -406,12 +406,12 @@ describe("Integration Tests - User Preferences", () => {
       await supabase.from("user_preferences").upsert({
         user_id: mockUserA.id,
         default_project_id: mockProject1.id,
-      });
+      }, { onConflict: 'user_id' });
 
       await supabase.from("user_preferences").upsert({
         user_id: mockUserA.id,
         default_project_id: mockProject2.id,
-      });
+      }, { onConflict: 'user_id' });
 
       // THEN upsert handles uniqueness (updates instead of creating duplicate)
       expect(upsertMock).toHaveBeenCalledTimes(2);
@@ -432,7 +432,7 @@ describe("Integration Tests - User Preferences", () => {
       await supabase.from("user_preferences").upsert({
         user_id: mockUserA.id,
         default_project_id: mockProject1.id,
-      });
+      }, { onConflict: 'user_id' });
 
       // THEN upsert is called with valid data
       expect(upsertMock).toHaveBeenCalledWith({

@@ -179,7 +179,7 @@ describe("useAuth - Sign-In/Sign-Out Flow Tests", () => {
         new Error("403 Forbidden")
       );
 
-      const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation();
+      const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
 
       const { result } = renderHook(() => useAuth(), { wrapper });
 

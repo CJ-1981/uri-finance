@@ -74,7 +74,7 @@ export const useProjects = () => {
       .upsert({
         user_id: user.id,
         default_project_id: projectId
-      });
+      }, { onConflict: 'user_id' });
   };
 
   // Persist selected project to localStorage (cache full object for instant restoration) and server

@@ -119,7 +119,7 @@ describe("useProjects - User Preference Tests", () => {
       expect(mockQuery.upsert).toHaveBeenCalledWith({
         user_id: mockUser.id,
         default_project_id: mockProjects[0].id,
-      });
+      }, { onConflict: 'user_id' });
       // AND the selection is saved to localStorage
       expect(localStorage.getItem("active_project_id")).toBe(mockProjects[0].id);
       expect(localStorage.getItem("active_project_cache")).toBe(
@@ -523,7 +523,7 @@ describe("useProjects - User Preference Tests", () => {
   describe("Error Handling", () => {
     it("Handles Supabase Error Gracefully", async () => {
       // GIVEN Supabase upsert fails
-      const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation();
+      const consoleDebugSpy = vi.spyOn(console, "debug").mockImplementation(() => {});
       const mockQuery = {
         select: vi.fn(() => mockQuery),
         eq: vi.fn(() => mockQuery),
