@@ -6,6 +6,16 @@ Detailed technical changes made during codebase review and improvement session.
 
 ## Security & Privacy Improvements
 
+### 14. PIN Numpad UI Consistency
+**Files Changed:**
+- `src/components/LockScreen.tsx` - Updated numpad styling and layout
+
+**Changes:**
+- Aligned `LockScreen` numpad layout and styling with `PinSetupDialog` for a more consistent user experience.
+- Reduced vertical spacing between elements to match the more compact setup dialog.
+- Standardized button font sizes (`text-lg` for digits) and delete indicator (`←`).
+- Added `place-items-center` to the grid for precise alignment across different screen sizes.
+
 ### 13. iOS App Switcher Privacy Fix (Issue #14)
 **Files Changed:**
 - `src/App.tsx` - Updated `AppLockGate` eager locking logic

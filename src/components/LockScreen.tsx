@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useI18n } from "@/hooks/useI18n";
-import { Lock, Delete, ShieldAlert } from "lucide-react";
+import { Lock, ShieldAlert } from "lucide-react";
 import {
   verifyPin,
   loadLockState,
@@ -117,7 +117,7 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
 
   return (
     <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-300 ${error || isBlocked ? "bg-destructive/10" : "bg-background"}`}>
-      <div className="flex flex-col items-center gap-8 animate-fade-in">
+      <div className="flex flex-col items-center gap-6 animate-fade-in">
         <div className={`flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 ${error || isBlocked ? "bg-destructive/20 animate-pulse-red" : "bg-primary/10"}`}>
           {isBlocked ? (
             <ShieldAlert className="h-8 w-8 text-destructive" />
@@ -153,7 +153,7 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
         </div>
 
         {/* Numpad */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4 place-items-center">
           {digits.map((d, i) => {
             if (d === "") return <div key={i} />;
             if (d === "del")
@@ -162,10 +162,11 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
                   key={i}
                   onPointerDown={handleDelete}
                   disabled={isBlocked}
+                  tabIndex={-1}
                   style={{ touchAction: "manipulation" }}
-                  className="flex h-20 w-20 items-center justify-center rounded-full text-muted-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none"
+                  className="flex h-20 w-20 items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none focus:outline-none"
                 >
-                  <Delete className="h-5 w-5" />
+                  ←
                 </button>
               );
             return (
@@ -173,8 +174,9 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
                 key={i}
                 onPointerDown={() => handleDigit(d)}
                 disabled={isBlocked}
+                tabIndex={-1}
                 style={{ touchAction: "manipulation" }}
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50 text-xl font-semibold text-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none"
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50 text-lg font-semibold text-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none focus:outline-none"
               >
                 {d}
               </button>
