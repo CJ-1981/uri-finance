@@ -153,9 +153,9 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
         </div>
 
         {/* Numpad */}
-        <div className="grid grid-cols-3 gap-4 place-items-center">
+        <div className="grid grid-cols-3 gap-4 justify-items-center">
           {digits.map((d, i) => {
-            if (d === "") return <div key={i} />;
+            if (d === "") return <div key={i} className="size-20" />; // Empty spacer with same size
             if (d === "del")
               return (
                 <button
@@ -164,7 +164,7 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
                   disabled={isBlocked}
                   tabIndex={-1}
                   style={{ touchAction: "manipulation" }}
-                  className="flex h-20 w-20 items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none focus:outline-none"
+                  className="flex size-20 aspect-square items-center justify-center rounded-full text-sm text-muted-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none focus:outline-none"
                 >
                   ←
                 </button>
@@ -176,7 +176,7 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
                 disabled={isBlocked}
                 tabIndex={-1}
                 style={{ touchAction: "manipulation" }}
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-muted/50 text-lg font-semibold text-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none focus:outline-none"
+                className="flex size-20 aspect-square items-center justify-center rounded-full bg-muted/50 text-lg font-semibold text-foreground hover:bg-muted transition-colors active:scale-90 transition-transform disabled:opacity-30 disabled:pointer-events-none focus:outline-none"
               >
                 {d}
               </button>

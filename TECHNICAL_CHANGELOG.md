@@ -9,12 +9,13 @@ Detailed technical changes made during codebase review and improvement session.
 ### 14. PIN Numpad UI Consistency
 **Files Changed:**
 - `src/components/LockScreen.tsx` - Updated numpad styling and layout
+- `src/components/PinSetupDialog.tsx` - Standardized numpad styling
 
 **Changes:**
-- Aligned `LockScreen` numpad layout and styling with `PinSetupDialog` for a more consistent user experience.
-- Reduced vertical spacing between elements to match the more compact setup dialog.
-- Standardized button font sizes (`text-lg` for digits) and delete indicator (`←`).
-- Added `place-items-center` to the grid for precise alignment across different screen sizes.
+- Perfectly aligned `LockScreen` and `PinSetupDialog` numpad layouts for identical user experience.
+- Standardized button sizing using `size-20` and `aspect-square` to ensure perfect circles and uniform vertical height.
+- Implemented `justify-items-center` on the grid and fixed-size spacers to maintain strict alignment of all rows, including the empty spacer in the bottom row.
+- Standardized font sizes (`text-lg` for digits) and the delete indicator (`←`) across both components.
 
 ### 13. iOS App Switcher Privacy Fix (Issue #14)
 **Files Changed:**
