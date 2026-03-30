@@ -35,6 +35,13 @@ async function captureElementToPng(
       allowTaint: true,
       backgroundColor: "#ffffff",
       logging: false,
+      onclone: (clonedDoc) => {
+        // Force light mode for capture
+        clonedDoc.documentElement.classList.remove("dark");
+        clonedDoc.body.classList.remove("dark");
+        clonedDoc.documentElement.removeAttribute("data-theme");
+        clonedDoc.documentElement.style.colorScheme = "light";
+      },
     });
     return {
       data: canvas.toDataURL("image/jpeg", 0.85),
@@ -88,6 +95,13 @@ async function buildHeaderImage(
       scale: scale,
       backgroundColor: "#ffffff",
       logging: false,
+      onclone: (clonedDoc) => {
+        // Force light mode for capture
+        clonedDoc.documentElement.classList.remove("dark");
+        clonedDoc.body.classList.remove("dark");
+        clonedDoc.documentElement.removeAttribute("data-theme");
+        clonedDoc.documentElement.style.colorScheme = "light";
+      },
     });
     return {
       data: canvas.toDataURL("image/jpeg", 0.85),

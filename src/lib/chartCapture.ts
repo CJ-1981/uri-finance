@@ -53,6 +53,13 @@ export async function captureElementAtWidth(
         allowTaint: true,
         backgroundColor: "#ffffff",
         logging: false,
+        onclone: (clonedDoc) => {
+          // SPEC-REPORT-001: Force light mode for PDF capture
+          clonedDoc.documentElement.classList.remove("dark");
+          clonedDoc.body.classList.remove("dark");
+          clonedDoc.documentElement.removeAttribute("data-theme");
+          clonedDoc.documentElement.style.colorScheme = "light";
+        },
       });
 
       const renderedWidth = element.offsetWidth;
@@ -134,6 +141,13 @@ export async function captureElementAtWidth(
       allowTaint: true,
       backgroundColor: "#ffffff",
       logging: false,
+      onclone: (clonedDoc) => {
+        // SPEC-REPORT-001: Force light mode for PDF capture
+        clonedDoc.documentElement.classList.remove("dark");
+        clonedDoc.body.classList.remove("dark");
+        clonedDoc.documentElement.removeAttribute("data-theme");
+        clonedDoc.documentElement.style.colorScheme = "light";
+      },
     });
 
     const renderedWidth = element.offsetWidth;

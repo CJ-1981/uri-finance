@@ -2,6 +2,28 @@
 
 Detailed technical changes made during codebase review and improvement session.
 
+## Session Date: 2026-03-30
+
+## PDF Export Improvements
+
+### 10. Force Light Mode for PDF Export
+**Files Changed:**
+- `src/lib/chartCapture.ts` - Added `onclone` to `html2canvas` calls
+- `src/lib/pdfGenerator.ts` - Added `onclone` to `html2canvas` calls
+
+**Changes:**
+- Implemented `onclone` callback for all `html2canvas` rendering operations:
+  - Automatically removes the `.dark` class from `html` and `body` in the cloned document.
+  - Removes the `data-theme` attribute from the root element.
+  - Explicitly sets `color-scheme: light` for the captured document.
+- Ensures all report components (summary table, Recharts charts, and header) render using light mode colors, even when the user is currently in dark mode.
+- Fixed an issue where white text (from dark mode) would become invisible on the white background used for PDF generation.
+
+**Impact:**
+- **Critical**: Resolves issue #16, ensuring PDF exports are always readable and professional.
+- Consistent branding and readability for all exported reports regardless of current UI theme.
+- No flick or visible state change for the user during the export process.
+
 ## Session Date: 2026-03-09
 
 ## Mobile Experience Improvements
