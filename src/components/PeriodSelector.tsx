@@ -208,7 +208,7 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
             <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-56 p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
+        <PopoverContent align="end" className="min-w-[180px] w-auto p-1 pointer-events-auto" onKeyDown={handleKeyDown} onOpenAutoFocus={(e) => e.preventDefault()}>
           {presets.map((p, idx) => (
             <button
               key={p.key}

@@ -100,7 +100,6 @@ const TreeItem = ({ node, depth, selectedCategoryId, focusedIndex, categoryOptio
               : "text-foreground hover:bg-muted",
             isFocused && !isMobile && "shadow-[inset_0_0_0_2px_hsl(var(--primary))]"
           )}
-          style={{ paddingLeft: `${12 + depth * 16}px` }}
         >
           {displayShortcut && !isMobile && (
             <span className="text-xs text-muted-foreground/50 font-mono w-4">{displayShortcut}</span>
@@ -441,7 +440,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       </PopoverTrigger>
       <PopoverContent
         ref={popoverContentRef}
-        align="start"
+        align="end"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
           isMobile && "max-h-[60vh] z-[100]"
@@ -844,7 +843,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
       </PopoverTrigger>
       <PopoverContent
         ref={popoverContentRef}
-        align="start"
+        align="end"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
           isMobile && "max-h-[60vh] z-[100]"
