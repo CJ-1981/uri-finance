@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.7] - 2026-03-30
+
+### Fixed
+- **Dashboard Filters Centering**: Fixed an issue where the category list and period selector were not properly center-aligned on page load.
+- **Popover Alignment**: Fixed category and period popover positioning to prevent them from rendering off-screen or at the far right.
+- **Mobile Popover Stability**: Removed restrictive CSS positioning that interfered with automatic popover placement in modal contexts.
+
 ## [1.1.6] - 2026-03-29
 
 ### Changed

@@ -316,7 +316,6 @@ input, select, textarea {
 
   /* Specific fix for modal context */
   [data-mobile-popover="true"] {
-    position: fixed !important;
     z-index: 100 !important;
   }
 }

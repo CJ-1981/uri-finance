@@ -557,7 +557,7 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
 
   if (isBulkEdit) {
     return (
-      <div className="space-y-3 animate-fade-in">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-xs font-medium text-muted-foreground">
             {t("cat.bulkEditLabel") || "Bulk Edit (Code, Emoji, Name)"}
@@ -582,7 +582,7 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
   }
 
   return (
-    <div className="space-y-3 animate-fade-in">
+    <div className="space-y-3">
       <div className="flex gap-2">
         <Input
           value={newCode}

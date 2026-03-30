@@ -440,7 +440,7 @@ const CategorySelector = forwardRef<CategorySelectorHandle, Props>(({ categories
       </PopoverTrigger>
       <PopoverContent
         ref={popoverContentRef}
-        align="end"
+        align="center"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
           isMobile && "max-h-[60vh] z-[100]"
@@ -843,7 +843,7 @@ const CategoryNameSelector = forwardRef<CategorySelectorHandle, NameBasedProps>(
       </PopoverTrigger>
       <PopoverContent
         ref={popoverContentRef}
-        align="end"
+        align="center"
         className={cn(
           "min-w-[200px] max-w-[300px] w-auto p-1 pointer-events-auto",
           isMobile && "max-h-[60vh] z-[100]"

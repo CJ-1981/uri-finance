@@ -411,20 +411,22 @@ const Dashboard = () => {
         ) : (
           <div className="animate-fade-in space-y-4">
             {/* Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              <PeriodSelector
-                ref={periodSelectorRef}
-                period={period}
-                onPeriodChange={setPeriod}
-                customRange={customRange}
-                onCustomRangeChange={setCustomRange}
-              />
-              <CategorySelector
-                ref={categorySelectorRef}
-                categories={categories}
-                selectedCategoryId={selectedCategoryId}
-                onCategoryChange={setSelectedCategoryId}
-              />
+            <div className="w-full overflow-x-auto pb-1 scrollbar-hide">
+              <div className="flex items-center justify-center gap-2 min-w-full">
+                <PeriodSelector
+                  ref={periodSelectorRef}
+                  period={period}
+                  onPeriodChange={setPeriod}
+                  customRange={customRange}
+                  onCustomRangeChange={setCustomRange}
+                />
+                <CategorySelector
+                  ref={categorySelectorRef}
+                  categories={categories}
+                  selectedCategoryId={selectedCategoryId}
+                  onCategoryChange={setSelectedCategoryId}
+                />
+              </div>
             </div>
 
             {/* Balance cards - project currency */}
