@@ -319,3 +319,26 @@ input, select, textarea {
     z-index: 100 !important;
   }
 }
+
+/* Visual indicator that toasts are swipable to the right */
+.toast-swipe-handle {
+  position: relative;
+  padding-right: 20px !important;
+}
+
+.toast-swipe-handle::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 24px;
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.toast-swipe-handle:hover::after {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}

@@ -18,11 +18,13 @@ Detailed technical changes made during codebase review and improvement session.
 
 ### 11. Toast Notification Refinement (Issue #18)
 **Files Changed:**
-- `src/components/ui/sonner.tsx` - Updated duration and added close button
+- `src/components/ui/sonner.tsx` - Updated duration and added close button/swipe handle class
+- `src/index.css` - Added visual swipe handle styles
 
 **Changes:**
 - Shortened default toast duration to 2000ms.
 - Added a close button to all toast notifications for immediate dismissal.
+- Added a visual swipe handle indicator (vertical bar on the right side) to hint that toasts can be swiped to dismiss.
 - This prevents toasts from staying too long and interfering with interactive elements like PIN pads or the Add button.
 
 ### 10. Force Light Mode for PDF Export
