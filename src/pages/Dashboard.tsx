@@ -471,38 +471,42 @@ const Dashboard = () => {
               <button
                 onClick={() => setView("list")}
                 data-testid="view-list"
-                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
-                  view === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  view === "list" ? "bg-card text-foreground shadow-sm px-3" : "text-muted-foreground px-2"
                 }`}
               >
-                <List className="h-3.5 w-3.5" /> {t("dash.transactions")}
+                <List className="h-4 w-4 shrink-0" />
+                <span className={view === "list" ? "inline" : "hidden sm:inline"}>{t("dash.transactions")}</span>
               </button>
               <button
                 onClick={() => setView("charts")}
                 data-testid="view-charts"
-                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
-                  view === "charts" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  view === "charts" ? "bg-card text-foreground shadow-sm px-3" : "text-muted-foreground px-2"
                 }`}
               >
-                <BarChart3 className="h-3.5 w-3.5" /> {t("dash.charts")}
+                <BarChart3 className="h-4 w-4 shrink-0" />
+                <span className={view === "charts" ? "inline" : "hidden sm:inline"}>{t("dash.charts")}</span>
               </button>
               <button
                 onClick={() => setView("cash")}
                 data-testid="view-cash"
-                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
-                  view === "cash" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  view === "cash" ? "bg-card text-foreground shadow-sm px-3" : "text-muted-foreground px-2"
                 }`}
               >
-                <Calculator className="h-3.5 w-3.5" /> {t("cash.title")}
+                <Calculator className="h-4 w-4 shrink-0" />
+                <span className={view === "cash" ? "inline" : "hidden sm:inline"}>{t("cash.title")}</span>
               </button>
               <button
                 onClick={() => setView("files")}
                 data-testid="view-files"
-                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium transition-all ${
-                  view === "files" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  view === "files" ? "bg-card text-foreground shadow-sm px-3" : "text-muted-foreground px-2"
                 }`}
               >
-                <FileText className="h-3.5 w-3.5" /> {t("files.title")}
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className={view === "files" ? "inline" : "hidden sm:inline"}>{t("files.title")}</span>
               </button>
             </div>
 

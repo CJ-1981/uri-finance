@@ -4,7 +4,26 @@ Detailed technical changes made during codebase review and improvement session.
 
 ## Session Date: 2026-03-30
 
-## PDF Export Improvements
+## UI & UX Improvements
+
+### 12. Responsive Tab Navigation (Issue #17)
+**Files Changed:**
+- `src/pages/Dashboard.tsx` - Updated tab button styling and responsiveness
+
+**Changes:**
+- Increased tab icon sizes to `h-4 w-4`.
+- Increased tab font size to `text-sm`.
+- Implemented responsive label visibility: labels are hidden for non-active tabs on small screens (`sm` breakpoint) to save horizontal space.
+- This ensures the navigation remains usable on narrow devices (e.g., 325px wide) while providing clear context for the active view.
+
+### 11. Toast Notification Refinement (Issue #18)
+**Files Changed:**
+- `src/components/ui/sonner.tsx` - Updated duration and added close button
+
+**Changes:**
+- Shortened default toast duration to 2000ms.
+- Added a close button to all toast notifications for immediate dismissal.
+- This prevents toasts from staying too long and interfering with interactive elements like PIN pads or the Add button.
 
 ### 10. Force Light Mode for PDF Export
 **Files Changed:**
