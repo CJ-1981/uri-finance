@@ -2,6 +2,23 @@
 
 Detailed technical changes made during codebase review and improvement session.
 
+## Session Date: 2026-03-31
+
+## Security & Privacy Improvements
+
+### 13. iOS App Switcher Privacy Fix (Issue #14)
+**Files Changed:**
+- `src/App.tsx` - Updated `AppLockGate` eager locking logic
+
+**Changes:**
+- Modified `AppLockGate` to trigger the lock screen immediately when the app is backgrounded (`visibilitychange: hidden` or `pagehide`).
+- This forces a re-render to the opaque `LockScreen` component *before* the OS captures the application screenshot for the app switcher.
+- Replaces the previous "foreground-only" locking which allowed cached data to be visible in the multitasking view.
+
+**Impact:**
+- **Privacy**: Protects sensitive financial data from being visible in the iOS/Android app switcher.
+- **Security**: Ensures the app is already in a locked state the moment it is no longer the active foreground application.
+
 ## Session Date: 2026-03-30
 
 ## UI & UX Improvements

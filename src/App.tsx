@@ -75,15 +75,28 @@ const AppLockGate = ({ children }: { children: React.ReactNode }) => {
   const [locked, setLocked] = useState(hasPin);
 
   useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "hidden") return;
-      // Re-lock when coming back if PIN is set
+    const handleLock = () => {
+      // Eagerly lock when the app is hidden or being backgrounded
       if (isPinSet()) {
         setLocked(true);
       }
     };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        handleLock();
+      }
+    };
+
+    // 'visibilitychange' is the standard for PWAs
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    // 'pagehide' can be more reliable on some mobile browsers for capture prevention
+    window.addEventListener("pagehide", handleLock);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("pagehide", handleLock);
+    };
   }, []);
 
   if (locked && hasPin) {
