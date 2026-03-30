@@ -24,7 +24,8 @@ Detailed technical changes made during codebase review and improvement session.
 **Changes:**
 - Shortened default toast duration to 2000ms.
 - Added a close button to all toast notifications for immediate dismissal.
-- Added a visual swipe handle indicator (vertical bar on the right side) to hint that toasts can be swiped to dismiss.
+- Added a visual swipe handle indicator (vertical bar and right-pointing chevron) to hint that toasts can be swiped to dismiss.
+- Added a subtle "pointing" animation to the chevron to proactively suggest a swipe-right interaction.
 - This prevents toasts from staying too long and interfering with interactive elements like PIN pads or the Add button.
 
 ### 10. Force Light Mode for PDF Export

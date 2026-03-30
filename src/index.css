@@ -323,10 +323,11 @@ input, select, textarea {
 /* Visual indicator that toasts are swipable to the right */
 .toast-swipe-handle {
   position: relative;
-  padding-right: 20px !important;
+  padding-right: 28px !important;
 }
 
-.toast-swipe-handle::after {
+/* Vertical bar handle */
+.toast-swipe-handle::before {
   content: "";
   position: absolute;
   right: 6px;
@@ -334,11 +335,31 @@ input, select, textarea {
   transform: translateY(-50%);
   width: 4px;
   height: 24px;
-  background-color: hsl(var(--muted-foreground) / 0.3);
+  background-color: hsl(var(--muted-foreground) / 0.2);
   border-radius: 2px;
-  transition: background-color 0.2s;
+}
+
+/* Right-pointing arrow (chevron) */
+.toast-swipe-handle::after {
+  content: "›";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-52%); /* Slightly higher to center chevron vertically */
+  font-size: 20px;
+  line-height: 1;
+  color: hsl(var(--muted-foreground) / 0.4);
+  transition: all 0.2s ease-out;
+  animation: toast-point-right 2s infinite ease-in-out;
 }
 
 .toast-swipe-handle:hover::after {
-  background-color: hsl(var(--muted-foreground) / 0.5);
+  color: hsl(var(--muted-foreground) / 0.8);
+  transform: translateY(-52%) translateX(3px);
+  animation: none;
+}
+
+@keyframes toast-point-right {
+  0%, 100% { transform: translateY(-52%) translateX(0); opacity: 0.4; }
+  50% { transform: translateY(-52%) translateX(4px); opacity: 0.8; }
 }
