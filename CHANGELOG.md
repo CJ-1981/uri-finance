@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.6] - 2026-03-29
+
+### Changed
+- **Transaction Modal Redesign**: Improved mobile stability and accessibility for add/edit transaction modals.
+  - Replaced unstable **Drawer (vaul)** with **Sheet (Radix Dialog)** on mobile to eliminate accidental swipe-to-close behavior on iOS Safari.
+  - Standardized mobile modal heights to `h-[85vh]` for better focus and usability.
+  - Unified mobile and desktop UI logic to improve maintainability and consistency.
+  - Added `overscroll-contain` to modal content areas to prevent background scrolling issues.
+
+### Added
+- **Violet Cancel Buttons**: Added high-visibility "Cancel" buttons with a new violet gradient.
+  - New `.gradient-violet` CSS utility for theme-consistent violet buttons with tokenized CSS variables.
+  - Dedicated "Cancel" button in Add Transaction modal.
+  - "Cancel" button positioned next to Delete button in Edit Transaction modal for clear exit paths.
+
+### Accessibility
+- **ARIA Labels**: Added descriptive labels to all icon-only buttons (Delete, Previous, Next, and floating Add button).
+- **Keyboard Navigation**:
+  - Expanded Tab navigation scope to include header navigation controls in transaction modals.
+  - Added `data-tab-stop` to Cancel buttons for consistent keyboard flow.
+  - Fixed stale state issues in keyboard shortcuts by updating memoization dependencies.
+  - Improved focus management with `tabIndex={-1}` on modal containers and refined `onOpenAutoFocus` logic for mobile devices.
+  - Added guards to prevent Tab key interference when category dropdowns or popovers are open.
+
+### Fixed
+- **Sheet Descriptions**: Localized hard-coded English strings in transaction modal descriptions for both English and Korean.
+
 ## [1.1.5] - 2026-03-26
 
 ### Added
