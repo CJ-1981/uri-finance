@@ -15,6 +15,7 @@ Detailed technical changes made during codebase review and improvement session.
 - Perfectly aligned `LockScreen` and `PinSetupDialog` numpad layouts for identical user experience.
 - Standardized button sizing using `size-20` and `aspect-square` to ensure perfect circles and uniform vertical height.
 - Implemented `justify-items-center` on the grid and fixed-size spacers to maintain strict alignment of all rows, including the empty spacer in the bottom row.
+- Tightened vertical spacing in `LockScreen` (reduced gaps and icon sizes) to ensure the numpad is positioned at the same height as in the setup dialog.
 - Standardized font sizes (`text-lg` for digits) and the delete indicator (`←`) across both components.
 
 ### 13. iOS App Switcher Privacy Fix (Issue #14)

@@ -117,24 +117,24 @@ const LockScreen = ({ onUnlock }: LockScreenProps) => {
 
   return (
     <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-colors duration-300 ${error || isBlocked ? "bg-destructive/10" : "bg-background"}`}>
-      <div className="flex flex-col items-center gap-6 animate-fade-in">
-        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 ${error || isBlocked ? "bg-destructive/20 animate-pulse-red" : "bg-primary/10"}`}>
+      <div className="flex flex-col items-center gap-4 animate-fade-in">
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 ${error || isBlocked ? "bg-destructive/20 animate-pulse-red" : "bg-primary/10"}`}>
           {isBlocked ? (
-            <ShieldAlert className="h-8 w-8 text-destructive" />
+            <ShieldAlert className="h-6 w-6 text-destructive" />
           ) : (
-            <Lock className={`h-8 w-8 transition-colors duration-300 ${error ? "text-destructive" : "text-primary"}`} />
+            <Lock className={`h-6 w-6 transition-colors duration-300 ${error ? "text-destructive" : "text-primary"}`} />
           )}
         </div>
 
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-foreground">{t("lock.title")}</h1>
-          <p className={`mt-1 text-sm transition-colors duration-200 ${error || isBlocked ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+        <div className="text-center mb-2">
+          <h1 className="text-lg font-bold text-foreground leading-none">{t("lock.title")}</h1>
+          <p className={`mt-1.5 text-xs transition-colors duration-200 ${error || isBlocked ? "text-destructive font-medium" : "text-muted-foreground"}`}>
             {statusMessage}
           </p>
         </div>
 
         {/* PIN dots */}
-        <div className={`flex gap-3 ${error ? "animate-shake-hard" : ""}`}>
+        <div className={`flex gap-3 py-2 ${error ? "animate-shake-hard" : ""}`}>
           {Array.from({ length: PIN_LENGTH }).map((_, i) => (
             <div
               key={i}
