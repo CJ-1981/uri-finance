@@ -48,7 +48,7 @@ export default defineConfig(({ mode }) => ({
   base: mode === 'development' ? '/' : (process.env.VITE_BASE_URL || "/uri-finance/"),
   define: {
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
-    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || JSON.parse(readFileSync(resolve(__dirname, './package.json'), 'utf-8')).version),
+    __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(resolve(__dirname, './package.json'), 'utf-8')).version),
   },
   server: {
     host: "::",
@@ -69,4 +69,4 @@ export default defineConfig(({ mode }) => ({
   },
 }));
 
-// Cache busting: 2026-03-21
+// Cache busting: 2026-03-30
