@@ -27,6 +27,9 @@ export const useTransactions = (projectId: string | undefined) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Renamed queryKey to avoid cache collisions with old non-infinite query data
+  const TRANSACTIONS_KEY = ["infinite_transactions", projectId];
+
   const { 
     data, 
     isLoading: loading, 
@@ -34,7 +37,7 @@ export const useTransactions = (projectId: string | undefined) => {
     hasNextPage, 
     isFetchingNextPage 
   } = useInfiniteQuery({
-    queryKey: ["transactions", projectId],
+    queryKey: TRANSACTIONS_KEY,
     queryFn: async ({ pageParam }) => {
       if (!projectId) return [];
       
@@ -49,8 +52,6 @@ export const useTransactions = (projectId: string | undefined) => {
 
       if (pageParam) {
         const { date, createdAt } = pageParam as { date: string; createdAt: string };
-        // Cursor-based pagination: fetch items older than the last item
-        // (Either older date OR same date but older created_at)
         query = query.or(`transaction_date.lt.${date},and(transaction_date.eq.${date},created_at.lt.${createdAt})`);
       }
       
@@ -104,9 +105,8 @@ export const useTransactions = (projectId: string | undefined) => {
       return data?.id;
     },
     onMutate: async (newTx) => {
-      const queryKey = ["transactions", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
+      const previous = queryClient.getQueryData(TRANSACTIONS_KEY);
       
       const optimistic: Transaction = {
         project_id: projectId!,
@@ -122,7 +122,7 @@ export const useTransactions = (projectId: string | undefined) => {
         _sync_status: "optimistic",
       };
 
-      queryClient.setQueryData(queryKey, (old: any) => {
+      queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
         if (!old) return { pages: [[optimistic]], pageParams: [null] };
         const newPages = [...old.pages];
         newPages[0] = [optimistic, ...newPages[0]];
@@ -133,7 +133,7 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onSuccess: (data, variables) => {
       toast.success("Transaction added!", { duration: 2000 });
-      queryClient.setQueryData(["transactions", projectId], (old: any) => {
+      queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -145,13 +145,13 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onError: (err: any, variables, context) => {
       if (isNetworkError(err)) return;
-      queryClient.setQueryData(["transactions", projectId], context?.previous);
+      queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
       toast.error("Failed to add transaction");
     },
     onSettled: () => {
       if (navigator.onLine) {
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
         }, 2000);
       }
     },
@@ -166,10 +166,9 @@ export const useTransactions = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, updates }) => {
-      const queryKey = ["transactions", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old: any) => {
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
+      const previous = queryClient.getQueryData(TRANSACTIONS_KEY);
+      queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -182,12 +181,12 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onError: (err: any, variables, context) => {
       if (isNetworkError(err)) return;
-      queryClient.setQueryData(["transactions", projectId], context?.previous);
+      queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
       toast.error("Failed to update transaction");
     },
     onSuccess: (data, variables) => {
       toast.success("Transaction updated!");
-      queryClient.setQueryData(["transactions", projectId], (old: any) => {
+      queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -200,7 +199,7 @@ export const useTransactions = (projectId: string | undefined) => {
     onSettled: () => {
       if (navigator.onLine) {
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
         }, 2000);
       }
     },
@@ -223,10 +222,9 @@ export const useTransactions = (projectId: string | undefined) => {
       if (unlinkError) throw unlinkError;
     },
     onMutate: async (id) => {
-      const queryKey = ["transactions", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old: any) => {
+      await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
+      const previous = queryClient.getQueryData(TRANSACTIONS_KEY);
+      queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -239,7 +237,7 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onError: (err: any, id, context) => {
       if (isNetworkError(err)) return;
-      queryClient.setQueryData(["transactions", projectId], context?.previous);
+      queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
       toast.error("Failed to delete transaction");
     },
     onSuccess: () => {
@@ -251,7 +249,7 @@ export const useTransactions = (projectId: string | undefined) => {
     onSettled: () => {
       if (navigator.onLine) {
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
         }, 2000);
       }
     },
@@ -285,7 +283,7 @@ export const useTransactions = (projectId: string | undefined) => {
     onSettled: () => {
       if (navigator.onLine) {
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
         }, 2000);
       }
     }
@@ -319,7 +317,7 @@ export const useTransactions = (projectId: string | undefined) => {
     updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutateAsync({ id, updates }), 
     deleteTransaction: (id: string) => deleteTransactionMutation.mutateAsync(id), 
     bulkAddTransactions: (txs: any[]) => bulkAddTransactionsMutation.mutateAsync(txs), 
-    fetchTransactions: () => queryClient.invalidateQueries({ queryKey: ["transactions", projectId] }), 
+    fetchTransactions: () => queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY }), 
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,

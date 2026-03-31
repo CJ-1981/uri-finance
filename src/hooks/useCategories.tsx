@@ -207,7 +207,7 @@ export const useCategories = (projectId: string | undefined) => {
       if (navigator.onLine) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
         }, 2000);
       }
     },
@@ -251,7 +251,7 @@ export const useCategories = (projectId: string | undefined) => {
       if (navigator.onLine) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
         }, 2000);
       }
     },
