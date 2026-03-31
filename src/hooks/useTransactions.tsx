@@ -43,6 +43,8 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const addTransactionMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async (tx: {
       id: string;
       type: "income" | "expense";
@@ -90,11 +92,24 @@ export const useTransactions = (projectId: string | undefined) => {
       queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => [optimisticTx, ...(old || [])]);
       return { previousTransactions };
     },
-    onError: (err, newTx, context) => {
+    onError: (err: any, newTx, context) => {
+      // Check if it's likely a network error
+      const isNetworkError = !navigator.onLine || 
+                             err?.message?.includes("Failed to fetch") || 
+                             err?.code === "PGRST100" ||
+                             err?.status === 0;
+
+      if (isNetworkError) {
+        // For network errors, we keep the optimistic update in the cache.
+        // It will be persisted to IndexedDB and survive reloads.
+        console.warn("[useTransactions] Mutation deferred due to network error. Keeping optimistic state.");
+        return;
+      }
+
       queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
       toast.error("Failed to add transaction");
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Transaction added!", { duration: 2000 });
     },
     onSettled: () => {
@@ -103,6 +118,8 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const updateTransactionMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ id, updates }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">> }) => {
       const { error } = await supabase
         .from("transactions")
@@ -118,7 +135,10 @@ export const useTransactions = (projectId: string | undefined) => {
       );
       return { previousTransactions };
     },
-    onError: (err, variables, context) => {
+    onError: (err: any, variables, context) => {
+      const isNetworkError = !navigator.onLine || err?.message?.includes("Failed to fetch") || err?.code === "PGRST100" || err?.status === 0;
+      if (isNetworkError) return;
+
       queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
       toast.error("Failed to update transaction");
     },
@@ -131,6 +151,8 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const deleteTransactionMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("transactions")
@@ -152,7 +174,10 @@ export const useTransactions = (projectId: string | undefined) => {
       );
       return { previousTransactions };
     },
-    onError: (err, id, context) => {
+    onError: (err: any, id, context) => {
+      const isNetworkError = !navigator.onLine || err?.message?.includes("Failed to fetch") || err?.code === "PGRST100" || err?.status === 0;
+      if (isNetworkError) return;
+
       queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
       toast.error("Failed to delete transaction");
     },

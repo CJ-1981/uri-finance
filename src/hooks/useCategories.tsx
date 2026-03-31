@@ -18,6 +18,13 @@ export interface CategoryTreeNode extends Category {
   children: CategoryTreeNode[];
 }
 
+const isNetworkError = (error: any) => {
+  return !navigator.onLine || 
+         error?.message?.includes("Failed to fetch") || 
+         error?.code === "PGRST100" || 
+         error?.status === 0;
+};
+
 export const useCategories = (projectId: string | undefined) => {
   const queryClient = useQueryClient();
 
@@ -25,12 +32,10 @@ export const useCategories = (projectId: string | undefined) => {
     const categoryMap = new Map<string, CategoryTreeNode>();
     const roots: CategoryTreeNode[] = [];
 
-    // First pass: create nodes
     categories.forEach(cat => {
       categoryMap.set(cat.id, { ...cat, children: [] });
     });
 
-    // Second pass: build tree
     categories.forEach(cat => {
       const node = categoryMap.get(cat.id)!;
       if (cat.parent_id && categoryMap.has(cat.parent_id)) {
@@ -67,12 +72,14 @@ export const useCategories = (projectId: string | undefined) => {
       return data as Category[];
     },
     enabled: !!projectId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 
   const addCategoryMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ name, code }: { name: string, code?: string }) => {
       if (!projectId) throw new Error("No project ID");
       const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order)) : -1;
@@ -86,6 +93,7 @@ export const useCategories = (projectId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
     },
     onError: (error: any) => {
+      if (isNetworkError(error)) return;
       if (error.code === "23505") {
         toast.error("Category already exists");
       } else {
@@ -95,6 +103,8 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const deleteCategoryMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async (id: string) => {
       const category = categories.find(c => c.id === id);
       const categoryName = category?.name;
@@ -117,12 +127,15 @@ export const useCategories = (projectId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
       queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      if (isNetworkError(error)) return;
       toast.error("Failed to delete category");
     }
   });
 
   const renameCategoryMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ id, newName }: { id: string, newName: string }) => {
       const category = categories.find(c => c.id === id);
       if (!category) throw new Error("Category not found");
@@ -146,12 +159,15 @@ export const useCategories = (projectId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
       queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      if (isNetworkError(error)) return;
       toast.error("Failed to rename category");
     }
   });
 
   const updateCategoryCodeMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ id, code }: { id: string, code: string }) => {
       const { error } = await supabase
         .from("project_categories")
@@ -162,12 +178,15 @@ export const useCategories = (projectId: string | undefined) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      if (isNetworkError(error)) return;
       toast.error("Failed to update code");
     }
   });
 
   const updateCategoryIconMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ id, icon }: { id: string, icon: string }) => {
       const { error } = await supabase
         .from("project_categories")
@@ -178,12 +197,15 @@ export const useCategories = (projectId: string | undefined) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      if (isNetworkError(error)) return;
       toast.error("Failed to update icon");
     }
   });
 
   const reorderCategoryMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ id, direction }: { id: string, direction: "up" | "down" }) => {
       const idx = categories.findIndex(c => c.id === id);
       if (idx < 0) return;
@@ -203,10 +225,15 @@ export const useCategories = (projectId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
+    },
+    onError: (error: any) => {
+      if (isNetworkError(error)) return;
     }
   });
 
   const reorderCategoriesMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async (orderedIds: string[]) => {
       const updates = orderedIds.map((id, index) =>
         supabase.from("project_categories").update({ sort_order: index } as { sort_order: number }).eq("id", id)
@@ -215,10 +242,15 @@ export const useCategories = (projectId: string | undefined) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
+    },
+    onError: (error: any) => {
+      if (isNetworkError(error)) return;
     }
   });
 
   const addSubCategoryMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ parentId, name, code }: { parentId: string, name: string, code?: string }) => {
       if (!projectId) throw new Error("No project ID");
       const { error } = await supabase
@@ -231,6 +263,7 @@ export const useCategories = (projectId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
     },
     onError: (error: any) => {
+      if (isNetworkError(error)) return;
       if (error.code === "23505") {
         toast.error("Sub-category already exists");
       } else {
@@ -240,6 +273,8 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const updateCategoryParentMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async ({ id, newParentId }: { id: string, newParentId: string | null }) => {
       if (newParentId) {
         let currentId = newParentId;
@@ -263,6 +298,7 @@ export const useCategories = (projectId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
     },
     onError: (error: any) => {
+      if (isNetworkError(error)) return;
       if (error.message === "CYCLE_DETECTED") {
         toast.error("Cannot create cycle in category hierarchy");
       } else {
@@ -272,6 +308,8 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const bulkUpdateCategoriesMutation = useMutation({
+    networkMode: "offlineFirst",
+    retry: 3,
     mutationFn: async (entries: { code: string; icon: string; name: string; level: number }[]) => {
       if (!projectId) throw new Error("No project ID");
       
@@ -370,6 +408,7 @@ export const useCategories = (projectId: string | undefined) => {
       queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
     },
     onError: (error: any) => {
+      if (isNetworkError(error)) return;
       console.error("Bulk update error:", error);
       toast.error("Failed to update categories: " + error.message);
     }
