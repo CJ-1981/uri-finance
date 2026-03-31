@@ -36,6 +36,9 @@ test.describe("Standalone Mode", () => {
     // Should show get started section
     await expect(page.getByText(/Create a project or join one/i)).toBeVisible();
 
+    // Verify Join Project button is hidden
+    await expect(page.getByRole("button", { name: /Join Project/i })).not.toBeVisible();
+
     // Create a new project
     await page.getByRole("button", { name: /Create New/i }).click();
     await page.getByPlaceholder(/e\.g\. Household Budget/i).fill("Standalone Project");

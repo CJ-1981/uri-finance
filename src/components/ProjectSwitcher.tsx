@@ -107,7 +107,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
           {([
             { key: "list" as const, label: t("proj.myProjects") },
             ...(isSystemAdmin ? [{ key: "create" as const, label: t("proj.createNew") }] : []),
-            { key: "join" as const, label: t("proj.join") },
+            ...(!isStandalone ? [{ key: "join" as const, label: t("proj.join") }] : []),
           ]).map(({ key, label }) => (
             <button
               key={key}

@@ -55,7 +55,7 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
 };
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isStandalone } = useAuth();
   const isOnline = useOnlineStatus();
 
   // Track all pending mutations for E2E synchronization signals
@@ -443,14 +443,16 @@ const Dashboard = () => {
               >
                 <BarChart3 className="mr-2 h-4 w-4" /> {t("proj.createNew")}
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => projectSwitcherRef.current?.openJoinTab()}
-                className="font-semibold"
-              >
-                <UserPlus className="mr-2 h-4 w-4" /> {t("dash.joinProject")}
-              </Button>
+              {!isStandalone && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => projectSwitcherRef.current?.openJoinTab()}
+                  className="font-semibold"
+                >
+                  <UserPlus className="mr-2 h-4 w-4" /> {t("dash.joinProject")}
+                </Button>
+              )}
             </div>
           </div>
         ) : (
