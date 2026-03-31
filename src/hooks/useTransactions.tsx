@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useMutationState } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -32,7 +32,19 @@ export const useTransactions = (projectId: string | undefined) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: transactions = [], isLoading: loading } = useQuery({
+  // Track pending "add" mutations to keep them in the UI during re-sync
+  const pendingAdds = useMutationState({
+    filters: { status: "pending", mutationKey: ["addTransaction", projectId] },
+    select: (mutation) => mutation.state.variables as any,
+  });
+
+  // Track pending "delete" IDs to hide them from UI during re-sync
+  const pendingDeletes = useMutationState({
+    filters: { status: "pending", mutationKey: ["deleteTransaction", projectId] },
+    select: (mutation) => mutation.state.variables as string,
+  });
+
+  const { data: serverTransactions = [], isLoading: loading } = useQuery({
     queryKey: ["transactions", projectId],
     queryFn: async () => {
       if (!projectId) return [];
@@ -51,7 +63,49 @@ export const useTransactions = (projectId: string | undefined) => {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Merge server data with pending offline changes to prevent data loss during sync
+  const transactions = useMemo(() => {
+    // 1. Start with server data
+    let list = [...serverTransactions];
+
+    // 2. Filter out items that are pending deletion
+    if (pendingDeletes.length > 0) {
+      const deleteSet = new Set(pendingDeletes);
+      list = list.filter(t => !deleteSet.has(t.id));
+    }
+
+    // 3. Add items that are pending creation (avoiding duplicates)
+    if (pendingAdds.length > 0) {
+      const existingIds = new Set(list.map(t => t.id));
+      pendingAdds.forEach(pending => {
+        if (!existingIds.has(pending.id)) {
+          // Format as a full Transaction object
+          list.unshift({
+            project_id: projectId!,
+            user_id: user?.id || "",
+            created_at: new Date().toISOString(),
+            deleted_at: null,
+            ...pending,
+            description: pending.description || null,
+            transaction_date: pending.transaction_date || new Date().toISOString().split("T")[0],
+            custom_values: pending.custom_values || {},
+            currency: pending.currency || "USD",
+          });
+        }
+      });
+    }
+
+    // 4. Re-sort if we added items
+    return list.sort((a, b) => {
+      const dateA = new Date(a.transaction_date).getTime();
+      const dateB = new Date(b.transaction_date).getTime();
+      if (dateB !== dateA) return dateB - dateA;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [serverTransactions, pendingAdds, pendingDeletes, projectId, user]);
+
   const addTransactionMutation = useMutation({
+    mutationKey: ["addTransaction", projectId],
     mutationFn: async (tx: {
       id: string;
       type: "income" | "expense";
@@ -113,6 +167,7 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const updateTransactionMutation = useMutation({
+    mutationKey: ["updateTransaction", projectId],
     mutationFn: async ({ id, updates }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">> }) => {
       const { error } = await supabase
         .from("transactions")
@@ -142,6 +197,7 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const deleteTransactionMutation = useMutation({
+    mutationKey: ["deleteTransaction", projectId],
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("transactions")
@@ -180,6 +236,7 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const bulkAddTransactionsMutation = useMutation({
+    mutationKey: ["bulkAddTransactions", projectId],
     mutationFn: async (txs: Array<any>) => {
       if (!user || !projectId) throw new Error("Missing auth or project");
       const rows = txs.map((tx) => ({

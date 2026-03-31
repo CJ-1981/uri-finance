@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useMutationState } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -29,6 +29,18 @@ const isNetworkError = (error: any) => {
 
 export const useCategories = (projectId: string | undefined) => {
   const queryClient = useQueryClient();
+
+  // Track pending "add" mutations
+  const pendingAdds = useMutationState({
+    filters: { status: "pending", mutationKey: ["addCategory", projectId] },
+    select: (mutation) => mutation.state.variables as any,
+  });
+
+  // Track pending "delete" IDs
+  const pendingDeletes = useMutationState({
+    filters: { status: "pending", mutationKey: ["deleteCategory", projectId] },
+    select: (mutation) => mutation.state.variables as string,
+  });
 
   const buildCategoryTree = (categories: Category[]): CategoryTreeNode[] => {
     const categoryMap = new Map<string, CategoryTreeNode>();
@@ -60,7 +72,7 @@ export const useCategories = (projectId: string | undefined) => {
     return result;
   };
 
-  const { data: categories = [], isLoading: loading } = useQuery({
+  const { data: serverCategories = [], isLoading: loading } = useQuery({
     queryKey: ["project_categories", projectId],
     queryFn: async () => {
       if (!projectId) return [];
@@ -77,9 +89,41 @@ export const useCategories = (projectId: string | undefined) => {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Merge server data with pending offline changes
+  const categories = useMemo(() => {
+    let list = [...serverCategories];
+
+    if (pendingDeletes.length > 0) {
+      const deleteSet = new Set(pendingDeletes);
+      list = list.filter(c => !deleteSet.has(c.id));
+    }
+
+    if (pendingAdds.length > 0) {
+      const existingIds = new Set(list.map(c => c.id));
+      pendingAdds.forEach(pending => {
+        const id = pending.id || `temp-${pending.name}`;
+        if (!existingIds.has(id)) {
+          list.push({
+            id,
+            project_id: projectId!,
+            name: pending.name,
+            code: pending.code || "",
+            icon: "Folder",
+            sort_order: list.length,
+            parent_id: pending.parentId || null,
+            created_at: new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    return list;
+  }, [serverCategories, pendingAdds, pendingDeletes, projectId]);
+
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 
   const addCategoryMutation = useMutation({
+    mutationKey: ["addCategory", projectId],
     mutationFn: async ({ name, code }: { name: string, code?: string }) => {
       if (!projectId) throw new Error("No project ID");
       const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order)) : -1;
@@ -103,8 +147,9 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const deleteCategoryMutation = useMutation({
+    mutationKey: ["deleteCategory", projectId],
     mutationFn: async (id: string) => {
-      const category = categories.find(c => c.id === id);
+      const category = serverCategories.find(c => c.id === id);
       const categoryName = category?.name;
 
       const { error } = await supabase
@@ -132,8 +177,9 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const renameCategoryMutation = useMutation({
+    mutationKey: ["renameCategory", projectId],
     mutationFn: async ({ id, newName }: { id: string, newName: string }) => {
-      const category = categories.find(c => c.id === id);
+      const category = serverCategories.find(c => c.id === id);
       if (!category) throw new Error("Category not found");
       const oldName = category.name;
       const trimmedNewName = newName.trim();
@@ -162,6 +208,7 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const updateCategoryCodeMutation = useMutation({
+    mutationKey: ["updateCategoryCode", projectId],
     mutationFn: async ({ id, code }: { id: string, code: string }) => {
       const { error } = await supabase
         .from("project_categories")
@@ -179,6 +226,7 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const updateCategoryIconMutation = useMutation({
+    mutationKey: ["updateCategoryIcon", projectId],
     mutationFn: async ({ id, icon }: { id: string, icon: string }) => {
       const { error } = await supabase
         .from("project_categories")
@@ -196,14 +244,15 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const reorderCategoryMutation = useMutation({
+    mutationKey: ["reorderCategory", projectId],
     mutationFn: async ({ id, direction }: { id: string, direction: "up" | "down" }) => {
-      const idx = categories.findIndex(c => c.id === id);
+      const idx = serverCategories.findIndex(c => c.id === id);
       if (idx < 0) return;
       const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= categories.length) return;
+      if (swapIdx < 0 || swapIdx >= serverCategories.length) return;
 
-      const current = categories[idx];
-      const swap = categories[swapIdx];
+      const current = serverCategories[idx];
+      const swap = serverCategories[swapIdx];
 
       const currentOrder = current.sort_order !== swap.sort_order ? current.sort_order : idx;
       const swapOrder = current.sort_order !== swap.sort_order ? swap.sort_order : swapIdx;
@@ -222,6 +271,7 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const reorderCategoriesMutation = useMutation({
+    mutationKey: ["reorderCategories", projectId],
     mutationFn: async (orderedIds: string[]) => {
       const updates = orderedIds.map((id, index) =>
         supabase.from("project_categories").update({ sort_order: index } as { sort_order: number }).eq("id", id)
@@ -237,6 +287,7 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const addSubCategoryMutation = useMutation({
+    mutationKey: ["addSubCategory", projectId],
     mutationFn: async ({ parentId, name, code }: { parentId: string, name: string, code?: string }) => {
       if (!projectId) throw new Error("No project ID");
       const { error } = await supabase
@@ -259,6 +310,7 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const updateCategoryParentMutation = useMutation({
+    mutationKey: ["updateCategoryParent", projectId],
     mutationFn: async ({ id, newParentId }: { id: string, newParentId: string | null }) => {
       if (newParentId) {
         let currentId = newParentId;
@@ -266,7 +318,7 @@ export const useCategories = (projectId: string | undefined) => {
         while (currentId) {
           if (visited.has(currentId)) throw new Error("CYCLE_DETECTED");
           visited.add(currentId);
-          const parent = categories.find(c => c.id === currentId);
+          const parent = serverCategories.find(c => c.id === currentId);
           if (!parent) break;
           currentId = parent.parent_id || "";
         }
@@ -292,6 +344,7 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const bulkUpdateCategoriesMutation = useMutation({
+    mutationKey: ["bulkUpdateCategories", projectId],
     mutationFn: async (entries: { code: string; icon: string; name: string; level: number }[]) => {
       if (!projectId) throw new Error("No project ID");
       

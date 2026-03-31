@@ -5,7 +5,7 @@
 // Updated: 2026-03-21 - Added file type validation, UUID paths, real-time sync, sonner
 // Updated: 2026-03-21 - Added transaction file association support
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useMutationState } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -105,8 +105,14 @@ export const useFiles = (projectId: string) => {
   const { t } = useI18n();
   const queryClient = useQueryClient();
 
+  // Track pending "delete" IDs
+  const pendingDeletes = useMutationState({
+    filters: { status: "pending", mutationKey: ["deleteFile", projectId] },
+    select: (mutation) => mutation.state.variables as string,
+  });
+
   const {
-    data: files = [],
+    data: serverFiles = [],
     isLoading,
     error,
   } = useQuery({
@@ -129,6 +135,13 @@ export const useFiles = (projectId: string) => {
     enabled: !!projectId,
   });
 
+  // Filter out pending deletes
+  const files = useMemo(() => {
+    if (pendingDeletes.length === 0) return serverFiles;
+    const deleteSet = new Set(pendingDeletes);
+    return serverFiles.filter(f => !deleteSet.has(f.id));
+  }, [serverFiles, pendingDeletes]);
+
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadedBytes, setDownloadedBytes] = useState(0);
 
@@ -143,6 +156,7 @@ export const useFiles = (projectId: string) => {
   }, [projectId, queryClient]);
 
   const uploadFileMutation = useMutation({
+    mutationKey: ["uploadFile", projectId],
     mutationFn: async (params: { file: File; remark?: string; transactionId?: string }) => {
       const { file, remark = '', transactionId } = params;
       let resolvedMime = file.type;
@@ -200,6 +214,7 @@ export const useFiles = (projectId: string) => {
   });
 
   const downloadFileMutation = useMutation({
+    mutationKey: ["downloadFile", projectId],
     mutationFn: async (file: ProjectFile): Promise<Blob> => {
       const { data, error } = await supabase.storage.from('project-files').createSignedUrl(file.storage_path, SIGNED_URL_EXPIRY);
       if (error) throw new Error(`${t('files.downloadFailed') || 'Failed to generate download URL'}: ${error.message}`);
@@ -235,11 +250,12 @@ export const useFiles = (projectId: string) => {
   });
 
   const deleteFileMutation = useMutation({
+    mutationKey: ["deleteFile", projectId],
     mutationFn: async (fileId: string) => {
       const { data: fileData, error: fetchError } = await supabase.from('project_files').select('storage_path').eq('id', fileId).eq('project_id', projectId).single();
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
       const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId).eq('project_id', projectId);
-      if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
+      if (deleteError) throw deleteError;
       const { error: storageError } = await supabase.storage.from('project-files').remove([fileData.storage_path]);
       if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
     },
@@ -254,10 +270,11 @@ export const useFiles = (projectId: string) => {
   });
 
   const updateFileMutation = useMutation({
+    mutationKey: ["updateFile", projectId],
     mutationFn: async (params: { fileId: string; remark: string | null }) => {
       const { fileId, remark } = params;
       const { data, error } = await supabase.from('project_files').update({ remark: remark?.trim() || null }).eq('id', fileId).eq('project_id', projectId).select().single();
-      if (error) throw new Error(`${t('files.updateFailed') || 'Failed to update file metadata'}: ${error.message}`);
+      if (error) throw error;
       return data as ProjectFile;
     },
     onSuccess: () => {
@@ -274,7 +291,7 @@ export const useFiles = (projectId: string) => {
     files,
     isLoading,
     error,
-    uploadFile: uploadFileMutation.mutateAsync,
+    uploadFile: (file: File, remark?: string, transactionId?: string) => uploadFileMutation.mutateAsync({ file, remark, transactionId }),
     isUploading: uploadFileMutation.isPending,
     downloadFile: downloadFileMutation.mutateAsync,
     isDownloading: downloadFileMutation.isPending,
