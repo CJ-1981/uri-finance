@@ -80,8 +80,6 @@ export const useCategories = (projectId: string | undefined) => {
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 
   const addCategoryMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async ({ name, code }: { name: string, code?: string }) => {
       if (!projectId) throw new Error("No project ID");
       const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order)) : -1;
@@ -105,8 +103,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const deleteCategoryMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async (id: string) => {
       const category = categories.find(c => c.id === id);
       const categoryName = category?.name;
@@ -136,8 +132,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const renameCategoryMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async ({ id, newName }: { id: string, newName: string }) => {
       const category = categories.find(c => c.id === id);
       if (!category) throw new Error("Category not found");
@@ -168,8 +162,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const updateCategoryCodeMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async ({ id, code }: { id: string, code: string }) => {
       const { error } = await supabase
         .from("project_categories")
@@ -187,8 +179,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const updateCategoryIconMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async ({ id, icon }: { id: string, icon: string }) => {
       const { error } = await supabase
         .from("project_categories")
@@ -206,8 +196,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const reorderCategoryMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async ({ id, direction }: { id: string, direction: "up" | "down" }) => {
       const idx = categories.findIndex(c => c.id === id);
       if (idx < 0) return;
@@ -234,8 +222,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const reorderCategoriesMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async (orderedIds: string[]) => {
       const updates = orderedIds.map((id, index) =>
         supabase.from("project_categories").update({ sort_order: index } as { sort_order: number }).eq("id", id)
@@ -251,8 +237,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const addSubCategoryMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async ({ parentId, name, code }: { parentId: string, name: string, code?: string }) => {
       if (!projectId) throw new Error("No project ID");
       const { error } = await supabase
@@ -275,8 +259,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const updateCategoryParentMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async ({ id, newParentId }: { id: string, newParentId: string | null }) => {
       if (newParentId) {
         let currentId = newParentId;
@@ -310,8 +292,6 @@ export const useCategories = (projectId: string | undefined) => {
   });
 
   const bulkUpdateCategoriesMutation = useMutation({
-    networkMode: "offlineFirst",
-    retry: 3,
     mutationFn: async (entries: { code: string; icon: string; name: string; level: number }[]) => {
       if (!projectId) throw new Error("No project ID");
       
