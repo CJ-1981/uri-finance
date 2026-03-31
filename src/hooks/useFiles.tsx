@@ -209,6 +209,7 @@ export const useFiles = (projectId: string) => {
 
   // Mutation: Upload file
   const uploadFileMutation = useMutation({
+    networkMode: "offlineFirst",
     mutationFn: async (params: { file: File; remark?: string; transactionId?: string }) => {
       const { file, remark = '', transactionId } = params;
 
@@ -305,6 +306,16 @@ export const useFiles = (projectId: string) => {
       queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
     },
     onError: (error: Error) => {
+      const isNetworkError = !navigator.onLine || 
+                             error.message?.includes("Failed to fetch") || 
+                             error.message?.includes("Load failed") ||
+                             error.message?.includes("TypeError") ||
+                             (error as any).status === 0;
+      
+      if (isNetworkError) {
+        console.warn("[useFiles] Operation deferred or failed due to network.");
+        return;
+      }
       toast.error(error.message);
     },
   });
@@ -415,6 +426,16 @@ export const useFiles = (projectId: string) => {
       queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
     },
     onError: (error: Error) => {
+      const isNetworkError = !navigator.onLine || 
+                             error.message?.includes("Failed to fetch") || 
+                             error.message?.includes("Load failed") ||
+                             error.message?.includes("TypeError") ||
+                             (error as any).status === 0;
+      
+      if (isNetworkError) {
+        console.warn("[useFiles] Operation deferred or failed due to network.");
+        return;
+      }
       toast.error(error.message);
     },
   });
@@ -442,6 +463,16 @@ export const useFiles = (projectId: string) => {
       queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
     },
     onError: (error: Error) => {
+      const isNetworkError = !navigator.onLine || 
+                             error.message?.includes("Failed to fetch") || 
+                             error.message?.includes("Load failed") ||
+                             error.message?.includes("TypeError") ||
+                             (error as any).status === 0;
+      
+      if (isNetworkError) {
+        console.warn("[useFiles] Operation deferred or failed due to network.");
+        return;
+      }
       toast.error(error.message);
     },
   });

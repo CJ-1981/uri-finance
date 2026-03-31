@@ -21,6 +21,8 @@ export interface CategoryTreeNode extends Category {
 const isNetworkError = (error: any) => {
   return !navigator.onLine || 
          error?.message?.includes("Failed to fetch") || 
+         error?.message?.includes("Load failed") ||
+         error?.message?.includes("TypeError") ||
          error?.code === "PGRST100" || 
          error?.status === 0;
 };

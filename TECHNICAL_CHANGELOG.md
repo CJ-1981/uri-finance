@@ -27,7 +27,25 @@ Detailed technical changes made during codebase review and improvement session.
 **Impact:**
 - **Reliability**: The app remains functional in low-connectivity or no-connectivity environments.
 - **Performance**: Instant data loading from the local cache (Hydration from IndexedDB).
-- **User Experience**: Seamless transitions between online and offline states with background synchronization.
+- User Experience: Seamless transitions between online and offline states with background synchronization.
+
+### 16. Robust Offline Synchronization Refinements
+**Files Changed:**
+- `src/App.tsx` - Added global mutation defaults
+- `src/hooks/useTransactions.tsx` - Broadened network error detection
+- `src/hooks/useCategories.tsx` - Broadened network error detection
+- `src/hooks/useFiles.tsx` - Enabled offline mode for file uploads
+
+**Changes:**
+- Configured global `networkMode: "offlineFirst"` for all mutations in `App.tsx` to ensure TanStack Query correctly queues actions during offline periods.
+- Enhanced `onError` handlers across all core hooks (`useTransactions`, `useCategories`, `useFiles`) to recognize a wider range of network-related errors (e.g., "Load failed", "TypeError", `status: 0`).
+- Prevented automatic rollback of optimistic UI updates when network errors occur, ensuring that user changes remain visible and are eventually synced when connectivity is restored.
+- Suppressed confusing "Failed" toast notifications for network-deferred actions, providing a cleaner and more trustworthy offline experience.
+
+**Impact:**
+- **Stability**: Resolves issues where mutations would incorrectly report failure while the app was intentionally working offline.
+- **Trust**: Users can now confidently perform actions offline knowing they won't be greeted by error messages or see their changes disappear.
+
 
 ### 14. PIN Numpad UI Consistency
 **Files Changed:**

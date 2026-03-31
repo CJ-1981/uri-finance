@@ -93,16 +93,16 @@ export const useTransactions = (projectId: string | undefined) => {
       return { previousTransactions };
     },
     onError: (err: any, newTx, context) => {
-      // Check if it's likely a network error
+      // Check if it's likely a network error (expanded for better coverage)
       const isNetworkError = !navigator.onLine || 
                              err?.message?.includes("Failed to fetch") || 
+                             err?.message?.includes("Load failed") ||
+                             err?.message?.includes("TypeError") ||
                              err?.code === "PGRST100" ||
                              err?.status === 0;
 
       if (isNetworkError) {
-        // For network errors, we keep the optimistic update in the cache.
-        // It will be persisted to IndexedDB and survive reloads.
-        console.warn("[useTransactions] Mutation deferred due to network error. Keeping optimistic state.");
+        console.warn("[useTransactions] Mutation deferred due to network error. Keeping optimistic state.", err);
         return;
       }
 
@@ -136,7 +136,12 @@ export const useTransactions = (projectId: string | undefined) => {
       return { previousTransactions };
     },
     onError: (err: any, variables, context) => {
-      const isNetworkError = !navigator.onLine || err?.message?.includes("Failed to fetch") || err?.code === "PGRST100" || err?.status === 0;
+      const isNetworkError = !navigator.onLine || 
+                             err?.message?.includes("Failed to fetch") || 
+                             err?.message?.includes("Load failed") ||
+                             err?.message?.includes("TypeError") ||
+                             err?.code === "PGRST100" || 
+                             err?.status === 0;
       if (isNetworkError) return;
 
       queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
@@ -175,7 +180,12 @@ export const useTransactions = (projectId: string | undefined) => {
       return { previousTransactions };
     },
     onError: (err: any, id, context) => {
-      const isNetworkError = !navigator.onLine || err?.message?.includes("Failed to fetch") || err?.code === "PGRST100" || err?.status === 0;
+      const isNetworkError = !navigator.onLine || 
+                             err?.message?.includes("Failed to fetch") || 
+                             err?.message?.includes("Load failed") ||
+                             err?.message?.includes("TypeError") ||
+                             err?.code === "PGRST100" || 
+                             err?.status === 0;
       if (isNetworkError) return;
 
       queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
