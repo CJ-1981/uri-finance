@@ -6,7 +6,7 @@
 // Updated: 2026-03-21 - Added transaction file association support
 
 import { useMutation, useQuery, useQueryClient, useMutationState } from '@tanstack/react-query';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import {
@@ -111,7 +111,7 @@ export const useFiles = (projectId: string) => {
   }).filter(Boolean);
 
   const {
-    data: serverFiles = [],
+    data: files = [],
     isLoading,
     error,
   } = useQuery({
@@ -127,15 +127,6 @@ export const useFiles = (projectId: string) => {
     },
     enabled: !!projectId,
   });
-
-  const files = useMemo(() => {
-    let list = [...serverFiles];
-    if (pendingDeletes.length > 0) {
-      const deleteSet = new Set(pendingDeletes);
-      list = list.filter(f => !deleteSet.has(f.id));
-    }
-    return list;
-  }, [serverFiles, pendingDeletes]);
 
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadedBytes, setDownloadedBytes] = useState(0);
@@ -159,18 +150,16 @@ export const useFiles = (projectId: string) => {
       }
       const fileToUpload = await autoCompressImageIfNeeded(file);
       
-      // Use new File constructor for real File instance
-      const fileForValidation = new File([fileToUpload], fileToUpload.name, { 
-        type: resolvedMime, 
-        lastModified: fileToUpload.lastModified 
+      // Construct an actual File instance using constructor
+      const fileForValidation = new File([fileToUpload], fileToUpload.name, {
+        type: resolvedMime,
+        lastModified: fileToUpload.lastModified
       });
 
       if (!isFileTypeAllowed(fileForValidation)) throw new Error(t('files.invalidFileType') || 'File type not allowed');
       if (fileToUpload.size > MAX_FILE_SIZE) throw new Error(t('files.sizeExceeds').replace('{size}', `${MAX_FILE_SIZE / (1024 * 1024)} MB`));
-      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error(t('files.notAuthenticated') || 'User not authenticated');
-
       const fileId = crypto.randomUUID();
       const ext = getFileExtension(file.name);
       const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
@@ -238,20 +227,14 @@ export const useFiles = (projectId: string) => {
   const deleteFileMutation = useMutation({
     mutationKey: ["deleteFile", projectId],
     mutationFn: async (fileId: string) => {
-      const { data: fileData, error: fetchError } = await supabase
-        .from('project_files')
-        .select('storage_path')
-        .eq('id', fileId)
-        .eq('project_id', projectId)
-        .single();
-      
+      const { data: fileData, error: fetchError } = await supabase.from('project_files').select('storage_path').eq('id', fileId).eq('project_id', projectId).single();
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
       
-      // Delete storage object FIRST to avoid orphaned storage items
+      // Step 1: Remove from storage first
       const { error: storageError } = await supabase.storage.from('project-files').remove([fileData.storage_path]);
       if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
 
-      // ONLY delete metadata if storage removal succeeded
+      // Step 2: Delete metadata
       const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId).eq('project_id', projectId);
       if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
     },

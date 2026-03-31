@@ -33,7 +33,13 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const blockWhenOffline = (actionKey: string): boolean => {
     if (!isOnline) {
-      toast.error(t("proj.offlineError") || t("common.offlineError") || "Cannot perform this action while offline");
+      const actionMap: Record<string, string> = {
+        "switch": t("proj.offlineSwitch") || "Cannot switch projects while offline",
+        "create": t("proj.offlineCreate") || "Cannot create projects while offline",
+        "join": t("proj.offlineJoin") || "Cannot join projects while offline",
+        "delete": t("proj.offlineDelete") || "Cannot delete projects while offline",
+      };
+      toast.error(actionMap[actionKey] || t("proj.offlineError") || "Action cannot be performed while offline");
       return true;
     }
     return false;

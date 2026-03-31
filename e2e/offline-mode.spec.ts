@@ -1,12 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+// Secrets protection: Require environment variables for E2E tests
 const TEST_EMAIL = process.env.TEST_EMAIL;
 const TEST_PASSWORD = process.env.TEST_PASSWORD;
 
 test.describe('Offline Mode Robustness', () => {
   test.beforeAll(() => {
     if (!TEST_EMAIL || !TEST_PASSWORD) {
-      throw new Error('TEST_EMAIL and TEST_PASSWORD environment variables are required for this test.');
+      throw new Error('TEST_EMAIL and TEST_PASSWORD environment variables are required for this test. Secrets must not be hardcoded.');
     }
   });
 
@@ -55,7 +56,6 @@ test.describe('Offline Mode Robustness', () => {
     await expect(page.getByText(tx2)).toBeVisible();
     
     // 3. (SKIPPED) Reload while offline - verify persistence
-    // We skip this because dev server doesn't support SW reloads well without production build
     
     // 4. Recover connection
     await context.setOffline(false);

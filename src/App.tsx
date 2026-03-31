@@ -21,6 +21,7 @@ import { isPinSet } from "@/lib/securePinStorage";
 
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { queryPersister } from "@/lib/offlineStorage";
+import { mutationFunctions } from "@/lib/mutations";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,10 +38,26 @@ const queryClient = new QueryClient({
     },
     mutations: {
       networkMode: "offlineFirst",
-      retry: 3,
+      // Removed global retry to prevent duplicate non-idempotent inserts.
+      // Individual mutations will handle retries where safe.
     },
   },
 });
+
+// Register mutation defaults for background resume support
+queryClient.setMutationDefaults(["addTransaction"], { mutationFn: mutationFunctions.addTransaction });
+queryClient.setMutationDefaults(["updateTransaction"], { mutationFn: mutationFunctions.updateTransaction });
+queryClient.setMutationDefaults(["deleteTransaction"], { mutationFn: mutationFunctions.deleteTransaction });
+queryClient.setMutationDefaults(["addCategory"], { mutationFn: mutationFunctions.addCategory });
+queryClient.setMutationDefaults(["deleteCategory"], { mutationFn: mutationFunctions.deleteCategory });
+queryClient.setMutationDefaults(["renameCategory"], { mutationFn: mutationFunctions.renameCategory });
+queryClient.setMutationDefaults(["updateCategoryCode"], { mutationFn: mutationFunctions.updateCategoryCode });
+queryClient.setMutationDefaults(["updateCategoryIcon"], { mutationFn: mutationFunctions.updateCategoryIcon });
+queryClient.setMutationDefaults(["reorderCategory"], { mutationFn: mutationFunctions.reorderCategory });
+queryClient.setMutationDefaults(["addColumn"], { mutationFn: mutationFunctions.addColumn });
+queryClient.setMutationDefaults(["deleteColumn"], { mutationFn: mutationFunctions.deleteColumn });
+queryClient.setMutationDefaults(["updateColumn"], { mutationFn: mutationFunctions.updateColumn });
+queryClient.setMutationDefaults(["renameColumn"], { mutationFn: mutationFunctions.renameColumn });
 
 // Configure persistence options
 const persistOptions = {
@@ -143,6 +160,12 @@ const App = () => {
       console.error('App: Global error caught', event.error);
     };
     window.addEventListener('error', handleError);
+    
+    // Resume paused mutations after hydration
+    // Note: TanStack Query resumes automatically if functions are registered, 
+    // but explicit call ensures it happens after startup.
+    queryClient.resumePausedMutations();
+
     return () => window.removeEventListener('error', handleError);
   }, []);
 

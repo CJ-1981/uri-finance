@@ -61,40 +61,40 @@ export const useProjects = () => {
       return data as Project[];
     },
     enabled: !!user,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 10,
   });
+
+  // Revalidate cached project against current user and fetched projects
+  const validateProject = useCallback((project: Project | null): Project | null => {
+    if (!project || projects.length === 0) return project;
+    const found = projects.find(p => p.id === project.id);
+    if (!found) {
+      console.warn("[useProjects] Active project is invalid or belongs to another user. Clearing cache.");
+      localStorage.removeItem("active_project_id");
+      localStorage.removeItem("active_project_cache");
+      return null;
+    }
+    return found;
+  }, [projects]);
 
   // Persist selected project to localStorage and server
   const handleSetActiveProject = useCallback((project: Project | null, source: ProjectSource = 'user-selection'): void => {
-    if (project) {
-      // Revalidate project against current projects list
-      // Only if we have projects loaded
-      if (projects.length > 0) {
-        const isValid = projects.some(p => p.id === project.id);
-        if (!isValid) {
-          console.warn("[useProjects] Attempted to set invalid project as active. Clearing cache.");
-          localStorage.removeItem("active_project_id");
-          localStorage.removeItem("active_project_cache");
-          setActiveProject(null);
-          return;
-        }
+    const validated = source === 'cache' ? validateProject(project) : project;
+    
+    if (validated) {
+      localStorage.setItem("active_project_id", validated.id);
+      localStorage.setItem("active_project_cache", JSON.stringify(validated));
+      
+      // Save preference to server if online and explicitly selected by user
+      if (isOnline && user && source === 'user-selection') {
+        supabase.from('user_preferences').upsert({
+          user_id: user.id,
+          default_project_id: validated.id
+        }, { onConflict: 'user_id' }).then(({ error }) => {
+          if (error) console.debug('Failed to save preference:', error);
+        });
       }
-
-      if (source === 'user-selection' || source === 'cache') {
-        localStorage.setItem("active_project_id", project.id);
-        localStorage.setItem("active_project_cache", JSON.stringify(project));
-        
-        // Save preference to server if online
-        if (isOnline && user && source === 'user-selection') {
-          supabase.from('user_preferences').upsert({
-            user_id: user.id,
-            default_project_id: project.id
-          }, { onConflict: 'user_id' }).then(({ error }) => {
-            if (error) console.debug('Failed to save preference:', error);
-          });
-        }
-      }
-    } else {
+    } else if (project === null || validated === null) {
       localStorage.removeItem("active_project_id");
       localStorage.removeItem("active_project_cache");
       if (isOnline && user) {
@@ -103,25 +103,25 @@ export const useProjects = () => {
         });
       }
     }
-    setActiveProject(project);
-  }, [isOnline, user, projects]);
+    setActiveProject(validated);
+  }, [isOnline, user, validateProject]);
 
-  // Revalidate activeProject whenever projects or user changes
+  // Restore logic: Ensure activeProject is set and valid
   useEffect(() => {
-    if (!loading && projects.length > 0 && activeProject) {
-      const isValid = projects.some(p => p.id === activeProject.id);
-      if (!isValid) {
-        console.log("[useProjects] Active project no longer valid. Switching to fallback.");
+    if (!loading && projects.length > 0) {
+      if (!activeProject) {
         const cachedId = localStorage.getItem("active_project_id");
-        const fallback = projects.find(p => p.id === cachedId) || projects[0];
-        handleSetActiveProject(fallback, 'cache');
+        const found = projects.find(p => p.id === cachedId) || projects[0];
+        handleSetActiveProject(found, 'cache');
+      } else {
+        // Revalidate existing active project
+        const validated = validateProject(activeProject);
+        if (!validated) {
+          handleSetActiveProject(projects[0], 'cache');
+        }
       }
-    } else if (!loading && projects.length > 0 && !activeProject) {
-      const cachedId = localStorage.getItem("active_project_id");
-      const found = projects.find(p => p.id === cachedId) || projects[0];
-      handleSetActiveProject(found, 'cache');
     }
-  }, [loading, projects, activeProject, handleSetActiveProject]);
+  }, [loading, projects, activeProject, handleSetActiveProject, validateProject]);
 
   const createProject = async (name: string, description?: string) => {
     if (!user || !isSystemAdmin) {
@@ -140,15 +140,9 @@ export const useProjects = () => {
       return;
     }
 
-    const { error: memberError } = await supabase
+    await supabase
       .from("project_members")
       .insert({ project_id: data.id, user_id: user.id, role: "owner" });
-
-    if (memberError) {
-      console.error("Failed to create owner membership:", memberError);
-      // We don't rollback project creation here as it's partial success, 
-      // but UI will be out of sync. In a real app we'd use a transaction or RPC.
-    }
 
     toast.success("Project created!");
     queryClient.invalidateQueries({ queryKey: ["user_projects", user.id] });
@@ -158,7 +152,7 @@ export const useProjects = () => {
   const joinProject = async (inviteCode: string) => {
     if (!user) return;
 
-    // Check for unique invite first
+    // Check for unique invite
     const { data: invite, error: inviteError } = await supabase
       .from("project_invites")
       .select("*")
@@ -166,24 +160,24 @@ export const useProjects = () => {
       .is("used_by", null)
       .single();
 
-    if (inviteError && inviteError.code !== "PGRST116") { 
+    if (inviteError && inviteError.code !== "PGRST116") {
       toast.error("Error checking invite code");
       return;
     }
 
     if (invite) {
-      // ATOMIC-LIKE: Guarded update to claim invite
+      // ATOMIC CONSUME: Guarded update
       try {
-        const { data: claimedInvites, error: consumeError } = await supabase
+        const { data: consumedInvites, error: consumeError } = await supabase
           .from("project_invites")
           .update({ used_by: user.id, used_at: new Date().toISOString() })
           .eq("id", invite.id)
-          .is("used_by", null) // Race condition guard
+          .is("used_by", null) // Ensure it wasn't claimed between check and update
           .select();
         
         if (consumeError) throw consumeError;
-        if (!claimedInvites || claimedInvites.length === 0) {
-          throw new Error("INVITE_ALREADY_CLAIMED");
+        if (!consumedInvites || consumedInvites.length === 0) {
+          throw new Error("INVITE_ALREADY_USED");
         }
 
         // Create membership
@@ -192,7 +186,7 @@ export const useProjects = () => {
           .insert({ project_id: invite.project_id, user_id: user.id, role: invite.role || "member" });
 
         if (memberError) {
-          // Compensating action: Rollback invite consumption if member creation fails
+          // ROLLBACK: Revert invite consumption if membership creation fails
           await supabase
             .from("project_invites")
             .update({ used_by: null, used_at: null })
@@ -218,7 +212,7 @@ export const useProjects = () => {
         handleSetActiveProject(project as Project, 'user-selection');
       } catch (err: any) {
         console.error("Failed to join via invite:", err);
-        if (err.message === "INVITE_ALREADY_CLAIMED") {
+        if (err.message === "INVITE_ALREADY_USED") {
           toast.error("This invite has already been used");
         } else {
           toast.error("Failed to join project");

@@ -6,6 +6,7 @@ export const isNetworkError = (error: any): boolean => {
     return true;
   }
 
+  // Normalize message to lowercase for consistent checking
   const message = error?.message?.toLowerCase() || "";
   
   return (

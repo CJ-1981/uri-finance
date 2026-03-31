@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { isNetworkError } from "@/lib/networkUtils";
+import { format } from "date-fns";
 
 export interface Transaction {
   id: string;
@@ -27,7 +28,6 @@ export const useTransactions = (projectId: string | undefined) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Renamed queryKey to avoid cache collisions with old non-infinite query data
   const TRANSACTIONS_KEY = ["infinite_transactions", projectId];
 
   const { 
@@ -70,15 +70,17 @@ export const useTransactions = (projectId: string | undefined) => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Flatten infinite query pages into a single list
   const transactions = useMemo(() => {
     if (!data?.pages) return [];
     return data.pages.flat() || [];
   }, [data]);
 
   const addTransactionMutation = useMutation({
+    mutationKey: ["addTransaction", projectId],
     mutationFn: async (tx: {
       id: string;
+      project_id: string; // Added for persistence
+      user_id: string;    // Added for persistence
       type: "income" | "expense";
       amount: number;
       category: string;
@@ -87,16 +89,15 @@ export const useTransactions = (projectId: string | undefined) => {
       custom_values?: Record<string, number | string>;
       currency?: string;
     }) => {
-      if (!user || !projectId) throw new Error("Missing auth or project");
       const { data, error } = await supabase.from("transactions").insert({
         id: tx.id,
-        project_id: projectId,
-        user_id: user.id,
+        project_id: tx.project_id,
+        user_id: tx.user_id,
         type: tx.type,
         amount: tx.amount,
         category: tx.category,
         description: tx.description || null,
-        transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
+        transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
         custom_values: tx.custom_values || {},
         currency: tx.currency || "USD",
       }).select("id").single();
@@ -109,14 +110,11 @@ export const useTransactions = (projectId: string | undefined) => {
       const previous = queryClient.getQueryData(TRANSACTIONS_KEY);
       
       const optimistic: Transaction = {
-        project_id: projectId!,
-        user_id: user?.id || "",
         created_at: new Date().toISOString(),
         deleted_at: null,
         ...newTx,
-        id: newTx.id,
         description: newTx.description || null,
-        transaction_date: newTx.transaction_date || new Date().toISOString().split("T")[0],
+        transaction_date: newTx.transaction_date || format(new Date(), "yyyy-MM-dd"),
         custom_values: newTx.custom_values || {},
         currency: newTx.currency || "USD",
         _sync_status: "optimistic",
@@ -144,7 +142,10 @@ export const useTransactions = (projectId: string | undefined) => {
       });
     },
     onError: (err: any, variables, context) => {
-      if (isNetworkError(err)) return;
+      if (isNetworkError(err)) {
+        toast.info("Saved offline - will sync when online");
+        return;
+      }
       queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
       toast.error("Failed to add transaction");
     },
@@ -158,11 +159,13 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const updateTransactionMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">> }) => {
+    mutationKey: ["updateTransaction", projectId],
+    mutationFn: async ({ id, updates, project_id }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>, project_id: string }) => {
       const { error } = await supabase
         .from("transactions")
         .update(updates)
-        .eq("id", id);
+        .eq("id", id)
+        .eq("project_id", project_id);
       if (error) throw error;
     },
     onMutate: async ({ id, updates }) => {
@@ -180,7 +183,10 @@ export const useTransactions = (projectId: string | undefined) => {
       return { previous };
     },
     onError: (err: any, variables, context) => {
-      if (isNetworkError(err)) return;
+      if (isNetworkError(err)) {
+        toast.info("Update saved offline");
+        return;
+      }
       queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
       toast.error("Failed to update transaction");
     },
@@ -206,11 +212,13 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const deleteTransactionMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationKey: ["deleteTransaction", projectId],
+    mutationFn: async ({ id, project_id }: { id: string, project_id: string }) => {
       const { error } = await supabase
         .from("transactions")
         .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+        .eq("id", id)
+        .eq("project_id", project_id);
       if (error) throw error;
 
       const { error: unlinkError } = await supabase
@@ -218,10 +226,9 @@ export const useTransactions = (projectId: string | undefined) => {
         .update({ transaction_id: null })
         .eq("transaction_id", id);
       
-      // Treat unlink operation as part of the failure path
       if (unlinkError) throw unlinkError;
     },
-    onMutate: async (id) => {
+    onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: TRANSACTIONS_KEY });
       const previous = queryClient.getQueryData(TRANSACTIONS_KEY);
       queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
@@ -235,8 +242,11 @@ export const useTransactions = (projectId: string | undefined) => {
       });
       return { previous };
     },
-    onError: (err: any, id, context) => {
-      if (isNetworkError(err)) return;
+    onError: (err: any, variables, context) => {
+      if (isNetworkError(err)) {
+        toast.info("Delete pending offline");
+        return;
+      }
       queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
       toast.error("Failed to delete transaction");
     },
@@ -249,7 +259,7 @@ export const useTransactions = (projectId: string | undefined) => {
     onSettled: () => {
       if (navigator.onLine) {
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
+          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
         }, 2000);
       }
     },
@@ -257,16 +267,15 @@ export const useTransactions = (projectId: string | undefined) => {
 
   const bulkAddTransactionsMutation = useMutation({
     mutationKey: ["bulkAddTransactions", projectId],
-    mutationFn: async (txs: Array<any>) => {
-      if (!user || !projectId) throw new Error("Missing auth or project");
+    mutationFn: async ({ txs, project_id, user_id }: { txs: Array<any>, project_id: string, user_id: string }) => {
       const rows = txs.map((tx) => ({
-        project_id: projectId,
-        user_id: user.id,
+        project_id,
+        user_id,
         type: tx.type,
         amount: tx.amount,
         category: tx.category,
         description: tx.description || null,
-        transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
+        transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
         custom_values: tx.custom_values || {},
         currency: tx.currency || "USD",
       }));
@@ -300,23 +309,33 @@ export const useTransactions = (projectId: string | undefined) => {
   const balance = totalIncome - totalExpense;
 
   const addTransaction = useCallback(async (tx: any) => {
+    if (!projectId || !user) throw new Error("Missing project or user");
     const id = crypto.randomUUID();
     try {
-      await addTransactionMutation.mutateAsync({ ...tx, id });
+      await addTransactionMutation.mutateAsync({ ...tx, id, project_id: projectId, user_id: user.id });
       return id;
     } catch (err) {
-      if (isNetworkError(err)) return id; // Treat as success for offline flow
+      if (isNetworkError(err)) return id;
       throw err;
     }
-  }, [addTransactionMutation]);
+  }, [addTransactionMutation, projectId, user]);
 
   return { 
     transactions, 
     loading, 
     addTransaction,
-    updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutateAsync({ id, updates }), 
-    deleteTransaction: (id: string) => deleteTransactionMutation.mutateAsync(id), 
-    bulkAddTransactions: (txs: any[]) => bulkAddTransactionsMutation.mutateAsync(txs), 
+    updateTransaction: (id: string, updates: any) => {
+      if (!projectId) return Promise.reject("No project");
+      return updateTransactionMutation.mutateAsync({ id, updates, project_id: projectId });
+    },
+    deleteTransaction: (id: string) => {
+      if (!projectId) return Promise.reject("No project");
+      return deleteTransactionMutation.mutateAsync({ id, project_id: projectId });
+    },
+    bulkAddTransactions: (txs: any[]) => {
+      if (!projectId || !user) return Promise.reject("No project or user");
+      return bulkAddTransactionsMutation.mutateAsync({ txs, project_id: projectId, user_id: user.id });
+    },
     fetchTransactions: () => queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY }), 
     fetchNextPage,
     hasNextPage,

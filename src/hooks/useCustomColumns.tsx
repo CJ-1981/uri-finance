@@ -41,11 +41,18 @@ export const useCustomColumns = (projectId: string | undefined) => {
   });
 
   const addColumnMutation = useMutation({
+    mutationKey: ["addColumn", projectId],
     mutationFn: async ({ name, columnType }: { name: string, columnType: ColumnType }) => {
       const maxOrder = columns.length > 0 ? Math.max(...columns.map(c => c.sort_order)) : -1;
       const { error } = await supabase
         .from("custom_columns")
-        .insert({ project_id: projectId, name: name.trim(), column_type: columnType, sort_order: maxOrder + 1 } as Partial<CustomColumn>);
+        .insert({ 
+          id: crypto.randomUUID(),
+          project_id: projectId, 
+          name: name.trim(), 
+          column_type: columnType, 
+          sort_order: maxOrder + 1 
+        } as Partial<CustomColumn>);
       if (error) throw error;
     },
     onMutate: async ({ name, columnType }) => {
@@ -72,18 +79,21 @@ export const useCustomColumns = (projectId: string | undefined) => {
     },
     onError: (err: any, variables, context) => {
       if (isNetworkError(err)) {
-        toast.info("Column saved offline — will sync when online");
+        toast.info("Column saved offline");
         return;
       }
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error(err.message.includes("duplicate") ? "Column already exists" : "Failed to add column");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      }
     }
   });
 
   const deleteColumnMutation = useMutation({
+    mutationKey: ["deleteColumn", projectId],
     mutationFn: async (id: string) => {
       const col = columns.find(c => c.id === id);
       if (!col || !projectId) return;
@@ -116,11 +126,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
       toast.error("Failed to delete column");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      }
     }
   });
 
   const updateColumnMutation = useMutation({
+    mutationKey: ["updateColumn", projectId],
     mutationFn: async ({ id, updates }: { id: string, updates: Partial<CustomColumn> }) => {
       const { error } = await supabase
         .from("custom_columns")
@@ -136,22 +149,26 @@ export const useCustomColumns = (projectId: string | undefined) => {
       return { previous };
     },
     onError: (err, variables, context) => {
-      if (isNetworkError(err)) return;
+      if (isNetworkError(err)) {
+        toast.info("Update saved offline");
+        return;
+      }
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error("Failed to update column");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      }
     }
   });
 
   const renameColumnMutation = useMutation({
+    mutationKey: ["renameColumn", projectId],
     mutationFn: async ({ id, newName }: { id: string, newName: string }) => {
-      if (!newName.trim() || !projectId) return;
       const oldCol = columns.find(c => c.id === id);
-      if (!oldCol) return;
+      if (!oldCol || !projectId) return;
       const trimmed = newName.trim();
-      if (trimmed === oldCol.name) return;
 
       const { error: updateError } = await supabase
         .from("custom_columns")
@@ -185,11 +202,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
       toast.error(err.message.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      }
     }
   });
 
   const reorderColumnsMutation = useMutation({
+    mutationKey: ["reorderColumns", projectId],
     mutationFn: async (orderedIds: string[]) => {
       if (!projectId) return;
       const updates = orderedIds.map((id, index) =>
@@ -217,14 +237,37 @@ export const useCustomColumns = (projectId: string | undefined) => {
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      }
     }
   });
 
   const addColumn = useCallback((name: string, columnType: ColumnType = "numeric") => {
     if (!projectId || !name.trim()) return;
+    // Client-side validation: avoid duplicates
+    if (columns.some(c => c.name.toLowerCase() === name.trim().toLowerCase())) {
+      toast.error("Column name already exists");
+      return;
+    }
     addColumnMutation.mutate({ name, columnType });
-  }, [projectId, addColumnMutation]);
+  }, [projectId, addColumnMutation, columns]);
+
+  const renameColumn = useCallback((id: string, newName: string) => {
+    if (!id || !newName.trim() || !projectId) return;
+    const oldCol = columns.find(c => c.id === id);
+    if (!oldCol) return;
+    const trimmed = newName.trim();
+    if (trimmed === oldCol.name) return;
+    
+    // Client-side validation: avoid duplicates
+    if (columns.some(c => c.id !== id && c.name.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Column name already exists");
+      return;
+    }
+    
+    renameColumnMutation.mutate({ id, newName: trimmed });
+  }, [projectId, renameColumnMutation, columns]);
 
   return { 
     columns, 
@@ -241,14 +284,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
       const swapIdx = direction === "up" ? idx - 1 : idx + 1;
       if (swapIdx < 0 || swapIdx >= columns.length) return;
       
-      const newOrder = [...columns];
-      const temp = newOrder[idx];
-      newOrder[idx] = newOrder[swapIdx];
-      newOrder[swapIdx] = temp;
-      reorderColumnsMutation.mutate(newOrder.map(c => c.id));
+      const newIds = [...columns.map(c => c.id)];
+      const temp = newIds[idx];
+      newIds[idx] = newIds[swapIdx];
+      newIds[swapIdx] = temp;
+      reorderColumnsMutation.mutate(newIds);
     },
     reorderColumns: (orderedIds: string[]) => reorderColumnsMutation.mutate(orderedIds),
-    renameColumn: (id: string, newName: string) => renameColumnMutation.mutate({ id, newName }),
+    renameColumn,
     fetchColumns: () => queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] }),
   };
 };
