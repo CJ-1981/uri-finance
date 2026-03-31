@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient, useMutationState } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ export interface Transaction {
   custom_values: Record<string, number | string> | null;
   deleted_at: string | null;
   currency: string;
+  _sync_status?: "optimistic" | "synced" | "deleted";
 }
 
 const isNetError = (err: any) => {
@@ -32,19 +33,7 @@ export const useTransactions = (projectId: string | undefined) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Track pending "add" mutations to keep them in the UI during re-sync
-  const pendingAdds = useMutationState({
-    filters: { status: "pending", mutationKey: ["addTransaction", projectId] },
-    select: (mutation) => mutation.state.variables as any,
-  });
-
-  // Track pending "delete" IDs to hide them from UI during re-sync
-  const pendingDeletes = useMutationState({
-    filters: { status: "pending", mutationKey: ["deleteTransaction", projectId] },
-    select: (mutation) => mutation.state.variables as string,
-  });
-
-  const { data: serverTransactions = [], isLoading: loading } = useQuery({
+  const { data: transactions = [], isLoading: loading } = useQuery({
     queryKey: ["transactions", projectId],
     queryFn: async () => {
       if (!projectId) return [];
@@ -57,55 +46,14 @@ export const useTransactions = (projectId: string | undefined) => {
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
-      return data as Transaction[];
+      
+      return (data as Transaction[]).map(t => ({ ...t, _sync_status: "synced" as const }));
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5,
   });
 
-  // Merge server data with pending offline changes to prevent data loss during sync
-  const transactions = useMemo(() => {
-    // 1. Start with server data
-    let list = [...serverTransactions];
-
-    // 2. Filter out items that are pending deletion
-    if (pendingDeletes.length > 0) {
-      const deleteSet = new Set(pendingDeletes);
-      list = list.filter(t => !deleteSet.has(t.id));
-    }
-
-    // 3. Add items that are pending creation (avoiding duplicates)
-    if (pendingAdds.length > 0) {
-      const existingIds = new Set(list.map(t => t.id));
-      pendingAdds.forEach(pending => {
-        if (!existingIds.has(pending.id)) {
-          // Format as a full Transaction object
-          list.unshift({
-            project_id: projectId!,
-            user_id: user?.id || "",
-            created_at: new Date().toISOString(),
-            deleted_at: null,
-            ...pending,
-            description: pending.description || null,
-            transaction_date: pending.transaction_date || new Date().toISOString().split("T")[0],
-            custom_values: pending.custom_values || {},
-            currency: pending.currency || "USD",
-          });
-        }
-      });
-    }
-
-    // 4. Re-sort if we added items
-    return list.sort((a, b) => {
-      const dateA = new Date(a.transaction_date).getTime();
-      const dateB = new Date(b.transaction_date).getTime();
-      if (dateB !== dateA) return dateB - dateA;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-    });
-  }, [serverTransactions, pendingAdds, pendingDeletes, projectId, user]);
-
   const addTransactionMutation = useMutation({
-    mutationKey: ["addTransaction", projectId],
     mutationFn: async (tx: {
       id: string;
       type: "income" | "expense";
@@ -134,10 +82,10 @@ export const useTransactions = (projectId: string | undefined) => {
       return data?.id;
     },
     onMutate: async (newTx) => {
-      await queryClient.cancelQueries({ queryKey: ["transactions", projectId] });
-      const previousTransactions = queryClient.getQueryData(["transactions", projectId]);
+      // Direct cache update for immediate UI feedback
+      const previous = queryClient.getQueryData(["transactions", projectId]);
       
-      const optimisticTx: Transaction = {
+      const optimistic: Transaction = {
         project_id: projectId!,
         user_id: user?.id || "",
         created_at: new Date().toISOString(),
@@ -148,26 +96,44 @@ export const useTransactions = (projectId: string | undefined) => {
         transaction_date: newTx.transaction_date || new Date().toISOString().split("T")[0],
         custom_values: newTx.custom_values || {},
         currency: newTx.currency || "USD",
+        _sync_status: "optimistic",
       };
 
-      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => [optimisticTx, ...(old || [])]);
-      return { previousTransactions };
+      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => {
+        const list = [optimistic, ...(old || [])];
+        return list.sort((a, b) => {
+          const dateA = new Date(a.transaction_date).getTime();
+          const dateB = new Date(b.transaction_date).getTime();
+          if (dateB !== dateA) return dateB - dateA;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+      });
+
+      return { previous };
     },
-    onError: (err: any, newTx, context) => {
+    onSuccess: (data, variables) => {
+      toast.success("Transaction added!", { duration: 2000 });
+      // Update the optimistic item to "synced" status
+      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
+        old?.map(t => t.id === variables.id ? { ...t, _sync_status: "synced" as const } : t)
+      );
+    },
+    onError: (err: any, variables, context) => {
       if (isNetError(err)) return;
-      queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
+      queryClient.setQueryData(["transactions", projectId], context?.previous);
       toast.error("Failed to add transaction");
     },
-    onSuccess: () => {
-      toast.success("Transaction added!", { duration: 2000 });
-    },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+      // Only invalidate if we are online to avoid flickering
+      if (navigator.onLine) {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+        }, 2000);
+      }
     },
   });
 
   const updateTransactionMutation = useMutation({
-    mutationKey: ["updateTransaction", projectId],
     mutationFn: async ({ id, updates }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">> }) => {
       const { error } = await supabase
         .from("transactions")
@@ -176,28 +142,33 @@ export const useTransactions = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["transactions", projectId] });
-      const previousTransactions = queryClient.getQueryData(["transactions", projectId]);
+      const previous = queryClient.getQueryData(["transactions", projectId]);
       queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
-        old?.map(t => t.id === id ? { ...t, ...updates } : t)
+        old?.map(t => t.id === id ? { ...t, ...updates, _sync_status: "optimistic" as const } : t)
       );
-      return { previousTransactions };
+      return { previous };
     },
     onError: (err: any, variables, context) => {
       if (isNetError(err)) return;
-      queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
+      queryClient.setQueryData(["transactions", projectId], context?.previous);
       toast.error("Failed to update transaction");
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast.success("Transaction updated!");
+      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
+        old?.map(t => t.id === variables.id ? { ...t, _sync_status: "synced" as const } : t)
+      );
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+      if (navigator.onLine) {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+        }, 2000);
+      }
     },
   });
 
   const deleteTransactionMutation = useMutation({
-    mutationKey: ["deleteTransaction", projectId],
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("transactions")
@@ -212,31 +183,33 @@ export const useTransactions = (projectId: string | undefined) => {
       if (unlinkError) console.error("Unlink files error:", unlinkError);
     },
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ["transactions", projectId] });
-      const previousTransactions = queryClient.getQueryData(["transactions", projectId]);
+      const previous = queryClient.getQueryData(["transactions", projectId]);
       queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
         old?.filter(t => t.id !== id)
       );
-      return { previousTransactions };
+      return { previous };
     },
     onError: (err: any, id, context) => {
       if (isNetError(err)) return;
-      queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
+      queryClient.setQueryData(["transactions", projectId], context?.previous);
       toast.error("Failed to delete transaction");
     },
     onSuccess: () => {
       toast.success("Transaction deleted");
-      if (projectId) {
+      if (projectId && navigator.onLine) {
         queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
       }
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+      if (navigator.onLine) {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+        }, 2000);
+      }
     },
   });
 
   const bulkAddTransactionsMutation = useMutation({
-    mutationKey: ["bulkAddTransactions", projectId],
     mutationFn: async (txs: Array<any>) => {
       if (!user || !projectId) throw new Error("Missing auth or project");
       const rows = txs.map((tx) => ({
