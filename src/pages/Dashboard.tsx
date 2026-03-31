@@ -34,7 +34,8 @@ import { FileManager } from "@/components/files";
 import ReportSummaryTable from "@/components/ReportSummaryTable";
 import ReportExportModal from "@/components/ReportExportModal";
 import { useReportData } from "@/hooks/useReportData";
-import { Download } from "lucide-react";
+import { Download, CloudOff } from "lucide-react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -54,6 +55,7 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const isOnline = useOnlineStatus();
   const { projects, activeProject, setActiveProject, createProject, joinProject, loading, isSystemAdmin } = useProjects();
   const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions, fetchTransactions } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
@@ -319,6 +321,18 @@ const Dashboard = () => {
             )}
           </div>
           <div className="flex items-center gap-1">
+            {!isOnline && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center justify-center p-2 text-amber-500 animate-pulse cursor-help">
+                    <CloudOff className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Offline Mode - Changes will sync later</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <ShortcutSettings />
             <Button
               variant="ghost"

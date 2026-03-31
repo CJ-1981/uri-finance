@@ -4,13 +4,14 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { VitePWA } from 'vite-plugin-pwa';
 
 // @MX:NOTE: Dev server plugin to redirect /uri-finance to / in development
 // This allows accessing the app with either http://localhost:8080 or http://localhost:8080/uri-finance
 function devBasePathRedirect() {
   return {
     name: 'dev-base-path-redirect',
-    configureServer(server: { middlewares: { use: (handler: (req: IncomingMessage, res: ServerResponse, next: () => void) => void) => void } }) {
+    configureServer(server: { middlewares: { use: (handler: (req: any, res: any, next: () => void) => void) => void } }) {
       // Register as pre-middleware (runs before Vite's internal middlewares)
       server.middlewares.use((req, res, next) => {
         const url = req.url || '';
@@ -31,16 +32,6 @@ function devBasePathRedirect() {
   };
 }
 
-// Types for Node.js HTTP server
-interface IncomingMessage {
-  url?: string;
-}
-
-interface ServerResponse {
-  writeHead(statusCode: number, headers?: { [key: string]: string }): void;
-  end(): void;
-}
-
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // @MX:NOTE: Use base="/uri-finance/" for production builds, base="/" for development
@@ -59,6 +50,39 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
+      manifest: {
+        name: 'URI Finance',
+        short_name: 'URI Finance',
+        description: 'Track your personal and project finances securely.',
+        theme_color: '#ffffff',
+        icons: [
+          {
+            src: 'icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: 'icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: 'icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Ensure service worker works correctly with GitHub Pages base path
+        navigateFallback: mode === 'development' ? '/index.html' : '/uri-finance/index.html',
+      }
+    }),
     mode === 'development' && devBasePathRedirect(),
     mode === "development" && componentTagger()
   ].filter(Boolean),

@@ -4,7 +4,30 @@ Detailed technical changes made during codebase review and improvement session.
 
 ## Session Date: 2026-03-31
 
-## Security & Privacy Improvements
+## Offline & Persistence Improvements
+
+### 15. Comprehensive Offline Mode (Issue #19)
+**Files Changed:**
+- `src/hooks/useTransactions.tsx` - Migrated to React Query with optimistic updates
+- `src/hooks/useCategories.tsx` - Migrated to React Query
+- `src/lib/offlineStorage.ts` - New IndexedDB persistence layer
+- `src/App.tsx` - Configured React Query persistence
+- `vite.config.ts` - Added `vite-plugin-pwa` for asset caching
+- `src/main.tsx` - Registered service worker
+- `src/hooks/useOnlineStatus.ts` - New hook for connectivity tracking
+- `src/pages/Dashboard.tsx` - Added offline status indicator
+
+**Changes:**
+- Standardized data fetching by migrating manual `useState`/`useEffect` hooks to TanStack Query v5.
+- Implemented persistent caching using IndexedDB (via `idb-keyval`), allowing the app to load previously fetched data instantly without a network connection.
+- Added optimistic UI updates for adding, updating, and deleting transactions, providing an immediate response while offline.
+- Integrated `vite-plugin-pwa` to cache the application shell (HTML, JS, CSS) for true offline access.
+- Added a visual "Cloud Off" indicator in the Dashboard header with an amber pulse animation to inform users when they are working offline.
+
+**Impact:**
+- **Reliability**: The app remains functional in low-connectivity or no-connectivity environments.
+- **Performance**: Instant data loading from the local cache (Hydration from IndexedDB).
+- **User Experience**: Seamless transitions between online and offline states with background synchronization.
 
 ### 14. PIN Numpad UI Consistency
 **Files Changed:**

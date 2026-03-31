@@ -19,7 +19,25 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { ThemeMetaUpdater } from "@/components/ThemeMetaUpdater";
 import { isPinSet } from "@/lib/securePinStorage";
 
-const queryClient = new QueryClient();
+import { configurePersistence } from "@/lib/offlineStorage";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      refetchOnWindowFocus: false,
+      retry: (failureCount, error: any) => {
+        // Don't retry if it's a 401/403 or if we are offline
+        if (error?.status === 401 || error?.status === 403) return false;
+        return failureCount < 3;
+      },
+    },
+  },
+});
+
+// Configure offline persistence
+configurePersistence(queryClient);
 
 // GitHub Pages SPA routing: Restore route from 404.html redirect
 const RouteRestoration = () => {

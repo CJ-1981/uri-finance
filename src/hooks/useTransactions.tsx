@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -22,142 +22,195 @@ export interface Transaction {
 export const useTransactions = (projectId: string | undefined) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const fetchTransactions = async () => {
-    if (!projectId) return;
-    setLoading(true);
-    const { data } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("project_id", projectId)
-      .is("deleted_at", null)
-      .order("transaction_date", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(100);
-    setTransactions((data as Transaction[]) || []);
-    setLoading(false);
-  };
+  const { data: transactions = [], isLoading: loading } = useQuery({
+    queryKey: ["transactions", projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("project_id", projectId)
+        .is("deleted_at", null)
+        .order("transaction_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data as Transaction[];
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 60 * 5,
+  });
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [projectId]);
+  const addTransactionMutation = useMutation({
+    mutationFn: async (tx: {
+      type: "income" | "expense";
+      amount: number;
+      category: string;
+      description?: string;
+      transaction_date?: string;
+      custom_values?: Record<string, number | string>;
+      currency?: string;
+    }) => {
+      if (!user || !projectId) throw new Error("Missing auth or project");
+      const { data, error } = await supabase.from("transactions").insert({
+        project_id: projectId,
+        user_id: user.id,
+        type: tx.type,
+        amount: tx.amount,
+        category: tx.category,
+        description: tx.description || null,
+        transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
+        custom_values: tx.custom_values || {},
+        currency: tx.currency || "USD",
+      }).select("id").single();
 
-  const addTransaction = async (tx: {
-    type: "income" | "expense";
-    amount: number;
-    category: string;
-    description?: string;
-    transaction_date?: string;
-    custom_values?: Record<string, number | string>;
-    currency?: string;
-  }) => {
-    if (!user || !projectId) return;
-    const { data, error } = await supabase.from("transactions").insert({
-      project_id: projectId,
-      user_id: user.id,
-      type: tx.type,
-      amount: tx.amount,
-      category: tx.category,
-      description: tx.description || null,
-      transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
-      custom_values: tx.custom_values || {},
-      currency: tx.currency || "USD",
-    }).select("id").single();
+      if (error) throw error;
+      return data?.id;
+    },
+    onMutate: async (newTx) => {
+      await queryClient.cancelQueries({ queryKey: ["transactions", projectId] });
+      const previousTransactions = queryClient.getQueryData(["transactions", projectId]);
+      
+      const optimisticTx: Transaction = {
+        id: crypto.randomUUID(),
+        project_id: projectId!,
+        user_id: user?.id || "",
+        created_at: new Date().toISOString(),
+        deleted_at: null,
+        ...newTx,
+        description: newTx.description || null,
+        transaction_date: newTx.transaction_date || new Date().toISOString().split("T")[0],
+        custom_values: newTx.custom_values || {},
+        currency: newTx.currency || "USD",
+      };
 
-    if (error) {
+      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => [optimisticTx, ...(old || [])]);
+      return { previousTransactions };
+    },
+    onError: (err, newTx, context) => {
+      queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
       toast.error("Failed to add transaction");
-      return;
-    }
-    toast.success("Transaction added!", { duration: 2000 });
-    await fetchTransactions();
-    // Return transaction ID for file association
-    return data?.id;
-  };
+    },
+    onSuccess: (data) => {
+      toast.success("Transaction added!", { duration: 2000 });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+    },
+  });
 
-  const updateTransaction = async (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>) => {
-    const { error } = await supabase
-      .from("transactions")
-      .update(updates)
-      .eq("id", id);
-    if (error) {
+  const updateTransactionMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">> }) => {
+      const { error } = await supabase
+        .from("transactions")
+        .update(updates)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, updates }) => {
+      await queryClient.cancelQueries({ queryKey: ["transactions", projectId] });
+      const previousTransactions = queryClient.getQueryData(["transactions", projectId]);
+      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
+        old?.map(t => t.id === id ? { ...t, ...updates } : t)
+      );
+      return { previousTransactions };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
       toast.error("Failed to update transaction");
-      return;
-    }
-    toast.success("Transaction updated!");
-    await fetchTransactions();
-  };
+    },
+    onSuccess: () => {
+      toast.success("Transaction updated!");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+    },
+  });
 
-  const deleteTransaction = async (id: string) => {
-    // Soft delete transaction
-    const { error } = await supabase
-      .from("transactions")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) {
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("transactions")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+
+      const { error: unlinkError } = await supabase
+        .from("project_files")
+        .update({ transaction_id: null })
+        .eq("transaction_id", id);
+      if (unlinkError) console.error("Unlink files error:", unlinkError);
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["transactions", projectId] });
+      const previousTransactions = queryClient.getQueryData(["transactions", projectId]);
+      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
+        old?.filter(t => t.id !== id)
+      );
+      return { previousTransactions };
+    },
+    onError: (err, id, context) => {
+      queryClient.setQueryData(["transactions", projectId], context?.previousTransactions);
       toast.error("Failed to delete transaction");
-      return;
-    }
+    },
+    onSuccess: () => {
+      toast.success("Transaction deleted");
+      if (projectId) {
+        queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+    },
+  });
 
-    // Unlink all files associated with this transaction (set transaction_id to NULL)
-    const { error: unlinkError } = await supabase
-      .from("project_files")
-      .update({ transaction_id: null })
-      .eq("transaction_id", id);
-
-    if (unlinkError) {
-      console.error("Failed to unlink files from transaction:", unlinkError);
-      // Don't fail the delete if unlink fails, just log it
-    }
-
-    // Invalidate file list cache to refresh UI with unlinked files
-    if (projectId) {
-      queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
-    }
-
-    toast.success("Transaction deleted");
-    await fetchTransactions();
-  };
-
-  const bulkAddTransactions = async (txs: Array<{
-    type: "income" | "expense";
-    amount: number;
-    category: string;
-    description?: string;
-    transaction_date?: string;
-    currency?: string;
-    custom_values?: Record<string, number | string>;
-  }>) => {
-    if (!user || !projectId) return;
-    const rows = txs.map((tx) => ({
-      project_id: projectId,
-      user_id: user.id,
-      type: tx.type,
-      amount: tx.amount,
-      category: tx.category,
-      description: tx.description || null,
-      transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
-      custom_values: tx.custom_values || {},
-      currency: tx.currency || "USD",
-    }));
-    const { error } = await supabase.from("transactions").insert(rows);
-    if (error) {
+  const bulkAddTransactionsMutation = useMutation({
+    mutationFn: async (txs: Array<any>) => {
+      if (!user || !projectId) throw new Error("Missing auth or project");
+      const rows = txs.map((tx) => ({
+        project_id: projectId,
+        user_id: user.id,
+        type: tx.type,
+        amount: tx.amount,
+        category: tx.category,
+        description: tx.description || null,
+        transaction_date: tx.transaction_date || new Date().toISOString().split("T")[0],
+        custom_values: tx.custom_values || {},
+        currency: tx.currency || "USD",
+      }));
+      const { error } = await supabase.from("transactions").insert(rows);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Transactions imported!");
+      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+    },
+    onError: () => {
       toast.error("Failed to import transactions");
-      return;
     }
-    await fetchTransactions();
-  };
+  });
 
-  const totalIncome = transactions
+  const totalIncome = useMemo(() => transactions
     .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .reduce((sum, t) => sum + Number(t.amount), 0), [transactions]);
 
-  const totalExpense = transactions
+  const totalExpense = useMemo(() => transactions
     .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
+    .reduce((sum, t) => sum + Number(t.amount), 0), [transactions]);
 
   const balance = totalIncome - totalExpense;
 
-  return { transactions, loading, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions, fetchTransactions, totalIncome, totalExpense, balance };
+  return { 
+    transactions, 
+    loading, 
+    addTransaction: (tx: any) => addTransactionMutation.mutateAsync(tx), 
+    updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutate(id, updates), 
+    deleteTransaction: (id: string) => deleteTransactionMutation.mutate(id), 
+    bulkAddTransactions: (txs: any[]) => bulkAddTransactionsMutation.mutate(txs), 
+    fetchTransactions: () => queryClient.invalidateQueries({ queryKey: ["transactions", projectId] }), 
+    totalIncome, 
+    totalExpense, 
+    balance 
+  };
 };
