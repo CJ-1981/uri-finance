@@ -52,6 +52,7 @@ export const useTransactions = (projectId: string | undefined) => {
 
       if (pageParam) {
         const { date, createdAt } = pageParam as { date: string; createdAt: string };
+        // Cursor-based pagination: fetch items older than the last item
         query = query.or(`transaction_date.lt.${date},and(transaction_date.eq.${date},created_at.lt.${createdAt})`);
       }
       
@@ -79,8 +80,8 @@ export const useTransactions = (projectId: string | undefined) => {
     mutationKey: ["addTransaction", projectId],
     mutationFn: async (tx: {
       id: string;
-      project_id: string; // Added for persistence
-      user_id: string;    // Added for persistence
+      project_id: string;
+      user_id: string;
       type: "income" | "expense";
       amount: number;
       category: string;
@@ -259,7 +260,7 @@ export const useTransactions = (projectId: string | undefined) => {
     onSettled: () => {
       if (navigator.onLine) {
         setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
         }, 2000);
       }
     },

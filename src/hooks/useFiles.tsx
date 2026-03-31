@@ -230,11 +230,9 @@ export const useFiles = (projectId: string) => {
       const { data: fileData, error: fetchError } = await supabase.from('project_files').select('storage_path').eq('id', fileId).eq('project_id', projectId).single();
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
       
-      // Step 1: Remove from storage first
       const { error: storageError } = await supabase.storage.from('project-files').remove([fileData.storage_path]);
       if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
 
-      // Step 2: Delete metadata
       const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId).eq('project_id', projectId);
       if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
     },
@@ -298,7 +296,7 @@ export const useFiles = (projectId: string) => {
     files,
     isLoading,
     error,
-    uploadFile: (file: File, remark?: string, transactionId?: string) => uploadFileMutation.mutateAsync({ file, remark, transactionId }),
+    uploadFile: (params: { file: File; remark?: string; transactionId?: string }) => uploadFileMutation.mutateAsync(params),
     isUploading: uploadFileMutation.isPending,
     downloadFile: downloadFileMutation.mutateAsync,
     isDownloading: downloadFileMutation.isPending,

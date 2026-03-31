@@ -40,7 +40,8 @@ export const useCategories = (projectId: string | undefined) => {
     select: (mutation) => {
       const isRecent = mutation.state.status === "success" && (Date.now() - mutation.state.submittedAt < 60000);
       if (mutation.state.status === "pending" || isRecent) {
-        return mutation.state.variables as string;
+        const vars = mutation.state.variables as any;
+        return typeof vars === 'string' ? vars : vars.id;
       }
       return null;
     },
@@ -124,12 +125,10 @@ export const useCategories = (projectId: string | undefined) => {
 
   const addCategoryMutation = useMutation({
     mutationKey: ["addCategory", projectId],
-    mutationFn: async (vars: { id: string, name: string, code?: string }) => {
-      if (!projectId) throw new Error("No project ID");
-      const maxOrder = serverCategories.length > 0 ? Math.max(...serverCategories.map(c => c.sort_order)) : -1;
+    mutationFn: async (vars: { id: string, name: string, code?: string, project_id: string, sort_order: number }) => {
       const { error } = await supabase
         .from("project_categories")
-        .insert({ id: vars.id, project_id: projectId, name: vars.name.trim(), code: vars.code?.trim() || "", sort_order: maxOrder + 1 });
+        .insert({ id: vars.id, project_id: vars.project_id, name: vars.name.trim(), code: vars.code?.trim() || "", sort_order: vars.sort_order });
       if (error) throw error;
     },
     onMutate: async (newCat) => {
@@ -176,29 +175,21 @@ export const useCategories = (projectId: string | undefined) => {
 
   const deleteCategoryMutation = useMutation({
     mutationKey: ["deleteCategory", projectId],
-    mutationFn: async (id: string) => {
-      if (!projectId) throw new Error("No project ID");
-      const category = serverCategories.find(c => c.id === id);
-      const categoryName = category?.name;
-      
-      const { error } = await supabase.from("project_categories").delete().eq("id", id);
+    mutationFn: async ({ id, project_id, categoryName }: { id: string, project_id: string, categoryName?: string }) => {
+      const { error } = await supabase.from("project_categories").delete().eq("id", id).eq("project_id", project_id);
       if (error) throw error;
       
       if (categoryName) {
-        // Scope transaction update to current project
         const { error: txError } = await supabase
           .from("transactions")
           .update({ category: "General" })
           .eq("category", categoryName)
-          .eq("project_id", projectId);
+          .eq("project_id", project_id);
         
         if (txError) throw txError;
-        
-        // Invalidate transactions
-        queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
       }
     },
-    onMutate: async (id) => {
+    onMutate: async ({ id }) => {
       const queryKey = ["project_categories", projectId];
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
@@ -220,7 +211,7 @@ export const useCategories = (projectId: string | undefined) => {
       if (navigator.onLine) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
         }, 2000);
       }
     },
@@ -228,27 +219,19 @@ export const useCategories = (projectId: string | undefined) => {
 
   const renameCategoryMutation = useMutation({
     mutationKey: ["renameCategory", projectId],
-    mutationFn: async ({ id, newName }: { id: string, newName: string }) => {
-      if (!projectId) throw new Error("No project ID");
-      const category = serverCategories.find(c => c.id === id);
-      if (!category) throw new Error("Category not found");
-      const oldName = category.name;
+    mutationFn: async ({ id, newName, project_id, oldName }: { id: string, newName: string, project_id: string, oldName: string }) => {
       const trimmedNewName = newName.trim();
       
-      const { error } = await supabase.from("project_categories").update({ name: trimmedNewName }).eq("id", id);
+      const { error } = await supabase.from("project_categories").update({ name: trimmedNewName }).eq("id", id).eq("project_id", project_id);
       if (error) throw error;
       
-      // Scope transaction update to current project
       const { error: txError } = await supabase
         .from("transactions")
         .update({ category: trimmedNewName })
         .eq("category", oldName)
-        .eq("project_id", projectId);
+        .eq("project_id", project_id);
       
       if (txError) throw txError;
-      
-      // Invalidate transactions
-      queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
     },
     onMutate: async ({ id, newName }) => {
       const queryKey = ["project_categories", projectId];
@@ -272,7 +255,7 @@ export const useCategories = (projectId: string | undefined) => {
       if (navigator.onLine) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
-          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+          queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
         }, 2000);
       }
     },
@@ -280,8 +263,8 @@ export const useCategories = (projectId: string | undefined) => {
 
   const updateCategoryCodeMutation = useMutation({
     mutationKey: ["updateCategoryCode", projectId],
-    mutationFn: async ({ id, code }: { id: string, code: string }) => {
-      const { error } = await supabase.from("project_categories").update({ code: code.trim() }).eq("id", id);
+    mutationFn: async ({ id, code, project_id }: { id: string, code: string, project_id: string }) => {
+      const { error } = await supabase.from("project_categories").update({ code: code.trim() }).eq("id", id).eq("project_id", project_id);
       if (error) throw error;
     },
     onMutate: async ({ id, code }) => {
@@ -310,8 +293,8 @@ export const useCategories = (projectId: string | undefined) => {
 
   const updateCategoryIconMutation = useMutation({
     mutationKey: ["updateCategoryIcon", projectId],
-    mutationFn: async ({ id, icon }: { id: string, icon: string }) => {
-      const { error } = await supabase.from("project_categories").update({ icon } as { icon: string }).eq("id", id);
+    mutationFn: async ({ id, icon, project_id }: { id: string, icon: string, project_id: string }) => {
+      const { error } = await supabase.from("project_categories").update({ icon } as { icon: string }).eq("id", id).eq("project_id", project_id);
       if (error) throw error;
     },
     onMutate: async ({ id, icon }) => {
@@ -340,22 +323,21 @@ export const useCategories = (projectId: string | undefined) => {
 
   const reorderCategoryMutation = useMutation({
     mutationKey: ["reorderCategory", projectId],
-    mutationFn: async ({ id, direction }: { id: string, direction: "up" | "down" }) => {
-      const idx = categories.findIndex(c => c.id === id);
+    mutationFn: async ({ id, direction, project_id }: { id: string, direction: "up" | "down", project_id: string }) => {
+      const idx = serverCategories.findIndex(c => c.id === id);
       if (idx < 0) return;
       const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-      if (swapIdx < 0 || swapIdx >= categories.length) return;
-      const current = categories[idx];
-      const swap = categories[swapIdx];
+      if (swapIdx < 0 || swapIdx >= serverCategories.length) return;
+      const current = serverCategories[idx];
+      const swap = serverCategories[swapIdx];
       
-      // Handle equal sort_order by falling back to indices
       const currentOrder = current.sort_order === swap.sort_order ? idx : current.sort_order;
       const swapOrder = current.sort_order === swap.sort_order ? swapIdx : swap.sort_order;
 
       try {
         const results = await Promise.all([
-          supabase.from("project_categories").update({ sort_order: swapOrder }).eq("id", current.id),
-          supabase.from("project_categories").update({ sort_order: currentOrder }).eq("id", swap.id),
+          supabase.from("project_categories").update({ sort_order: swapOrder }).eq("id", current.id).eq("project_id", project_id),
+          supabase.from("project_categories").update({ sort_order: currentOrder }).eq("id", swap.id).eq("project_id", project_id),
         ]);
 
         const err = results.find(r => r.error)?.error;
@@ -363,8 +345,8 @@ export const useCategories = (projectId: string | undefined) => {
       } catch (error) {
         // Rollback attempt
         await Promise.all([
-          supabase.from("project_categories").update({ sort_order: currentOrder }).eq("id", current.id),
-          supabase.from("project_categories").update({ sort_order: swapOrder }).eq("id", swap.id),
+          supabase.from("project_categories").update({ sort_order: currentOrder }).eq("id", current.id).eq("project_id", project_id),
+          supabase.from("project_categories").update({ sort_order: swapOrder }).eq("id", swap.id).eq("project_id", project_id),
         ]);
         throw error;
       }
@@ -382,7 +364,7 @@ export const useCategories = (projectId: string | undefined) => {
     mutationKey: ["reorderCategories", projectId],
     mutationFn: async (orderedIds: string[]) => {
       const updates = orderedIds.map((id, index) =>
-        supabase.from("project_categories").update({ sort_order: index } as { sort_order: number }).eq("id", id)
+        supabase.from("project_categories").update({ sort_order: index } as { sort_order: number }).eq("id", id).eq("project_id", projectId!)
       );
       const results = await Promise.all(updates);
       const firstError = results.find(r => r.error)?.error;
@@ -399,9 +381,8 @@ export const useCategories = (projectId: string | undefined) => {
 
   const addSubCategoryMutation = useMutation({
     mutationKey: ["addSubCategory", projectId],
-    mutationFn: async (vars: { id: string, parentId: string, name: string, code?: string }) => {
-      if (!projectId) throw new Error("No project ID");
-      const { error } = await supabase.from("project_categories").insert({ id: vars.id, project_id: projectId, name: vars.name.trim(), code: vars.code?.trim() || "", parent_id: vars.parentId });
+    mutationFn: async (vars: { id: string, parentId: string, name: string, code?: string, project_id: string }) => {
+      const { error } = await supabase.from("project_categories").insert({ id: vars.id, project_id: vars.project_id, name: vars.name.trim(), code: vars.code?.trim() || "", parent_id: vars.parentId });
       if (error) throw error;
     },
     onMutate: async (newSub) => {
@@ -447,20 +428,17 @@ export const useCategories = (projectId: string | undefined) => {
 
   const updateCategoryParentMutation = useMutation({
     mutationKey: ["updateCategoryParent", projectId],
-    mutationFn: async ({ id, newParentId }: { id: string, newParentId: string | null }) => {
-      if (!projectId) throw new Error("No project ID");
+    mutationFn: async ({ id, newParentId, project_id }: { id: string, newParentId: string | null, project_id: string }) => {
       if (newParentId) {
-        // Fetch fresh data for cycle detection
         const { data: freshCategories, error: fetchError } = await supabase
           .from("project_categories")
           .select("id, parent_id")
-          .eq("project_id", projectId);
+          .eq("project_id", project_id);
         
         if (fetchError) throw fetchError;
 
         let currentId = newParentId;
         const visited = new Set<string>();
-        // Seed visited with moving category ID
         visited.add(id);
 
         while (currentId) {
@@ -471,7 +449,7 @@ export const useCategories = (projectId: string | undefined) => {
           currentId = parent.parent_id || "";
         }
       }
-      const { error } = await supabase.from("project_categories").update({ parent_id: newParentId }).eq("id", id);
+      const { error } = await supabase.from("project_categories").update({ parent_id: newParentId }).eq("id", id).eq("project_id", project_id);
       if (error) throw error;
     },
     onMutate: async ({ id, newParentId }) => {
@@ -551,19 +529,15 @@ export const useCategories = (projectId: string | undefined) => {
       const toDelete = existing.filter(cat => !processedIds.has(cat.id));
       if (toDelete.length > 0) {
         const deleteIds = toDelete.map(cat => cat.id);
-        const { error: deleteError = null } = await supabase.from("project_categories").delete().in("id", deleteIds);
+        const { error: deleteError = null } = await supabase.from("project_categories").delete().in("id", deleteIds).eq("project_id", projectId);
         if (deleteError) throw deleteError;
         for (const cat of toDelete) {
-          // Scope transaction update to current project
-          const { error: updateTxError } = await supabase
+          await supabase
             .from("transactions")
             .update({ category: "General" })
             .eq("category", cat.name)
             .eq("project_id", projectId);
-          
-          if (updateTxError) throw updateTxError;
         }
-        // Invalidate transactions
         queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
       }
     },
@@ -591,20 +565,44 @@ export const useCategories = (projectId: string | undefined) => {
     categories,
     loading,
     addCategory: (name: string, code?: string) => {
+      if (!projectId) return;
       const id = crypto.randomUUID();
-      addCategoryMutation.mutate({ id, name, code });
+      const sort_order = categories.length;
+      addCategoryMutation.mutate({ id, name, code, project_id: projectId, sort_order });
     },
     addSubCategory: (parentId: string, name: string, code?: string) => {
+      if (!projectId) return;
       const id = crypto.randomUUID();
-      addSubCategoryMutation.mutate({ id, parentId, name, code });
+      addSubCategoryMutation.mutate({ id, parentId, name, code, project_id: projectId });
     },
-    deleteCategory: (id: string) => deleteCategoryMutation.mutate(id),
-    renameCategory: (id: string, newName: string) => renameCategoryMutation.mutate({ id, newName }),
-    updateCategoryCode: (id: string, code: string) => updateCategoryCodeMutation.mutate({ id, code }),
-    updateCategoryIcon: (id: string, icon: string) => updateCategoryIconMutation.mutate({ id, icon }),
-    reorderCategory: (id: string, direction: "up" | "down") => reorderCategoryMutation.mutate({ id, direction }),
+    deleteCategory: (id: string) => {
+      if (!projectId) return;
+      const cat = categories.find(c => c.id === id);
+      deleteCategoryMutation.mutate({ id, project_id: projectId, categoryName: cat?.name });
+    },
+    renameCategory: (id: string, newName: string) => {
+      if (!projectId) return;
+      const cat = categories.find(c => c.id === id);
+      if (!cat) return;
+      renameCategoryMutation.mutate({ id, newName, project_id: projectId, oldName: cat.name });
+    },
+    updateCategoryCode: (id: string, code: string) => {
+      if (!projectId) return;
+      updateCategoryCodeMutation.mutate({ id, code, project_id: projectId });
+    },
+    updateCategoryIcon: (id: string, icon: string) => {
+      if (!projectId) return;
+      updateCategoryIconMutation.mutate({ id, icon, project_id: projectId });
+    },
+    reorderCategory: (id: string, direction: "up" | "down") => {
+      if (!projectId) return;
+      reorderCategoryMutation.mutate({ id, direction, project_id: projectId });
+    },
     reorderCategories: (orderedIds: string[]) => reorderCategoriesMutation.mutate(orderedIds),
-    updateCategoryParent: (id: string, newParentId: string | null) => updateCategoryParentMutation.mutate({ id, newParentId }),
+    updateCategoryParent: (id: string, newParentId: string | null) => {
+      if (!projectId) return;
+      updateCategoryParentMutation.mutate({ id, newParentId, project_id: projectId });
+    },
     bulkUpdateCategories: (entries: any[]) => bulkUpdateCategoriesMutation.mutate(entries),
     buildCategoryTree,
     flattenCategoryTree,

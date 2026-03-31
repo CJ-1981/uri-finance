@@ -73,14 +73,30 @@ export const mutationFunctions = {
   },
 
   renameCategory: async ({ id, newName, project_id, oldName }: any) => {
-    const { error } = await supabase.from("project_categories").update({ name: newName }).eq("id", id).eq("project_id", project_id);
+    let finalProjectId = project_id;
+    let finalOldName = oldName;
+
+    // Fetch missing info if not provided (needed for resumed mutations)
+    if (!finalProjectId || !finalOldName) {
+      const { data, error: fetchError } = await supabase
+        .from("project_categories")
+        .select("project_id, name")
+        .eq("id", id)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      finalProjectId = data.project_id;
+      finalOldName = data.name;
+    }
+
+    const { error } = await supabase.from("project_categories").update({ name: newName }).eq("id", id).eq("project_id", finalProjectId);
     if (error) throw error;
     
     await supabase
       .from("transactions")
       .update({ category: newName })
-      .eq("category", oldName)
-      .eq("project_id", project_id);
+      .eq("category", finalOldName)
+      .eq("project_id", finalProjectId);
   },
 
   updateCategoryCode: async ({ id, code, project_id }: any) => {
@@ -99,11 +115,8 @@ export const mutationFunctions = {
   },
 
   // Files
-  uploadFile: async (params: any) => {
-    // This one is complex because it involves storage. 
-    // Usually we don't resume complex file uploads via TanStack Query's basic persister 
-    // but we can provide the metadata insert part.
-    // For now, we'll focus on data mutations.
+  uploadFile: async () => {
+    throw new Error("uploadFile not implemented in background mutations: see specific storage handler in useFiles.tsx");
   },
 
   // Custom Columns

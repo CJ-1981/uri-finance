@@ -35,7 +35,8 @@ test.describe('Offline Mode Robustness', () => {
     
     // 1. Go Offline
     await context.setOffline(true);
-    await page.waitForTimeout(1000);
+    // Condition-based wait: verify navigator.onLine is false
+    await page.waitForFunction(() => navigator.onLine === false);
     
     // 2. Add multiple transactions while offline
     const tx1 = `Offline Tx ${Date.now()}-1`;
@@ -62,11 +63,14 @@ test.describe('Offline Mode Robustness', () => {
     console.log("Connection recovered, waiting for sync...");
 
     // 5. Verify they STAY visible during and after sync
-    // The pulsing indicator disappearing is our trigger
-    const offlineIndicator = page.getByTestId('offline-indicator');
-    await expect(offlineIndicator).not.toBeVisible({ timeout: 25000 });
+    // Wait for navigator to report online AND mutation queue to clear
+    await page.waitForFunction(() => navigator.onLine === true);
     
-    console.log("Offline indicator gone, verifying data stays...");
+    // Wait for the specific mutation/sync state signal
+    const dashboard = page.getByTestId('dashboard');
+    await expect(dashboard).toHaveAttribute('data-pending-mutations', '0', { timeout: 30000 });
+    
+    console.log("Sync complete (pending mutations = 0), verifying data stays...");
     
     // Check multiple times over a few seconds to catch "disappearing" flicker
     for (let i = 0; i < 5; i++) {

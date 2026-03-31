@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useMutationState } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
@@ -56,6 +57,12 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
 const Dashboard = () => {
   const { user } = useAuth();
   const isOnline = useOnlineStatus();
+
+  // Track all pending mutations for E2E synchronization signals
+  const pendingMutations = useMutationState({
+    filters: { status: 'pending' },
+  });
+  const pendingCount = pendingMutations.length;
   const { projects, activeProject, setActiveProject, createProject, joinProject, loading, isSystemAdmin } = useProjects();
   const { 
     transactions, 
@@ -298,7 +305,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24" data-testid="dashboard">
+    <div className="min-h-screen bg-background pb-24" data-testid="dashboard" data-pending-mutations={pendingCount}>
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
