@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderOpen, Plus, UserPlus } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { toast } from "sonner";
 
 export interface ProjectSwitcherHandle {
   openJoinTab: () => void;
@@ -27,9 +29,25 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
   const [desc, setDesc] = useState("");
   const [code, setCode] = useState("");
   const { t } = useI18n();
+  const isOnline = useOnlineStatus();
+
+  const blockWhenOffline = (actionKey: string): boolean => {
+    if (!isOnline) {
+      const actionMap: Record<string, string> = {
+        "switch": t("proj.offlineSwitch") || "Cannot switch projects while offline",
+        "create": t("proj.offlineCreate") || "Cannot create projects while offline",
+        "join": t("proj.offlineJoin") || "Cannot join projects while offline",
+        "delete": t("proj.offlineDelete") || "Cannot delete projects while offline",
+      };
+      toast.error(actionMap[actionKey] || t("proj.offlineError") || "Action cannot be performed while offline");
+      return true;
+    }
+    return false;
+  };
 
   useImperativeHandle(ref, () => ({
     openJoinTab: () => {
+      if (blockWhenOffline("join projects")) return;
       setTab("join");
       setOpen(true);
     },
@@ -37,6 +55,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (blockWhenOffline("create projects")) return;
     if (!name.trim()) return;
     await onCreate(name.trim(), desc.trim() || undefined);
     setName("");
@@ -46,10 +65,17 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (blockWhenOffline("join projects")) return;
     if (!code.trim()) return;
     await onJoin(code.trim());
     setCode("");
     setTab("list");
+  };
+
+  const handleSelect = (p: Project) => {
+    if (active?.id !== p.id && blockWhenOffline("switch projects")) return;
+    onSelect(p);
+    setOpen(false);
   };
 
   return (
@@ -94,7 +120,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
                 projects.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => { onSelect(p); setOpen(false); }}
+                    onClick={() => handleSelect(p)}
                     className={`w-full text-left rounded-xl px-4 py-3 transition-all ${
                       active?.id === p.id
                         ? "bg-primary/10 ring-1 ring-primary/30"

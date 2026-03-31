@@ -19,7 +19,52 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { ThemeMetaUpdater } from "@/components/ThemeMetaUpdater";
 import { isPinSet } from "@/lib/securePinStorage";
 
-const queryClient = new QueryClient();
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryPersister } from "@/lib/offlineStorage";
+import { mutationFunctions } from "@/lib/mutations";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 60 * 24, // 24 hours
+      refetchOnWindowFocus: false,
+      retry: (failureCount, error: any) => {
+        // Only retry for network/server errors (standard React Query behavior)
+        // 401/403 are permanent failures, so don't retry.
+        if (error?.status === 401 || error?.status === 403) return false;
+        return failureCount < 3;
+      },
+    },
+    mutations: {
+      networkMode: "offlineFirst",
+      // Removed global retry to prevent duplicate non-idempotent inserts.
+      // Individual mutations will handle retries where safe.
+    },
+  },
+});
+
+// Register mutation defaults for background resume support
+queryClient.setMutationDefaults(["addTransaction"], { mutationFn: mutationFunctions.addTransaction });
+queryClient.setMutationDefaults(["updateTransaction"], { mutationFn: mutationFunctions.updateTransaction });
+queryClient.setMutationDefaults(["deleteTransaction"], { mutationFn: mutationFunctions.deleteTransaction });
+queryClient.setMutationDefaults(["addCategory"], { mutationFn: mutationFunctions.addCategory });
+queryClient.setMutationDefaults(["deleteCategory"], { mutationFn: mutationFunctions.deleteCategory });
+queryClient.setMutationDefaults(["renameCategory"], { mutationFn: mutationFunctions.renameCategory });
+queryClient.setMutationDefaults(["updateCategoryCode"], { mutationFn: mutationFunctions.updateCategoryCode });
+queryClient.setMutationDefaults(["updateCategoryIcon"], { mutationFn: mutationFunctions.updateCategoryIcon });
+queryClient.setMutationDefaults(["reorderCategory"], { mutationFn: mutationFunctions.reorderCategory });
+queryClient.setMutationDefaults(["addColumn"], { mutationFn: mutationFunctions.addColumn });
+queryClient.setMutationDefaults(["deleteColumn"], { mutationFn: mutationFunctions.deleteColumn });
+queryClient.setMutationDefaults(["updateColumn"], { mutationFn: mutationFunctions.updateColumn });
+queryClient.setMutationDefaults(["renameColumn"], { mutationFn: mutationFunctions.renameColumn });
+
+// Configure persistence options
+const persistOptions = {
+  persister: queryPersister,
+  maxAge: 1000 * 60 * 60 * 24, // 24 hours
+  buster: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : "1.0.0",
+};
 
 // GitHub Pages SPA routing: Restore route from 404.html redirect
 const RouteRestoration = () => {
@@ -115,6 +160,12 @@ const App = () => {
       console.error('App: Global error caught', event.error);
     };
     window.addEventListener('error', handleError);
+    
+    // Resume paused mutations after hydration
+    // Note: TanStack Query resumes automatically if functions are registered, 
+    // but explicit call ensures it happens after startup.
+    queryClient.resumePausedMutations();
+
     return () => window.removeEventListener('error', handleError);
   }, []);
 
@@ -122,7 +173,7 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <I18nProvider>
         <ErrorBoundary>
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
             <AuthProvider>
               <TooltipProvider>
                 <ThemeMetaUpdater />
@@ -143,7 +194,7 @@ const App = () => {
                 </AppLockGate>
               </TooltipProvider>
             </AuthProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </ErrorBoundary>
       </I18nProvider>
     </ThemeProvider>

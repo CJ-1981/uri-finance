@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useMutationState } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useTransactions, Transaction } from "@/hooks/useTransactions";
@@ -34,7 +35,8 @@ import { FileManager } from "@/components/files";
 import ReportSummaryTable from "@/components/ReportSummaryTable";
 import ReportExportModal from "@/components/ReportExportModal";
 import { useReportData } from "@/hooks/useReportData";
-import { Download } from "lucide-react";
+import { Download, CloudOff } from "lucide-react";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -54,8 +56,25 @@ const AmountText = ({ value, currency, className }: { value: number; currency: s
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const isOnline = useOnlineStatus();
+
+  // Track all pending mutations for E2E synchronization signals
+  const pendingMutations = useMutationState({
+    filters: { status: 'pending' },
+  });
+  const pendingCount = pendingMutations.length;
   const { projects, activeProject, setActiveProject, createProject, joinProject, loading, isSystemAdmin } = useProjects();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions, fetchTransactions } = useTransactions(activeProject?.id);
+  const { 
+    transactions, 
+    addTransaction, 
+    updateTransaction, 
+    deleteTransaction, 
+    bulkAddTransactions, 
+    fetchTransactions,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
@@ -286,7 +305,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24" data-testid="dashboard">
+    <div className="min-h-screen bg-background pb-24" data-testid="dashboard" data-pending-mutations={pendingCount}>
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -319,6 +338,22 @@ const Dashboard = () => {
             )}
           </div>
           <div className="flex items-center gap-1">
+            {!isOnline && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    data-testid="offline-indicator"
+                    className="flex items-center justify-center p-2 text-amber-500 animate-pulse cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-full"
+                    aria-label={t("dash.offlineMode") || "Offline Mode"}
+                  >
+                    <CloudOff className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("dash.offlineHint") || "Offline Mode - Changes will sync later"}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <ShortcutSettings />
             <Button
               variant="ghost"
@@ -512,7 +547,21 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList ref={txListRef} transactions={filtered} categories={categories} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} onTransactionDeleted={fetchTransactions} headers={headers} customColumns={customColumns} isViewer={isViewer} />
+              <TransactionList 
+                ref={txListRef} 
+                transactions={filtered} 
+                categories={categories} 
+                onSelect={handleSelectTx} 
+                onBulkDelete={handleBulkDelete} 
+                onBulkEditOpen={handleBulkEditOpen} 
+                onTransactionDeleted={fetchTransactions} 
+                headers={headers} 
+                customColumns={customColumns} 
+                isViewer={isViewer}
+                hasNextPage={hasNextPage}
+                fetchNextPage={fetchNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+              />
             ) : view === "charts" ? (
               <div className="space-y-4">
                 {/* Export button row */}

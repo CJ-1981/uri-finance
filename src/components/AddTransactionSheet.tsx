@@ -20,6 +20,7 @@ import AutoSuggestInput from "@/components/AutoSuggestInput";
 import ColoredBadge from "@/components/ColoredBadge";
 import { FileUploadSheet } from "@/components/files/FileUploadSheet";
 import { FilePreviewDialog, type FilePreviewInfo } from "@/components/files/FilePreviewDialog";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 // Valid ISO 4217 currency codes (ROL was replaced by RON in 2005)
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD", "AUD", "CHF", "INR", "BRL", "MXN", "CZK", "RON", "SGD", "PLN"];
@@ -48,6 +49,7 @@ interface Props {
 }
 
 const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd, onUploadFile }: Props) => {
+  const isOnline = useOnlineStatus();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = (v: boolean) => {
@@ -128,55 +130,75 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
     setSubmitting(true);
 
-    const cv: Record<string, number | string> = {};
-    for (const col of customColumns) {
-      const val = customValues[col.name];
-      if (!val) continue;
-      if (col.column_type === "numeric") {
-        if (!isNaN(Number(val))) cv[col.name] = Number(val);
-      } else {
-        cv[col.name] = val;
-      }
-    }
-
-    const result = await onAdd({
-      type,
-      amount: Number(amount),
-      category,
-      description: description || undefined,
-      transaction_date: date,
-      custom_values: Object.keys(cv).length > 0 ? cv : undefined,
-      currency,
-    });
-
-    // SPEC-TRANSACTION-FILES: Upload pending files after transaction is created
-    if (result && pendingFiles.length > 0 && onUploadFile) {
-      const transactionId = typeof result === 'string' ? result : result;
-      setLastCreatedTransactionId(transactionId);
-
-      // Upload each pending file with progress tracking
-      for (let i = 0; i < pendingFiles.length; i++) {
-        const pendingFile = pendingFiles[i];
-        setUploadProgress(prev => ({ ...prev, [i]: 0 }));
-        setPendingFiles(prev => prev.map((pf, idx) => idx === i ? { ...pf, uploading: true } : pf));
-
-        try {
-          await onUploadFile(pendingFile.file, pendingFile.remark, transactionId);
-          setUploadProgress(prev => ({ ...prev, [i]: 100 }));
-        } catch (error) {
-          console.error('Failed to upload file:', error);
-          setPendingFiles(prev => prev.map((pf, idx) => idx === i ? { ...pf, uploading: false } : pf));
-          toast.error(`Failed to upload ${pendingFile.file.name}`);
+    try {
+      const cv: Record<string, number | string> = {};
+      for (const col of customColumns) {
+        const val = customValues[col.name];
+        if (!val) continue;
+        if (col.column_type === "numeric") {
+          if (!isNaN(Number(val))) cv[col.name] = Number(val);
+        } else {
+          cv[col.name] = val;
         }
       }
 
-      // Clear pending files after upload
-      setPendingFiles([]);
-      setUploadProgress({});
-    }
+      const result = await onAdd({
+        type,
+        amount: Number(amount),
+        category,
+        description: description || undefined,
+        transaction_date: date,
+        custom_values: Object.keys(cv).length > 0 ? cv : undefined,
+        currency,
+      });
 
-    setSubmitting(false);
-    return true;
+      const transactionId = typeof result === 'string' ? result : result;
+      if (transactionId) {
+        setLastCreatedTransactionId(transactionId);
+      }
+
+      // SPEC-TRANSACTION-FILES: Upload pending files after transaction is created
+      if (result && pendingFiles.length > 0 && onUploadFile) {
+        if (!isOnline) {
+          toast.warning(t("tx.offlineFilesWarning") || "You are offline. Transaction saved, but files will not be uploaded.");
+          // DO NOT clear pendingFiles here, so they stay in the UI for retry
+        } else {
+          const transactionIdStr = typeof result === 'string' ? result : result;
+          const successfulIndices: number[] = [];
+
+          // Upload each pending file with progress tracking
+          for (let i = 0; i < pendingFiles.length; i++) {
+            const pendingFile = pendingFiles[i];
+            setUploadProgress(prev => ({ ...prev, [i]: 0 }));
+            setPendingFiles(prev => prev.map((pf, idx) => idx === i ? { ...pf, uploading: true } : pf));
+
+            try {
+              await onUploadFile(pendingFile.file, pendingFile.remark, transactionIdStr);
+              setUploadProgress(prev => ({ ...prev, [i]: 100 }));
+              successfulIndices.push(i);
+            } catch (error) {
+              console.error('Failed to upload file:', error);
+              setPendingFiles(prev => prev.map((pf, idx) => idx === i ? { ...pf, uploading: false } : pf));
+              toast.error(`${t('files.uploadFailed') || 'Failed to upload'}: ${pendingFile.file.name}`);
+            }
+          }
+
+          // Only remove the files that succeeded
+          if (successfulIndices.length > 0) {
+            setPendingFiles(prev => prev.filter((_, idx) => !successfulIndices.includes(idx)));
+            // Reset progress for next batch
+            setUploadProgress({});
+          }
+        }
+      }
+      return true;
+    } catch (err) {
+      console.error("[AddTransactionSheet] submit failed:", err);
+      toast.error(t("tx.addFailed") || "Failed to add transaction");
+      return false;
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -304,6 +326,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             placeholder="0.00"
             required
             className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
+            data-testid="transaction-amount"
           />
         </div>
 
@@ -377,6 +400,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             placeholder={t("tx.descriptionPlaceholder")}
             className="bg-muted/50 border-border/50"
             data-tab-stop
+            data-testid="transaction-description"
           />
         </div>
 
@@ -618,6 +642,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             disabled={submitting}
             onPointerDown={(e) => isMobile && e.stopPropagation()}
             className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 justify-center gap-2"
+            data-testid="transaction-submit-button"
           >
             {submitting ? t("tx.adding") : (
               <>
@@ -648,6 +673,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             size="icon"
             className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30"
             aria-label={t("tx.addTransaction") || "Add transaction"}
+            data-testid="add-transaction-button"
           >
             <Plus className="h-6 w-6" />
           </Button>

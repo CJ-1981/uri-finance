@@ -1,5 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export interface ColumnHeaders {
   date: string;
@@ -17,76 +19,101 @@ const DEFAULT_HEADERS: ColumnHeaders = {
   amount: "Amount",
 };
 
+const isNetError = (err: any) => {
+  return !navigator.onLine || 
+         err?.message?.includes("Failed to fetch") || 
+         err?.message?.includes("Load failed") ||
+         err?.message?.includes("TypeError") ||
+         err?.status === 0;
+};
+
 export const useColumnHeaders = (projectId: string | undefined) => {
-  const [headers, setHeaders] = useState<ColumnHeaders>(DEFAULT_HEADERS);
-  const [draft, setDraft] = useState<ColumnHeaders>(DEFAULT_HEADERS);
-  const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const loadedProjectRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!projectId) {
-      setHeaders(DEFAULT_HEADERS);
-      setDraft(DEFAULT_HEADERS);
-      setDirty(false);
-      loadedProjectRef.current = null;
-      return;
-    }
-    if (loadedProjectRef.current === projectId) return;
-
-    (async () => {
-      const { data } = await supabase
+  const { data: headers = DEFAULT_HEADERS, isLoading } = useQuery({
+    queryKey: ["project_column_headers", projectId],
+    queryFn: async () => {
+      if (!projectId) return DEFAULT_HEADERS;
+      const { data, error } = await supabase
         .from("projects")
         .select("column_headers")
         .eq("id", projectId)
         .single();
-      const loaded = data?.column_headers && typeof data.column_headers === "object"
+      
+      if (error) throw error;
+
+      return data?.column_headers && typeof data.column_headers === "object"
         ? { ...DEFAULT_HEADERS, ...(data.column_headers as Partial<ColumnHeaders>) }
         : DEFAULT_HEADERS;
-      setHeaders(loaded);
-      setDraft(loaded);
-      setDirty(false);
-      loadedProjectRef.current = projectId;
-    })();
-  }, [projectId]);
+    },
+    enabled: !!projectId,
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
+
+  const [draft, setDraft] = useState<ColumnHeaders>(headers);
+  const [dirty, setDirty] = useState(false);
+
+  // Sync draft with headers when they load or change
+  useEffect(() => {
+    setDraft(headers);
+    setDirty(false);
+  }, [headers]);
 
   const updateDraft = useCallback((key: keyof ColumnHeaders, value: string) => {
-    setDraft((prev) => {
-      const next = { ...prev, [key]: value };
-      return next;
-    });
+    setDraft((prev) => ({ ...prev, [key]: value }));
     setDirty(true);
   }, []);
 
+  const saveMutation = useMutation({
+    mutationFn: async (newHeaders: ColumnHeaders) => {
+      if (!projectId) return;
+      const { error } = await supabase
+        .from("projects")
+        .update({ column_headers: newHeaders } as { column_headers: ColumnHeaders })
+        .eq("id", projectId);
+      if (error) throw error;
+    },
+    onMutate: async (newHeaders) => {
+      await queryClient.cancelQueries({ queryKey: ["project_column_headers", projectId] });
+      const previous = queryClient.getQueryData(["project_column_headers", projectId]);
+      queryClient.setQueryData(["project_column_headers", projectId], newHeaders);
+      return { previous };
+    },
+    onSuccess: () => {
+      toast.success("Headers updated!");
+    },
+    onError: (err, variables, context) => {
+      if (isNetError(err)) return;
+      queryClient.setQueryData(["project_column_headers", projectId], context?.previous);
+      toast.error("Failed to save headers");
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["project_column_headers", projectId] });
+      }
+    }
+  });
+
   const saveHeaders = useCallback(async () => {
-    if (!projectId) return;
-    setSaving(true);
-    // Replace empty strings with defaults before saving
     const toSave: ColumnHeaders = { ...draft };
     for (const key of Object.keys(DEFAULT_HEADERS) as (keyof ColumnHeaders)[]) {
       if (!toSave[key].trim()) toSave[key] = DEFAULT_HEADERS[key];
     }
-    await supabase
-      .from("projects")
-      .update({ column_headers: toSave } as { column_headers: ColumnHeaders })
-      .eq("id", projectId);
-    setHeaders(toSave);
-    setDraft(toSave);
-    setDirty(false);
-    setSaving(false);
-  }, [projectId, draft]);
+    saveMutation.mutate(toSave);
+  }, [draft, saveMutation]);
 
   const resetHeaders = useCallback(async () => {
-    setDraft(DEFAULT_HEADERS);
-    setHeaders(DEFAULT_HEADERS);
-    setDirty(false);
-    if (projectId) {
-      await supabase
-        .from("projects")
-        .update({ column_headers: {} } as { column_headers: Partial<ColumnHeaders> })
-        .eq("id", projectId);
-    }
-  }, [projectId]);
+    saveMutation.mutate(DEFAULT_HEADERS);
+  }, [saveMutation]);
 
-  return { headers, draft, dirty, saving, updateDraft, saveHeaders, resetHeaders, DEFAULT_HEADERS };
+  return { 
+    headers, 
+    draft, 
+    dirty, 
+    saving: saveMutation.isPending, 
+    updateDraft, 
+    saveHeaders, 
+    resetHeaders, 
+    DEFAULT_HEADERS 
+  };
 };

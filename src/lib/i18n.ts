@@ -49,6 +49,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.expenses": "Expenses",
     "dash.transactions": "Transactions",
     "dash.charts": "Charts",
+    "dash.offlineMode": "Offline Mode",
+    "dash.offlineHint": "Offline Mode - Changes will sync later",
     "dash.getStarted": "Get Started",
     "dash.getStartedDesc": "Create a project or join one with an invite code to start tracking finances together.",
     "dash.joinProject": "Join a Project",
@@ -103,6 +105,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.expand": "Expand",
     "tx.collapse": "Collapse",
     "tx.customCurrency": "Custom / Manual",
+    "tx.offlineFilesWarning": "You are offline. Transaction saved, but files will not be uploaded.",
 
     // Projects
     "proj.projects": "Projects",
@@ -122,7 +125,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "proj.inviteCode": "Invite Code",
     "proj.enterInviteCode": "Enter invite code",
     "proj.joinProject": "Join Project",
-    "proj.joined": "Joined \"{project}\"!",
+    "proj.joined": 'Joined "{project}"!',
+    "proj.offlineError": "Cannot perform this action while offline",
+
 
     // Admin
     "admin.title": "Project Settings",
@@ -594,6 +599,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.expenses": "지출",
     "dash.transactions": "거래 내역",
     "dash.charts": "차트",
+    "dash.offlineMode": "오프라인 모드",
+    "dash.offlineHint": "오프라인 모드 - 변경사항은 나중에 동기화됩니다",
     "dash.getStarted": "시작하기",
     "dash.getStartedDesc": "프로젝트를 만들거나 초대 코드로 참여하여 함께 재무를 관리하세요.",
     "dash.joinProject": "프로젝트 참여",
@@ -648,6 +655,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.expand": "펼치기",
     "tx.collapse": "접기",
     "tx.customCurrency": "직접 입력",
+    "tx.offlineFilesWarning": "오프라인 상태입니다. 거래는 저장되었으나 파일은 업로드되지 않았습니다.",
 
     // Projects
     "proj.projects": "프로젝트",
@@ -667,7 +675,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "proj.inviteCode": "초대 코드",
     "proj.enterInviteCode": "초대 코드 입력",
     "proj.joinProject": "프로젝트 참여",
-    "proj.joined": "\"{project}\" 프로젝트에 참여했습니다!",
+    "proj.joined": '"{project}" 프로젝트에 참여했습니다!',
+    "proj.offlineError": "오프라인 상태에서는 이 작업을 수행할 수 없습니다",
+
 
     // Admin
     "admin.title": "프로젝트 설정",
