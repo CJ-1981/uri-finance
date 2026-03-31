@@ -304,6 +304,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             placeholder="0.00"
             required
             className="bg-muted/50 border-border/50 text-2xl font-bold h-14"
+            data-testid="transaction-amount"
           />
         </div>
 
@@ -377,6 +378,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             placeholder={t("tx.descriptionPlaceholder")}
             className="bg-muted/50 border-border/50"
             data-tab-stop
+            data-testid="transaction-description"
           />
         </div>
 
@@ -618,6 +620,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             disabled={submitting}
             onPointerDown={(e) => isMobile && e.stopPropagation()}
             className="flex-1 gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity h-12 justify-center gap-2"
+            data-testid="transaction-submit-button"
           >
             {submitting ? t("tx.adding") : (
               <>
@@ -648,6 +651,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             size="icon"
             className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30"
             aria-label={t("tx.addTransaction") || "Add transaction"}
+            data-testid="add-transaction-button"
           >
             <Plus className="h-6 w-6" />
           </Button>

@@ -225,6 +225,7 @@ dist-ssr
 .mcp.json
 supabase/.temp/
 .auth-storage.json
+e2e/offline-mode.spec.ts
 # Playwright test results
 test-results/
 playwright-report/
