@@ -9,8 +9,11 @@ import { useI18n } from "@/hooks/useI18n";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { toast } from "sonner";
 
+import { useAuth } from "@/hooks/useAuth";
+
 export interface ProjectSwitcherHandle {
   openJoinTab: () => void;
+  openCreateTab: () => void;
 }
 
 interface Props {
@@ -23,6 +26,7 @@ interface Props {
 }
 
 const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, active, onSelect, onCreate, onJoin, isSystemAdmin = false }, ref) => {
+  const { isStandalone } = useAuth();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"list" | "create" | "join">(isSystemAdmin ? "list" : "list");
   const [name, setName] = useState("");
@@ -32,6 +36,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
   const isOnline = useOnlineStatus();
 
   const blockWhenOffline = (actionKey: string): boolean => {
+    if (isStandalone) return false;
     if (!isOnline) {
       const actionMap: Record<string, string> = {
         "switch": t("proj.offlineSwitch") || "Cannot switch projects while offline",
@@ -47,8 +52,13 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   useImperativeHandle(ref, () => ({
     openJoinTab: () => {
-      if (blockWhenOffline("join projects")) return;
+      if (blockWhenOffline("join")) return;
       setTab("join");
+      setOpen(true);
+    },
+    openCreateTab: () => {
+      if (blockWhenOffline("create")) return;
+      setTab("create");
       setOpen(true);
     },
   }));
@@ -61,6 +71,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
     setName("");
     setDesc("");
     setTab("list");
+    setOpen(false);
   };
 
   const handleJoin = async (e: React.FormEvent) => {
@@ -70,6 +81,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
     await onJoin(code.trim());
     setCode("");
     setTab("list");
+    setOpen(false);
   };
 
   const handleSelect = (p: Project) => {

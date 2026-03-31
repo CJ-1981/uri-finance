@@ -7,22 +7,48 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isStandalone: boolean;
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
+  enableStandaloneMode: () => void;
+  disableStandaloneMode: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const STANDALONE_USER: User = {
+  id: "standalone-user",
+  email: "standalone@local",
+  app_metadata: {},
+  user_metadata: { full_name: "Standalone User" },
+  aud: "authenticated",
+  created_at: new Date().toISOString(),
+  role: "authenticated",
+  updated_at: new Date().toISOString(),
+  phone: "",
+  confirmed_at: new Date().toISOString(),
+  last_sign_in_at: new Date().toISOString(),
+  identities: [],
+  factors: [],
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isStandalone, setIsStandalone] = useState(() => localStorage.getItem("is_standalone") === "true");
 
   useEffect(() => {
-    console.log('AuthProvider: Initializing authentication...');
+    console.log('AuthProvider: Initializing authentication...', { isStandalone });
+
+    if (isStandalone) {
+      setUser(STANDALONE_USER);
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -53,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('AuthProvider: Initialization error', error);
       setLoading(false);
     }
-  }, []);
+  }, [isStandalone]);
 
   const signUp = async (email: string, password: string) => {
     // Construct the email redirect URL with the correct base path
@@ -91,6 +117,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("active_project_id");
     localStorage.removeItem("active_project_cache");
     localStorage.removeItem("pending_invite_code");
+    localStorage.removeItem("is_standalone");
+    setIsStandalone(false);
     try {
       await supabase.auth.signOut({ scope: 'global' });
     } catch (error) {
@@ -98,6 +126,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Local state is already cleared, so user is effectively logged out
       console.debug('Logout error (ignoring):', error);
     }
+  };
+
+  const enableStandaloneMode = () => {
+    localStorage.setItem("is_standalone", "true");
+    setIsStandalone(true);
+    setUser(STANDALONE_USER);
+  };
+
+  const disableStandaloneMode = () => {
+    localStorage.removeItem("is_standalone");
+    setIsStandalone(false);
+    setUser(null);
   };
 
   const resetPassword = async (email: string) => {
@@ -118,7 +158,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, resetPassword, updatePassword }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      isStandalone, 
+      signUp, 
+      signIn, 
+      signOut, 
+      resetPassword, 
+      updatePassword,
+      enableStandaloneMode,
+      disableStandaloneMode
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,6 +4,8 @@ import { Navigate } from "react-router-dom";
 import Dashboard from "@/pages/Dashboard";
 import { useI18n } from "@/hooks/useI18n";
 
+import { PWAInstructions } from "@/components/PWAInstructions";
+
 const Index = () => {
   const { user, loading } = useAuth();
   const { t } = useI18n();
@@ -22,7 +24,12 @@ const Index = () => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  return <Dashboard />;
+  return (
+    <>
+      <Dashboard />
+      <PWAInstructions />
+    </>
+  );
 };
 
 export default Index;

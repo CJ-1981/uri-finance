@@ -5,8 +5,27 @@ import { format } from "date-fns";
  * Shared mutation functions for TanStack Query defaults and resume support.
  */
 
+const getIsStandalone = () => localStorage.getItem("is_standalone") === "true";
+
 export const mutationFunctions = {
   addTransaction: async (tx: any) => {
+    if (getIsStandalone()) {
+      const key = `local_transactions_${tx.project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const newTx = {
+        ...tx,
+        description: tx.description || null,
+        transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
+        custom_values: tx.custom_values || {},
+        currency: tx.currency || "USD",
+        created_at: new Date().toISOString(),
+        deleted_at: null,
+      };
+      localStorage.setItem(key, JSON.stringify([newTx, ...existing]));
+      return tx.id;
+    }
+
     const { error } = await supabase.from("transactions").insert({
       id: tx.id,
       project_id: tx.project_id,
@@ -24,6 +43,15 @@ export const mutationFunctions = {
   },
 
   updateTransaction: async ({ id, updates, project_id }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_transactions_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((t: any) => t.id === id ? { ...t, ...updates } : t);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error } = await supabase
       .from("transactions")
       .update(updates)
@@ -33,6 +61,15 @@ export const mutationFunctions = {
   },
 
   deleteTransaction: async ({ id, project_id }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_transactions_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((t: any) => t.id === id ? { ...t, deleted_at: new Date().toISOString() } : t);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error } = await supabase
       .from("transactions")
       .update({ deleted_at: new Date().toISOString() })
@@ -47,6 +84,24 @@ export const mutationFunctions = {
   },
 
   addCategory: async (vars: any) => {
+    if (getIsStandalone()) {
+      const key = `local_categories_${vars.project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const newCat = { 
+        id: vars.id, 
+        project_id: vars.project_id, 
+        name: vars.name.trim(), 
+        code: vars.code?.trim() || "", 
+        sort_order: vars.sort_order,
+        icon: "Folder",
+        parent_id: null,
+        created_at: new Date().toISOString()
+      };
+      localStorage.setItem(key, JSON.stringify([...existing, newCat]));
+      return;
+    }
+
     const { error } = await supabase
       .from("project_categories")
       .insert({ 
@@ -60,6 +115,15 @@ export const mutationFunctions = {
   },
 
   deleteCategory: async ({ id, project_id, categoryName }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_categories_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.filter((c: any) => c.id !== id);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error } = await supabase.from("project_categories").delete().eq("id", id).eq("project_id", project_id);
     if (error) throw error;
     
@@ -73,6 +137,15 @@ export const mutationFunctions = {
   },
 
   renameCategory: async ({ id, newName, project_id, oldName }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_categories_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((c: any) => c.id === id ? { ...c, name: newName } : c);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     let finalProjectId = project_id;
     let finalOldName = oldName;
 
@@ -100,16 +173,43 @@ export const mutationFunctions = {
   },
 
   updateCategoryCode: async ({ id, code, project_id }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_categories_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((c: any) => c.id === id ? { ...c, code: code.trim() } : c);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error } = await supabase.from("project_categories").update({ code: code.trim() }).eq("id", id).eq("project_id", project_id);
     if (error) throw error;
   },
 
   updateCategoryIcon: async ({ id, icon, project_id }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_categories_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((c: any) => c.id === id ? { ...c, icon } : c);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error } = await supabase.from("project_categories").update({ icon }).eq("id", id).eq("project_id", project_id);
     if (error) throw error;
   },
 
   reorderCategory: async ({ id, sort_order, project_id }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_categories_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((c: any) => c.id === id ? { ...c, sort_order } : c);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error } = await supabase.from("project_categories").update({ sort_order }).eq("id", id).eq("project_id", project_id);
     if (error) throw error;
   },
@@ -121,11 +221,36 @@ export const mutationFunctions = {
 
   // Custom Columns
   addColumn: async (vars: any) => {
+    if (getIsStandalone()) {
+      const key = `local_custom_columns_${vars.project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const newCol = {
+        ...vars,
+        masked: false,
+        required: false,
+        suggestions: [],
+        suggestion_colors: {},
+        created_at: new Date().toISOString()
+      };
+      localStorage.setItem(key, JSON.stringify([...existing, newCol]));
+      return;
+    }
+
     const { error } = await supabase.from("custom_columns").insert(vars);
     if (error) throw error;
   },
 
   deleteColumn: async ({ id, project_id, name }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_custom_columns_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.filter((c: any) => c.id !== id);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error: deleteError } = await supabase.from("custom_columns").delete().eq("id", id).eq("project_id", project_id);
     if (deleteError) throw deleteError;
 
@@ -136,11 +261,29 @@ export const mutationFunctions = {
   },
 
   updateColumn: async ({ id, updates, project_id }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_custom_columns_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((c: any) => c.id === id ? { ...c, ...updates } : c);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error } = await supabase.from("custom_columns").update(updates).eq("id", id).eq("project_id", project_id);
     if (error) throw error;
   },
 
   renameColumn: async ({ id, oldName, newName, project_id }: any) => {
+    if (getIsStandalone()) {
+      const key = `local_custom_columns_${project_id}`;
+      const local = localStorage.getItem(key);
+      const existing = local ? JSON.parse(local) : [];
+      const updated = existing.map((c: any) => c.id === id ? { ...c, name: newName } : c);
+      localStorage.setItem(key, JSON.stringify(updated));
+      return;
+    }
+
     const { error: updateError } = await supabase.from("custom_columns").update({ name: newName }).eq("id", id).eq("project_id", project_id);
     if (updateError) throw updateError;
 

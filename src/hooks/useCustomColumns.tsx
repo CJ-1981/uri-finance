@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { isNetworkError } from "@/lib/networkUtils";
+import { useAuth } from "@/hooks/useAuth";
 
 export type ColumnType = "numeric" | "text" | "list";
 
@@ -21,12 +22,22 @@ export interface CustomColumn {
 }
 
 export const useCustomColumns = (projectId: string | undefined) => {
+  const { isStandalone } = useAuth();
   const queryClient = useQueryClient();
 
+  const COLUMNS_KEY = ["project_custom_columns", projectId];
+  const LOCAL_COLUMNS_KEY = `local_custom_columns_${projectId}`;
+
   const { data: columns = [], isLoading: loading } = useQuery({
-    queryKey: ["project_custom_columns", projectId],
+    queryKey: COLUMNS_KEY,
     queryFn: async () => {
       if (!projectId) return [];
+
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_COLUMNS_KEY);
+        return local ? JSON.parse(local) : [];
+      }
+
       const { data, error } = await supabase
         .from("custom_columns")
         .select("*")
@@ -44,10 +55,31 @@ export const useCustomColumns = (projectId: string | undefined) => {
     mutationKey: ["addColumn", projectId],
     mutationFn: async ({ name, columnType }: { name: string, columnType: ColumnType }) => {
       const maxOrder = columns.length > 0 ? Math.max(...columns.map(c => c.sort_order)) : -1;
+      const id = crypto.randomUUID();
+
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_COLUMNS_KEY);
+        const existing: CustomColumn[] = local ? JSON.parse(local) : [];
+        const newCol: CustomColumn = {
+          id,
+          project_id: projectId!,
+          name: name.trim(),
+          column_type: columnType,
+          masked: false,
+          required: false,
+          sort_order: maxOrder + 1,
+          suggestions: [],
+          suggestion_colors: {},
+          created_at: new Date().toISOString(),
+        };
+        localStorage.setItem(LOCAL_COLUMNS_KEY, JSON.stringify([...existing, newCol]));
+        return;
+      }
+
       const { error } = await supabase
         .from("custom_columns")
         .insert({ 
-          id: crypto.randomUUID(),
+          id,
           project_id: projectId, 
           name: name.trim(), 
           column_type: columnType, 
@@ -56,9 +88,8 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ name, columnType }) => {
-      const queryKey = ["project_custom_columns", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
+      await queryClient.cancelQueries({ queryKey: COLUMNS_KEY });
+      const previous = queryClient.getQueryData(COLUMNS_KEY);
       const optimistic: CustomColumn = {
         id: crypto.randomUUID(),
         project_id: projectId!,
@@ -71,7 +102,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
         suggestion_colors: {},
         created_at: new Date().toISOString(),
       };
-      queryClient.setQueryData(queryKey, (old: any) => [...(old || []), optimistic]);
+      queryClient.setQueryData(COLUMNS_KEY, (old: any) => [...(old || []), optimistic]);
       return { previous };
     },
     onSuccess: () => {
@@ -82,12 +113,12 @@ export const useCustomColumns = (projectId: string | undefined) => {
         toast.info("Column saved offline");
         return;
       }
-      queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
-      toast.error(err.message.includes("duplicate") ? "Column already exists" : "Failed to add column");
+      queryClient.setQueryData(COLUMNS_KEY, context?.previous);
+      toast.error(err.message?.includes("duplicate") ? "Column already exists" : "Failed to add column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine || isStandalone) {
+        queryClient.invalidateQueries({ queryKey: COLUMNS_KEY });
       }
     }
   });
@@ -97,6 +128,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
     mutationFn: async (id: string) => {
       const col = columns.find(c => c.id === id);
       if (!col || !projectId) return;
+
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_COLUMNS_KEY);
+        const existing: CustomColumn[] = local ? JSON.parse(local) : [];
+        const updated = existing.filter(c => c.id !== id);
+        localStorage.setItem(LOCAL_COLUMNS_KEY, JSON.stringify(updated));
+        return;
+      }
 
       const { error: deleteError } = await supabase.from("custom_columns").delete().eq("id", id);
       if (deleteError) throw deleteError;
@@ -108,10 +147,9 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (rpcError) throw rpcError;
     },
     onMutate: async (id) => {
-      const queryKey = ["project_custom_columns", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old: any) => (old as CustomColumn[])?.filter(c => c.id !== id));
+      await queryClient.cancelQueries({ queryKey: COLUMNS_KEY });
+      const previous = queryClient.getQueryData(COLUMNS_KEY);
+      queryClient.setQueryData(COLUMNS_KEY, (old: any) => (old as CustomColumn[])?.filter(c => c.id !== id));
       return { previous };
     },
     onSuccess: () => {
@@ -122,12 +160,12 @@ export const useCustomColumns = (projectId: string | undefined) => {
         toast.info("Delete pending offline");
         return;
       }
-      queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
+      queryClient.setQueryData(COLUMNS_KEY, context?.previous);
       toast.error("Failed to delete column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine || isStandalone) {
+        queryClient.invalidateQueries({ queryKey: COLUMNS_KEY });
       }
     }
   });
@@ -135,6 +173,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
   const updateColumnMutation = useMutation({
     mutationKey: ["updateColumn", projectId],
     mutationFn: async ({ id, updates }: { id: string, updates: Partial<CustomColumn> }) => {
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_COLUMNS_KEY);
+        const existing: CustomColumn[] = local ? JSON.parse(local) : [];
+        const updated = existing.map(c => c.id === id ? { ...c, ...updates } : c);
+        localStorage.setItem(LOCAL_COLUMNS_KEY, JSON.stringify(updated));
+        return;
+      }
+
       const { error } = await supabase
         .from("custom_columns")
         .update(updates)
@@ -142,10 +188,9 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, updates }) => {
-      const queryKey = ["project_custom_columns", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, ...updates } : c));
+      await queryClient.cancelQueries({ queryKey: COLUMNS_KEY });
+      const previous = queryClient.getQueryData(COLUMNS_KEY);
+      queryClient.setQueryData(COLUMNS_KEY, (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, ...updates } : c));
       return { previous };
     },
     onError: (err, variables, context) => {
@@ -153,12 +198,12 @@ export const useCustomColumns = (projectId: string | undefined) => {
         toast.info("Update saved offline");
         return;
       }
-      queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
+      queryClient.setQueryData(COLUMNS_KEY, context?.previous);
       toast.error("Failed to update column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine || isStandalone) {
+        queryClient.invalidateQueries({ queryKey: COLUMNS_KEY });
       }
     }
   });
@@ -169,6 +214,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
       const oldCol = columns.find(c => c.id === id);
       if (!oldCol || !projectId) return;
       const trimmed = newName.trim();
+
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_COLUMNS_KEY);
+        const existing: CustomColumn[] = local ? JSON.parse(local) : [];
+        const updated = existing.map(c => c.id === id ? { ...c, name: trimmed } : c);
+        localStorage.setItem(LOCAL_COLUMNS_KEY, JSON.stringify(updated));
+        return;
+      }
 
       const { error: updateError } = await supabase
         .from("custom_columns")
@@ -184,10 +237,9 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (rpcError) throw rpcError;
     },
     onMutate: async ({ id, newName }) => {
-      const queryKey = ["project_custom_columns", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, name: newName } : c));
+      await queryClient.cancelQueries({ queryKey: COLUMNS_KEY });
+      const previous = queryClient.getQueryData(COLUMNS_KEY);
+      queryClient.setQueryData(COLUMNS_KEY, (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, name: newName } : c));
       return { previous };
     },
     onSuccess: () => {
@@ -198,12 +250,12 @@ export const useCustomColumns = (projectId: string | undefined) => {
         toast.info("Rename pending offline");
         return;
       }
-      queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
-      toast.error(err.message.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
+      queryClient.setQueryData(COLUMNS_KEY, context?.previous);
+      toast.error(err.message?.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine || isStandalone) {
+        queryClient.invalidateQueries({ queryKey: COLUMNS_KEY });
       }
     }
   });
@@ -212,6 +264,19 @@ export const useCustomColumns = (projectId: string | undefined) => {
     mutationKey: ["reorderColumns", projectId],
     mutationFn: async (orderedIds: string[]) => {
       if (!projectId) return;
+
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_COLUMNS_KEY);
+        const existing: CustomColumn[] = local ? JSON.parse(local) : [];
+        const updated = existing.map(c => {
+          const newIdx = orderedIds.indexOf(c.id);
+          if (newIdx !== -1) return { ...c, sort_order: newIdx };
+          return c;
+        });
+        localStorage.setItem(LOCAL_COLUMNS_KEY, JSON.stringify(updated));
+        return;
+      }
+
       const updates = orderedIds.map((id, index) =>
         supabase.from("custom_columns").update({ sort_order: index } as { sort_order: number }).eq("id", id)
       );
@@ -220,25 +285,24 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (firstError) throw firstError;
     },
     onMutate: async (orderedIds) => {
-      const queryKey = ["project_custom_columns", projectId];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData(queryKey);
+      await queryClient.cancelQueries({ queryKey: COLUMNS_KEY });
+      const previous = queryClient.getQueryData(COLUMNS_KEY);
       
       const newOrder = orderedIds.map((id, index) => {
         const col = (previous as CustomColumn[]).find(c => c.id === id);
         return { ...col, sort_order: index } as CustomColumn;
       });
       
-      queryClient.setQueryData(queryKey, newOrder);
+      queryClient.setQueryData(COLUMNS_KEY, newOrder);
       return { previous };
     },
     onError: (err, variables, context) => {
       if (isNetworkError(err)) return;
-      queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
+      queryClient.setQueryData(COLUMNS_KEY, context?.previous);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      if (navigator.onLine || isStandalone) {
+        queryClient.invalidateQueries({ queryKey: COLUMNS_KEY });
       }
     }
   });
@@ -292,6 +356,6 @@ export const useCustomColumns = (projectId: string | undefined) => {
     },
     reorderColumns: (orderedIds: string[]) => reorderColumnsMutation.mutate(orderedIds),
     renameColumn,
-    fetchColumns: () => queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] }),
+    fetchColumns: () => queryClient.invalidateQueries({ queryKey: COLUMNS_KEY }), 
   };
 };

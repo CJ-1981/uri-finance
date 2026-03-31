@@ -8,6 +8,7 @@
 import { useMutation, useQuery, useQueryClient, useMutationState } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import {
   ProjectFile,
@@ -95,6 +96,7 @@ async function autoCompressImageIfNeeded(file: File): Promise<File> {
 }
 
 export const useFiles = (projectId: string) => {
+  const { isStandalone } = useAuth();
   const { t } = useI18n();
   const queryClient = useQueryClient();
 
@@ -117,6 +119,7 @@ export const useFiles = (projectId: string) => {
   } = useQuery({
     queryKey: ['project-files', projectId],
     queryFn: async () => {
+      if (isStandalone) return [];
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_project_files_with_email', {
         p_project_id: projectId,
       });
@@ -142,6 +145,10 @@ export const useFiles = (projectId: string) => {
   const uploadFileMutation = useMutation({
     mutationKey: ["uploadFile", projectId],
     mutationFn: async (params: { file: File; remark?: string; transactionId?: string }) => {
+      if (isStandalone) {
+        toast.info("File uploads are not supported in Standalone Mode.");
+        return;
+      }
       const { file, remark = '', transactionId } = params;
       let resolvedMime = file.type;
       if (!resolvedMime || resolvedMime === '') {
@@ -191,6 +198,7 @@ export const useFiles = (projectId: string) => {
   const downloadFileMutation = useMutation({
     mutationKey: ["downloadFile", projectId],
     mutationFn: async (file: ProjectFile): Promise<Blob> => {
+      if (isStandalone) throw new Error("Downloads not supported in standalone mode");
       const { data, error } = await supabase.storage.from('project-files').createSignedUrl(file.storage_path, SIGNED_URL_EXPIRY);
       if (error) throw new Error(`${t('files.downloadFailed') || 'Failed to generate download URL'}: ${error.message}`);
       setDownloadProgress(0);
@@ -227,6 +235,7 @@ export const useFiles = (projectId: string) => {
   const deleteFileMutation = useMutation({
     mutationKey: ["deleteFile", projectId],
     mutationFn: async (fileId: string) => {
+      if (isStandalone) return;
       const { data: fileData, error: fetchError } = await supabase.from('project_files').select('storage_path').eq('id', fileId).eq('project_id', projectId).single();
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
       
@@ -263,6 +272,7 @@ export const useFiles = (projectId: string) => {
   const updateFileMutation = useMutation({
     mutationKey: ["updateFile", projectId],
     mutationFn: async (params: { fileId: string; remark: string | null }) => {
+      if (isStandalone) return {} as ProjectFile;
       const { fileId, remark } = params;
       const { data, error } = await supabase.from('project_files').update({ remark: remark?.trim() || null }).eq('id', fileId).eq('project_id', projectId).select().single();
       if (error) throw error;

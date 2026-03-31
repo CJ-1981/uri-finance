@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface ColumnHeaders {
   date: string;
@@ -28,12 +29,22 @@ const isNetError = (err: any) => {
 };
 
 export const useColumnHeaders = (projectId: string | undefined) => {
+  const { isStandalone } = useAuth();
   const queryClient = useQueryClient();
 
+  const HEADERS_KEY = ["project_column_headers", projectId];
+  const LOCAL_HEADERS_KEY = `local_column_headers_${projectId}`;
+
   const { data: headers = DEFAULT_HEADERS, isLoading } = useQuery({
-    queryKey: ["project_column_headers", projectId],
+    queryKey: HEADERS_KEY,
     queryFn: async () => {
       if (!projectId) return DEFAULT_HEADERS;
+
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_HEADERS_KEY);
+        return local ? JSON.parse(local) : DEFAULT_HEADERS;
+      }
+
       const { data, error } = await supabase
         .from("projects")
         .select("column_headers")
@@ -67,6 +78,12 @@ export const useColumnHeaders = (projectId: string | undefined) => {
   const saveMutation = useMutation({
     mutationFn: async (newHeaders: ColumnHeaders) => {
       if (!projectId) return;
+
+      if (isStandalone) {
+        localStorage.setItem(LOCAL_HEADERS_KEY, JSON.stringify(newHeaders));
+        return;
+      }
+
       const { error } = await supabase
         .from("projects")
         .update({ column_headers: newHeaders } as { column_headers: ColumnHeaders })
@@ -74,9 +91,9 @@ export const useColumnHeaders = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async (newHeaders) => {
-      await queryClient.cancelQueries({ queryKey: ["project_column_headers", projectId] });
-      const previous = queryClient.getQueryData(["project_column_headers", projectId]);
-      queryClient.setQueryData(["project_column_headers", projectId], newHeaders);
+      await queryClient.cancelQueries({ queryKey: HEADERS_KEY });
+      const previous = queryClient.getQueryData(HEADERS_KEY);
+      queryClient.setQueryData(HEADERS_KEY, newHeaders);
       return { previous };
     },
     onSuccess: () => {
@@ -84,12 +101,12 @@ export const useColumnHeaders = (projectId: string | undefined) => {
     },
     onError: (err, variables, context) => {
       if (isNetError(err)) return;
-      queryClient.setQueryData(["project_column_headers", projectId], context?.previous);
+      queryClient.setQueryData(HEADERS_KEY, context?.previous);
       toast.error("Failed to save headers");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_column_headers", projectId] });
+      if (navigator.onLine || isStandalone) {
+        queryClient.invalidateQueries({ queryKey: HEADERS_KEY });
       }
     }
   });

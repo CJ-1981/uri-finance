@@ -19,7 +19,7 @@ const Auth = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn, signUp, resetPassword, updatePassword } = useAuth();
+  const { signIn, signUp, resetPassword, updatePassword, enableStandaloneMode } = useAuth();
   const { t, locale, setLocale } = useI18n();
 
   if (loading) {
@@ -31,6 +31,11 @@ const Auth = () => {
   }
 
   if (user) return <Navigate to="/" replace />;
+
+  const handleStandalone = () => {
+    enableStandaloneMode();
+    toast.success(t("auth.standaloneMode"));
+  };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -267,14 +272,37 @@ const Auth = () => {
           )}
 
           {!isPasswordReset && (
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                {isLogin ? t("auth.switchToSignUp") : t("auth.switchToSignIn")}
-              </button>
-            </div>
+            <>
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setIsLogin(!isLogin)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {isLogin ? t("auth.switchToSignUp") : t("auth.switchToSignIn")}
+                </button>
+              </div>
+
+              <div className="mt-6 flex items-center gap-2">
+                <div className="h-px flex-1 bg-border/50"></div>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
+                  {t("common.or") || "OR"}
+                </span>
+                <div className="h-px flex-1 bg-border/50"></div>
+              </div>
+
+              <div className="mt-6">
+                <Button
+                  variant="outline"
+                  onClick={handleStandalone}
+                  className="w-full border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors flex flex-col h-auto py-3 px-4 gap-1"
+                >
+                  <span className="font-semibold text-primary">{t("auth.continueStandalone")}</span>
+                  <span className="text-[10px] text-muted-foreground font-normal whitespace-normal line-clamp-2">
+                    {t("auth.standaloneDesc")}
+                  </span>
+                </Button>
+              </div>
+            </>
           )}
         </div>
       </div>

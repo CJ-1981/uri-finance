@@ -25,10 +25,11 @@ export interface Transaction {
 const PAGE_SIZE = 50;
 
 export const useTransactions = (projectId: string | undefined) => {
-  const { user } = useAuth();
+  const { user, isStandalone } = useAuth();
   const queryClient = useQueryClient();
 
   const TRANSACTIONS_KEY = ["infinite_transactions", projectId];
+  const LOCAL_TRANSACTIONS_KEY = `local_transactions_${projectId}`;
 
   const { 
     data, 
@@ -41,6 +42,16 @@ export const useTransactions = (projectId: string | undefined) => {
     queryFn: async ({ pageParam }) => {
       if (!projectId) return [];
       
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
+        const all: Transaction[] = local ? JSON.parse(local) : [];
+        const filtered = all.filter(t => !t.deleted_at);
+        // Basic pagination simulation: slice the array
+        const start = pageParam ? (pageParam as any).index : 0;
+        const page = filtered.slice(start, start + PAGE_SIZE);
+        return page.map(t => ({ ...t, _sync_status: "synced" as const }));
+      }
+
       let query = supabase
         .from("transactions")
         .select("*")
@@ -61,9 +72,14 @@ export const useTransactions = (projectId: string | undefined) => {
       if (error) throw error;
       return (data as Transaction[]).map(t => ({ ...t, _sync_status: "synced" as const }));
     },
-    initialPageParam: null as { date: string; createdAt: string } | null,
-    getNextPageParam: (lastPage) => {
+    initialPageParam: null as any,
+    getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
+      
+      if (isStandalone) {
+        return { index: allPages.length * PAGE_SIZE };
+      }
+
       const lastItem = lastPage[lastPage.length - 1];
       return { date: lastItem.transaction_date, createdAt: lastItem.created_at };
     },
@@ -90,6 +106,22 @@ export const useTransactions = (projectId: string | undefined) => {
       custom_values?: Record<string, number | string>;
       currency?: string;
     }) => {
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
+        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const newTx: Transaction = {
+          ...tx,
+          description: tx.description || null,
+          transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
+          custom_values: tx.custom_values || {},
+          currency: tx.currency || "USD",
+          created_at: new Date().toISOString(),
+          deleted_at: null,
+        };
+        localStorage.setItem(LOCAL_TRANSACTIONS_KEY, JSON.stringify([newTx, ...existing]));
+        return tx.id;
+      }
+
       const { data, error } = await supabase.from("transactions").insert({
         id: tx.id,
         project_id: tx.project_id,
@@ -162,6 +194,14 @@ export const useTransactions = (projectId: string | undefined) => {
   const updateTransactionMutation = useMutation({
     mutationKey: ["updateTransaction", projectId],
     mutationFn: async ({ id, updates, project_id }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>, project_id: string }) => {
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
+        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const updated = existing.map(t => t.id === id ? { ...t, ...updates } : t);
+        localStorage.setItem(LOCAL_TRANSACTIONS_KEY, JSON.stringify(updated));
+        return;
+      }
+
       const { error } = await supabase
         .from("transactions")
         .update(updates)
@@ -215,6 +255,14 @@ export const useTransactions = (projectId: string | undefined) => {
   const deleteTransactionMutation = useMutation({
     mutationKey: ["deleteTransaction", projectId],
     mutationFn: async ({ id, project_id }: { id: string, project_id: string }) => {
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
+        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const updated = existing.map(t => t.id === id ? { ...t, deleted_at: new Date().toISOString() } : t);
+        localStorage.setItem(LOCAL_TRANSACTIONS_KEY, JSON.stringify(updated));
+        return;
+      }
+
       const { error } = await supabase
         .from("transactions")
         .update({ deleted_at: new Date().toISOString() })
@@ -269,6 +317,25 @@ export const useTransactions = (projectId: string | undefined) => {
   const bulkAddTransactionsMutation = useMutation({
     mutationKey: ["bulkAddTransactions", projectId],
     mutationFn: async ({ txs, project_id, user_id }: { txs: Array<any>, project_id: string, user_id: string }) => {
+      if (isStandalone) {
+        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
+        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const newTxs = txs.map(tx => ({
+          ...tx,
+          id: crypto.randomUUID(),
+          project_id,
+          user_id,
+          description: tx.description || null,
+          transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
+          custom_values: tx.custom_values || {},
+          currency: tx.currency || "USD",
+          created_at: new Date().toISOString(),
+          deleted_at: null,
+        }));
+        localStorage.setItem(LOCAL_TRANSACTIONS_KEY, JSON.stringify([...newTxs, ...existing]));
+        return;
+      }
+
       const rows = txs.map((tx) => ({
         project_id,
         user_id,
@@ -313,13 +380,17 @@ export const useTransactions = (projectId: string | undefined) => {
     if (!projectId || !user) throw new Error("Missing project or user");
     const id = crypto.randomUUID();
     try {
+      if (isStandalone) {
+        await addTransactionMutation.mutateAsync({ ...tx, id, project_id: projectId, user_id: user.id });
+        return id;
+      }
       await addTransactionMutation.mutateAsync({ ...tx, id, project_id: projectId, user_id: user.id });
       return id;
     } catch (err) {
       if (isNetworkError(err)) return id;
       throw err;
     }
-  }, [addTransactionMutation, projectId, user]);
+  }, [addTransactionMutation, projectId, user, isStandalone]);
 
   return { 
     transactions, 

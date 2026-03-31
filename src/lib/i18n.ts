@@ -42,6 +42,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.currentPasswordRequired": "Current password is required",
     "auth.wrongCurrentPassword": "Current password is incorrect",
     "auth.signOut": "Sign Out",
+    "auth.standaloneMode": "Standalone Mode (No Account)",
+    "auth.standaloneDesc": "Use the app with local storage only. No cloud sync, but no account required.",
+    "auth.continueStandalone": "Continue in Standalone Mode",
 
     // Dashboard
     "dash.balance": "Balance",
@@ -453,6 +456,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lang.label": "EN",
     "common.clear": "Clear",
     "common.optional": "optional",
+    "common.or": "OR",
+
+    // PWA
+    "pwa.installTitle": "Install App",
+    "pwa.installDesc": "Install this app on your home screen for a better experience and offline access.",
+    "pwa.installBtn": "Install Now",
 
     // Error
     "error.title": "Something went wrong",
@@ -592,6 +601,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.currentPasswordRequired": "현재 비밀번호를 입력해주세요",
     "auth.wrongCurrentPassword": "현재 비밀번호가 올바르지 않습니다",
     "auth.signOut": "로그아웃",
+    "auth.standaloneMode": "독립 실행 모드 (계정 없음)",
+    "auth.standaloneDesc": "로컬 저장소만 사용합니다. 클라우드 동기화는 지원되지 않지만 계정이 필요 없습니다.",
+    "auth.continueStandalone": "독립 실행 모드로 계속하기",
 
     // Dashboard
     "dash.balance": "잔액",
@@ -1003,6 +1015,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "lang.label": "한국어",
     "common.clear": "지우기",
     "common.optional": "선택 사항",
+    "common.or": "또는",
+
+    // PWA
+    "pwa.installTitle": "앱 설치",
+    "pwa.installDesc": "더 나은 경험과 오프라인 접근을 위해 이 앱을 홈 화면에 설치하세요.",
+    "pwa.installBtn": "지금 설치",
 
     // Error
     "error.title": "문제가 발생했습니다",

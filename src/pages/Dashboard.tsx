@@ -434,14 +434,24 @@ const Dashboard = () => {
             <p className="mt-1 text-sm text-muted-foreground max-w-xs">
               {t("dash.getStartedDesc")}
             </p>
-            <Button
-              variant="default"
-              size="lg"
-              onClick={() => projectSwitcherRef.current?.openJoinTab()}
-              className="mt-6 gradient-primary font-semibold"
-            >
-              <UserPlus className="mr-2 h-4 w-4" /> {t("dash.joinProject")}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 mt-6">
+              <Button
+                variant="default"
+                size="lg"
+                onClick={() => projectSwitcherRef.current?.openCreateTab()}
+                className="gradient-primary font-semibold"
+              >
+                <BarChart3 className="mr-2 h-4 w-4" /> {t("proj.createNew")}
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => projectSwitcherRef.current?.openJoinTab()}
+                className="font-semibold"
+              >
+                <UserPlus className="mr-2 h-4 w-4" /> {t("dash.joinProject")}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="animate-fade-in space-y-4">

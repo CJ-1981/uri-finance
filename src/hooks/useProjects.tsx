@@ -25,11 +25,14 @@ const ACTIVE_PROJECT_ID_KEY = "active_project_id";
 const ACTIVE_PROJECT_CACHE_KEY = "active_project_cache";
 
 export const useProjects = () => {
-  const { user } = useAuth();
+  const { user, isStandalone } = useAuth();
   const { t } = useI18n();
-  const { isSystemAdmin } = useSystemAdmin();
+  const { isSystemAdmin: isRealSystemAdmin } = useSystemAdmin();
   const isOnline = useOnlineStatus();
   const queryClient = useQueryClient();
+
+  // In standalone mode, everyone is an admin of their local projects
+  const isSystemAdmin = isStandalone || isRealSystemAdmin;
 
   // Initialize activeProject from localStorage cache
   const [activeProject, setActiveProject] = useState<Project | null>(() => {
@@ -46,10 +49,10 @@ export const useProjects = () => {
 
   // Query: Fetch projects (either from Supabase or local storage)
   const { data: projects = [], isLoading: loading } = useQuery({
-    queryKey: ["user_projects", user?.id || "anonymous"],
+    queryKey: ["user_projects", isStandalone ? "standalone" : (user?.id || "anonymous")],
     queryFn: async () => {
-      if (!user) {
-        // Load projects from local storage when offline/unauthenticated
+      if (isStandalone || !user) {
+        // Load projects from local storage when standalone or offline/unauthenticated
         const local = localStorage.getItem(LOCAL_PROJECTS_KEY);
         return local ? JSON.parse(local) : [];
       }
@@ -98,7 +101,7 @@ export const useProjects = () => {
       localStorage.setItem(ACTIVE_PROJECT_ID_KEY, project.id);
       localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(project));
       
-      if (isOnline && user && source === 'user-selection') {
+      if (!isStandalone && isOnline && user && source === 'user-selection') {
         supabase.from('user_preferences').upsert({
           user_id: user.id,
           default_project_id: project.id
@@ -147,20 +150,20 @@ export const useProjects = () => {
   }, [loading, projects, activeProject, handleSetActiveProject, validateProject, lastSource]);
 
   const createProject = async (name: string, description?: string) => {
-    if (!user) {
+    if (isStandalone || !user) {
       // Local-only creation
       const newProject: Project = {
         id: crypto.randomUUID(),
         name,
         description: description || null,
-        owner_id: "anonymous",
+        owner_id: isStandalone ? "standalone-user" : "anonymous",
         invite_code: "LOCAL",
         currency: "USD",
         created_at: new Date().toISOString()
       };
       const existing = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
       localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify([newProject, ...existing]));
-      queryClient.invalidateQueries({ queryKey: ["user_projects", "anonymous"] });
+      queryClient.invalidateQueries({ queryKey: ["user_projects", isStandalone ? "standalone" : "anonymous"] });
       handleSetActiveProject(newProject, 'user-selection');
       toast.success("Project created locally!");
       return;
@@ -303,12 +306,12 @@ export const useProjects = () => {
   };
 
   const deleteProject = async (projectId: string): Promise<boolean> => {
-    if (!user) {
+    if (isStandalone || !user) {
       // Local delete
       const existing = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
       const updated = existing.filter((p: any) => p.id !== projectId);
       localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updated));
-      queryClient.invalidateQueries({ queryKey: ["user_projects", "anonymous"] });
+      queryClient.invalidateQueries({ queryKey: ["user_projects", isStandalone ? "standalone" : "anonymous"] });
       if (activeProject?.id === projectId) handleSetActiveProject(null, 'user-selection');
       toast.success("Local project deleted");
       return true;
@@ -328,7 +331,7 @@ export const useProjects = () => {
   };
 
   const fetchProjects = async () => {
-    const key = ["user_projects", user?.id || "anonymous"];
+    const key = ["user_projects", isStandalone ? "standalone" : (user?.id || "anonymous")];
     await queryClient.invalidateQueries({ queryKey: key });
     return await queryClient.refetchQueries({ queryKey: key });
   };

@@ -36,6 +36,7 @@ export const UserMenu = () => {
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground relative"
+            data-testid="user-menu-trigger"
           >
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">

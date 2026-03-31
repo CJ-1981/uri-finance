@@ -8,7 +8,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:8082',
+    baseURL: 'http://localhost:8080',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -23,7 +23,7 @@ export default defineConfig({
   webServer: {
     // Don't start web server since we're using existing dev server
     command: '',
-    port: 8082,
+    port: 8080,
     reuseExistingServer: true,
   },
 });
