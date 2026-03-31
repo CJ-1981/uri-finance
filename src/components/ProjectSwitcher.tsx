@@ -31,12 +31,17 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
   const { t } = useI18n();
   const isOnline = useOnlineStatus();
 
+  const blockWhenOffline = (actionKey: string): boolean => {
+    if (!isOnline) {
+      toast.error(t("proj.offlineError") || `Cannot ${actionKey} while offline`);
+      return true;
+    }
+    return false;
+  };
+
   useImperativeHandle(ref, () => ({
     openJoinTab: () => {
-      if (!isOnline) {
-        toast.error(t("proj.offlineError") || "Cannot join projects while offline");
-        return;
-      }
+      if (blockWhenOffline("join projects")) return;
       setTab("join");
       setOpen(true);
     },
@@ -44,10 +49,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isOnline) {
-      toast.error(t("proj.offlineError") || "Cannot create projects while offline");
-      return;
-    }
+    if (blockWhenOffline("create projects")) return;
     if (!name.trim()) return;
     await onCreate(name.trim(), desc.trim() || undefined);
     setName("");
@@ -57,10 +59,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isOnline) {
-      toast.error(t("proj.offlineError") || "Cannot join projects while offline");
-      return;
-    }
+    if (blockWhenOffline("join projects")) return;
     if (!code.trim()) return;
     await onJoin(code.trim());
     setCode("");
@@ -68,10 +67,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
   };
 
   const handleSelect = (p: Project) => {
-    if (!isOnline && active?.id !== p.id) {
-      toast.error(t("proj.offlineError") || "Cannot switch projects while offline");
-      return;
-    }
+    if (active?.id !== p.id && blockWhenOffline("switch projects")) return;
     onSelect(p);
     setOpen(false);
   };

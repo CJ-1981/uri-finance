@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isNetworkError } from "@/lib/networkUtils";
 
 export interface Category {
   id: string;
@@ -18,24 +19,17 @@ export interface CategoryTreeNode extends Category {
   children: CategoryTreeNode[];
 }
 
-const isNetworkError = (error: any) => {
-  return !navigator.onLine || 
-         error?.message?.includes("Failed to fetch") || 
-         error?.message?.includes("Load failed") ||
-         error?.message?.includes("TypeError") ||
-         error?.code === "PGRST100" || 
-         error?.status === 0;
-};
-
 export const useCategories = (projectId: string | undefined) => {
   const queryClient = useQueryClient();
 
   const buildCategoryTree = (categories: Category[]): CategoryTreeNode[] => {
     const categoryMap = new Map<string, CategoryTreeNode>();
     const roots: CategoryTreeNode[] = [];
+
     categories.forEach(cat => {
       categoryMap.set(cat.id, { ...cat, children: [] });
     });
+
     categories.forEach(cat => {
       const node = categoryMap.get(cat.id)!;
       if (cat.parent_id && categoryMap.has(cat.parent_id)) {
@@ -44,6 +38,7 @@ export const useCategories = (projectId: string | undefined) => {
         roots.push(node);
       }
     });
+
     return roots;
   };
 
@@ -86,8 +81,10 @@ export const useCategories = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async (newCat) => {
-      const previous = queryClient.getQueryData(["project_categories", projectId]);
-      const optimistic = {
+      const queryKey = ["project_categories", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      const optimistic: Category = {
         id: crypto.randomUUID(),
         project_id: projectId!,
         name: newCat.name,
@@ -97,7 +94,7 @@ export const useCategories = (projectId: string | undefined) => {
         parent_id: null,
         created_at: new Date().toISOString(),
       };
-      queryClient.setQueryData(["project_categories", projectId], (old: any) => [...(old || []), optimistic]);
+      queryClient.setQueryData(queryKey, (old: any) => [...(old || []), optimistic]);
       return { previous };
     },
     onSuccess: () => {
@@ -132,8 +129,10 @@ export const useCategories = (projectId: string | undefined) => {
       }
     },
     onMutate: async (id) => {
-      const previous = queryClient.getQueryData(["project_categories", projectId]);
-      queryClient.setQueryData(["project_categories", projectId], (old: any) => (old as Category[])?.filter(c => c.id !== id));
+      const queryKey = ["project_categories", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as Category[])?.filter(c => c.id !== id));
       return { previous };
     },
     onSuccess: () => {
@@ -166,8 +165,10 @@ export const useCategories = (projectId: string | undefined) => {
       if (txError) throw txError;
     },
     onMutate: async ({ id, newName }) => {
-      const previous = queryClient.getQueryData(["project_categories", projectId]);
-      queryClient.setQueryData(["project_categories", projectId], (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, name: newName } : c));
+      const queryKey = ["project_categories", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, name: newName } : c));
       return { previous };
     },
     onSuccess: () => {
@@ -194,8 +195,10 @@ export const useCategories = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, code }) => {
-      const previous = queryClient.getQueryData(["project_categories", projectId]);
-      queryClient.setQueryData(["project_categories", projectId], (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, code } : c));
+      const queryKey = ["project_categories", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, code } : c));
       return { previous };
     },
     onSuccess: () => {
@@ -221,8 +224,10 @@ export const useCategories = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, icon }) => {
-      const previous = queryClient.getQueryData(["project_categories", projectId]);
-      queryClient.setQueryData(["project_categories", projectId], (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, icon } : c));
+      const queryKey = ["project_categories", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, icon } : c));
       return { previous };
     },
     onSuccess: () => {
@@ -250,12 +255,24 @@ export const useCategories = (projectId: string | undefined) => {
       if (swapIdx < 0 || swapIdx >= categories.length) return;
       const current = categories[idx];
       const swap = categories[swapIdx];
-      const currentOrder = current.sort_order !== swap.sort_order ? current.sort_order : idx;
-      const swapOrder = current.sort_order !== swap.sort_order ? swap.sort_order : swapIdx;
-      await Promise.all([
-        supabase.from("project_categories").update({ sort_order: swapOrder } as { sort_order: number }).eq("id", current.id),
-        supabase.from("project_categories").update({ sort_order: currentOrder } as { sort_order: number }).eq("id", swap.id),
-      ]);
+      const currentOrder = current.sort_order;
+      const swapOrder = swap.sort_order;
+
+      try {
+        const { error } = await Promise.all([
+          supabase.from("project_categories").update({ sort_order: swapOrder }).eq("id", current.id),
+          supabase.from("project_categories").update({ sort_order: currentOrder }).eq("id", swap.id),
+        ]).then(([res1, res2]) => ({ error: res1.error || res2.error }));
+
+        if (error) throw error;
+      } catch (error) {
+        // Rollback attempt
+        await Promise.all([
+          supabase.from("project_categories").update({ sort_order: currentOrder }).eq("id", current.id),
+          supabase.from("project_categories").update({ sort_order: swapOrder }).eq("id", swap.id),
+        ]);
+        throw error;
+      }
     },
     onSettled: () => {
       if (navigator.onLine) {
@@ -289,7 +306,9 @@ export const useCategories = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async (newSub) => {
-      const previous = queryClient.getQueryData(["project_categories", projectId]);
+      const queryKey = ["project_categories", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
       const optimistic = {
         id: crypto.randomUUID(),
         project_id: projectId!,
@@ -300,7 +319,7 @@ export const useCategories = (projectId: string | undefined) => {
         parent_id: newSub.parentId,
         created_at: new Date().toISOString(),
       };
-      queryClient.setQueryData(["project_categories", projectId], (old: any) => [...(old || []), optimistic]);
+      queryClient.setQueryData(queryKey, (old: any) => [...(old || []), optimistic]);
       return { previous };
     },
     onSuccess: () => {
@@ -327,12 +346,20 @@ export const useCategories = (projectId: string | undefined) => {
   const updateCategoryParentMutation = useMutation({
     mutationFn: async ({ id, newParentId }: { id: string, newParentId: string | null }) => {
       if (newParentId) {
+        // Fetch fresh data for cycle detection
+        const { data: freshCategories, error: fetchError } = await supabase
+          .from("project_categories")
+          .select("id, parent_id")
+          .eq("project_id", projectId);
+        
+        if (fetchError) throw fetchError;
+
         let currentId = newParentId;
         const visited = new Set<string>();
         while (currentId) {
           if (visited.has(currentId)) throw new Error("CYCLE_DETECTED");
           visited.add(currentId);
-          const parent = categories.find(c => c.id === currentId);
+          const parent = freshCategories.find(c => c.id === currentId);
           if (!parent) break;
           currentId = parent.parent_id || "";
         }
@@ -341,8 +368,10 @@ export const useCategories = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, newParentId }) => {
-      const previous = queryClient.getQueryData(["project_categories", projectId]);
-      queryClient.setQueryData(["project_categories", projectId], (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, parent_id: newParentId } : c));
+      const queryKey = ["project_categories", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as Category[])?.map(c => c.id === id ? { ...c, parent_id: newParentId } : c));
       return { previous };
     },
     onSuccess: () => {

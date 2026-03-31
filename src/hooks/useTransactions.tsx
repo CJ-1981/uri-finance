@@ -1,8 +1,9 @@
-import { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useCallback } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { isNetworkError } from "@/lib/networkUtils";
 
 export interface Transaction {
   id: string;
@@ -20,22 +21,21 @@ export interface Transaction {
   _sync_status?: "optimistic" | "synced" | "deleted";
 }
 
-const isNetError = (err: any) => {
-  return !navigator.onLine || 
-         err?.message?.includes("Failed to fetch") || 
-         err?.message?.includes("Load failed") ||
-         err?.message?.includes("TypeError") ||
-         err?.code === "PGRST100" ||
-         err?.status === 0;
-};
+const PAGE_SIZE = 50;
 
 export const useTransactions = (projectId: string | undefined) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: transactions = [], isLoading: loading } = useQuery({
+  const { 
+    data, 
+    isLoading: loading, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage 
+  } = useInfiniteQuery({
     queryKey: ["transactions", projectId],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
       if (!projectId) return [];
       const { data, error } = await supabase
         .from("transactions")
@@ -44,14 +44,24 @@ export const useTransactions = (projectId: string | undefined) => {
         .is("deleted_at", null)
         .order("transaction_date", { ascending: false })
         .order("created_at", { ascending: false })
-        .limit(100);
-      if (error) throw error;
+        .range(pageParam, pageParam + PAGE_SIZE - 1);
       
+      if (error) throw error;
       return (data as Transaction[]).map(t => ({ ...t, _sync_status: "synced" as const }));
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return allPages.length * PAGE_SIZE;
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5,
   });
+
+  // Flatten infinite query pages into a single list
+  const transactions = useMemo(() => {
+    return data?.pages?.flat() || [];
+  }, [data]);
 
   const addTransactionMutation = useMutation({
     mutationFn: async (tx: {
@@ -82,8 +92,9 @@ export const useTransactions = (projectId: string | undefined) => {
       return data?.id;
     },
     onMutate: async (newTx) => {
-      // Direct cache update for immediate UI feedback
-      const previous = queryClient.getQueryData(["transactions", projectId]);
+      const queryKey = ["transactions", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
       
       const optimistic: Transaction = {
         project_id: projectId!,
@@ -99,32 +110,33 @@ export const useTransactions = (projectId: string | undefined) => {
         _sync_status: "optimistic",
       };
 
-      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => {
-        const list = [optimistic, ...(old || [])];
-        return list.sort((a, b) => {
-          const dateA = new Date(a.transaction_date).getTime();
-          const dateB = new Date(b.transaction_date).getTime();
-          if (dateB !== dateA) return dateB - dateA;
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return { pages: [[optimistic]], pageParams: [0] };
+        const newPages = [...old.pages];
+        newPages[0] = [optimistic, ...newPages[0]];
+        return { ...old, pages: newPages };
       });
 
       return { previous };
     },
     onSuccess: (data, variables) => {
       toast.success("Transaction added!", { duration: 2000 });
-      // Update the optimistic item to "synced" status
-      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
-        old?.map(t => t.id === variables.id ? { ...t, _sync_status: "synced" as const } : t)
-      );
+      queryClient.setQueryData(["transactions", projectId], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: Transaction[]) => 
+            page.map(t => t.id === variables.id ? { ...t, _sync_status: "synced" as const } : t)
+          )
+        };
+      });
     },
     onError: (err: any, variables, context) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       queryClient.setQueryData(["transactions", projectId], context?.previous);
       toast.error("Failed to add transaction");
     },
     onSettled: () => {
-      // Only invalidate if we are online to avoid flickering
       if (navigator.onLine) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
@@ -142,22 +154,36 @@ export const useTransactions = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, updates }) => {
-      const previous = queryClient.getQueryData(["transactions", projectId]);
-      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
-        old?.map(t => t.id === id ? { ...t, ...updates, _sync_status: "optimistic" as const } : t)
-      );
+      const queryKey = ["transactions", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: Transaction[]) => 
+            page.map(t => t.id === id ? { ...t, ...updates, _sync_status: "optimistic" as const } : t)
+          )
+        };
+      });
       return { previous };
     },
     onError: (err: any, variables, context) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       queryClient.setQueryData(["transactions", projectId], context?.previous);
       toast.error("Failed to update transaction");
     },
     onSuccess: (data, variables) => {
       toast.success("Transaction updated!");
-      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
-        old?.map(t => t.id === variables.id ? { ...t, _sync_status: "synced" as const } : t)
-      );
+      queryClient.setQueryData(["transactions", projectId], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: Transaction[]) => 
+            page.map(t => t.id === variables.id ? { ...t, _sync_status: "synced" as const } : t)
+          )
+        };
+      });
     },
     onSettled: () => {
       if (navigator.onLine) {
@@ -183,14 +209,22 @@ export const useTransactions = (projectId: string | undefined) => {
       if (unlinkError) console.error("Unlink files error:", unlinkError);
     },
     onMutate: async (id) => {
-      const previous = queryClient.getQueryData(["transactions", projectId]);
-      queryClient.setQueryData(["transactions", projectId], (old: Transaction[] | undefined) => 
-        old?.filter(t => t.id !== id)
-      );
+      const queryKey = ["transactions", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: Transaction[]) => 
+            page.filter(t => t.id !== id)
+          )
+        };
+      });
       return { previous };
     },
     onError: (err: any, id, context) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       queryClient.setQueryData(["transactions", projectId], context?.previous);
       toast.error("Failed to delete transaction");
     },
@@ -228,11 +262,17 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success("Transactions imported!");
-      queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
     },
     onError: (err: any) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       toast.error("Failed to import transactions");
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["transactions", projectId] });
+        }, 2000);
+      }
     }
   });
 
@@ -246,18 +286,28 @@ export const useTransactions = (projectId: string | undefined) => {
 
   const balance = totalIncome - totalExpense;
 
+  const addTransaction = useCallback(async (tx: any) => {
+    const id = crypto.randomUUID();
+    try {
+      await addTransactionMutation.mutateAsync({ ...tx, id });
+      return id;
+    } catch (err) {
+      if (isNetworkError(err)) return id; // Treat as success for offline flow
+      throw err;
+    }
+  }, [addTransactionMutation]);
+
   return { 
     transactions, 
     loading, 
-    addTransaction: (tx: any) => {
-      const id = crypto.randomUUID();
-      addTransactionMutation.mutate({ ...tx, id });
-      return Promise.resolve(id);
-    },
-    updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutate({ id, updates }), 
-    deleteTransaction: (id: string) => deleteTransactionMutation.mutate(id), 
+    addTransaction,
+    updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutateAsync({ id, updates }), 
+    deleteTransaction: (id: string) => deleteTransactionMutation.mutateAsync(id), 
     bulkAddTransactions: (txs: any[]) => bulkAddTransactionsMutation.mutate(txs), 
     fetchTransactions: () => queryClient.invalidateQueries({ queryKey: ["transactions", projectId] }), 
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     totalIncome, 
     totalExpense, 
     balance 

@@ -156,9 +156,12 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
       if (result && pendingFiles.length > 0 && onUploadFile) {
         if (!isOnline) {
           toast.warning(t("tx.offlineFilesWarning") || "You are offline. Transaction saved, but files will not be uploaded.");
+          // DO NOT clear pendingFiles here, so they stay in the UI for retry
         } else {
           const transactionId = typeof result === 'string' ? result : result;
           setLastCreatedTransactionId(transactionId);
+
+          const successfulIndices: number[] = [];
 
           // Upload each pending file with progress tracking
           for (let i = 0; i < pendingFiles.length; i++) {
@@ -169,17 +172,21 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
             try {
               await onUploadFile(pendingFile.file, pendingFile.remark, transactionId);
               setUploadProgress(prev => ({ ...prev, [i]: 100 }));
+              successfulIndices.push(i);
             } catch (error) {
               console.error('Failed to upload file:', error);
               setPendingFiles(prev => prev.map((pf, idx) => idx === i ? { ...pf, uploading: false } : pf));
-              toast.error(`Failed to upload ${pendingFile.file.name}`);
+              toast.error(`${t('files.uploadFailed') || 'Failed to upload'}: ${pendingFile.file.name}`);
             }
           }
-        }
 
-        // Clear pending files after upload attempt
-        setPendingFiles([]);
-        setUploadProgress({});
+          // Only remove the files that succeeded
+          if (successfulIndices.length > 0) {
+            setPendingFiles(prev => prev.filter((_, idx) => !successfulIndices.includes(idx)));
+            // Reset progress for next batch
+            setUploadProgress({});
+          }
+        }
       }
       return true;
     } catch (err) {

@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { isNetworkError } from "@/lib/networkUtils";
 
 export type ColumnType = "numeric" | "text" | "list";
 
@@ -18,15 +19,6 @@ export interface CustomColumn {
   default_value?: string;
   created_at: string;
 }
-
-const isNetError = (err: any) => {
-  return !navigator.onLine || 
-         err?.message?.includes("Failed to fetch") || 
-         err?.message?.includes("Load failed") ||
-         err?.message?.includes("TypeError") ||
-         err?.code === "PGRST100" || 
-         err?.status === 0;
-};
 
 export const useCustomColumns = (projectId: string | undefined) => {
   const queryClient = useQueryClient();
@@ -50,7 +42,6 @@ export const useCustomColumns = (projectId: string | undefined) => {
 
   const addColumnMutation = useMutation({
     mutationFn: async ({ name, columnType }: { name: string, columnType: ColumnType }) => {
-      if (!projectId || !name.trim()) return;
       const maxOrder = columns.length > 0 ? Math.max(...columns.map(c => c.sort_order)) : -1;
       const { error } = await supabase
         .from("custom_columns")
@@ -58,8 +49,9 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ name, columnType }) => {
-      await queryClient.cancelQueries({ queryKey: ["project_custom_columns", projectId] });
-      const previous = queryClient.getQueryData(["project_custom_columns", projectId]);
+      const queryKey = ["project_custom_columns", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
       const optimistic: CustomColumn = {
         id: crypto.randomUUID(),
         project_id: projectId!,
@@ -72,14 +64,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
         suggestion_colors: {},
         created_at: new Date().toISOString(),
       };
-      queryClient.setQueryData(["project_custom_columns", projectId], (old: any) => [...(old || []), optimistic]);
+      queryClient.setQueryData(queryKey, (old: any) => [...(old || []), optimistic]);
       return { previous };
     },
     onSuccess: () => {
       toast.success("Column added");
     },
     onError: (err: any, variables, context) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error(err.message.includes("duplicate") ? "Column already exists" : "Failed to add column");
     },
@@ -93,26 +85,29 @@ export const useCustomColumns = (projectId: string | undefined) => {
   const deleteColumnMutation = useMutation({
     mutationFn: async (id: string) => {
       const col = columns.find(c => c.id === id);
-      const { error } = await supabase.from("custom_columns").delete().eq("id", id);
-      if (error) throw error;
-      if (col && projectId) {
-        await supabase.rpc("remove_custom_column_key", {
-          _project_id: projectId,
-          _column_name: col.name,
-        });
-      }
+      if (!col || !projectId) return;
+
+      const { error: deleteError } = await supabase.from("custom_columns").delete().eq("id", id);
+      if (deleteError) throw deleteError;
+
+      const { error: rpcError } = await supabase.rpc("remove_custom_column_key", {
+        _project_id: projectId,
+        _column_name: col.name,
+      });
+      if (rpcError) throw rpcError;
     },
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ["project_custom_columns", projectId] });
-      const previous = queryClient.getQueryData(["project_custom_columns", projectId]);
-      queryClient.setQueryData(["project_custom_columns", projectId], (old: any) => (old as CustomColumn[])?.filter(c => c.id !== id));
+      const queryKey = ["project_custom_columns", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as CustomColumn[])?.filter(c => c.id !== id));
       return { previous };
     },
     onSuccess: () => {
       toast.success("Column removed");
     },
     onError: (err, variables, context) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error("Failed to delete column");
     },
@@ -132,13 +127,14 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (error) throw error;
     },
     onMutate: async ({ id, updates }) => {
-      await queryClient.cancelQueries({ queryKey: ["project_custom_columns", projectId] });
-      const previous = queryClient.getQueryData(["project_custom_columns", projectId]);
-      queryClient.setQueryData(["project_custom_columns", projectId], (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, ...updates } : c));
+      const queryKey = ["project_custom_columns", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, ...updates } : c));
       return { previous };
     },
     onError: (err, variables, context) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error("Failed to update column");
     },
@@ -157,29 +153,31 @@ export const useCustomColumns = (projectId: string | undefined) => {
       const trimmed = newName.trim();
       if (trimmed === oldCol.name) return;
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("custom_columns")
         .update({ name: trimmed } as { name: string })
         .eq("id", id);
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      await supabase.rpc("rename_custom_column_key", {
+      const { error: rpcError } = await supabase.rpc("rename_custom_column_key", {
         _project_id: projectId,
         _old_name: oldCol.name,
         _new_name: trimmed,
       });
+      if (rpcError) throw rpcError;
     },
     onMutate: async ({ id, newName }) => {
-      await queryClient.cancelQueries({ queryKey: ["project_custom_columns", projectId] });
-      const previous = queryClient.getQueryData(["project_custom_columns", projectId]);
-      queryClient.setQueryData(["project_custom_columns", projectId], (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, name: newName } : c));
+      const queryKey = ["project_custom_columns", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as CustomColumn[])?.map(c => c.id === id ? { ...c, name: newName } : c));
       return { previous };
     },
     onSuccess: () => {
       toast.success("Column renamed");
     },
     onError: (err: any, variables, context) => {
-      if (isNetError(err)) return;
+      if (isNetworkError(err)) return;
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error(err.message.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
     },
@@ -190,10 +188,32 @@ export const useCustomColumns = (projectId: string | undefined) => {
     }
   });
 
+  const reorderColumnsMutation = useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      if (!projectId) return;
+      const updates = orderedIds.map((id, index) =>
+        supabase.from("custom_columns").update({ sort_order: index } as { sort_order: number }).eq("id", id)
+      );
+      const results = await Promise.all(updates);
+      const firstError = results.find(r => r.error)?.error;
+      if (firstError) throw firstError;
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
+      }
+    }
+  });
+
+  const addColumn = useCallback((name: string, columnType: ColumnType = "numeric") => {
+    if (!projectId || !name.trim()) return;
+    addColumnMutation.mutate({ name, columnType });
+  }, [projectId, addColumnMutation]);
+
   return { 
     columns, 
     loading, 
-    addColumn: (name: string, columnType: ColumnType = "numeric") => addColumnMutation.mutate({ name, columnType }),
+    addColumn,
     deleteColumn: (id: string) => deleteColumnMutation.mutate(id),
     toggleMasked: (id: string, masked: boolean) => updateColumnMutation.mutate({ id, updates: { masked } }),
     toggleRequired: (id: string, required: boolean) => updateColumnMutation.mutate({ id, updates: { required } }),
@@ -206,12 +226,13 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (swapIdx < 0 || swapIdx >= columns.length) return;
       const current = columns[idx];
       const swap = columns[swapIdx];
-      updateColumnMutation.mutate({ id: current.id, updates: { sort_order: swap.sort_order } });
-      updateColumnMutation.mutate({ id: swap.id, updates: { sort_order: current.sort_order } });
+      
+      const newOrder = [...columns];
+      newOrder[idx] = swap;
+      newOrder[swapIdx] = current;
+      reorderColumnsMutation.mutate(newOrder.map(c => c.id));
     },
-    reorderColumns: (orderedIds: string[]) => {
-      orderedIds.forEach((id, index) => updateColumnMutation.mutate({ id, updates: { sort_order: index } }));
-    },
+    reorderColumns: (orderedIds: string[]) => reorderColumnsMutation.mutate(orderedIds),
     renameColumn: (id: string, newName: string) => renameColumnMutation.mutate({ id, newName }),
     fetchColumns: () => queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] }),
   };

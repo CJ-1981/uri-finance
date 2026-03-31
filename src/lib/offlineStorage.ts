@@ -21,11 +21,13 @@ export const createIndexedDBPersister = (idbKey: string = "react-query-cache") =
   };
 };
 
+export const queryPersister = createIndexedDBPersister();
+
 export const configurePersistence = (queryClient: QueryClient) => {
   persistQueryClient({
     queryClient,
-    persister: createIndexedDBPersister(),
+    persister: queryPersister,
     maxAge: 1000 * 60 * 60 * 24, // 24 hours
-    buster: __APP_VERSION__, // Invalidate cache on app version change
+    buster: __APP_VERSION__ || "1.0.0", // Invalidate cache on app version change
   });
 };

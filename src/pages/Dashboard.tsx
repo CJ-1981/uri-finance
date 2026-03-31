@@ -57,7 +57,17 @@ const Dashboard = () => {
   const { user } = useAuth();
   const isOnline = useOnlineStatus();
   const { projects, activeProject, setActiveProject, createProject, joinProject, loading, isSystemAdmin } = useProjects();
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, bulkAddTransactions, fetchTransactions } = useTransactions(activeProject?.id);
+  const { 
+    transactions, 
+    addTransaction, 
+    updateTransaction, 
+    deleteTransaction, 
+    bulkAddTransactions, 
+    fetchTransactions,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useTransactions(activeProject?.id);
   const { categories } = useCategories(activeProject?.id);
   const { headers } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns } = useCustomColumns(activeProject?.id);
@@ -324,12 +334,15 @@ const Dashboard = () => {
             {!isOnline && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center justify-center p-2 text-amber-500 animate-pulse cursor-help">
+                  <button 
+                    className="flex items-center justify-center p-2 text-amber-500 animate-pulse cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-full"
+                    aria-label={t("dash.offlineMode") || "Offline Mode"}
+                  >
                     <CloudOff className="h-4 w-4" />
-                  </div>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Offline Mode - Changes will sync later</p>
+                  <p>{t("dash.offlineHint") || "Offline Mode - Changes will sync later"}</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -526,7 +539,21 @@ const Dashboard = () => {
 
             {/* Content */}
             {view === "list" ? (
-              <TransactionList ref={txListRef} transactions={filtered} categories={categories} onSelect={handleSelectTx} onBulkDelete={handleBulkDelete} onBulkEditOpen={handleBulkEditOpen} onTransactionDeleted={fetchTransactions} headers={headers} customColumns={customColumns} isViewer={isViewer} />
+              <TransactionList 
+                ref={txListRef} 
+                transactions={filtered} 
+                categories={categories} 
+                onSelect={handleSelectTx} 
+                onBulkDelete={handleBulkDelete} 
+                onBulkEditOpen={handleBulkEditOpen} 
+                onTransactionDeleted={fetchTransactions} 
+                headers={headers} 
+                customColumns={customColumns} 
+                isViewer={isViewer}
+                hasNextPage={hasNextPage}
+                fetchNextPage={fetchNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+              />
             ) : view === "charts" ? (
               <div className="space-y-4">
                 {/* Export button row */}

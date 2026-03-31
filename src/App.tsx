@@ -19,7 +19,8 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { ThemeMetaUpdater } from "@/components/ThemeMetaUpdater";
 import { isPinSet } from "@/lib/securePinStorage";
 
-import { configurePersistence } from "@/lib/offlineStorage";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryPersister } from "@/lib/offlineStorage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,12 +36,17 @@ const queryClient = new QueryClient({
     },
     mutations: {
       networkMode: "offlineFirst",
+      retry: 3,
     },
   },
 });
 
-// Configure offline persistence
-configurePersistence(queryClient);
+// Configure persistence options
+const persistOptions = {
+  persister: queryPersister,
+  maxAge: 1000 * 60 * 60 * 24, // 24 hours
+  buster: typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : "1.0.0",
+};
 
 // GitHub Pages SPA routing: Restore route from 404.html redirect
 const RouteRestoration = () => {
@@ -143,7 +149,7 @@ const App = () => {
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <I18nProvider>
         <ErrorBoundary>
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
             <AuthProvider>
               <TooltipProvider>
                 <ThemeMetaUpdater />
@@ -164,7 +170,7 @@ const App = () => {
                 </AppLockGate>
               </TooltipProvider>
             </AuthProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </ErrorBoundary>
       </I18nProvider>
     </ThemeProvider>

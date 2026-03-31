@@ -5,7 +5,7 @@
 // Updated: 2026-03-21 - Added file type validation, UUID paths, real-time sync, sonner
 // Updated: 2026-03-21 - Added transaction file association support
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useMutationState } from '@tanstack/react-query';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -20,6 +20,7 @@ import {
 } from '@/types/files';
 import { toast } from 'sonner';
 import { useI18n } from '@/hooks/useI18n';
+import { isNetworkError } from '@/lib/networkUtils';
 
 // Image MIME types that can be compressed
 const COMPRESSIBLE_IMAGE_TYPES = [
@@ -34,14 +35,6 @@ const COMPRESSION_QUALITY = 0.8;
 
 // Maximum size before attempting compression (1MB)
 const COMPRESSION_THRESHOLD = IMAGE_COMPRESSION_THRESHOLD;
-
-const isNetError = (err: any) => {
-  return !navigator.onLine || 
-         err?.message?.includes("Failed to fetch") || 
-         err?.message?.includes("Load failed") ||
-         err?.message?.includes("TypeError") ||
-         err?.status === 0;
-};
 
 /**
  * Compress an image file using Canvas API
@@ -105,8 +98,20 @@ export const useFiles = (projectId: string) => {
   const { t } = useI18n();
   const queryClient = useQueryClient();
 
+  // Track pending and recently successful "delete" IDs
+  const pendingDeletes = useMutationState({
+    filters: { mutationKey: ["deleteFile", projectId] },
+    select: (mutation) => {
+      const isRecent = mutation.state.status === "success" && (Date.now() - mutation.state.submittedAt < 60000);
+      if (mutation.state.status === "pending" || isRecent) {
+        return mutation.state.variables as string;
+      }
+      return null;
+    },
+  }).filter(Boolean);
+
   const {
-    data: files = [],
+    data: serverFiles = [],
     isLoading,
     error,
   } = useQuery({
@@ -123,6 +128,15 @@ export const useFiles = (projectId: string) => {
     enabled: !!projectId,
   });
 
+  const files = useMemo(() => {
+    let list = [...serverFiles];
+    if (pendingDeletes.length > 0) {
+      const deleteSet = new Set(pendingDeletes);
+      list = list.filter(f => !deleteSet.has(f.id));
+    }
+    return list;
+  }, [serverFiles, pendingDeletes]);
+
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadedBytes, setDownloadedBytes] = useState(0);
 
@@ -135,6 +149,7 @@ export const useFiles = (projectId: string) => {
   }, [projectId, queryClient]);
 
   const uploadFileMutation = useMutation({
+    mutationKey: ["uploadFile", projectId],
     mutationFn: async (params: { file: File; remark?: string; transactionId?: string }) => {
       const { file, remark = '', transactionId } = params;
       let resolvedMime = file.type;
@@ -164,7 +179,7 @@ export const useFiles = (projectId: string) => {
       toast.success(t('files.uploaded') || 'File uploaded successfully');
     },
     onError: (error: Error) => {
-      if (isNetError(error)) return;
+      if (isNetworkError(error)) return;
       toast.error(error.message);
     },
     onSettled: () => {
@@ -177,6 +192,7 @@ export const useFiles = (projectId: string) => {
   });
 
   const downloadFileMutation = useMutation({
+    mutationKey: ["downloadFile", projectId],
     mutationFn: async (file: ProjectFile): Promise<Blob> => {
       const { data, error } = await supabase.storage.from('project-files').createSignedUrl(file.storage_path, SIGNED_URL_EXPIRY);
       if (error) throw new Error(`${t('files.downloadFailed') || 'Failed to generate download URL'}: ${error.message}`);
@@ -204,7 +220,7 @@ export const useFiles = (projectId: string) => {
       setTimeout(() => { setDownloadProgress(0); setDownloadedBytes(0); }, 1000);
     },
     onError: (error: Error) => {
-      if (isNetError(error)) return;
+      if (isNetworkError(error)) return;
       toast.error(error.message);
       setDownloadProgress(0);
       setDownloadedBytes(0);
@@ -212,24 +228,37 @@ export const useFiles = (projectId: string) => {
   });
 
   const deleteFileMutation = useMutation({
+    mutationKey: ["deleteFile", projectId],
     mutationFn: async (fileId: string) => {
-      const { data: fileData, error: fetchError } = await supabase.from('project_files').select('storage_path').eq('id', fileId).eq('project_id', projectId).single();
+      const { data: fileData, error: fetchError } = await supabase
+        .from('project_files')
+        .select('storage_path')
+        .eq('id', fileId)
+        .eq('project_id', projectId)
+        .single();
+      
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
-      const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId).eq('project_id', projectId);
-      if (deleteError) throw deleteError;
+      
+      // Delete storage object first to avoid orphans
       const { error: storageError } = await supabase.storage.from('project-files').remove([fileData.storage_path]);
       if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
+
+      // Only then delete metadata
+      const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId).eq('project_id', projectId);
+      if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
     },
     onMutate: async (id) => {
-      const previous = queryClient.getQueryData(['project-files', projectId]);
-      queryClient.setQueryData(['project-files', projectId], (old: any) => (old as ProjectFile[])?.filter(f => f.id !== id));
+      const queryKey = ['project-files', projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as ProjectFile[])?.filter(f => f.id !== id));
       return { previous };
     },
     onSuccess: () => {
       toast.success(t('files.deleted') || 'File deleted');
     },
     onError: (error: Error, variables, context) => {
-      if (isNetError(error)) return;
+      if (isNetworkError(error)) return;
       queryClient.setQueryData(['project-files', projectId], context?.previous);
       toast.error(error.message);
     },
@@ -243,6 +272,7 @@ export const useFiles = (projectId: string) => {
   });
 
   const updateFileMutation = useMutation({
+    mutationKey: ["updateFile", projectId],
     mutationFn: async (params: { fileId: string; remark: string | null }) => {
       const { fileId, remark } = params;
       const { data, error } = await supabase.from('project_files').update({ remark: remark?.trim() || null }).eq('id', fileId).eq('project_id', projectId).select().single();
@@ -250,15 +280,17 @@ export const useFiles = (projectId: string) => {
       return data as ProjectFile;
     },
     onMutate: async ({ fileId, remark }) => {
-      const previous = queryClient.getQueryData(['project-files', projectId]);
-      queryClient.setQueryData(['project-files', projectId], (old: any) => (old as ProjectFile[])?.map(f => f.id === fileId ? { ...f, remark } : f));
+      const queryKey = ['project-files', projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as ProjectFile[])?.map(f => f.id === fileId ? { ...f, remark } : f));
       return { previous };
     },
     onSuccess: () => {
       toast.success(t('files.updated') || 'File updated');
     },
     onError: (error: Error, variables, context) => {
-      if (isNetError(error)) return;
+      if (isNetworkError(error)) return;
       queryClient.setQueryData(['project-files', projectId], context?.previous);
       toast.error(error.message);
     },

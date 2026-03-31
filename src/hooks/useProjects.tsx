@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,6 +6,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 import { useSystemAdmin } from "@/hooks/useSystemAdmin";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { isNetworkError } from "@/lib/networkUtils";
 
 export interface Project {
   id: string;
@@ -18,15 +19,6 @@ export interface Project {
 }
 
 type ProjectSource = 'user-selection' | 'cache' | 'server';
-
-const isNetError = (err: any) => {
-  return !navigator.onLine || 
-         err?.message?.includes("Failed to fetch") || 
-         err?.message?.includes("Load failed") ||
-         err?.message?.includes("TypeError") ||
-         err?.code === "PGRST100" ||
-         err?.status === 0;
-};
 
 export const useProjects = () => {
   const { user } = useAuth();
@@ -74,7 +66,7 @@ export const useProjects = () => {
   });
 
   // Persist selected project to localStorage and server
-  const handleSetActiveProject = (project: Project | null, source: ProjectSource = 'user-selection'): void => {
+  const handleSetActiveProject = useCallback((project: Project | null, source: ProjectSource = 'user-selection'): void => {
     if (project) {
       if (source === 'user-selection') {
         localStorage.setItem("active_project_id", project.id);
@@ -100,7 +92,7 @@ export const useProjects = () => {
       }
     }
     setActiveProject(project);
-  };
+  }, [isOnline, user]);
 
   // Restore logic: Ensure activeProject is set if we have projects but none selected
   useEffect(() => {
@@ -109,7 +101,7 @@ export const useProjects = () => {
       const found = projects.find(p => p.id === cachedId) || projects[0];
       handleSetActiveProject(found, 'cache');
     }
-  }, [loading, projects, activeProject]);
+  }, [loading, projects, activeProject, handleSetActiveProject]);
 
   const createProject = async (name: string, description?: string) => {
     if (!user || !isSystemAdmin) {
@@ -140,47 +132,79 @@ export const useProjects = () => {
   const joinProject = async (inviteCode: string) => {
     if (!user) return;
 
-    // Join logic remains Supabase-direct as it requires real-time validation
-    // but we invalidate the query on success
-    const { data: invite } = await supabase
+    // Check for unique invite first
+    const { data: invite, error: inviteError } = await supabase
       .from("project_invites")
       .select("*")
       .eq("code", inviteCode.trim())
       .is("used_by", null)
       .single();
 
-    if (!invite) {
-      const { data: project } = await supabase
-        .from("projects")
-        .select("*")
-        .eq("invite_code", inviteCode.trim())
-        .single();
-
-      if (!project) {
-        localStorage.removeItem("pending_invite_code");
-        toast.error("Invalid or already used invite code");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("project_members")
-        .insert({ project_id: project.id, user_id: user.id });
-
-      if (error) {
-        if (error.code === "23505") toast.info("You're already a member");
-        else toast.error("Failed to join");
-        return;
-      }
-
-      toast.success(t("proj.joined").replace("{project}", project.name));
-      queryClient.invalidateQueries({ queryKey: ["user_projects", user.id] });
-      handleSetActiveProject(project as Project, 'user-selection');
+    if (inviteError && inviteError.code !== "PGRST116") { // PGRST116 is "no rows found"
+      toast.error("Error checking invite code");
       return;
     }
 
-    // (Simplified rest of join logic for brevity - keeping standard behavior)
-    // ... we would normally include full logic here ...
+    if (invite) {
+      // Consume the invite and create membership
+      try {
+        const { error: consumeError } = await supabase
+          .from("project_invites")
+          .update({ used_by: user.id, used_at: new Date().toISOString() })
+          .eq("id", invite.id);
+        
+        if (consumeError) throw consumeError;
+
+        const { error: memberError } = await supabase
+          .from("project_members")
+          .insert({ project_id: invite.project_id, user_id: user.id, role: invite.role || "member" });
+
+        if (memberError && memberError.code !== "23505") throw memberError;
+
+        const { data: project, error: projError } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("id", invite.project_id)
+          .single();
+
+        if (projError) throw projError;
+
+        toast.success(t("proj.joined").replace("{project}", project.name));
+        queryClient.invalidateQueries({ queryKey: ["user_projects", user.id] });
+        handleSetActiveProject(project as Project, 'user-selection');
+      } catch (err) {
+        console.error("Failed to join via invite:", err);
+        toast.error("Failed to join project");
+      }
+      return;
+    }
+
+    // Fallback to public/reusable invite code check if no unique invite found
+    const { data: project, error: projError } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("invite_code", inviteCode.trim())
+      .single();
+
+    if (projError) {
+      localStorage.removeItem("pending_invite_code");
+      toast.error("Invalid or already used invite code");
+      return;
+    }
+
+    const { error: memberError } = await supabase
+      .from("project_members")
+      .insert({ project_id: project.id, user_id: user.id });
+
+    if (memberError) {
+      if (memberError.code === "23505") toast.info("You're already a member");
+      else toast.error("Failed to join");
+      return;
+    }
+
+    toast.success(t("proj.joined").replace("{project}", project.name));
     queryClient.invalidateQueries({ queryKey: ["user_projects", user.id] });
+    handleSetActiveProject(project as Project, 'user-selection');
   };
 
   const deleteProject = async (projectId: string): Promise<boolean> => {
@@ -200,6 +224,12 @@ export const useProjects = () => {
     return true;
   };
 
+  const fetchProjects = async () => {
+    const key = ["user_projects", user?.id];
+    await queryClient.invalidateQueries({ queryKey: key });
+    return await queryClient.refetchQueries({ queryKey: key });
+  };
+
   return {
     projects,
     loading,
@@ -207,7 +237,7 @@ export const useProjects = () => {
     setActiveProject: handleSetActiveProject,
     createProject,
     joinProject,
-    fetchProjects: () => queryClient.invalidateQueries({ queryKey: ["user_projects", user?.id] }),
+    fetchProjects,
     clearProjectCache: () => {
       localStorage.removeItem("active_project_id");
       localStorage.removeItem("active_project_cache");

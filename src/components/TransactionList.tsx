@@ -1,7 +1,7 @@
-import { useState, useMemo, useRef, useImperativeHandle, forwardRef } from "react";
+import { useState, useMemo, useRef, useImperativeHandle, forwardRef, useCallback } from "react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
-import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { CustomColumn } from "@/hooks/useCustomColumns";
@@ -35,6 +35,9 @@ interface Props {
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
   isViewer?: boolean;
+  hasNextPage?: boolean;
+  fetchNextPage?: () => void;
+  isFetchingNextPage?: boolean;
 }
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
@@ -54,7 +57,20 @@ export interface TransactionListHandle {
   focusSearch: () => void;
 }
 
-const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions, categories, onSelect, onBulkDelete, onBulkEditOpen, onTransactionDeleted, headers, customColumns, isViewer }, ref) => {
+const TransactionList = forwardRef<TransactionListHandle, Props>(({ 
+  transactions, 
+  categories, 
+  onSelect, 
+  onBulkDelete, 
+  onBulkEditOpen, 
+  onTransactionDeleted, 
+  headers, 
+  customColumns, 
+  isViewer,
+  hasNextPage,
+  fetchNextPage,
+  isFetchingNextPage
+}, ref) => {
   const { t } = useI18n();
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -471,39 +487,59 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({ transactions
 
       {/* Pagination controls */}
       {filteredTransactions.length > 0 && (
-        <div className="flex items-center justify-between px-2 pt-2 pb-1">
-          <div className="flex items-center gap-2">
-            <NumberedSelect
-              value={String(pageSize)}
-              onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}
-              items={PAGE_SIZES.map((s) => ({ value: String(s), label: String(s) }))}
-              className="h-7 w-[72px] text-xs bg-muted/30 border-border/50 px-2"
-              showNumbers
-            />
-            <span className="text-xs text-muted-foreground">/ {t("tx.page") || "page"}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground tabular-nums mr-1">
-              {safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, filteredTransactions.length)} / {filteredTransactions.length}
-            </span>
+        <div className="flex flex-col gap-4 px-2 pt-2 pb-1">
+          {hasNextPage && (
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              disabled={safePage === 0}
-              onClick={() => setPage(safePage - 1)}
+              variant="outline"
+              className="w-full py-6 border-dashed border-border/50 text-muted-foreground hover:text-foreground"
+              onClick={() => fetchNextPage?.()}
+              disabled={isFetchingNextPage}
             >
-              <ChevronLeft className="h-4 w-4" />
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  {t("global.loading") || "Loading..."}
+                </>
+              ) : (
+                t("common.loadMore") || "Load More Transactions"
+              )}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              disabled={safePage >= totalPages - 1}
-              onClick={() => setPage(safePage + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          )}
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <NumberedSelect
+                value={String(pageSize)}
+                onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}
+                items={PAGE_SIZES.map((s) => ({ value: String(s), label: String(s) }))}
+                className="h-7 w-[72px] text-xs bg-muted/30 border-border/50 px-2"
+                showNumbers
+              />
+              <span className="text-xs text-muted-foreground">/ {t("tx.page") || "page"}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground tabular-nums mr-1">
+                {safePage * pageSize + 1}–{Math.min((safePage + 1) * pageSize, filteredTransactions.length)} / {filteredTransactions.length}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={safePage === 0}
+                onClick={() => setPage(safePage - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                disabled={safePage >= totalPages - 1}
+                onClick={() => setPage(safePage + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       )}
