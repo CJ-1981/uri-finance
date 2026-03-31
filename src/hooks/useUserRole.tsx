@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -6,22 +7,25 @@ export type UserRole = "owner" | "admin" | "member" | "viewer";
 
 export const useUserRole = (projectId?: string) => {
   const { user } = useAuth();
-  const [role, setRole] = useState<UserRole>("member");
   const [simulatedRole, setSimulatedRole] = useState<UserRole | null>(null);
 
-  useEffect(() => {
-    if (!projectId || !user) return;
-    const fetch = async () => {
-      const { data } = await supabase
+  const { data: role = "member" as UserRole } = useQuery({
+    queryKey: ["user_role", projectId, user?.id],
+    queryFn: async () => {
+      if (!projectId || !user) return "member" as UserRole;
+      const { data, error } = await supabase
         .from("project_members")
         .select("role")
         .eq("project_id", projectId)
         .eq("user_id", user.id)
         .single();
-      if (data) setRole((data.role as UserRole) || "member");
-    };
-    fetch();
-  }, [projectId, user]);
+      
+      if (error) throw error;
+      return (data.role as UserRole) || "member";
+    },
+    enabled: !!projectId && !!user,
+    staleTime: 1000 * 60 * 30, // 30 minutes
+  });
 
   // Reset simulation when project changes
   useEffect(() => {
