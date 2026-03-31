@@ -51,8 +51,8 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
-      return allPages.length * PAGE_SIZE;
+      if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
+      return (allPages?.length || 0) * PAGE_SIZE;
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5,
@@ -60,7 +60,8 @@ export const useTransactions = (projectId: string | undefined) => {
 
   // Flatten infinite query pages into a single list
   const transactions = useMemo(() => {
-    return data?.pages?.flat() || [];
+    if (!data?.pages) return [];
+    return data.pages.flat() || [];
   }, [data]);
 
   const addTransactionMutation = useMutation({
