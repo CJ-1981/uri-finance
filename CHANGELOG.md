@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.8] - 2026-03-31
+
+### Added
+- **Toast Swipe Indicator**: Added a visual vertical bar and an animated chevron ("›") on the right side of toast notifications to proactively suggest swipability.
+- **Privacy Lock (iOS/Android)**: Implemented eager locking that triggers as soon as the app is backgrounded. This prevents sensitive data from being visible in the system app switcher/multitasking view.
+
+### Changed
+- **PIN Numpad Consistency**: Standardized the numpad layout and styling across both the Lock Screen and Pin Setup dialog for a perfectly uniform user experience.
+- **Toast Timing**: Shortened toast duration to 2000ms and added a close button to prevent interference with other UI elements.
+- **Tab Navigation**: Refined tab buttons to be more responsive on narrow mobile devices (325px wide), including larger icons and dynamic label visibility.
+
 ## [1.1.7] - 2026-03-30
 
 ### Fixed
