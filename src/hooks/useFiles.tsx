@@ -158,11 +158,19 @@ export const useFiles = (projectId: string) => {
         resolvedMime = EXTENSION_TO_MIME[ext] || '';
       }
       const fileToUpload = await autoCompressImageIfNeeded(file);
-      const fileForValidation = { ...fileToUpload, type: resolvedMime } as File;
+      
+      // Use new File constructor for real File instance
+      const fileForValidation = new File([fileToUpload], fileToUpload.name, { 
+        type: resolvedMime, 
+        lastModified: fileToUpload.lastModified 
+      });
+
       if (!isFileTypeAllowed(fileForValidation)) throw new Error(t('files.invalidFileType') || 'File type not allowed');
       if (fileToUpload.size > MAX_FILE_SIZE) throw new Error(t('files.sizeExceeds').replace('{size}', `${MAX_FILE_SIZE / (1024 * 1024)} MB`));
+      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error(t('files.notAuthenticated') || 'User not authenticated');
+
       const fileId = crypto.randomUUID();
       const ext = getFileExtension(file.name);
       const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
@@ -239,11 +247,11 @@ export const useFiles = (projectId: string) => {
       
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
       
-      // Delete storage object first to avoid orphans
+      // Delete storage object FIRST to avoid orphaned storage items
       const { error: storageError } = await supabase.storage.from('project-files').remove([fileData.storage_path]);
       if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
 
-      // Only then delete metadata
+      // ONLY delete metadata if storage removal succeeded
       const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId).eq('project_id', projectId);
       if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
     },

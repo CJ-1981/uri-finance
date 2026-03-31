@@ -1,9 +1,15 @@
 import { test, expect } from '@playwright/test';
 
-const TEST_EMAIL = process.env.TEST_EMAIL || 'jungchimin@gmail.com';
-const TEST_PASSWORD = process.env.TEST_PASSWORD || 'runnu5-fuznaS-popxiv';
+const TEST_EMAIL = process.env.TEST_EMAIL;
+const TEST_PASSWORD = process.env.TEST_PASSWORD;
 
 test.describe('Offline Mode Robustness', () => {
+  test.beforeAll(() => {
+    if (!TEST_EMAIL || !TEST_PASSWORD) {
+      throw new Error('TEST_EMAIL and TEST_PASSWORD environment variables are required for this test.');
+    }
+  });
+
   test.beforeEach(async ({ page }) => {
     // Capture console logs
     page.on('console', msg => {
@@ -16,8 +22,8 @@ test.describe('Offline Mode Robustness', () => {
     
     const isAuthPage = await page.isVisible('[data-testid="auth-page"]');
     if (isAuthPage) {
-      await page.fill('input[type="email"]', TEST_EMAIL);
-      await page.fill('input[type="password"]', TEST_PASSWORD);
+      await page.fill('input[type="email"]', TEST_EMAIL!);
+      await page.fill('input[type="password"]', TEST_PASSWORD!);
       await page.click('button:has-text("로그인")');
       await page.waitForSelector('[data-testid="dashboard"]', { timeout: 15000 });
     }
@@ -57,7 +63,7 @@ test.describe('Offline Mode Robustness', () => {
 
     // 5. Verify they STAY visible during and after sync
     // The pulsing indicator disappearing is our trigger
-    const offlineIndicator = page.locator('.text-amber-500.animate-pulse');
+    const offlineIndicator = page.getByTestId('offline-indicator');
     await expect(offlineIndicator).not.toBeVisible({ timeout: 25000 });
     
     console.log("Offline indicator gone, verifying data stays...");

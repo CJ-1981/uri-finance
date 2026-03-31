@@ -35,24 +35,35 @@ export const useTransactions = (projectId: string | undefined) => {
     isFetchingNextPage 
   } = useInfiniteQuery({
     queryKey: ["transactions", projectId],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam }) => {
       if (!projectId) return [];
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from("transactions")
         .select("*")
         .eq("project_id", projectId)
         .is("deleted_at", null)
         .order("transaction_date", { ascending: false })
         .order("created_at", { ascending: false })
-        .range(pageParam, pageParam + PAGE_SIZE - 1);
+        .limit(PAGE_SIZE);
+
+      if (pageParam) {
+        const { date, createdAt } = pageParam as { date: string; createdAt: string };
+        // Cursor-based pagination: fetch items older than the last item
+        // (Either older date OR same date but older created_at)
+        query = query.or(`transaction_date.lt.${date},and(transaction_date.eq.${date},created_at.lt.${createdAt})`);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return (data as Transaction[]).map(t => ({ ...t, _sync_status: "synced" as const }));
     },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
+    initialPageParam: null as { date: string; createdAt: string } | null,
+    getNextPageParam: (lastPage) => {
       if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
-      return (allPages?.length || 0) * PAGE_SIZE;
+      const lastItem = lastPage[lastPage.length - 1];
+      return { date: lastItem.transaction_date, createdAt: lastItem.created_at };
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5,
@@ -112,7 +123,7 @@ export const useTransactions = (projectId: string | undefined) => {
       };
 
       queryClient.setQueryData(queryKey, (old: any) => {
-        if (!old) return { pages: [[optimistic]], pageParams: [0] };
+        if (!old) return { pages: [[optimistic]], pageParams: [null] };
         const newPages = [...old.pages];
         newPages[0] = [optimistic, ...newPages[0]];
         return { ...old, pages: newPages };
@@ -207,7 +218,9 @@ export const useTransactions = (projectId: string | undefined) => {
         .from("project_files")
         .update({ transaction_id: null })
         .eq("transaction_id", id);
-      if (unlinkError) console.error("Unlink files error:", unlinkError);
+      
+      // Treat unlink operation as part of the failure path
+      if (unlinkError) throw unlinkError;
     },
     onMutate: async (id) => {
       const queryKey = ["transactions", projectId];
@@ -245,6 +258,7 @@ export const useTransactions = (projectId: string | undefined) => {
   });
 
   const bulkAddTransactionsMutation = useMutation({
+    mutationKey: ["bulkAddTransactions", projectId],
     mutationFn: async (txs: Array<any>) => {
       if (!user || !projectId) throw new Error("Missing auth or project");
       const rows = txs.map((tx) => ({
@@ -304,7 +318,7 @@ export const useTransactions = (projectId: string | undefined) => {
     addTransaction,
     updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutateAsync({ id, updates }), 
     deleteTransaction: (id: string) => deleteTransactionMutation.mutateAsync(id), 
-    bulkAddTransactions: (txs: any[]) => bulkAddTransactionsMutation.mutate(txs), 
+    bulkAddTransactions: (txs: any[]) => bulkAddTransactionsMutation.mutateAsync(txs), 
     fetchTransactions: () => queryClient.invalidateQueries({ queryKey: ["transactions", projectId] }), 
     fetchNextPage,
     hasNextPage,

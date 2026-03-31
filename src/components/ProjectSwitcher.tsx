@@ -33,7 +33,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const blockWhenOffline = (actionKey: string): boolean => {
     if (!isOnline) {
-      toast.error(t("proj.offlineError") || `Cannot ${actionKey} while offline`);
+      toast.error(t("proj.offlineError") || t("common.offlineError") || "Cannot perform this action while offline");
       return true;
     }
     return false;

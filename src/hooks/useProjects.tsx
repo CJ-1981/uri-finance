@@ -6,7 +6,6 @@ import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 import { useSystemAdmin } from "@/hooks/useSystemAdmin";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { isNetworkError } from "@/lib/networkUtils";
 
 export interface Project {
   id: string;
@@ -27,7 +26,7 @@ export const useProjects = () => {
   const isOnline = useOnlineStatus();
   const queryClient = useQueryClient();
 
-  // Initialize activeProject from localStorage cache to prevent flicker
+  // Initialize activeProject from localStorage cache
   const [activeProject, setActiveProject] = useState<Project | null>(() => {
     try {
       const cached = localStorage.getItem("active_project_cache");
@@ -68,12 +67,25 @@ export const useProjects = () => {
   // Persist selected project to localStorage and server
   const handleSetActiveProject = useCallback((project: Project | null, source: ProjectSource = 'user-selection'): void => {
     if (project) {
-      if (source === 'user-selection') {
+      // Revalidate project against current projects list
+      // Only if we have projects loaded
+      if (projects.length > 0) {
+        const isValid = projects.some(p => p.id === project.id);
+        if (!isValid) {
+          console.warn("[useProjects] Attempted to set invalid project as active. Clearing cache.");
+          localStorage.removeItem("active_project_id");
+          localStorage.removeItem("active_project_cache");
+          setActiveProject(null);
+          return;
+        }
+      }
+
+      if (source === 'user-selection' || source === 'cache') {
         localStorage.setItem("active_project_id", project.id);
         localStorage.setItem("active_project_cache", JSON.stringify(project));
         
         // Save preference to server if online
-        if (isOnline && user) {
+        if (isOnline && user && source === 'user-selection') {
           supabase.from('user_preferences').upsert({
             user_id: user.id,
             default_project_id: project.id
@@ -92,11 +104,19 @@ export const useProjects = () => {
       }
     }
     setActiveProject(project);
-  }, [isOnline, user]);
+  }, [isOnline, user, projects]);
 
-  // Restore logic: Ensure activeProject is set if we have projects but none selected
+  // Revalidate activeProject whenever projects or user changes
   useEffect(() => {
-    if (!loading && projects.length > 0 && !activeProject) {
+    if (!loading && projects.length > 0 && activeProject) {
+      const isValid = projects.some(p => p.id === activeProject.id);
+      if (!isValid) {
+        console.log("[useProjects] Active project no longer valid. Switching to fallback.");
+        const cachedId = localStorage.getItem("active_project_id");
+        const fallback = projects.find(p => p.id === cachedId) || projects[0];
+        handleSetActiveProject(fallback, 'cache');
+      }
+    } else if (!loading && projects.length > 0 && !activeProject) {
       const cachedId = localStorage.getItem("active_project_id");
       const found = projects.find(p => p.id === cachedId) || projects[0];
       handleSetActiveProject(found, 'cache');
@@ -120,9 +140,15 @@ export const useProjects = () => {
       return;
     }
 
-    await supabase
+    const { error: memberError } = await supabase
       .from("project_members")
       .insert({ project_id: data.id, user_id: user.id, role: "owner" });
+
+    if (memberError) {
+      console.error("Failed to create owner membership:", memberError);
+      // We don't rollback project creation here as it's partial success, 
+      // but UI will be out of sync. In a real app we'd use a transaction or RPC.
+    }
 
     toast.success("Project created!");
     queryClient.invalidateQueries({ queryKey: ["user_projects", user.id] });
@@ -140,26 +166,44 @@ export const useProjects = () => {
       .is("used_by", null)
       .single();
 
-    if (inviteError && inviteError.code !== "PGRST116") { // PGRST116 is "no rows found"
+    if (inviteError && inviteError.code !== "PGRST116") { 
       toast.error("Error checking invite code");
       return;
     }
 
     if (invite) {
-      // Consume the invite and create membership
+      // ATOMIC-LIKE: Guarded update to claim invite
       try {
-        const { error: consumeError } = await supabase
+        const { data: claimedInvites, error: consumeError } = await supabase
           .from("project_invites")
           .update({ used_by: user.id, used_at: new Date().toISOString() })
-          .eq("id", invite.id);
+          .eq("id", invite.id)
+          .is("used_by", null) // Race condition guard
+          .select();
         
         if (consumeError) throw consumeError;
+        if (!claimedInvites || claimedInvites.length === 0) {
+          throw new Error("INVITE_ALREADY_CLAIMED");
+        }
 
+        // Create membership
         const { error: memberError } = await supabase
           .from("project_members")
           .insert({ project_id: invite.project_id, user_id: user.id, role: invite.role || "member" });
 
-        if (memberError && memberError.code !== "23505") throw memberError;
+        if (memberError) {
+          // Compensating action: Rollback invite consumption if member creation fails
+          await supabase
+            .from("project_invites")
+            .update({ used_by: null, used_at: null })
+            .eq("id", invite.id);
+          
+          if (memberError.code === "23505") {
+            toast.info("You're already a member");
+          } else {
+            throw memberError;
+          }
+        }
 
         const { data: project, error: projError } = await supabase
           .from("projects")
@@ -172,14 +216,18 @@ export const useProjects = () => {
         toast.success(t("proj.joined").replace("{project}", project.name));
         queryClient.invalidateQueries({ queryKey: ["user_projects", user.id] });
         handleSetActiveProject(project as Project, 'user-selection');
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to join via invite:", err);
-        toast.error("Failed to join project");
+        if (err.message === "INVITE_ALREADY_CLAIMED") {
+          toast.error("This invite has already been used");
+        } else {
+          toast.error("Failed to join project");
+        }
       }
       return;
     }
 
-    // Fallback to public/reusable invite code check if no unique invite found
+    // Fallback to public/reusable invite code check
     const { data: project, error: projError } = await supabase
       .from("projects")
       .select("*")

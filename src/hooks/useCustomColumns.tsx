@@ -71,14 +71,15 @@ export const useCustomColumns = (projectId: string | undefined) => {
       toast.success("Column added");
     },
     onError: (err: any, variables, context) => {
-      if (isNetworkError(err)) return;
+      if (isNetworkError(err)) {
+        toast.info("Column saved offline — will sync when online");
+        return;
+      }
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error(err.message.includes("duplicate") ? "Column already exists" : "Failed to add column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
     }
   });
 
@@ -107,14 +108,15 @@ export const useCustomColumns = (projectId: string | undefined) => {
       toast.success("Column removed");
     },
     onError: (err, variables, context) => {
-      if (isNetworkError(err)) return;
+      if (isNetworkError(err)) {
+        toast.info("Delete pending offline");
+        return;
+      }
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error("Failed to delete column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
     }
   });
 
@@ -139,9 +141,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
       toast.error("Failed to update column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
     }
   });
 
@@ -177,14 +177,15 @@ export const useCustomColumns = (projectId: string | undefined) => {
       toast.success("Column renamed");
     },
     onError: (err: any, variables, context) => {
-      if (isNetworkError(err)) return;
+      if (isNetworkError(err)) {
+        toast.info("Rename pending offline");
+        return;
+      }
       queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
       toast.error(err.message.includes("duplicate") ? "Column name already exists" : "Failed to rename column");
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
     }
   });
 
@@ -198,10 +199,25 @@ export const useCustomColumns = (projectId: string | undefined) => {
       const firstError = results.find(r => r.error)?.error;
       if (firstError) throw firstError;
     },
+    onMutate: async (orderedIds) => {
+      const queryKey = ["project_custom_columns", projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      
+      const newOrder = orderedIds.map((id, index) => {
+        const col = (previous as CustomColumn[]).find(c => c.id === id);
+        return { ...col, sort_order: index } as CustomColumn;
+      });
+      
+      queryClient.setQueryData(queryKey, newOrder);
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      if (isNetworkError(err)) return;
+      queryClient.setQueryData(["project_custom_columns", projectId], context?.previous);
+    },
     onSettled: () => {
-      if (navigator.onLine) {
-        queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
-      }
+      queryClient.invalidateQueries({ queryKey: ["project_custom_columns", projectId] });
     }
   });
 
@@ -224,12 +240,11 @@ export const useCustomColumns = (projectId: string | undefined) => {
       if (idx < 0) return;
       const swapIdx = direction === "up" ? idx - 1 : idx + 1;
       if (swapIdx < 0 || swapIdx >= columns.length) return;
-      const current = columns[idx];
-      const swap = columns[swapIdx];
       
       const newOrder = [...columns];
-      newOrder[idx] = swap;
-      newOrder[swapIdx] = current;
+      const temp = newOrder[idx];
+      newOrder[idx] = newOrder[swapIdx];
+      newOrder[swapIdx] = temp;
       reorderColumnsMutation.mutate(newOrder.map(c => c.id));
     },
     reorderColumns: (orderedIds: string[]) => reorderColumnsMutation.mutate(orderedIds),

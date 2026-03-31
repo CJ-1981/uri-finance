@@ -29,7 +29,8 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
       refetchOnWindowFocus: false,
       retry: (failureCount, error: any) => {
-        // Don't retry if it's a 401/403 or if we are offline
+        // Only retry for network/server errors (standard React Query behavior)
+        // 401/403 are permanent failures, so don't retry.
         if (error?.status === 401 || error?.status === 403) return false;
         return failureCount < 3;
       },

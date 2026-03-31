@@ -142,15 +142,8 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         }
       }
 
-      const result = await onAdd({
-        type,
-        amount: Number(amount),
-        category,
-        description: description || undefined,
-        transaction_date: date,
-        custom_values: Object.keys(cv).length > 0 ? cv : undefined,
-        currency,
-      });
+      const transactionId = typeof result === 'string' ? result : result;
+      setLastCreatedTransactionId(transactionId);
 
       // SPEC-TRANSACTION-FILES: Upload pending files after transaction is created
       if (result && pendingFiles.length > 0 && onUploadFile) {
@@ -158,9 +151,6 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           toast.warning(t("tx.offlineFilesWarning") || "You are offline. Transaction saved, but files will not be uploaded.");
           // DO NOT clear pendingFiles here, so they stay in the UI for retry
         } else {
-          const transactionId = typeof result === 'string' ? result : result;
-          setLastCreatedTransactionId(transactionId);
-
           const successfulIndices: number[] = [];
 
           // Upload each pending file with progress tracking

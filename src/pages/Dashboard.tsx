@@ -335,6 +335,7 @@ const Dashboard = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
+                    data-testid="offline-indicator"
                     className="flex items-center justify-center p-2 text-amber-500 animate-pulse cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-full"
                     aria-label={t("dash.offlineMode") || "Offline Mode"}
                   >
