@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FolderOpen, Plus, UserPlus } from "lucide-react";
 import { useI18n } from "@/hooks/useI18n";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { toast } from "sonner";
 
 export interface ProjectSwitcherHandle {
   openJoinTab: () => void;
@@ -27,9 +29,14 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
   const [desc, setDesc] = useState("");
   const [code, setCode] = useState("");
   const { t } = useI18n();
+  const isOnline = useOnlineStatus();
 
   useImperativeHandle(ref, () => ({
     openJoinTab: () => {
+      if (!isOnline) {
+        toast.error(t("proj.offlineError") || "Cannot join projects while offline");
+        return;
+      }
       setTab("join");
       setOpen(true);
     },
@@ -37,6 +44,10 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      toast.error(t("proj.offlineError") || "Cannot create projects while offline");
+      return;
+    }
     if (!name.trim()) return;
     await onCreate(name.trim(), desc.trim() || undefined);
     setName("");
@@ -46,10 +57,23 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isOnline) {
+      toast.error(t("proj.offlineError") || "Cannot join projects while offline");
+      return;
+    }
     if (!code.trim()) return;
     await onJoin(code.trim());
     setCode("");
     setTab("list");
+  };
+
+  const handleSelect = (p: Project) => {
+    if (!isOnline && active?.id !== p.id) {
+      toast.error(t("proj.offlineError") || "Cannot switch projects while offline");
+      return;
+    }
+    onSelect(p);
+    setOpen(false);
   };
 
   return (
@@ -94,7 +118,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
                 projects.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => { onSelect(p); setOpen(false); }}
+                    onClick={() => handleSelect(p)}
                     className={`w-full text-left rounded-xl px-4 py-3 transition-all ${
                       active?.id === p.id
                         ? "bg-primary/10 ring-1 ring-primary/30"

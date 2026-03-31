@@ -123,7 +123,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "proj.inviteCode": "Invite Code",
     "proj.enterInviteCode": "Enter invite code",
     "proj.joinProject": "Join Project",
-    "proj.joined": "Joined \"{project}\"!",
+    "proj.joined": 'Joined "{project}"!',
+    "proj.offlineError": "Cannot perform this action while offline",
+
 
     // Admin
     "admin.title": "Project Settings",
@@ -669,7 +671,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "proj.inviteCode": "초대 코드",
     "proj.enterInviteCode": "초대 코드 입력",
     "proj.joinProject": "프로젝트 참여",
-    "proj.joined": "\"{project}\" 프로젝트에 참여했습니다!",
+    "proj.joined": '"{project}" 프로젝트에 참여했습니다!',
+    "proj.offlineError": "오프라인 상태에서는 이 작업을 수행할 수 없습니다",
+
 
     // Admin
     "admin.title": "프로젝트 설정",
