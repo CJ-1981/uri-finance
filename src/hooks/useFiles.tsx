@@ -6,7 +6,7 @@
 // Updated: 2026-03-21 - Added transaction file association support
 
 import { useMutation, useQuery, useQueryClient, useMutationState } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import {
