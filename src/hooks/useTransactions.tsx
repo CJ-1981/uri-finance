@@ -44,6 +44,7 @@ export const useTransactions = (projectId: string | undefined) => {
 
   const addTransactionMutation = useMutation({
     mutationFn: async (tx: {
+      id: string;
       type: "income" | "expense";
       amount: number;
       category: string;
@@ -54,6 +55,7 @@ export const useTransactions = (projectId: string | undefined) => {
     }) => {
       if (!user || !projectId) throw new Error("Missing auth or project");
       const { data, error } = await supabase.from("transactions").insert({
+        id: tx.id,
         project_id: projectId,
         user_id: user.id,
         type: tx.type,
@@ -73,7 +75,7 @@ export const useTransactions = (projectId: string | undefined) => {
       const previousTransactions = queryClient.getQueryData(["transactions", projectId]);
       
       const optimisticTx: Transaction = {
-        id: crypto.randomUUID(),
+        id: newTx.id || crypto.randomUUID(),
         project_id: projectId!,
         user_id: user?.id || "",
         created_at: new Date().toISOString(),
@@ -204,8 +206,12 @@ export const useTransactions = (projectId: string | undefined) => {
   return { 
     transactions, 
     loading, 
-    addTransaction: (tx: any) => addTransactionMutation.mutateAsync(tx), 
-    updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutate(id, updates), 
+    addTransaction: (tx: any) => {
+      const id = crypto.randomUUID();
+      addTransactionMutation.mutate({ ...tx, id });
+      return Promise.resolve(id);
+    },
+    updateTransaction: (id: string, updates: any) => updateTransactionMutation.mutate({ id, updates }), 
     deleteTransaction: (id: string) => deleteTransactionMutation.mutate(id), 
     bulkAddTransactions: (txs: any[]) => bulkAddTransactionsMutation.mutate(txs), 
     fetchTransactions: () => queryClient.invalidateQueries({ queryKey: ["transactions", projectId] }), 

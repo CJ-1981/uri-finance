@@ -103,6 +103,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.expand": "Expand",
     "tx.collapse": "Collapse",
     "tx.customCurrency": "Custom / Manual",
+    "tx.offlineFilesWarning": "You are offline. Transaction saved, but files will not be uploaded.",
 
     // Projects
     "proj.projects": "Projects",
@@ -648,6 +649,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "tx.expand": "펼치기",
     "tx.collapse": "접기",
     "tx.customCurrency": "직접 입력",
+    "tx.offlineFilesWarning": "오프라인 상태입니다. 거래는 저장되었으나 파일은 업로드되지 않았습니다.",
 
     // Projects
     "proj.projects": "프로젝트",
