@@ -333,7 +333,7 @@ const Dashboard = () => {
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{t("dash.offlineHint") || "Offline Mode - Changes will sync later"}</p>
+                  <p>{t("dash.offlineHint")}</p>
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -592,7 +592,7 @@ const Dashboard = () => {
               />
             ) : (
               <div className="py-20 text-center">
-                <p className="text-sm text-muted-foreground">Files are not available in Standalone Mode.</p>
+                <p className="text-sm text-muted-foreground">{t("dash.standaloneFilesNotice")}</p>
               </div>
             )}
 

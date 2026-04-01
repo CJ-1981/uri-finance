@@ -60,7 +60,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.offlineHint": "Offline Mode - Changes will sync later",
     "dash.getStarted": "Get Started",
     "dash.getStartedDesc": "Create a project or join one with an invite code to start tracking finances together.",
+    "dash.getStartedDescStandalone": "Create a local project to start tracking your finances.",
     "dash.joinProject": "Join a Project",
+    "dash.standaloneFilesNotice": "Files are not available in Standalone Mode.",
 
     // Transaction list
     "tx.noTransactions": "No transactions yet. Tap + to add one.",
@@ -194,6 +196,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.saving": "Saving...",
     "admin.deleteProject": "Delete Project",
     "admin.deleteConfirm": "Are you sure you want to delete \"{project}\"? This action cannot be undone.",
+    "admin.buildInfo": "Build Info",
+    "admin.buildTime": "Build Time",
+    "admin.buildMode": "Mode",
+    "admin.buildVersion": "Version",
 
     // Custom columns
     "cc.placeholder": "Column name (e.g. Tax, Discount)",
@@ -459,6 +465,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "EN",
     "common.clear": "Clear",
+    "common.close": "Close",
     "common.optional": "optional",
     "common.or": "OR",
 
@@ -466,6 +473,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "pwa.installTitle": "Install App",
     "pwa.installDesc": "Install this app on your home screen for a better experience and offline access.",
     "pwa.installBtn": "Install Now",
+    "pwa.iosInstructions": "To install this app on your iPhone:",
+    "pwa.iosStep1": "Tap the share button",
+    "pwa.iosStep2": "Scroll down and tap 'Add to Home Screen'",
 
     // Error
     "error.title": "Something went wrong",
@@ -473,6 +483,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "error.details": "Error Details (Development Only)",
     "error.tryAgain": "Try Again",
     "error.reload": "Reload Page",
+    "error.standaloneNotSupported": "Action not supported in Standalone Mode",
+    "error.standaloneDownloadsNotSupported": "Downloads not supported in standalone mode",
 
     // PIN Setup
     "pinSetup.failedToSetPinSecurely": "Failed to set PIN securely",
@@ -625,6 +637,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.getStartedDesc": "프로젝트를 만들거나 초대 코드로 참여하여 함께 재무를 관리하세요.",
     "dash.getStartedDescStandalone": "로컬 프로젝트를 만들어 재무 관리를 시작하세요.",
     "dash.joinProject": "프로젝트 참여",
+    "dash.standaloneFilesNotice": "독립 실행 모드에서는 파일을 사용할 수 없습니다.",
 
     // Transaction list
     "tx.noTransactions": "거래 내역이 없습니다. +를 눌러 추가하세요.",
@@ -758,6 +771,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.saving": "저장 중...",
     "admin.deleteProject": "프로젝트 삭제",
     "admin.deleteConfirm": "\"{project}\" 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "admin.buildInfo": "빌드 정보",
+    "admin.buildTime": "빌드 시간",
+    "admin.buildMode": "모드",
+    "admin.buildVersion": "버전",
 
     // Global Admin
     "global.title": "시스템 관리",
@@ -1023,6 +1040,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     // Language
     "lang.label": "한국어",
     "common.clear": "지우기",
+    "common.close": "닫기",
     "common.optional": "선택 사항",
     "common.or": "또는",
 
@@ -1030,6 +1048,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "pwa.installTitle": "앱 설치",
     "pwa.installDesc": "더 나은 경험과 오프라인 접근을 위해 이 앱을 홈 화면에 설치하세요.",
     "pwa.installBtn": "지금 설치",
+    "pwa.iosInstructions": "iPhone에 이 앱을 설치하려면:",
+    "pwa.iosStep1": "공유 버튼을 누르세요",
+    "pwa.iosStep2": "아래로 스크롤하여 '홈 화면에 추가'를 누르세요",
 
     // Error
     "error.title": "문제가 발생했습니다",
@@ -1037,6 +1058,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "error.details": "오류 세부 정보 (개발자용)",
     "error.tryAgain": "다시 시도",
     "error.reload": "페이지 새로고침",
+    "error.standaloneNotSupported": "독립 실행 모드에서는 지원되지 않는 작업입니다",
+    "error.standaloneDownloadsNotSupported": "독립 실행 모드에서는 다운로드를 지원하지 않습니다",
 
     // PIN Setup
     "pinSetup.failedToSetPinSecurely": "PIN을 안전하게 설정하지 못했습니다",

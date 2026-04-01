@@ -940,19 +940,19 @@ const AdminPage = () => {
         <section className="rounded-2xl bg-card border border-border p-4">
           <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-            {t("admin.buildInfo") || "Build Info"}
+            {t("admin.buildInfo")}
           </h2>
           <div className="space-y-1.5 text-xs text-muted-foreground">
             <div className="flex justify-between">
-              <span>{t("admin.buildTime") || "Build Time"}</span>
+              <span>{t("admin.buildTime")}</span>
               <span className="font-mono">{(() => { try { return format(new Date(__BUILD_TIME__), "yyyy-MM-dd HH:mm:ss"); } catch { return "N/A"; } })()}</span>
             </div>
             <div className="flex justify-between">
-              <span>{t("admin.buildMode") || "Mode"}</span>
+              <span>{t("admin.buildMode")}</span>
               <span className="font-mono">{import.meta.env.MODE}</span>
             </div>
             <div className="flex justify-between">
-              <span>{t("admin.buildVersion") || "Version"}</span>
+              <span>{t("admin.buildVersion")}</span>
               <span className="font-mono">{__APP_VERSION__}</span>
             </div>
           </div>

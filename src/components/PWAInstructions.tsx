@@ -97,23 +97,23 @@ export const PWAInstructions = () => {
           <DialogHeader>
             <DialogTitle>{t("pwa.installTitle")}</DialogTitle>
             <DialogDescription>
-              {t("pwa.iosInstructions") || "To install this app on your iPhone:"}
+              {t("pwa.iosInstructions")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">1</div>
               <p className="text-sm">
-                {t("pwa.iosStep1") || "Tap the share button"} <Share className="inline h-4 w-4 mx-1" />
+                {t("pwa.iosStep1")} <Share className="inline h-4 w-4 mx-1" />
               </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">2</div>
-              <p className="text-sm">{t("pwa.iosStep2") || "Scroll down and tap 'Add to Home Screen'"}</p>
+              <p className="text-sm">{t("pwa.iosStep2")}</p>
             </div>
           </div>
           <Button onClick={() => setShowIOSInstructions(false)} className="w-full">
-            {t("common.close") || "Close"}
+            {t("common.close")}
           </Button>
         </DialogContent>
       </Dialog>

@@ -146,7 +146,7 @@ export const useFiles = (projectId: string) => {
     mutationKey: ["uploadFile", projectId],
     mutationFn: async (params: { file: File; remark?: string; transactionId?: string }) => {
       if (isStandalone) {
-        throw new Error("Action not supported in Standalone Mode");
+        throw new Error(t("error.standaloneNotSupported"));
       }
       const { file, remark = '', transactionId } = params;
       let resolvedMime = file.type;
@@ -197,7 +197,7 @@ export const useFiles = (projectId: string) => {
   const downloadFileMutation = useMutation({
     mutationKey: ["downloadFile", projectId],
     mutationFn: async (file: ProjectFile): Promise<Blob> => {
-      if (isStandalone) throw new Error("Downloads not supported in standalone mode");
+      if (isStandalone) throw new Error(t("error.standaloneDownloadsNotSupported"));
       const { data, error } = await supabase.storage.from('project-files').createSignedUrl(file.storage_path, SIGNED_URL_EXPIRY);
       if (error) throw new Error(`${t('files.downloadFailed') || 'Failed to generate download URL'}: ${error.message}`);
       setDownloadProgress(0);
@@ -235,7 +235,7 @@ export const useFiles = (projectId: string) => {
     mutationKey: ["deleteFile", projectId],
     mutationFn: async (fileId: string) => {
       if (isStandalone) {
-        throw new Error("Action not supported in Standalone Mode");
+        throw new Error(t("error.standaloneNotSupported"));
       }
       const { data: fileData, error: fetchError } = await supabase.from('project_files').select('storage_path').eq('id', fileId).eq('project_id', projectId).single();
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
@@ -274,7 +274,7 @@ export const useFiles = (projectId: string) => {
     mutationKey: ["updateFile", projectId],
     mutationFn: async (params: { fileId: string; remark: string | null }) => {
       if (isStandalone) {
-        throw new Error("Action not supported in Standalone Mode");
+        throw new Error(t("error.standaloneNotSupported"));
       }
       const { fileId, remark } = params;
       const { data, error } = await supabase.from('project_files').update({ remark: remark?.trim() || null }).eq('id', fileId).eq('project_id', projectId).select().single();
