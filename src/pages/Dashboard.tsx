@@ -296,7 +296,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background pb-24" data-testid="dashboard" data-pending-mutations={pendingCount}>
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between relative">
           <div className="flex items-center gap-1">
             <ProjectSwitcher
               ref={projectSwitcherRef}
@@ -319,24 +319,28 @@ const Dashboard = () => {
               />
             )}
           </div>
-          <div className="flex items-center gap-0.5">
-            {!isOnline && !isStandalone && !(isOwner || effectiveRole === "admin") && (
+
+          {/* Center Offline Indicator */}
+          {!isOnline && !isStandalone && (
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-none">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button 
-                    data-testid="offline-indicator"
-                    className="flex items-center justify-center p-2 text-amber-500 animate-pulse cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-full"
-                    aria-label={t("dash.offlineMode") || "Offline Mode"}
+                  <div 
+                    data-testid="offline-indicator-center"
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 animate-pulse pointer-events-auto cursor-help"
                   >
-                    <CloudOff className="h-4 w-4" />
-                  </button>
+                    <CloudOff className="h-3.5 w-3.5" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">Offline</span>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{t("dash.offlineHint") || "Offline Mode - Changes will sync later"}</p>
                 </TooltipContent>
               </Tooltip>
-            )}
+            </div>
+          )}
 
+          <div className="flex items-center gap-0.5">
             {(isOwner || effectiveRole === "admin") && (
               <div className="relative">
                 <Tooltip>
