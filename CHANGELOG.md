@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-01
+
+### Added
+- **Full Standalone Mode**: Introduced a complete local-only storage mode.
+  - Automatic fallback to `localStorage` for Transactions, Categories, and Custom Columns.
+  - Data integrity logic ensures category and column updates propagate to local transactions.
+  - Deterministic sorting and cursor-based pagination for local data.
+  - "Continue in Standalone Mode" option on the authentication page.
+- **PWA Enhancements**:
+  - Added a custom iOS-specific installation instruction modal.
+  - Refined install prompts and session persistence.
+
+### Changed
+- **UI/UX Optimization**:
+  - Consolidated header utility icons (Theme, Locale, PIN, Shortcuts) into the **User Menu** to prevent header overflow.
+  - Moved the main **Offline Indicator** to the absolute center of the header for maximum visibility.
+  - **Context-Aware Admin Gear**: The admin gear icon is now hidden when offline in Supabase mode to prevent access to non-functional pages.
+- **Robustness**:
+  - Aggressive session clearing during logout to prevent stale sessions from re-logging users in while offline.
+  - Configured core queries with `networkMode: "always"` to ensure instant access to local data regardless of network status.
+
+### Fixed
+- **E2E Test Stability**: Improved test reliability by awaiting IndexedDB cleanup and using stable SVG-based locators.
+- **Data Consistency**: Fixed ID mismatch in optimistic updates for custom columns.
+
 ## [1.1.9] - 2026-03-31
 
 ### Added

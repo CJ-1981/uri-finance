@@ -4,6 +4,7 @@ A React application for tracking team finances with custom categories, columns, 
 
 ## Features
 
+- **Standalone Mode**: Use the app with purely local storage. No account or internet required—data stays on your device.
 - **Multi-User Projects**: Create projects and invite team members with role-based access control
 - **Custom Categories**: Define transaction categories per project with codes and icons
 - **Custom Columns**: Add custom fields to transactions (numeric, text, list types)

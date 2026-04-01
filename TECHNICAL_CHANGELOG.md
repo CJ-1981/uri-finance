@@ -2,6 +2,56 @@
 
 Detailed technical changes made during codebase review and improvement session.
 
+## Session Date: 2026-04-01
+
+## Standalone & Offline Refinements
+
+### 16. Aggressive State Clearing on Logout
+**Files Changed:**
+- `src/hooks/useAuth.tsx`
+
+**Changes:**
+- Updated `signOut` to clear all Supabase-related keys from `localStorage` (looping through `sb-` prefixes).
+- Explicitly set `user` and `session` state to `null` *before* the async Supabase call.
+- Ensures immediate UI redirection to `/auth` and prevents session restoration if the network request fails or times out.
+
+### 17. Deterministic Local Pagination
+**Files Changed:**
+- `src/hooks/useTransactions.tsx`
+
+**Changes:**
+- Implemented `safeReadLocalTransactions` helper with JSON validation.
+- Refactored local pagination to use a stable `lastId` cursor instead of array indices.
+- Added explicit sorting (`transaction_date DESC`, `created_at DESC`, `id DESC`) to local data before slicing to match Supabase behavior and prevent skips/duplicates during infinite scroll.
+
+### 18. Network Isolation & Guarding
+**Files Changed:**
+- `src/hooks/useProjects.tsx`
+- `src/hooks/useCategories.tsx`
+- `src/hooks/useTransactions.tsx`
+- `src/hooks/useColumnHeaders.tsx`
+- `src/hooks/useCustomColumns.tsx`
+- `src/hooks/useUserRole.tsx`
+- `src/hooks/useProjectMembers.tsx`
+- `src/pages/AdminPage.tsx`
+
+**Changes:**
+- Applied `networkMode: "always"` to critical queries to ensure they resolve immediately from cache or defaults in standalone/offline modes.
+- Added `isStandalone` and `"standalone-user"` guards to prevent `400 Bad Request` errors when the mock user ID is used in Supabase REST calls.
+- Gated statistics fetching and member management effects in `AdminPage`.
+
+### 19. Header & UserMenu Consolidation
+**Files Changed:**
+- `src/pages/Dashboard.tsx`
+- `src/components/UserMenu.tsx`
+- `src/components/ShortcutSettings.tsx`
+
+**Changes:**
+- Migrated Theme, Locale, PIN, and Keyboard Shortcut controls into the `UserMenu` dropdown.
+- Converted `ShortcutSettings` from a `Popover` to a `Dialog` for better compatibility within dropdown menus.
+- Centered the main `Offline` indicator in the header status bar.
+- Implemented conditional visibility for the admin gear based on `isOnline` and `isStandalone` status.
+
 ## Session Date: 2026-03-31
 
 ## Security & Privacy Improvements
