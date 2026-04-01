@@ -15,7 +15,7 @@ test.describe("Standalone Mode", () => {
             const req = window.indexedDB.deleteDatabase(db.name!);
             req.onsuccess = resolve;
             req.onerror = reject;
-            req.onblocked = resolve; // Continue if blocked
+            req.onblocked = () => reject(new Error('deleteDatabase blocked'));
           });
         }
         return Promise.resolve();

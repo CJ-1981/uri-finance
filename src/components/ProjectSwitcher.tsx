@@ -52,7 +52,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   useImperativeHandle(ref, () => ({
     openJoinTab: () => {
-      if (blockWhenOffline("join")) return;
+      if (isStandalone || blockWhenOffline("join")) return;
       setTab("join");
       setOpen(true);
     },
@@ -76,7 +76,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (blockWhenOffline("join")) return;
+    if (isStandalone || blockWhenOffline("join")) return;
     if (!code.trim()) return;
     await onJoin(code.trim());
     setCode("");
@@ -175,7 +175,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
             </form>
           )}
 
-          {tab === "join" && (
+          {tab === "join" && !isStandalone && (
             <form onSubmit={handleJoin} className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs">{t("proj.inviteCode")}</Label>

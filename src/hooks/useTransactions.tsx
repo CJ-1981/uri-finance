@@ -24,6 +24,21 @@ export interface Transaction {
 
 const PAGE_SIZE = 50;
 
+const safeReadLocalTransactions = (key: string): Transaction[] => {
+  try {
+    const local = localStorage.getItem(key);
+    if (!local) return [];
+    const parsed = JSON.parse(local);
+    if (Array.isArray(parsed)) {
+      return parsed as Transaction[];
+    }
+    return [];
+  } catch (err) {
+    console.error("Failed to parse local transactions:", err);
+    return [];
+  }
+};
+
 export const useTransactions = (projectId: string | undefined) => {
   const { user, isStandalone } = useAuth();
   const queryClient = useQueryClient();
@@ -43,12 +58,13 @@ export const useTransactions = (projectId: string | undefined) => {
       if (!projectId) return [];
       
       if (isStandalone) {
-        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
-        const all: Transaction[] = local ? JSON.parse(local) : [];
+        const all = safeReadLocalTransactions(LOCAL_TRANSACTIONS_KEY);
         const filtered = all.filter(t => !t.deleted_at);
-        // Basic pagination simulation: slice the array
-        const start = pageParam ? (pageParam as any).index : 0;
-        const page = filtered.slice(start, start + PAGE_SIZE);
+        
+        const lastId = pageParam ? (pageParam as any).lastId : null;
+        const startIndex = lastId ? filtered.findIndex(t => t.id === lastId) + 1 : 0;
+        const page = filtered.slice(startIndex, startIndex + PAGE_SIZE);
+        
         return page.map(t => ({ ...t, _sync_status: "synced" as const }));
       }
 
@@ -77,7 +93,7 @@ export const useTransactions = (projectId: string | undefined) => {
       if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
       
       if (isStandalone) {
-        return { index: allPages.length * PAGE_SIZE };
+        return { lastId: lastPage[lastPage.length - 1].id };
       }
 
       const lastItem = lastPage[lastPage.length - 1];
@@ -107,8 +123,7 @@ export const useTransactions = (projectId: string | undefined) => {
       currency?: string;
     }) => {
       if (isStandalone) {
-        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
-        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const existing = safeReadLocalTransactions(LOCAL_TRANSACTIONS_KEY);
         const newTx: Transaction = {
           ...tx,
           description: tx.description || null,
@@ -195,8 +210,7 @@ export const useTransactions = (projectId: string | undefined) => {
     mutationKey: ["updateTransaction", projectId],
     mutationFn: async ({ id, updates, project_id }: { id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>, project_id: string }) => {
       if (isStandalone) {
-        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
-        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const existing = safeReadLocalTransactions(LOCAL_TRANSACTIONS_KEY);
         const updated = existing.map(t => t.id === id ? { ...t, ...updates } : t);
         localStorage.setItem(LOCAL_TRANSACTIONS_KEY, JSON.stringify(updated));
         return;
@@ -256,8 +270,7 @@ export const useTransactions = (projectId: string | undefined) => {
     mutationKey: ["deleteTransaction", projectId],
     mutationFn: async ({ id, project_id }: { id: string, project_id: string }) => {
       if (isStandalone) {
-        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
-        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const existing = safeReadLocalTransactions(LOCAL_TRANSACTIONS_KEY);
         const updated = existing.map(t => t.id === id ? { ...t, deleted_at: new Date().toISOString() } : t);
         localStorage.setItem(LOCAL_TRANSACTIONS_KEY, JSON.stringify(updated));
         return;
@@ -318,8 +331,7 @@ export const useTransactions = (projectId: string | undefined) => {
     mutationKey: ["bulkAddTransactions", projectId],
     mutationFn: async ({ txs, project_id, user_id }: { txs: Array<any>, project_id: string, user_id: string }) => {
       if (isStandalone) {
-        const local = localStorage.getItem(LOCAL_TRANSACTIONS_KEY);
-        const existing: Transaction[] = local ? JSON.parse(local) : [];
+        const existing = safeReadLocalTransactions(LOCAL_TRANSACTIONS_KEY);
         const newTxs = txs.map(tx => ({
           ...tx,
           id: crypto.randomUUID(),
