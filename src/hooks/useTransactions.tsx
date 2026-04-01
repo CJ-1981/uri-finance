@@ -39,6 +39,8 @@ const safeReadLocalTransactions = (key: string): Transaction[] => {
   }
 };
 
+export type PageParam = { lastId: string } | { date: string; createdAt: string } | null;
+
 export const useTransactions = (projectId: string | undefined) => {
   const { user, isStandalone } = useAuth();
   const queryClient = useQueryClient();
@@ -54,14 +56,22 @@ export const useTransactions = (projectId: string | undefined) => {
     isFetchingNextPage 
   } = useInfiniteQuery({
     queryKey: TRANSACTIONS_KEY,
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }: { pageParam: PageParam }) => {
       if (!projectId) return [];
       
       if (isStandalone) {
         const all = safeReadLocalTransactions(LOCAL_TRANSACTIONS_KEY);
-        const filtered = all.filter(t => !t.deleted_at);
+        const filtered = all
+          .filter(t => !t.deleted_at)
+          .sort((a, b) => {
+            const dateCompare = new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime();
+            if (dateCompare !== 0) return dateCompare;
+            const createdCompare = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            if (createdCompare !== 0) return createdCompare;
+            return b.id.localeCompare(a.id);
+          });
         
-        const lastId = pageParam ? (pageParam as any).lastId : null;
+        const lastId = pageParam && "lastId" in pageParam ? pageParam.lastId : null;
         const startIndex = lastId ? filtered.findIndex(t => t.id === lastId) + 1 : 0;
         const page = filtered.slice(startIndex, startIndex + PAGE_SIZE);
         
@@ -77,8 +87,8 @@ export const useTransactions = (projectId: string | undefined) => {
         .order("created_at", { ascending: false })
         .limit(PAGE_SIZE);
 
-      if (pageParam) {
-        const { date, createdAt } = pageParam as { date: string; createdAt: string };
+      if (pageParam && "date" in pageParam) {
+        const { date, createdAt } = pageParam;
         // Cursor-based pagination: fetch items older than the last item
         query = query.or(`transaction_date.lt.${date},and(transaction_date.eq.${date},created_at.lt.${createdAt})`);
       }
@@ -88,8 +98,8 @@ export const useTransactions = (projectId: string | undefined) => {
       if (error) throw error;
       return (data as Transaction[]).map(t => ({ ...t, _sync_status: "synced" as const }));
     },
-    initialPageParam: null as any,
-    getNextPageParam: (lastPage, allPages) => {
+    initialPageParam: null as PageParam,
+    getNextPageParam: (lastPage, allPages): PageParam | undefined => {
       if (!lastPage || !Array.isArray(lastPage) || lastPage.length < PAGE_SIZE) return undefined;
       
       if (isStandalone) {

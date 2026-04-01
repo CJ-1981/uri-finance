@@ -148,7 +148,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
             </div>
           )}
 
-          {tab === "create" && (
+          {tab === "create" && isSystemAdmin && (
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs">{t("proj.projectName")}</Label>
@@ -201,3 +201,4 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 ProjectSwitcher.displayName = "ProjectSwitcher";
 
 export default ProjectSwitcher;
+
