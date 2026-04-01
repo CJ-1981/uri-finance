@@ -53,9 +53,8 @@ export const useCustomColumns = (projectId: string | undefined) => {
 
   const addColumnMutation = useMutation({
     mutationKey: ["addColumn", projectId],
-    mutationFn: async ({ name, columnType }: { name: string, columnType: ColumnType }) => {
+    mutationFn: async ({ id, name, columnType }: { id: string, name: string, columnType: ColumnType }) => {
       const maxOrder = columns.length > 0 ? Math.max(...columns.map(c => c.sort_order)) : -1;
-      const id = crypto.randomUUID();
 
       if (isStandalone) {
         const local = localStorage.getItem(LOCAL_COLUMNS_KEY);
@@ -87,11 +86,11 @@ export const useCustomColumns = (projectId: string | undefined) => {
         } as Partial<CustomColumn>);
       if (error) throw error;
     },
-    onMutate: async ({ name, columnType }) => {
+    onMutate: async ({ id, name, columnType }) => {
       await queryClient.cancelQueries({ queryKey: COLUMNS_KEY });
       const previous = queryClient.getQueryData(COLUMNS_KEY);
       const optimistic: CustomColumn = {
-        id: crypto.randomUUID(),
+        id,
         project_id: projectId!,
         name: name.trim(),
         column_type: columnType,

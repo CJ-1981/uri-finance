@@ -358,7 +358,7 @@ export const useTransactions = (projectId: string | undefined) => {
       toast.error("Failed to import transactions");
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY });
         }, 2000);

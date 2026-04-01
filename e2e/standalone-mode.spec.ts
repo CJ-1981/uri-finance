@@ -9,9 +9,17 @@ test.describe("Standalone Mode", () => {
       localStorage.clear();
       sessionStorage.clear();
       const databases = await window.indexedDB.databases();
-      for (const db of databases) {
-        if (db.name) window.indexedDB.deleteDatabase(db.name);
-      }
+      await Promise.all(databases.map(db => {
+        if (db.name) {
+          return new Promise((resolve, reject) => {
+            const req = window.indexedDB.deleteDatabase(db.name!);
+            req.onsuccess = resolve;
+            req.onerror = reject;
+            req.onblocked = resolve; // Continue if blocked
+          });
+        }
+        return Promise.resolve();
+      }));
     });
     await page.reload();
     // Ensure English

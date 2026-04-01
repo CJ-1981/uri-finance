@@ -43,9 +43,6 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
         "create": t("proj.offlineCreate") || "Cannot create projects while offline",
         "join": t("proj.offlineJoin") || "Cannot join projects while offline",
         "delete": t("proj.offlineDelete") || "Cannot delete projects while offline",
-        "switch projects": t("proj.offlineSwitch") || "Cannot switch projects while offline",
-        "create projects": t("proj.offlineCreate") || "Cannot create projects while offline",
-        "join projects": t("proj.offlineJoin") || "Cannot join projects while offline",
       };
       toast.error(actionMap[actionKey] || t("proj.offlineError") || "Action cannot be performed while offline");
       return true;
@@ -68,7 +65,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (blockWhenOffline("create projects")) return;
+    if (blockWhenOffline("create")) return;
     if (!name.trim()) return;
     await onCreate(name.trim(), desc.trim() || undefined);
     setName("");
@@ -79,7 +76,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (blockWhenOffline("join projects")) return;
+    if (blockWhenOffline("join")) return;
     if (!code.trim()) return;
     await onJoin(code.trim());
     setCode("");
@@ -88,7 +85,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
   };
 
   const handleSelect = (p: Project) => {
-    if (active?.id !== p.id && blockWhenOffline("switch projects")) return;
+    if (active?.id !== p.id && blockWhenOffline("switch")) return;
     onSelect(p);
     setOpen(false);
   };
