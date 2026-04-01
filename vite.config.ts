@@ -1,8 +1,8 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -34,6 +34,14 @@ function devBasePathRedirect() {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd());
+  const appTitle = env.VITE_APP_TITLE || '우리교회 재정부';
+  const iconSuffix = env.VITE_APP_ICON_SUFFIX || '';
+  
+  // Only use suffix if the icon file actually exists
+  const hasSuffixIcon = iconSuffix && existsSync(resolve(__dirname, `public/favicon${iconSuffix}.ico`));
+  const actualIconSuffix = hasSuffixIcon ? iconSuffix : '';
+  
   const base = mode === 'development' ? '/' : (process.env.VITE_BASE_URL || "/uri-finance/");
   
   return {
@@ -53,28 +61,35 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      {
+        name: 'html-transform',
+        transformIndexHtml(html) {
+          return html.replace(/__VITE_APP_TITLE__/g, appTitle)
+                     .replace(/__VITE_APP_ICON_SUFFIX__/g, actualIconSuffix);
+        },
+      },
       VitePWA({
         registerType: 'autoUpdate',
         injectRegister: false, // Handled manually in main.tsx
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
+        includeAssets: [`favicon${actualIconSuffix}.ico`, `apple-touch-icon${actualIconSuffix}.png`, 'robots.txt'],
         manifest: {
-          name: 'URI Finance',
-          short_name: 'URI Finance',
+          name: appTitle,
+          short_name: appTitle,
           description: 'Track your personal and project finances securely.',
           theme_color: '#ffffff',
           icons: [
             {
-              src: 'icon-192x192.png',
+              src: `icon-192x192${actualIconSuffix}.png`,
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'icon-512x512.png',
+              src: `icon-512x512${actualIconSuffix}.png`,
               sizes: '512x512',
               type: 'image/png'
             },
             {
-              src: 'icon-192x192.png',
+              src: `icon-192x192${actualIconSuffix}.png`,
               sizes: '192x192',
               type: 'image/png',
               purpose: 'maskable'
