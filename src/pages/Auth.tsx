@@ -33,6 +33,7 @@ const Auth = () => {
   if (user) return <Navigate to="/" replace />;
 
   const handleStandalone = () => {
+    localStorage.removeItem("pending_invite_code");
     enableStandaloneMode();
     toast.success(t("auth.standaloneMode"));
   };

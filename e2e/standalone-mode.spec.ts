@@ -62,11 +62,9 @@ test.describe("Standalone Mode", () => {
     await page.getByPlaceholder("0.00").fill("100");
     
     // Select category
-    const categoryLabel = page.getByText(/Category/i);
-    await expect(categoryLabel).toBeVisible();
-    // Click the selector (usually near the label)
-    await page.keyboard.press("Tab"); // Focus next element which should be the selector
-    await page.keyboard.press("Enter");
+    const categoryTrigger = page.locator('button').filter({ has: page.locator('svg[data-lucide="tag"]') });
+    await expect(categoryTrigger).toBeVisible();
+    await categoryTrigger.click();
     
     // Wait for popover and select a category
     await page.keyboard.press("ArrowDown");
@@ -96,6 +94,18 @@ test.describe("Standalone Mode", () => {
     // Sign out
     const userMenu = page.getByTestId("user-menu-trigger");
     await expect(userMenu).toBeVisible();
+    await userMenu.click();
+    await page.getByRole("menuitem", { name: /Sign Out/i }).click();
+
+    // Should be back to auth page
+    await expect(page).toHaveURL(/\/auth/);
+    
+    // Verify standalone mode flag is gone
+    const isStandalone = await page.evaluate(() => localStorage.getItem("is_standalone"));
+    expect(isStandalone).toBeNull();
+  });
+});
+BeVisible();
     await userMenu.click();
     await page.getByRole("menuitem", { name: /Sign Out/i }).click();
 

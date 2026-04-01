@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Playwright configuration for screenshot generation
  * Optimized for consistent, high-quality documentation screenshots
  *
- * IMPORTANT: Start dev server first with 'npm run dev' on port 8082
+ * IMPORTANT: Start dev server first with 'npm run dev' on port 8080
  */
 export default defineConfig({
   testDir: './e2e',
@@ -15,7 +15,7 @@ export default defineConfig({
   workers: 1,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:8082',
+    baseURL: 'http://localhost:8080',
     trace: 'off',
     screenshot: 'only-on-failure',
     video: 'off',
@@ -35,5 +35,5 @@ export default defineConfig({
       },
     },
   ],
-  // No webServer - assume dev server is already running on port 8082
+  // No webServer - assume dev server is already running on port 8080
 });

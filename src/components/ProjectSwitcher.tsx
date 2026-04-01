@@ -43,6 +43,9 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
         "create": t("proj.offlineCreate") || "Cannot create projects while offline",
         "join": t("proj.offlineJoin") || "Cannot join projects while offline",
         "delete": t("proj.offlineDelete") || "Cannot delete projects while offline",
+        "switch projects": t("proj.offlineSwitch") || "Cannot switch projects while offline",
+        "create projects": t("proj.offlineCreate") || "Cannot create projects while offline",
+        "join projects": t("proj.offlineJoin") || "Cannot join projects while offline",
       };
       toast.error(actionMap[actionKey] || t("proj.offlineError") || "Action cannot be performed while offline");
       return true;

@@ -51,7 +51,8 @@ export const useProjects = () => {
   const { data: projects = [], isLoading: loading } = useQuery({
     queryKey: ["user_projects", isStandalone ? "standalone" : (user?.id || "anonymous")],
     queryFn: async () => {
-      if (isStandalone || !user) {
+      // Guard: If standalone, no user, or using the mock standalone user ID, use local storage
+      if (isStandalone || !user || user.id === "standalone-user") {
         // Load projects from local storage when standalone or offline/unauthenticated
         const local = localStorage.getItem(LOCAL_PROJECTS_KEY);
         return local ? JSON.parse(local) : [];
@@ -112,14 +113,14 @@ export const useProjects = () => {
     } else {
       localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
       localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
-      if (isOnline && user) {
+      if (!isStandalone && isOnline && user) {
         supabase.from('user_preferences').update({ default_project_id: null }).eq('user_id', user.id).then(({ error }) => {
           if (error) console.debug('Failed to clear preference:', error);
         });
       }
     }
     setActiveProject(project);
-  }, [isOnline, user]);
+  }, [isOnline, user, isStandalone]);
 
   // Restore logic
   useEffect(() => {

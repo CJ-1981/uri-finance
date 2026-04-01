@@ -89,7 +89,8 @@ export const useCategories = (projectId: string | undefined) => {
 
       if (isStandalone) {
         const local = localStorage.getItem(LOCAL_CATEGORIES_KEY);
-        return local ? JSON.parse(local) : [];
+        const parsedData: Category[] = local ? JSON.parse(local) : [];
+        return parsedData.sort((a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name));
       }
 
       const { data, error } = await supabase
@@ -193,7 +194,7 @@ export const useCategories = (projectId: string | undefined) => {
       }
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);
@@ -209,6 +210,19 @@ export const useCategories = (projectId: string | undefined) => {
         const existing: Category[] = local ? JSON.parse(local) : [];
         const updated = existing.filter(c => c.id !== id);
         localStorage.setItem(LOCAL_CATEGORIES_KEY, JSON.stringify(updated));
+
+        // Reassign transactions if category name provided
+        if (categoryName) {
+          const txKey = `local_transactions_${project_id}`;
+          const localTxs = localStorage.getItem(txKey);
+          if (localTxs) {
+            const txs = JSON.parse(localTxs);
+            const updatedTxs = txs.map((t: any) => 
+              t.category === categoryName ? { ...t, category: "General" } : t
+            );
+            localStorage.setItem(txKey, JSON.stringify(updatedTxs));
+          }
+        }
         return;
       }
 
@@ -244,7 +258,7 @@ export const useCategories = (projectId: string | undefined) => {
       toast.error("Failed to delete category");
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
           queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
@@ -263,6 +277,17 @@ export const useCategories = (projectId: string | undefined) => {
         const existing: Category[] = local ? JSON.parse(local) : [];
         const updated = existing.map(c => c.id === id ? { ...c, name: trimmedNewName } : c);
         localStorage.setItem(LOCAL_CATEGORIES_KEY, JSON.stringify(updated));
+
+        // Update transactions
+        const txKey = `local_transactions_${project_id}`;
+        const localTxs = localStorage.getItem(txKey);
+        if (localTxs) {
+          const txs = JSON.parse(localTxs);
+          const updatedTxs = txs.map((t: any) => 
+            t.category === oldName ? { ...t, category: trimmedNewName } : t
+          );
+          localStorage.setItem(txKey, JSON.stringify(updatedTxs));
+        }
         return;
       }
 
@@ -296,7 +321,7 @@ export const useCategories = (projectId: string | undefined) => {
       toast.error("Failed to rename category");
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
           queryClient.invalidateQueries({ queryKey: ["infinite_transactions", projectId] });
@@ -335,7 +360,7 @@ export const useCategories = (projectId: string | undefined) => {
       toast.error("Failed to update code");
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);
@@ -373,7 +398,7 @@ export const useCategories = (projectId: string | undefined) => {
       toast.error("Failed to update icon");
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);
@@ -424,7 +449,7 @@ export const useCategories = (projectId: string | undefined) => {
       }
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);
@@ -455,7 +480,7 @@ export const useCategories = (projectId: string | undefined) => {
       if (firstError) throw firstError;
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);
@@ -519,7 +544,7 @@ export const useCategories = (projectId: string | undefined) => {
       }
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);
@@ -599,7 +624,7 @@ export const useCategories = (projectId: string | undefined) => {
       }
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);
@@ -690,7 +715,7 @@ export const useCategories = (projectId: string | undefined) => {
       toast.error("Failed to update categories: " + error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
+      if (navigator.onLine || isStandalone) {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ["project_categories", projectId] });
         }, 2000);

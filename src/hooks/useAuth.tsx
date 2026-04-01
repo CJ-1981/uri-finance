@@ -19,7 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STANDALONE_USER: User = {
+const getStandaloneUser = (): User => ({
   id: "standalone-user",
   email: "standalone@local",
   app_metadata: {},
@@ -33,7 +33,7 @@ const STANDALONE_USER: User = {
   last_sign_in_at: new Date().toISOString(),
   identities: [],
   factors: [],
-};
+});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -45,9 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('AuthProvider: Initializing authentication...', { isStandalone });
 
     if (isStandalone) {
-      setUser(STANDALONE_USER);
+      setUser(getStandaloneUser());
       setLoading(false);
       return;
+    } else if (user?.id === "standalone-user") {
+      // Clear mock user if standalone mode is disabled
+      setUser(null);
     }
 
     try {
@@ -131,7 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const enableStandaloneMode = () => {
     localStorage.setItem("is_standalone", "true");
     setIsStandalone(true);
-    setUser(STANDALONE_USER);
+    setUser(getStandaloneUser());
   };
 
   const disableStandaloneMode = () => {

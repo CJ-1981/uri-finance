@@ -615,6 +615,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.offlineHint": "오프라인 모드 - 변경사항은 나중에 동기화됩니다",
     "dash.getStarted": "시작하기",
     "dash.getStartedDesc": "프로젝트를 만들거나 초대 코드로 참여하여 함께 재무를 관리하세요.",
+    "dash.getStartedDescStandalone": "로컬 프로젝트를 만들어 재무 관리를 시작하세요.",
     "dash.joinProject": "프로젝트 참여",
 
     // Transaction list

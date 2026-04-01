@@ -121,6 +121,18 @@ export const mutationFunctions = {
       const existing = local ? JSON.parse(local) : [];
       const updated = existing.filter((c: any) => c.id !== id);
       localStorage.setItem(key, JSON.stringify(updated));
+
+      if (categoryName) {
+        const txKey = `local_transactions_${project_id}`;
+        const localTxs = localStorage.getItem(txKey);
+        if (localTxs) {
+          const txs = JSON.parse(localTxs);
+          const updatedTxs = txs.map((t: any) => 
+            t.category === categoryName ? { ...t, category: "General" } : t
+          );
+          localStorage.setItem(txKey, JSON.stringify(updatedTxs));
+        }
+      }
       return;
     }
 
@@ -143,6 +155,16 @@ export const mutationFunctions = {
       const existing = local ? JSON.parse(local) : [];
       const updated = existing.map((c: any) => c.id === id ? { ...c, name: newName } : c);
       localStorage.setItem(key, JSON.stringify(updated));
+
+      const txKey = `local_transactions_${project_id}`;
+      const localTxs = localStorage.getItem(txKey);
+      if (localTxs) {
+        const txs = JSON.parse(localTxs);
+        const updatedTxs = txs.map((t: any) => 
+          t.category === oldName ? { ...t, category: newName } : t
+        );
+        localStorage.setItem(txKey, JSON.stringify(updatedTxs));
+      }
       return;
     }
 
@@ -225,10 +247,12 @@ export const mutationFunctions = {
       const key = `local_custom_columns_${vars.project_id}`;
       const local = localStorage.getItem(key);
       const existing = local ? JSON.parse(local) : [];
+      const maxOrder = existing.length > 0 ? Math.max(...existing.map((c: any) => c.sort_order)) : -1;
       const newCol = {
         ...vars,
         masked: false,
         required: false,
+        sort_order: maxOrder + 1,
         suggestions: [],
         suggestion_colors: {},
         created_at: new Date().toISOString()
@@ -248,6 +272,22 @@ export const mutationFunctions = {
       const existing = local ? JSON.parse(local) : [];
       const updated = existing.filter((c: any) => c.id !== id);
       localStorage.setItem(key, JSON.stringify(updated));
+
+      // Remove the custom value from transactions
+      const txKey = `local_transactions_${project_id}`;
+      const localTxs = localStorage.getItem(txKey);
+      if (localTxs) {
+        const txs = JSON.parse(localTxs);
+        const updatedTxs = txs.map((t: any) => {
+          if (t.custom_values && t.custom_values[name] !== undefined) {
+            const newVals = { ...t.custom_values };
+            delete newVals[name];
+            return { ...t, custom_values: newVals };
+          }
+          return t;
+        });
+        localStorage.setItem(txKey, JSON.stringify(updatedTxs));
+      }
       return;
     }
 
@@ -281,6 +321,23 @@ export const mutationFunctions = {
       const existing = local ? JSON.parse(local) : [];
       const updated = existing.map((c: any) => c.id === id ? { ...c, name: newName } : c);
       localStorage.setItem(key, JSON.stringify(updated));
+
+      // Update transactions
+      const txKey = `local_transactions_${project_id}`;
+      const localTxs = localStorage.getItem(txKey);
+      if (localTxs) {
+        const txs = JSON.parse(localTxs);
+        const updatedTxs = txs.map((t: any) => {
+          if (t.custom_values && t.custom_values[oldName] !== undefined) {
+            const newVals = { ...t.custom_values };
+            newVals[newName] = newVals[oldName];
+            delete newVals[oldName];
+            return { ...t, custom_values: newVals };
+          }
+          return t;
+        });
+        localStorage.setItem(txKey, JSON.stringify(updatedTxs));
+      }
       return;
     }
 

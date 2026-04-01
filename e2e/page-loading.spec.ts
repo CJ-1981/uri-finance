@@ -41,10 +41,10 @@ test.describe('Page Loading Diagnosis', () => {
   });
 
   test('should load the home page without errors', async () => {
-    console.log('Navigating to http://localhost:8082/');
+    console.log('Navigating to http://localhost:8080/');
 
     // Navigate to the page and wait for initial load
-    const response = await page.goto('http://localhost:8082/', {
+    const response = await page.goto('http://localhost:8080/', {
       waitUntil: 'networkidle',
       timeout: 10000
     });
@@ -118,7 +118,7 @@ test.describe('Page Loading Diagnosis', () => {
   test('should check for authentication state', async () => {
     console.log('Checking authentication state...');
 
-    await page.goto('http://localhost:8082/', {
+    await page.goto('http://localhost:8080/', {
       waitUntil: 'domcontentloaded',
       timeout: 10000
     });
@@ -156,7 +156,7 @@ test.describe('Page Loading Diagnosis', () => {
   test('should diagnose infinite loading loop', async () => {
     console.log('Diagnosing potential infinite loading loop...');
 
-    await page.goto('http://localhost:8082/', {
+    await page.goto('http://localhost:8080/', {
       waitUntil: 'domcontentloaded',
       timeout: 10000
     });

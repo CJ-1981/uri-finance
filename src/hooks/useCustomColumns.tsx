@@ -314,7 +314,8 @@ export const useCustomColumns = (projectId: string | undefined) => {
       toast.error("Column name already exists");
       return;
     }
-    addColumnMutation.mutate({ name, columnType });
+    const id = crypto.randomUUID();
+    addColumnMutation.mutate({ id, name, columnType });
   }, [projectId, addColumnMutation, columns]);
 
   const renameColumn = useCallback((id: string, newName: string) => {

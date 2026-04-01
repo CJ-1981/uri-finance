@@ -432,7 +432,7 @@ const Dashboard = () => {
             </div>
             <h2 className="text-lg font-semibold text-foreground">{t("dash.getStarted")}</h2>
             <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-              {t("dash.getStartedDesc")}
+              {t(isStandalone ? "dash.getStartedDescStandalone" : "dash.getStartedDesc")}
             </p>
             <div className="flex flex-col sm:flex-row gap-2 mt-6">
               <Button
@@ -545,6 +545,7 @@ const Dashboard = () => {
                 <Calculator className="h-4 w-4 shrink-0" />
                 <span className={view === "cash" ? "inline" : "hidden sm:inline"}>{t("cash.title")}</span>
               </button>
+              {!isStandalone && (
               <button
                 onClick={() => setView("files")}
                 data-testid="view-files"
@@ -555,6 +556,7 @@ const Dashboard = () => {
                 <FileText className="h-4 w-4 shrink-0" />
                 <span className={view === "files" ? "inline" : "hidden sm:inline"}>{t("files.title")}</span>
               </button>
+              )}
             </div>
 
             {/* Content */}
@@ -616,12 +618,16 @@ const Dashboard = () => {
               </div>
             ) : view === "cash" ? (
               <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
-            ) : (
+            ) : !isStandalone ? (
               <FileManager
                 projectId={activeProject.id}
                 canDelete={!isViewer && (isOwner || effectiveRole === "admin")}
                 onTransactionClick={handleTransactionClickFromFile}
               />
+            ) : (
+              <div className="py-20 text-center">
+                <p className="text-sm text-muted-foreground">Files are not available in Standalone Mode.</p>
+              </div>
             )}
 
             {/* FAB - hidden for viewers */}
