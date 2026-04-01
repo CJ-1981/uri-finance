@@ -18,25 +18,22 @@ import FinanceCharts from "@/components/FinanceCharts";
 import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod, PeriodSelectorHandle } from "@/components/PeriodSelector";
 import CategorySelector, { CategorySelectorHandle } from "@/components/CategorySelector";
-import PinSetupDialog from "@/components/PinSetupDialog";
-import PinDisableDialog from "@/components/PinDisableDialog";
 import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { BarChart3, List, Sun, Moon, Settings, Globe, Lock, LockOpen, Eye, Calculator, UserPlus, Loader2, FileText } from "lucide-react";
+import { BarChart3, List, Settings, Eye, Calculator, UserPlus, Loader2, FileText } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
 import ShortcutSettings from "@/components/ShortcutSettings";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { UserRole } from "@/hooks/useUserRole";
-import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
-import { isPinSet } from "@/lib/securePinStorage";
 import { FileManager } from "@/components/files";
 import ReportSummaryTable from "@/components/ReportSummaryTable";
 import ReportExportModal from "@/components/ReportExportModal";
 import { useReportData } from "@/hooks/useReportData";
 import { Download, CloudOff } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { cn } from "@/lib/utils";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -89,13 +86,9 @@ const Dashboard = () => {
   const [period, setPeriod] = useState<PeriodKey>("all");
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
-  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const realOwner = activeProject && user && activeProject.owner_id === user.id;
   const isOwner = !isSimulating && realOwner;
-  const [pinDialogOpen, setPinDialogOpen] = useState(false);
-  const [pinDisableDialogOpen, setPinDisableDialogOpen] = useState(false);
-  const [hasPin, setHasPin] = useState(isPinSet());
   const [addTxOpen, setAddTxOpen] = useState(false);
   const [bulkEditTxs, setBulkEditTxs] = useState<Transaction[]>([]);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
@@ -125,7 +118,7 @@ const Dashboard = () => {
     if (activeProject && !isViewer) setAddTxOpen(true);
   }, [activeProject, isViewer]);
 
-  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen && !pinDialogOpen && !pinDisableDialogOpen;
+  const noModalOpen = !addTxOpen && !detailOpen && !bulkEditOpen;
 
   // "/" shortcut to focus search
   useEffect(() => {
@@ -145,10 +138,6 @@ const Dashboard = () => {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [noModalOpen]);
-
-  const handleRemovePin = () => {
-    setHasPin(false);
-  };
 
   // Filter transactions by selected period and category
   const filtered = useMemo(() => {
@@ -319,7 +308,6 @@ const Dashboard = () => {
               isSystemAdmin={isSystemAdmin}
             />
             {activeProject && (
-              <>
               <ExportTransactions
                 transactions={filtered}
                 headers={headers}
@@ -329,16 +317,10 @@ const Dashboard = () => {
                 projectCurrency={projectCurrency}
                 onImport={!isViewer ? bulkAddTransactions : undefined}
               />
-              {(isOwner || effectiveRole === "admin") && (
-                <Button variant="ghost" size="icon" onClick={() => navigate("/admin")} className="text-muted-foreground hover:text-foreground">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              )}
-              </>
             )}
           </div>
-          <div className="flex items-center gap-1">
-            {!isOnline && !isStandalone && (
+          <div className="flex items-center gap-0.5">
+            {!isOnline && !isStandalone && !(isOwner || effectiveRole === "admin") && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 
@@ -354,45 +336,39 @@ const Dashboard = () => {
                 </TooltipContent>
               </Tooltip>
             )}
+
+            {(isOwner || effectiveRole === "admin") && (
+              <div className="relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => (isOnline || isStandalone) && navigate("/admin")} 
+                      className={cn(
+                        "text-muted-foreground hover:text-foreground", 
+                        !isOnline && !isStandalone && "opacity-60"
+                      )}
+                      title={t("admin.title")}
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  {!isOnline && !isStandalone && (
+                    <TooltipContent>
+                      <p>{t("dash.offlineHint") || "Offline Mode - Admin access disabled"}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+                {!isOnline && !isStandalone && (
+                  <div className="absolute -top-0.5 -right-0.5 bg-background rounded-full p-0.5 pointer-events-none">
+                    <CloudOff className="h-2.5 w-2.5 text-amber-500 animate-pulse" />
+                  </div>
+                )}
+              </div>
+            )}
+
             <ShortcutSettings />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => hasPin ? setPinDisableDialogOpen(true) : setPinDialogOpen(true)}
-              className="text-muted-foreground hover:text-foreground"
-              title={hasPin ? t("lock.disable") : t("lock.enable")}
-              data-testid="pin-setup-button"
-            >
-              {hasPin ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLocale(locale === "en" ? "ko" : "en")}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Globe className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                const newTheme = theme === "dark" ? "light" : "dark";
-                const doc = document as Document & {
-                  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
-                };
-                if (!doc.startViewTransition) {
-                  setTheme(newTheme);
-                  return;
-                }
-                doc.startViewTransition(() => {
-                  setTheme(newTheme);
-                });
-              }}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
             <UserMenu />
           </div>
         </div>
@@ -656,8 +632,6 @@ const Dashboard = () => {
           </div>
         )}
       </main>
-      <PinSetupDialog open={pinDialogOpen} onOpenChange={setPinDialogOpen} onComplete={() => setHasPin(true)} />
-      <PinDisableDialog open={pinDisableDialogOpen} onOpenChange={setPinDisableDialogOpen} onDisableSuccess={handleRemovePin} />
       <ReportExportModal
         open={reportExportOpen}
         onOpenChange={setReportExportOpen}

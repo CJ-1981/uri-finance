@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useI18n } from "@/hooks/useI18n";
 import {
@@ -10,13 +10,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { PasswordChangeDialog } from "@/components/PasswordChangeDialog";
-import { LogOut, KeyRound } from "lucide-react";
+import { LogOut, KeyRound, Sun, Moon, Globe, Lock, LockOpen } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTheme } from "next-themes";
+import { isPinSet } from "@/lib/securePinStorage";
+import PinSetupDialog from "@/components/PinSetupDialog";
+import PinDisableDialog from "@/components/PinDisableDialog";
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
+  const { theme, setTheme } = useTheme();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [pinDisableDialogOpen, setPinDisableDialogOpen] = useState(false);
+  const [hasPin, setHasPin] = useState(isPinSet());
+
+  // Update pin state when dialogs close or components mount
+  useEffect(() => {
+    setHasPin(isPinSet());
+  }, [pinDialogOpen, pinDisableDialogOpen]);
 
   const getUserInitials = () => {
     if (!user?.email) return "U";
@@ -26,6 +39,26 @@ export const UserMenu = () => {
       return parts[0].charAt(0).toUpperCase();
     }
     return "U";
+  };
+
+  const toggleTheme = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const newTheme = theme === "dark" ? "light" : "dark";
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+    };
+    if (!doc.startViewTransition) {
+      setTheme(newTheme);
+      return;
+    }
+    doc.startViewTransition(() => {
+      setTheme(newTheme);
+    });
+  };
+
+  const toggleLocale = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setLocale(locale === "en" ? "ko" : "en");
   };
 
   return (
@@ -45,11 +78,35 @@ export const UserMenu = () => {
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-56">
           <div className="px-2 py-1.5 text-sm">
             <p className="font-medium text-foreground truncate">{user?.email}</p>
           </div>
           <DropdownMenuSeparator />
+          
+          <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
+            {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            <span>{theme === "dark" ? t("theme.light") || "Light Mode" : t("theme.dark") || "Dark Mode"}</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onClick={toggleLocale} className="cursor-pointer">
+            <Globe className="mr-2 h-4 w-4" />
+            <span>{locale === "en" ? "한국어" : "English"}</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            onClick={(e) => {
+              e.preventDefault();
+              hasPin ? setPinDisableDialogOpen(true) : setPinDialogOpen(true);
+            }} 
+            className="cursor-pointer"
+          >
+            {hasPin ? <Lock className="mr-2 h-4 w-4" /> : <LockOpen className="mr-2 h-4 w-4" />}
+            <span>{hasPin ? t("lock.disable") : t("lock.enable")}</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem
             onClick={(e) => {
               e.preventDefault();
@@ -66,7 +123,7 @@ export const UserMenu = () => {
               e.preventDefault();
               signOut();
             }}
-            className="cursor-pointer text-destructive"
+            className="cursor-pointer text-destructive focus:text-destructive"
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>{t("auth.signOut")}</span>
@@ -77,6 +134,18 @@ export const UserMenu = () => {
       <PasswordChangeDialog
         open={passwordDialogOpen}
         onOpenChange={setPasswordDialogOpen}
+      />
+
+      <PinSetupDialog 
+        open={pinDialogOpen} 
+        onOpenChange={setPinDialogOpen} 
+        onComplete={() => setHasPin(true)} 
+      />
+      
+      <PinDisableDialog 
+        open={pinDisableDialogOpen} 
+        onOpenChange={setPinDisableDialogOpen} 
+        onDisableSuccess={() => setHasPin(false)} 
       />
     </>
   );
