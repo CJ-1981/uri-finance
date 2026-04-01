@@ -340,30 +340,23 @@ const Dashboard = () => {
           )}
 
           <div className="flex items-center gap-0.5">
-            {(isOwner || effectiveRole === "admin") && (
-              <div className="relative">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => (isOnline || isStandalone) && navigate("/admin")} 
-                      className={cn(
-                        "transition-all duration-300",
-                        (!isOnline && !isStandalone) ? "text-amber-500 hover:text-amber-600 bg-amber-500/5" : "text-muted-foreground hover:text-foreground"
-                      )}
-                      title={(!isOnline && !isStandalone) ? t("dash.offlineHint") : t("admin.title")}
-                    >
-                      {(!isOnline && !isStandalone) ? <CloudOff className="h-4 w-4 animate-pulse" /> : <Settings className="h-4 w-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  {!isOnline && !isStandalone && (
-                    <TooltipContent>
-                      <p>{t("dash.offlineHint") || "Offline Mode - Admin access disabled"}</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </div>
+            {(isOwner || effectiveRole === "admin") && (isOnline || isStandalone) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => navigate("/admin")} 
+                    className="text-muted-foreground hover:text-foreground"
+                    title={t("admin.title")}
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("admin.title")}</p>
+                </TooltipContent>
+              </Tooltip>
             )}
 
             <UserMenu />
