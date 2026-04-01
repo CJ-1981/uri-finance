@@ -338,7 +338,7 @@ const Dashboard = () => {
             )}
           </div>
           <div className="flex items-center gap-1">
-            {!isOnline && (
+            {!isOnline && !isStandalone && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button 

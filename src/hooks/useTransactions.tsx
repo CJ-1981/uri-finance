@@ -111,6 +111,7 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5,
+    networkMode: "always",
   });
 
   const transactions = useMemo(() => {

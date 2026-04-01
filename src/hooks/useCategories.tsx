@@ -104,6 +104,7 @@ export const useCategories = (projectId: string | undefined) => {
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 5,
+    networkMode: "always",
   });
 
   // Merge server data with pending offline changes

@@ -78,6 +78,7 @@ export const useProjects = () => {
     },
     enabled: true,
     staleTime: 1000 * 60 * 10,
+    networkMode: "always",
   });
 
   // Revalidate cached project against current list

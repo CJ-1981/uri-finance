@@ -49,6 +49,7 @@ export const useCustomColumns = (projectId: string | undefined) => {
     },
     enabled: !!projectId,
     staleTime: 1000 * 60 * 30, // 30 minutes
+    networkMode: "always",
   });
 
   const addColumnMutation = useMutation({
