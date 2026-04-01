@@ -113,15 +113,3 @@ test.describe("Standalone Mode", () => {
     expect(isStandalone).toBeNull();
   });
 });
-BeVisible();
-    await userMenu.click();
-    await page.getByRole("menuitem", { name: /Sign Out/i }).click();
-
-    // Should be back to auth page
-    await expect(page).toHaveURL(/\/auth/);
-    
-    // Verify standalone mode flag is gone
-    const isStandalone = await page.evaluate(() => localStorage.getItem("is_standalone"));
-    expect(isStandalone).toBeNull();
-  });
-});

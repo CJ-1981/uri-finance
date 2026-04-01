@@ -380,17 +380,13 @@ export const useTransactions = (projectId: string | undefined) => {
     if (!projectId || !user) throw new Error("Missing project or user");
     const id = crypto.randomUUID();
     try {
-      if (isStandalone) {
-        await addTransactionMutation.mutateAsync({ ...tx, id, project_id: projectId, user_id: user.id });
-        return id;
-      }
       await addTransactionMutation.mutateAsync({ ...tx, id, project_id: projectId, user_id: user.id });
       return id;
     } catch (err) {
       if (isNetworkError(err)) return id;
       throw err;
     }
-  }, [addTransactionMutation, projectId, user, isStandalone]);
+  }, [addTransactionMutation, projectId, user]);
 
   return { 
     transactions, 

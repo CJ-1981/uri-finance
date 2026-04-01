@@ -28,7 +28,7 @@ interface Props {
 const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, active, onSelect, onCreate, onJoin, isSystemAdmin = false }, ref) => {
   const { isStandalone } = useAuth();
   const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"list" | "create" | "join">(isSystemAdmin ? "list" : "list");
+  const [tab, setTab] = useState<"list" | "create" | "join">("list");
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [code, setCode] = useState("");
