@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BarChart3, List, Settings, Eye, Calculator, UserPlus, Loader2, FileText } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
-import ShortcutSettings from "@/components/ShortcutSettings";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { UserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
@@ -372,7 +371,6 @@ const Dashboard = () => {
               </div>
             )}
 
-            <ShortcutSettings />
             <UserMenu />
           </div>
         </div>

@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { PasswordChangeDialog } from "@/components/PasswordChangeDialog";
-import { LogOut, KeyRound, Sun, Moon, Globe, Lock, LockOpen } from "lucide-react";
+import { LogOut, KeyRound, Sun, Moon, Globe, Lock, LockOpen, Keyboard } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { isPinSet } from "@/lib/securePinStorage";
 import PinSetupDialog from "@/components/PinSetupDialog";
 import PinDisableDialog from "@/components/PinDisableDialog";
+import ShortcutSettings from "@/components/ShortcutSettings";
 
 export const UserMenu = () => {
   const { user, signOut } = useAuth();
@@ -24,6 +25,7 @@ export const UserMenu = () => {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinDisableDialogOpen, setPinDisableDialogOpen] = useState(false);
+  const [shortcutDialogOpen, setShortcutDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(isPinSet());
 
   // Update pin state when dialogs close or components mount
@@ -86,7 +88,7 @@ export const UserMenu = () => {
           
           <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
             {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            <span>{theme === "dark" ? t("theme.light") || "Light Mode" : t("theme.dark") || "Dark Mode"}</span>
+            <span>{theme === "dark" ? t("theme.light") : t("theme.dark")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={toggleLocale} className="cursor-pointer">
@@ -103,6 +105,17 @@ export const UserMenu = () => {
           >
             {hasPin ? <Lock className="mr-2 h-4 w-4" /> : <LockOpen className="mr-2 h-4 w-4" />}
             <span>{hasPin ? t("lock.disable") : t("lock.enable")}</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem 
+            onClick={(e) => {
+              e.preventDefault();
+              setShortcutDialogOpen(true);
+            }} 
+            className="cursor-pointer hidden md:flex"
+          >
+            <Keyboard className="mr-2 h-4 w-4" />
+            <span>{t("shortcut.title")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -146,6 +159,11 @@ export const UserMenu = () => {
         open={pinDisableDialogOpen} 
         onOpenChange={setPinDisableDialogOpen} 
         onDisableSuccess={() => setHasPin(false)} 
+      />
+
+      <ShortcutSettings 
+        open={shortcutDialogOpen} 
+        onOpenChange={setShortcutDialogOpen} 
       />
     </>
   );

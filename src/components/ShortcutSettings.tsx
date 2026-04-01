@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Keyboard, X } from "lucide-react";
+import { X } from "lucide-react";
 import { getShortcuts, saveShortcuts, ShortcutConfig } from "@/hooks/useKeyboardShortcut";
 import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 
 type RecordingTarget = keyof ShortcutConfig;
 
-const ShortcutSettings = () => {
+interface ShortcutSettingsProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+const ShortcutSettings = ({ open, onOpenChange }: ShortcutSettingsProps) => {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
   const [shortcuts, setShortcuts] = useState<ShortcutConfig>(getShortcuts);
   const [recordingKey, setRecordingKey] = useState<RecordingTarget | null>(null);
 
@@ -35,7 +39,7 @@ const ShortcutSettings = () => {
     saveShortcuts(shortcuts);
     window.dispatchEvent(new Event("shortcut-updated"));
     toast.success(t("shortcut.saved"));
-    setOpen(false);
+    onOpenChange(false);
   };
 
   const renderKeyButton = (target: RecordingTarget, value: string) => (
@@ -66,22 +70,12 @@ const ShortcutSettings = () => {
   );
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-foreground hidden md:inline-flex"
-          title={t("shortcut.title")}
-          data-testid="keyboard-shortcuts-button"
-        >
-          <Keyboard className="h-4 w-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 max-h-[80vh] overflow-y-auto" align="end" data-testid="keyboard-shortcuts-popover">
-        <div className="space-y-3 pb-2">
-          <h4 className="font-medium text-sm">{t("shortcut.title")}</h4>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("shortcut.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 pb-2 pt-4">
           <div className="space-y-1">
             <label className="text-xs text-muted-foreground">{t("shortcut.addTransaction")}</label>
             {renderKeyButton("addTransaction", shortcuts.addTransaction)}
@@ -135,8 +129,8 @@ const ShortcutSettings = () => {
             {t("shortcut.save")}
           </Button>
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 };
 

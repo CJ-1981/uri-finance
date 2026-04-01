@@ -46,6 +46,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.standaloneDesc": "Use the app with local storage only. No cloud sync, but no account required.",
     "auth.continueStandalone": "Continue in Standalone Mode",
 
+    // Theme
+    "theme.light": "Light Mode",
+    "theme.dark": "Dark Mode",
+
     // Dashboard
     "dash.balance": "Balance",
     "dash.income": "Income",
@@ -604,6 +608,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "auth.standaloneMode": "독립 실행 모드 (계정 없음)",
     "auth.standaloneDesc": "로컬 저장소만 사용합니다. 클라우드 동기화는 지원되지 않지만 계정이 필요 없습니다.",
     "auth.continueStandalone": "독립 실행 모드로 계속하기",
+
+    // Theme
+    "theme.light": "라이트 모드",
+    "theme.dark": "다크 모드",
 
     // Dashboard
     "dash.balance": "잔액",
