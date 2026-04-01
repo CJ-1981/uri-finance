@@ -379,8 +379,8 @@ const AdminPage = () => {
         </section>
         )}
 
-        {/* Archive - Owner only */}
-        {isOwner && (
+        {/* Archive - Owner only and NOT in standalone mode */}
+        {isOwner && !isStandalone && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -462,8 +462,8 @@ const AdminPage = () => {
         </section>
         )}
 
-        {/* Members - Owner only */}
-        {isOwner && (
+        {/* Members - Owner only and NOT in standalone mode */}
+        {isOwner && !isStandalone && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.members")}</h2>
@@ -561,8 +561,8 @@ const AdminPage = () => {
         </section>
         )}
 
-        {/* Invite Codes - Owner only */}
-        {isOwner && (
+        {/* Invite Codes - Owner only and NOT in standalone mode */}
+        {isOwner && !isStandalone && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground">{t("admin.invites")}</h2>
@@ -781,7 +781,8 @@ const AdminPage = () => {
           </div>
         </section>
 
-        {/* Database Stats */}
+        {/* Database Stats - NOT in standalone mode */}
+        {!isStandalone && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -829,8 +830,10 @@ const AdminPage = () => {
             )}
           </div>
         </section>
+        )}
 
-        {/* Storage Stats - SPEC-STORAGE-001 */}
+        {/* Storage Stats - SPEC-STORAGE-001 - NOT in standalone mode */}
+        {!isStandalone && (
         <section className="space-y-4">
           <div>
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -931,6 +934,7 @@ const AdminPage = () => {
             )}
           </div>
         </section>
+        )}
 
         {/* Build Info */}
         <section className="rounded-2xl bg-card border border-border p-4">
@@ -954,8 +958,8 @@ const AdminPage = () => {
           </div>
         </section>
 
-        {/* System Administration - Owner only */}
-        {realOwner && (
+        {/* System Administration - Owner only and NOT in standalone mode */}
+        {realOwner && !isStandalone && (
         <section className="rounded-2xl bg-card border border-border p-4">
           <Button
             variant="outline"

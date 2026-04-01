@@ -19,7 +19,7 @@ import PinDisableDialog from "@/components/PinDisableDialog";
 import ShortcutSettings from "@/components/ShortcutSettings";
 
 export const UserMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isStandalone } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -120,17 +120,22 @@ export const UserMenu = () => {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.preventDefault();
-              setPasswordDialogOpen(true);
-            }}
-            className="cursor-pointer"
-          >
-            <KeyRound className="mr-2 h-4 w-4" />
-            <span>{t("auth.changePassword")}</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          {!isStandalone && (
+            <>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  setPasswordDialogOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <KeyRound className="mr-2 h-4 w-4" />
+                <span>{t("auth.changePassword")}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+
           <DropdownMenuItem
             onClick={(e) => {
               e.preventDefault();
