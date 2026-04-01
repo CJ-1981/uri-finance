@@ -349,12 +349,12 @@ const Dashboard = () => {
                       size="icon" 
                       onClick={() => (isOnline || isStandalone) && navigate("/admin")} 
                       className={cn(
-                        "text-muted-foreground hover:text-foreground", 
-                        !isOnline && !isStandalone && "opacity-60"
+                        "transition-all duration-300",
+                        (!isOnline && !isStandalone) ? "text-amber-500 hover:text-amber-600 bg-amber-500/5" : "text-muted-foreground hover:text-foreground"
                       )}
-                      title={t("admin.title")}
+                      title={(!isOnline && !isStandalone) ? t("dash.offlineHint") : t("admin.title")}
                     >
-                      <Settings className="h-4 w-4" />
+                      {(!isOnline && !isStandalone) ? <CloudOff className="h-4 w-4 animate-pulse" /> : <Settings className="h-4 w-4" />}
                     </Button>
                   </TooltipTrigger>
                   {!isOnline && !isStandalone && (
@@ -363,11 +363,6 @@ const Dashboard = () => {
                     </TooltipContent>
                   )}
                 </Tooltip>
-                {!isOnline && !isStandalone && (
-                  <div className="absolute -top-0.5 -right-0.5 bg-background rounded-full p-0.5 pointer-events-none">
-                    <CloudOff className="h-2.5 w-2.5 text-amber-500 animate-pulse" />
-                  </div>
-                )}
               </div>
             )}
 

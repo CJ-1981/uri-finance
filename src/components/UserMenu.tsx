@@ -88,7 +88,7 @@ export const UserMenu = () => {
           
           <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
             {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-            <span>{theme === "dark" ? t("theme.light") : t("theme.dark")}</span>
+            <span>{theme === "dark" ? t("theme.light") || "Light Mode" : t("theme.dark") || "Dark Mode"}</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={toggleLocale} className="cursor-pointer">
