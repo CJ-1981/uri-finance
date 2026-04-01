@@ -118,6 +118,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("pending_invite_code");
     localStorage.removeItem("is_standalone");
     
+    // Aggressively clear all Supabase-related keys from localStorage to prevent re-login while offline
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
     // Explicitly clear state first to ensure immediate UI update
     setSession(null);
     setUser(null);

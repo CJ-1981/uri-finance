@@ -77,7 +77,7 @@ const AdminPage = () => {
   const STORAGE_MAX_BYTES = 1024 * 1024 * 1024; // 1 GB for Supabase Storage free tier
 
   useEffect(() => {
-    if (!isOwner) return;
+    if (!isOwner || isStandalone) return;
     const fetchStats = async () => {
       setDbLoading(true);
       const { data, error } = await supabase.rpc("get_db_stats");
@@ -85,10 +85,10 @@ const AdminPage = () => {
       if (!error && data) setDbStats(data);
     };
     fetchStats();
-  }, [isOwner]);
+  }, [isOwner, isStandalone]);
 
   useEffect(() => {
-    if (!activeProject?.id) return;
+    if (!activeProject?.id || isStandalone) return;
     const fetchStorageStats = async () => {
       console.log('[AdminPage] Fetching storage stats for project:', activeProject.id);
       console.log('[AdminPage] Project ID type:', typeof activeProject.id);

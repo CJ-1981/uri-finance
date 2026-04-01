@@ -6,13 +6,15 @@ import { useAuth } from "@/hooks/useAuth";
 export type UserRole = "owner" | "admin" | "member" | "viewer";
 
 export const useUserRole = (projectId?: string) => {
-  const { user } = useAuth();
+  const { user, isStandalone } = useAuth();
   const [simulatedRole, setSimulatedRole] = useState<UserRole | null>(null);
 
   const { data: role = "member" as UserRole } = useQuery({
-    queryKey: ["user_role", projectId, user?.id],
+    queryKey: ["user_role", projectId, user?.id, isStandalone],
     queryFn: async () => {
-      if (!projectId || !user) return "member" as UserRole;
+      if (!projectId || !user || isStandalone || user.id === "standalone-user") {
+        return "member" as UserRole;
+      }
       const { data, error } = await supabase
         .from("project_members")
         .select("role")
@@ -25,6 +27,7 @@ export const useUserRole = (projectId?: string) => {
     },
     enabled: !!projectId && !!user,
     staleTime: 1000 * 60 * 30, // 30 minutes
+    networkMode: "always",
   });
 
   // Reset simulation when project changes

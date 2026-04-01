@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { useAuth } from "@/hooks/useAuth";
 
 type ProjectInviteInsert = Database["public"]["Tables"]["project_invites"]["Insert"];
 
@@ -25,12 +26,17 @@ export interface ProjectInvite {
 }
 
 export const useProjectMembers = (projectId?: string) => {
+  const { isStandalone } = useAuth();
   const [members, setMembers] = useState<ProjectMember[]>([]);
   const [invites, setInvites] = useState<ProjectInvite[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchMembers = useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId || isStandalone) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
     const { data } = await supabase
       .from("project_members")
       .select("*")
@@ -38,17 +44,20 @@ export const useProjectMembers = (projectId?: string) => {
       .order("joined_at", { ascending: true });
     setMembers((data as ProjectMember[]) || []);
     setLoading(false);
-  }, [projectId]);
+  }, [projectId, isStandalone]);
 
   const fetchInvites = useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId || isStandalone) {
+      setInvites([]);
+      return;
+    }
     const { data } = await supabase
       .from("project_invites")
       .select("*")
       .eq("project_id", projectId)
       .order("created_at", { ascending: false });
     setInvites((data as ProjectInvite[]) || []);
-  }, [projectId]);
+  }, [projectId, isStandalone]);
 
   useEffect(() => {
     fetchMembers();
