@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { UserRole } from "@/hooks/useUserRole";
 
 const AdminPage = () => {
-  const { user } = useAuth();
+  const { user, isStandalone } = useAuth();
   const { projects, activeProject, fetchProjects, deleteProject, loading } = useProjects();
   const { categories, addCategory, addSubCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, bulkUpdateCategories, fetchCategories } = useCategories(activeProject?.id);
   const { headers, draft, dirty, saving, updateDraft, saveHeaders, resetHeaders } = useColumnHeaders(activeProject?.id);
@@ -111,7 +111,7 @@ const AdminPage = () => {
       }
     };
     fetchStorageStats();
-  }, [activeProject?.id]);
+  }, [activeProject?.id, isStandalone]);
 
   const handleCurrencyChange = async () => {
     if (!activeProject || !currency.trim()) return;
