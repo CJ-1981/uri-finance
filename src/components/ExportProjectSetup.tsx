@@ -10,6 +10,12 @@ import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Props {
   categories: Category[];
@@ -366,7 +372,16 @@ const ExportProjectSetup = ({
             {t("setup.useSample") || "Use Demo Project Setup"}
           </Label>
         </div>
-        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[200px] text-xs">
+              <p>{t("setup.useSampleHelp")}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <input
