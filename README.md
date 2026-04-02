@@ -21,6 +21,17 @@ A React application for tracking team finances with custom categories, columns, 
 
 ## Screenshots
 
+### Standalone Mode (Local-Only)
+Full application functionality using `localStorage` without requiring a Supabase account or internet connection. Perfect for private, device-only finance tracking.
+
+| Dashboard | Charts View |
+|-----------|------------|
+| ![Standalone Dashboard](docs/screenshots/standalone-dashboard.png) | ![Standalone Charts](docs/screenshots/standalone-charts.png) |
+
+| Project Switcher (Rename) | Cash Calculator |
+|---------------------------|-----------------|
+| ![Standalone Project Switcher](docs/screenshots/standalone-project-switcher.png) | ![Standalone Cash](docs/screenshots/standalone-cash.png) |
+
 ### Dashboard (Light & Dark Mode)
 Main dashboard showing transaction list, balance summary, and quick actions.
 
@@ -99,6 +110,13 @@ Set up a PIN code to lock the application for enhanced security.
 - **Date**: date-fns
 
 ## Getting Started
+
+### Quick Start (Standalone Mode)
+The fastest way to try the app is **Standalone Mode**. You don't need any backend setup:
+1. Clone and install dependencies (see below).
+2. Run `npm run dev`.
+3. On the login page, click **"Continue in Standalone Mode"**.
+4. Your data will be saved locally in your browser.
 
 ### Prerequisites
 
