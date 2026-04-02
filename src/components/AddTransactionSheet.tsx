@@ -63,7 +63,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [currency, setCurrency] = useState(projectCurrency || "USD");
+  const [currency, setCurrency] = useState(projectCurrency || "EUR");
   const [isCustomCurrency, setIsCustomCurrency] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>(() => {
@@ -460,7 +460,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                     onClick={() => {
                       setIsCustomCurrency(false);
                       if (!CURRENCIES.includes(currency)) {
-                        setCurrency(projectCurrency || "USD");
+                        setCurrency(projectCurrency || "EUR");
                       }
                     }}
                   >

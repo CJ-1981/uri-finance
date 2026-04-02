@@ -455,7 +455,7 @@ const CumulativeChartForCurrency = ({
   );
 };
 
-const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer, projectCurrency = "USD" }: Props) => {
+const FinanceCharts = ({ transactions, customColumns, period, customRange, isViewer, projectCurrency = "EUR" }: Props) => {
   const { t } = useI18n();
   const [showOtherCurrencies, setShowOtherCurrencies] = useState(() =>
     localStorage.getItem("chart-show-other-currencies") === "true"

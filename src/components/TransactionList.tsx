@@ -47,9 +47,9 @@ const VALID_CURRENCIES = new Set(["USD", "EUR", "GBP", "JPY", "KRW", "CNY", "CAD
 
 // Helper to safely format currency with validation
 function formatCurrencySafe(amount: number, currencyCode: string | undefined): string {
-  const currency = currencyCode || "USD";
+  const currency = currencyCode || "EUR";
   // Validate currency code to avoid RangeError with toLocaleString
-  const validCurrency = VALID_CURRENCIES.has(currency) ? currency : "USD";
+  const validCurrency = VALID_CURRENCIES.has(currency) ? currency : "EUR";
   return amount.toLocaleString("en-US", { style: "currency", currency: validCurrency });
 }
 
@@ -254,7 +254,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
     const sums = new Map<string, { income: number; expense: number }>();
     for (const tx of filteredTransactions) {
       if (!selected.has(tx.id)) continue;
-      const cur = tx.currency || "USD";
+      const cur = tx.currency || "EUR";
       const entry = sums.get(cur) || { income: 0, expense: 0 };
       if (tx.type === "income") entry.income += Number(tx.amount);
       else entry.expense += Number(tx.amount);

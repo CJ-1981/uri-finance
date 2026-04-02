@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "exportedAt": "2026-04-02T17:04:23.301Z",
+  "currency": "EUR",
+  "columnHeaders": {
+    "date": "날짜",
+    "type": "수입/지출",
+    "category": "종류",
+    "description": "비고",
+    "amount": "금액"
+  },
+  "categories": [
+    {
+      "name": "주일헌금",
+      "code": "",
+      "icon": "☀️",
+      "sort_order": 0
+    },
+    {
+      "name": "십일조",
+      "code": "",
+      "icon": "🔟",
+      "sort_order": 1
+    },
+    {
+      "name": "감사헌금",
+      "code": "",
+      "icon": "🙏",
+      "sort_order": 2
+    },
+    {
+      "name": "선교헌금",
+      "code": "",
+      "icon": "✝️",
+      "sort_order": 3
+    },
+    {
+      "name": "주일학교",
+      "code": "",
+      "icon": "👶",
+      "sort_order": 4
+    },
+    {
+      "name": "특별헌금",
+      "code": "",
+      "icon": "🪙",
+      "sort_order": 5
+    },
+    {
+      "name": "분립헌금",
+      "code": "",
+      "icon": "⛪️",
+      "sort_order": 6
+    },
+    {
+      "name": "기타",
+      "code": "900",
+      "icon": "📋",
+      "sort_order": 104
+    },
+    {
+      "name": "기타 비용",
+      "code": "901",
+      "icon": "📺",
+      "sort_order": 105,
+      "parent_code": "900",
+      "parent_name": "기타"
+    },
+    {
+      "name": "예비비",
+      "code": "910",
+      "icon": "💰",
+      "sort_order": 106,
+      "parent_code": "900",
+      "parent_name": "기타"
+    }
+  ],
+  "customColumns": [
+    {
+      "name": "이름",
+      "column_type": "text",
+      "masked": true,
+      "required": false,
+      "sort_order": 0,
+      "suggestions": [],
+      "suggestion_colors": {}
+    },
+    {
+      "name": "입출금",
+      "column_type": "list",
+      "masked": false,
+      "required": false,
+      "sort_order": 1,
+      "suggestions": [
+        "현금",
+        "계좌입금",
+        "송금필요",
+        "송금완료"
+      ],
+      "suggestion_colors": {
+        "계좌입금": "teal",
+        "송금완료": "green",
+        "송금필요": "red"
+      }
+    }
+  ]
+}

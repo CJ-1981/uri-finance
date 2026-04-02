@@ -160,7 +160,7 @@ export const useProjects = () => {
         description: description || null,
         owner_id: isStandalone ? "standalone-user" : "anonymous",
         invite_code: "LOCAL",
-        currency: "USD",
+        currency: "EUR",
         created_at: new Date().toISOString()
       };
       const existing = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");

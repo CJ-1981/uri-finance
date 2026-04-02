@@ -140,7 +140,7 @@ export const useTransactions = (projectId: string | undefined) => {
           description: tx.description || null,
           transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
           custom_values: tx.custom_values || {},
-          currency: tx.currency || "USD",
+          currency: tx.currency || "EUR",
           created_at: new Date().toISOString(),
           deleted_at: null,
         };
@@ -158,7 +158,7 @@ export const useTransactions = (projectId: string | undefined) => {
         description: tx.description || null,
         transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
         custom_values: tx.custom_values || {},
-        currency: tx.currency || "USD",
+        currency: tx.currency || "EUR",
       }).select("id").single();
 
       if (error) throw error;
@@ -175,7 +175,7 @@ export const useTransactions = (projectId: string | undefined) => {
         description: newTx.description || null,
         transaction_date: newTx.transaction_date || format(new Date(), "yyyy-MM-dd"),
         custom_values: newTx.custom_values || {},
-        currency: newTx.currency || "USD",
+        currency: newTx.currency || "EUR",
         _sync_status: "optimistic",
       };
 
@@ -351,7 +351,7 @@ export const useTransactions = (projectId: string | undefined) => {
           description: tx.description || null,
           transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
           custom_values: tx.custom_values || {},
-          currency: tx.currency || "USD",
+          currency: tx.currency || "EUR",
           created_at: new Date().toISOString(),
           deleted_at: null,
         }));
@@ -368,7 +368,7 @@ export const useTransactions = (projectId: string | undefined) => {
         description: tx.description || null,
         transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
         custom_values: tx.custom_values || {},
-        currency: tx.currency || "USD",
+        currency: tx.currency || "EUR",
       }));
       const { error } = await supabase.from("transactions").insert(rows);
       if (error) throw error;

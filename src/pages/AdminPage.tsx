@@ -36,7 +36,7 @@ const AdminPage = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [currency, setCurrency] = useState(activeProject?.currency || "USD");
+  const [currency, setCurrency] = useState(activeProject?.currency || "EUR");
   
   // Sync currency when activeProject updates
   useEffect(() => {
@@ -778,6 +778,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
               projectId={activeProject.id}
               onCategoriesRefresh={fetchCategories}
               onColumnsRefresh={fetchColumns}
+              onProjectRefresh={fetchProjects}
             />
           </div>
         </section>
@@ -809,7 +810,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
                 onChange={(e) => setCurrency(e.target.value)}
                 className="flex-1 bg-background text-sm uppercase"
                 maxLength={5}
-                placeholder="USD"
+                placeholder="EUR"
               />
               <Button
                 size="sm"

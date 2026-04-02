@@ -150,7 +150,7 @@ const Dashboard = () => {
     return result;
   }, [transactions, period, customRange, selectedCategoryId, categories]);
 
-  const projectCurrency = activeProject?.currency || "USD";
+  const projectCurrency = activeProject?.currency || "EUR";
 
   // Group filtered transactions by currency
   const currencyTotals = useMemo(() => {
