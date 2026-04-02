@@ -1,5 +1,6 @@
 import { useState, useImperativeHandle, forwardRef } from "react";
 import { Project } from "@/hooks/useProjects";
+import { UserRole } from "@/hooks/useUserRole";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,12 +22,24 @@ interface Props {
   active: Project | null;
   onSelect: (p: Project) => void;
   onCreate: (name: string, desc?: string) => Promise<void>;
-  onUpdate: (id: string, updates: { name?: string; description?: string | null }) => Promise<boolean>;
+  onUpdate: (id: string, updates: { name?: string; description?: string | null; currency?: string }) => Promise<boolean>;
   onJoin: (code: string) => Promise<void>;
   isSystemAdmin?: boolean;
+  isSimulating?: boolean;
+  simulatedRole?: UserRole | null;
 }
 
-const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, active, onSelect, onCreate, onUpdate, onJoin, isSystemAdmin = false }, ref) => {
+const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ 
+  projects, 
+  active, 
+  onSelect, 
+  onCreate, 
+  onUpdate, 
+  onJoin, 
+  isSystemAdmin = false,
+  isSimulating = false,
+  simulatedRole = null
+}, ref) => {
   const { isStandalone, user } = useAuth();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"list" | "create" | "join">("list");
@@ -161,7 +174,8 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
                 </p>
               ) : (
                 projects.map((p) => {
-                  const isOwner = isStandalone || (user && p.owner_id === user.id);
+                  const realOwner = isStandalone || (user && p.owner_id === user.id);
+                  const isOwner = isSimulating ? simulatedRole === "owner" : realOwner;
                   const isEditing = editingProjectId === p.id;
 
                   if (isEditing) {
@@ -226,10 +240,10 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({ projects, ac
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-foreground"
                           onClick={(e) => startEditing(e, p)}
                         >
-                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>

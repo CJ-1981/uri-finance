@@ -59,7 +59,7 @@ const Dashboard = () => {
     filters: { status: 'pending' },
   });
   const pendingCount = pendingMutations.length;
-  const { projects, activeProject, setActiveProject, createProject, joinProject, loading, isSystemAdmin } = useProjects();
+  const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin } = useProjects();
   const { 
     transactions, 
     addTransaction, 
@@ -303,8 +303,11 @@ const Dashboard = () => {
               active={activeProject}
               onSelect={setActiveProject}
               onCreate={createProject}
+              onUpdate={updateProject}
               onJoin={joinProject}
               isSystemAdmin={isSystemAdmin}
+              isSimulating={isSimulating}
+              simulatedRole={simulatedRole}
             />
             {activeProject && (
               <ExportTransactions
