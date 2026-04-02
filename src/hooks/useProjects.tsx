@@ -6,6 +6,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 import { useSystemAdmin } from "@/hooks/useSystemAdmin";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { get, del } from "idb-keyval";
 
 export interface Project {
   id: string;
@@ -309,14 +310,46 @@ export const useProjects = () => {
 
   const deleteProject = async (projectId: string): Promise<boolean> => {
     if (isStandalone || !user) {
-      // Local delete
-      const existing = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
-      const updated = existing.filter((p: any) => p.id !== projectId);
-      localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updated));
-      queryClient.invalidateQueries({ queryKey: ["user_projects", isStandalone ? "standalone" : "anonymous"] });
-      if (activeProject?.id === projectId) handleSetActiveProject(null, 'user-selection');
-      toast.success("Local project deleted");
-      return true;
+      // Local delete - perform thorough cleanup
+      try {
+        // 1. Clear basic project lists
+        const existing = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
+        const updated = existing.filter((p: any) => p.id !== projectId);
+        localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updated));
+
+        // 2. Clear project-specific data from LocalStorage
+        localStorage.removeItem(`local_transactions_${projectId}`);
+        localStorage.removeItem(`local_categories_${projectId}`);
+        localStorage.removeItem(`local_custom_columns_${projectId}`);
+        localStorage.removeItem(`local_column_headers_${projectId}`);
+
+        // 3. Clear file metadata and content from IndexedDB
+        const fileMetadataKey = `files-metadata-${projectId}`;
+        const localFiles: any[] = await get(fileMetadataKey) || [];
+        
+        console.log(`[useProjects] Clearing ${localFiles.length} files for project ${projectId}`);
+        
+        // Delete every individual file content
+        for (const file of localFiles) {
+          if (file.id) {
+            await del(`file-content-${file.id}`);
+          }
+        }
+        
+        // Delete the metadata list itself
+        await del(fileMetadataKey);
+
+        // 4. Update UI state
+        queryClient.invalidateQueries({ queryKey: ["user_projects", isStandalone ? "standalone" : "anonymous"] });
+        if (activeProject?.id === projectId) handleSetActiveProject(null, 'user-selection');
+        
+        toast.success("Local project and all associated data deleted");
+        return true;
+      } catch (err) {
+        console.error("Failed to thoroughly delete local project:", err);
+        toast.error("Failed to fully clear project data");
+        return false;
+      }
     }
 
     const { error } = await supabase.from("projects").delete().eq("id", projectId);
