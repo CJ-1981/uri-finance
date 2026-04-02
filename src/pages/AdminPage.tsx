@@ -23,8 +23,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parse } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 import { UserRole } from "@/hooks/useUserRole";
+import { get } from "idb-keyval";
 
 const AdminPage = () => {
   const { user, isStandalone } = useAuth();
@@ -147,19 +148,11 @@ const AdminPage = () => {
           // Use user-defined quota if smaller than browser quota, otherwise use browser quota
           const effectiveQuota = Math.min(quota, standaloneQuota);
           
-          const formatSize = (bytes: number) => {
-            if (bytes === 0) return "0 B";
-            const k = 1024;
-            const sizes = ["B", "KB", "MB", "GB", "TB"];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-          };
-
           setLocalStorageStats({
             usage,
             quota: effectiveQuota,
-            usagePretty: formatSize(usage),
-            quotaPretty: formatSize(effectiveQuota),
+            usagePretty: formatBytes(usage),
+            quotaPretty: formatBytes(effectiveQuota),
             percent: effectiveQuota > 0 ? (usage / effectiveQuota) * 100 : 0
           });
         } catch (err) {
@@ -916,16 +909,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("files.size")}</span>
                   <span className="text-sm font-semibold flex items-center gap-1.5 font-mono text-[11px]">
                     <HardDrive className="h-3 w-3 text-primary" />
-                    {localStorageStats?.usagePretty ? (
-                      (() => {
-                        const bytes = standaloneStats.filesSize;
-                        if (bytes === 0) return "0 B";
-                        const k = 1024;
-                        const sizes = ["B", "KB", "MB", "GB", "TB"];
-                        const i = Math.floor(Math.log(bytes) / Math.log(k));
-                        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-                      })()
-                    ) : "..."}
+                    {localStorageStats?.usagePretty ? formatBytes(standaloneStats.filesSize, 1) : "..."}
                   </span>
                 </div>
                 <div className="p-2 bg-muted/20 rounded-lg space-y-1">
