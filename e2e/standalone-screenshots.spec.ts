@@ -5,66 +5,64 @@ import { Project } from '../src/hooks/useProjects';
 test.describe('Standalone Mode Screenshots', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
-  test('capture all standalone screenshots', async ({ page }) => {
-    // 1. Setup Standalone Mode with Mock Data
-    await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem("is_standalone", "true");
-      localStorage.setItem("theme", "light");
-      localStorage.setItem("app-locale", "ko"); // Using Korean for consistency with previous screenshots
+  test('capture all standalone screenshots', async ({ page, context }) => {
+    const projectId = "mock-project-id";
+    const mockProject: any = {
+      id: projectId,
+      name: "우리집 가계부 (독립 실행)",
+      description: "로컬 전용 가계부입니다.",
+      owner_id: "standalone-user",
+      invite_code: "LOCAL",
+      currency: "KRW",
+      created_at: new Date().toISOString()
+    };
 
-      const projectId = "mock-project-id";
-      const mockProject: any = {
-        id: projectId,
-        name: "우리집 가계부 (독립 실행)",
-        description: "로컬 전용 가계부입니다.",
-        owner_id: "standalone-user",
-        invite_code: "LOCAL",
-        currency: "KRW",
+    const mockTransactions: any[] = [
+      {
+        id: "tx-1",
+        project_id: projectId,
+        amount: 50000,
+        type: "income",
+        category: "식비",
+        description: "마트 장보기",
+        transaction_date: new Date().toISOString().split('T')[0],
         created_at: new Date().toISOString()
-      };
+      },
+      {
+        id: "tx-2",
+        project_id: projectId,
+        amount: 15000,
+        type: "expense",
+        category: "교통",
+        description: "주유비",
+        transaction_date: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString()
+      },
+      {
+        id: "tx-3",
+        project_id: projectId,
+        amount: 1200000,
+        type: "income",
+        category: "월급",
+        description: "3월 급여",
+        transaction_date: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString()
+      }
+    ];
 
-      const mockTransactions: any[] = [
-        {
-          id: "tx-1",
-          project_id: projectId,
-          amount: 50000,
-          type: "income",
-          category: "식비",
-          description: "마트 장보기",
-          transaction_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "tx-2",
-          project_id: projectId,
-          amount: 15000,
-          type: "expense",
-          category: "교통",
-          description: "주유비",
-          transaction_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString()
-        },
-        {
-          id: "tx-3",
-          project_id: projectId,
-          amount: 1200000,
-          type: "income",
-          category: "월급",
-          description: "3월 급여",
-          transaction_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString()
-        }
-      ];
+    // 1. Setup Standalone Mode with Mock Data before page loads
+    await context.addInitScript(({ pId, p, txs }) => {
+      window.localStorage.clear();
+      window.localStorage.setItem("is_standalone", "true");
+      window.localStorage.setItem("theme", "light");
+      window.localStorage.setItem("app-locale", "ko");
+      window.localStorage.setItem("local_projects", JSON.stringify([p]));
+      window.localStorage.setItem("active_project_id", pId);
+      window.localStorage.setItem("active_project_cache", JSON.stringify(p));
+      window.localStorage.setItem(`local_transactions_${pId}`, JSON.stringify(txs));
+    }, { pId: projectId, p: mockProject, txs: mockTransactions });
 
-      localStorage.setItem("local_projects", JSON.stringify([mockProject]));
-      localStorage.setItem("active_project_id", projectId);
-      localStorage.setItem("active_project_cache", JSON.stringify(mockProject));
-      localStorage.setItem(`local_transactions_${projectId}`, JSON.stringify(mockTransactions));
-    });
-
-    await page.reload();
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('[data-testid="dashboard"]');
 

@@ -167,8 +167,6 @@ const AdminPage = () => {
   useEffect(() => {
     if (!activeProject?.id || isStandalone) return;
     const fetchStorageStats = async () => {
-      console.log('[AdminPage] Fetching storage stats for project:', activeProject.id);
-      console.log('[AdminPage] Project ID type:', typeof activeProject.id);
       setStorageLoading(true);
 
       const { data, error } = await supabase.rpc("get_storage_stats", { p_project_id: activeProject.id });
@@ -177,13 +175,7 @@ const AdminPage = () => {
 
       if (error) {
         console.error('[AdminPage] Storage stats error:', error);
-        console.error('[AdminPage] Error name:', error.name);
-        console.error('[AdminPage] Error message:', error.message);
-        console.error('[AdminPage] Error details:', error);
-        console.error('[AdminPage] Error hint:', error.hint);
-        console.error('[AdminPage] Full error object:', JSON.stringify(error, null, 2));
       } else {
-        console.log('[AdminPage] Storage stats success:', data);
         setStorageStats(data);
       }
     };
@@ -366,7 +358,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
 
   if (loading && !activeProject) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20 text-center animate-fade-in" data-testid="admin-page">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="mt-4 text-sm text-muted-foreground">{t("global.loading")}</p>
       </div>
@@ -375,7 +367,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
 
   if (!activeProject) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="admin-page">
         <p className="text-muted-foreground">{t("admin.noProject")}</p>
       </div>
     );
@@ -383,7 +375,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
 
   if (!canAccess) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4" data-testid="admin-page">
         <ShieldCheck className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground text-sm">{t("admin.ownerOnly")}</p>
         <Button variant="outline" onClick={() => navigate("/")}>
