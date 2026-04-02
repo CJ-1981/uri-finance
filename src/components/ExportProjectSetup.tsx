@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Upload, Info } from "lucide-react";
+import { Download, Upload, Info, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Category } from "@/hooks/useCategories";
@@ -116,16 +116,21 @@ const ExportProjectSetup = ({
   };
 
   const handleImportClick = async () => {
+    console.log("[ExportProjectSetup] Import button clicked. useSample:", useSample);
     if (useSample) {
       setImporting(true);
       try {
+        console.log("[ExportProjectSetup] Fetching demo-project-setup.json...");
         const response = await fetch("/demo-project-setup.json");
-        if (!response.ok) throw new Error("Failed to fetch demo setup");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch demo setup: ${response.status} ${response.statusText}`);
+        }
         const demoData = await response.json();
+        console.log("[ExportProjectSetup] Demo data fetched successfully. Performing import...");
         await performImport(demoData);
       } catch (err) {
-        console.error("Demo import failed:", err);
-        toast.error("Failed to import demo project setup");
+        console.error("[ExportProjectSetup] Demo import failed:", err);
+        toast.error("Failed to import demo project setup: " + (err instanceof Error ? err.message : String(err)));
       } finally {
         setImporting(false);
       }
@@ -350,14 +355,18 @@ const ExportProjectSetup = ({
           {t("setup.export") || "Export"}
         </Button>
         <Button
-          variant="outline"
+          variant={useSample ? "default" : "outline"}
           size="sm"
           onClick={handleImportClick}
           disabled={importing}
-          className="flex-1"
+          className="flex-1 transition-all"
         >
-          <Download className="h-4 w-4 mr-2" />
-          {importing ? t("setup.importing") || "Importing..." : (t("setup.import") || "Import")}
+          {useSample ? <Sparkles className="h-4 w-4 mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+          {importing 
+            ? t("setup.importing") || "Importing..." 
+            : useSample 
+              ? (t("setup.importDemo") || "Import Demo") 
+              : (t("setup.import") || "Import")}
         </Button>
       </div>
 
