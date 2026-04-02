@@ -198,18 +198,6 @@ const ExportProjectSetup = ({
           if (importData.columnHeaders) activeProj.column_headers = importData.columnHeaders;
           localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(activeProj));
         }
-
-        if (importData.currency) {
-          toast.success(
-            (t("setup.currencyUpdated") || "Currency updated to {currency}").replace(
-              "{currency}",
-              importData.currency.toUpperCase()
-            )
-          );
-        }
-        if (importData.columnHeaders) {
-          toast.success(t("setup.headersImported") || "Column headers imported");
-        }
       } else {
         // --- Supabase Mode Import ---
         // Import categories - Pass 1: Insert all categories
@@ -280,13 +268,6 @@ const ExportProjectSetup = ({
             .eq("id", projectId);
           if (currencyError) {
             console.error("Failed to import currency:", currencyError);
-          } else {
-            toast.success(
-              (t("setup.currencyUpdated") || "Currency updated to {currency}").replace(
-                "{currency}",
-                importData.currency.toUpperCase()
-              )
-            );
           }
         }
 
@@ -298,8 +279,6 @@ const ExportProjectSetup = ({
             .eq("id", projectId);
           if (headersError) {
             console.error("Failed to import column headers:", headersError);
-          } else {
-            toast.success(t("setup.headersImported") || "Column headers imported");
           }
         }
       }
@@ -307,12 +286,18 @@ const ExportProjectSetup = ({
       // Refresh data
       await Promise.all([onCategoriesRefresh(), onColumnsRefresh()]);
 
-      toast.success(
-        (t("setup.imported") || "Project setup imported").replace(
-          "{n}",
-          String(importData.categories.length + importData.customColumns.length)
-        )
+      let summary = (t("setup.imported") || "Project setup imported").replace(
+        "{n}",
+        String(importData.categories.length + importData.customColumns.length)
       );
+      if (importData.currency || importData.columnHeaders) {
+        summary += " (" + [
+          importData.currency ? t("proj.currency") || "Currency" : null,
+          importData.columnHeaders ? t("admin.columnHeaders") || "Headers" : null
+        ].filter(Boolean).join(", ") + ")";
+      }
+
+      toast.success(summary);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast.error((t("setup.importError") || "Failed to import project setup") + errorMessage);
