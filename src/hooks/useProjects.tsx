@@ -332,6 +332,38 @@ export const useProjects = () => {
     return true;
   };
 
+  const updateProject = async (projectId: string, updates: { name?: string; description?: string | null; currency?: string }): Promise<boolean> => {
+    if (isStandalone || !user) {
+      // Local update
+      const existing = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
+      const updated = existing.map((p: any) => p.id === projectId ? { ...p, ...updates } : p);
+      localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updated));
+      queryClient.invalidateQueries({ queryKey: ["user_projects", isStandalone ? "standalone" : "anonymous"] });
+      if (activeProject?.id === projectId) {
+        const newActive = updated.find((p: any) => p.id === projectId);
+        handleSetActiveProject(newActive, 'cache');
+      }
+      toast.success(t("proj.renameSuccess") || "Project updated");
+      return true;
+    }
+
+    const { error } = await supabase.from("projects").update(updates).eq("id", projectId);
+    if (error) {
+      toast.error("Failed to update project");
+      return false;
+    }
+    
+    // Refresh active project if it was the one updated
+    if (activeProject?.id === projectId) {
+      const { data: updatedProj } = await supabase.from("projects").select("*").eq("id", projectId).single();
+      if (updatedProj) handleSetActiveProject(updatedProj as Project, 'cache');
+    }
+
+    toast.success(t("proj.renameSuccess") || "Project updated");
+    queryClient.invalidateQueries({ queryKey: ["user_projects", user.id] });
+    return true;
+  };
+
   const fetchProjects = async () => {
     const key = ["user_projects", isStandalone ? "standalone" : (user?.id || "anonymous")];
     await queryClient.invalidateQueries({ queryKey: key });
@@ -351,6 +383,7 @@ export const useProjects = () => {
       localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
     },
     deleteProject,
+    updateProject,
     isSystemAdmin
   };
 };

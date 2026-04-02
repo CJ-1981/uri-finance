@@ -28,7 +28,7 @@ import { UserRole } from "@/hooks/useUserRole";
 
 const AdminPage = () => {
   const { user, isStandalone } = useAuth();
-  const { projects, activeProject, fetchProjects, deleteProject, loading } = useProjects();
+  const { projects, activeProject, fetchProjects, deleteProject, updateProject, loading } = useProjects();
   const { categories, addCategory, addSubCategory, deleteCategory, renameCategory, updateCategoryCode, updateCategoryIcon, reorderCategory, reorderCategories, bulkUpdateCategories, fetchCategories } = useCategories(activeProject?.id);
   const { headers, draft, dirty, saving, updateDraft, saveHeaders, resetHeaders } = useColumnHeaders(activeProject?.id);
   const { columns: customColumns, addColumn, deleteColumn, toggleMasked, toggleRequired, updateSuggestions, reorderColumn, reorderColumns, renameColumn, fetchColumns } = useCustomColumns(activeProject?.id);
@@ -116,17 +116,8 @@ const AdminPage = () => {
   const handleCurrencyChange = async () => {
     if (!activeProject || !currency.trim()) return;
     setSavingCurrency(true);
-    const { error } = await supabase
-      .from("projects")
-      .update({ currency: currency.trim().toUpperCase() })
-      .eq("id", activeProject.id);
+    await updateProject(activeProject.id, { currency: currency.trim().toUpperCase() });
     setSavingCurrency(false);
-    if (error) {
-      toast.error(t("admin.currencyFailed"));
-      return;
-    }
-    toast.success(t("admin.currencyUpdated"));
-    await fetchProjects();
   };
 
   const handleRemoveMember = async (memberId: string) => {
