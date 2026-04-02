@@ -235,7 +235,7 @@ const ExportProjectSetup = ({
     <div className="space-y-3">
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={handleExport} className="flex-1">
-          <Download className="h-4 w-4 mr-2" />
+          <Upload className="h-4 w-4 mr-2" />
           {t("setup.export") || "Export"}
         </Button>
         <Button
@@ -245,7 +245,7 @@ const ExportProjectSetup = ({
           disabled={importing}
           className="flex-1"
         >
-          <Upload className="h-4 w-4 mr-2" />
+          <Download className="h-4 w-4 mr-2" />
           {importing ? t("setup.importing") || "Importing..." : (t("setup.import") || "Import")}
         </Button>
       </div>

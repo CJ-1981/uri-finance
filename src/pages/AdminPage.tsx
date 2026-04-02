@@ -68,6 +68,11 @@ const AdminPage = () => {
     quotaPretty: string;
     percent: number;
   } | null>(null);
+  const [standaloneQuota, setStandaloneQuota] = useState<number>(() => {
+    const stored = localStorage.getItem("standalone-quota-gb");
+    return stored ? Number(stored) * 1024 * 1024 * 1024 : 5 * 1024 * 1024 * 1024; // Default 5GB
+  });
+  const [quotaInput, setQuotaInput] = useState<string>((standaloneQuota / (1024 * 1024 * 1024)).toString());
   const [storageLoading, setStorageLoading] = useState(false);
   const [archiveFrom, setArchiveFrom] = useState("");
   const [archiveTo, setArchiveTo] = useState("");
@@ -104,6 +109,9 @@ const AdminPage = () => {
           const usage = estimate.usage || 0;
           const quota = estimate.quota || 0;
           
+          // Use user-defined quota if smaller than browser quota, otherwise use browser quota
+          const effectiveQuota = Math.min(quota, standaloneQuota);
+          
           const formatSize = (bytes: number) => {
             if (bytes === 0) return "0 B";
             const k = 1024;
@@ -114,10 +122,10 @@ const AdminPage = () => {
 
           setLocalStorageStats({
             usage,
-            quota,
+            quota: effectiveQuota,
             usagePretty: formatSize(usage),
-            quotaPretty: formatSize(quota),
-            percent: quota > 0 ? (usage / quota) * 100 : 0
+            quotaPretty: formatSize(effectiveQuota),
+            percent: effectiveQuota > 0 ? (usage / effectiveQuota) * 100 : 0
           });
         } catch (err) {
           console.error("Failed to fetch storage estimate:", err);
@@ -126,7 +134,7 @@ const AdminPage = () => {
     };
     
     fetchLocalEstimate();
-  }, [isStandalone]);
+  }, [isStandalone, standaloneQuota]);
 
   useEffect(() => {
     if (!activeProject?.id || isStandalone) return;
@@ -181,19 +189,30 @@ const AdminPage = () => {
     if (ok) toast.success(t("admin.promoted"));
     else toast.error(t("admin.promoteFailed"));
   };
+const handleTransferOwnership = async (newOwnerId: string) => {
+  if (!user || !activeProject) return;
+  const confirmed = window.confirm(t("admin.transferConfirm"));
+  if (!confirmed) return;
+  const ok = await transferOwnership(newOwnerId, user.id);
+  if (ok) {
+    toast.success(t("admin.transferred"));
+    await fetchProjects();
+    navigate("/");
+  } else {
+    toast.error(t("admin.transferFailed"));
+  }
+};
 
-  const handleTransferOwnership = async (newOwnerId: string) => {
-    if (!user || !activeProject) return;
-    const confirmed = window.confirm(t("admin.transferConfirm"));
-    if (!confirmed) return;
-    const ok = await transferOwnership(newOwnerId, user.id);
-    if (ok) {
-      toast.success(t("admin.transferred"));
-      await fetchProjects();
-      navigate("/");
-    } else {
-      toast.error(t("admin.transferFailed"));
+  const handleQuotaChange = () => {
+    const val = parseFloat(quotaInput);
+    if (isNaN(val) || val <= 0) {
+      toast.error(t("admin.invalidQuota"));
+      return;
     }
+    const bytes = val * 1024 * 1024 * 1024;
+    setStandaloneQuota(bytes);
+    localStorage.setItem("standalone-quota-gb", val.toString());
+    toast.success(t("admin.quotaUpdated").replace("{val}", val.toString()));
   };
 
   const handleCreateInvite = async () => {
@@ -838,6 +857,26 @@ const AdminPage = () => {
               <div className="flex items-center justify-between text-[10px] text-muted-foreground">
                 <span>{localStorageStats.percent.toFixed(2)}%</span>
                 <span>{t("admin.storageQuota")}: {localStorageStats.quotaPretty}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-border/30">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("admin.changeQuota") || "Change Quota (GB)"}
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={quotaInput}
+                  onChange={(e) => setQuotaInput(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                <Button size="sm" variant="outline" className="h-8" onClick={handleQuotaChange}>
+                  <Check className="h-3.5 w-3.5 mr-1.5" />
+                  {t("admin.save") || "Save"}
+                </Button>
               </div>
             </div>
             
