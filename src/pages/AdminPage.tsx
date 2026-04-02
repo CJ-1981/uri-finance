@@ -876,7 +876,19 @@ const handleTransferOwnership = async (newOwnerId: string) => {
           <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{t("admin.storageUsed")}</span>
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  {t("admin.storageUsed")}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[200px] text-[10px]">
+                        <p>{t("admin.originStorageNote") || "This represents the total storage used by the entire application on your device, including all projects and browser overhead."}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
                 <span className="font-mono text-foreground">{localStorageStats.usagePretty}</span>
               </div>
               <Progress

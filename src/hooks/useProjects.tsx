@@ -321,24 +321,29 @@ export const useProjects = () => {
 
         // 2. Aggressively clear ALL project-specific data from LocalStorage by searching keys
         console.log(`[useProjects] Scanning LocalStorage for project-related keys...`);
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.includes(projectId)) {
-            keysToRemove.push(key);
-          }
+        const allLocalStorageKeys = Object.keys(localStorage);
+        console.log(`[useProjects] Total LocalStorage keys found: ${allLocalStorageKeys.length}`);
+        
+        const keysToRemove: string[] = allLocalStorageKeys.filter(key => key.includes(projectId));
+        
+        if (keysToRemove.length > 0) {
+          console.log(`[useProjects] Found ${keysToRemove.length} LocalStorage keys to remove for project ${projectId}:`, keysToRemove);
+          keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log(`[useProjects] Removed LocalStorage key: ${key}`);
+          });
+        } else {
+          console.log(`[useProjects] No LocalStorage keys found containing project ID: ${projectId}`);
         }
-        keysToRemove.forEach(key => {
-          localStorage.removeItem(key);
-          console.log(`[useProjects] Removed LocalStorage key: ${key}`);
-        });
 
         // 3. Clear file content and other project-specific data from IndexedDB
         console.log(`[useProjects] Scanning IndexedDB for project-related keys...`);
         const fileMetadataKey = `files-metadata-${projectId}`;
         const localFiles: any[] = await get(fileMetadataKey) || [];
         
-        // Delete individual file content (their keys usually don't contain projectId, but fileId)
+        console.log(`[useProjects] Project metadata found in IDB: ${localFiles.length} files`);
+        
+        // Delete individual file content
         for (const file of localFiles) {
           if (file.id) {
             const contentKey = `file-content-${file.id}`;
@@ -349,12 +354,17 @@ export const useProjects = () => {
         
         // Now scan all IDB keys for anything else containing the projectId
         const allIdbKeys = await keys();
+        console.log(`[useProjects] Total IndexedDB keys found: ${allIdbKeys.length}`);
+        
         for (const key of allIdbKeys) {
           if (typeof key === 'string' && key.includes(projectId)) {
             await del(key);
             console.log(`[useProjects] Removed IndexedDB key: ${key}`);
           }
         }
+        
+        // Final metadata list deletion (redundant if already found by scan, but safe)
+        await del(fileMetadataKey);
 
         // 4. Clear related query cache to prevent ghost data
         queryClient.removeQueries({ queryKey: ["project_categories", projectId] });
