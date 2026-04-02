@@ -4,6 +4,53 @@ Detailed technical changes made during codebase review and improvement session.
 
 ## Session Date: 2026-04-01
 
+## Workflow & Branding Automation
+
+### 20. Parameterized Build Environment
+**Files Changed:**
+- `index.html`
+- `vite.config.ts`
+- `.github/workflows/deploy.yml`
+
+**Changes:**
+- Replaced hardcoded title and icon links in `index.html` with custom placeholders (`__VITE_APP_TITLE__`, `__VITE_APP_ICON_SUFFIX__`).
+- Implemented `html-transform` plugin in `vite.config.ts` to perform safe string replacement during build.
+- Added `existsSync` validation in Vite config to automatically fallback to default assets if environment-specific icons (e.g., `-preview`) are missing.
+- Updated GitHub Workflow to inject environment-specific branding:
+  - **PRs**: "재정부 (Preview)" + `-preview` icon suffix.
+  - **Main**: "우리교회 재정부" + default icons.
+
+### 21. Standalone Security Hardening
+**Files Changed:**
+- `src/pages/AdminPage.tsx`
+- `src/components/UserMenu.tsx`
+
+**Changes:**
+- Gated administrative sections (`Members`, `Invites`, `Archive`, `DB Stats`, `Storage Stats`) behind `!isStandalone` check.
+- Restricted `Change Password` menu item to cloud-authenticated users only.
+- Refactored `handleCurrencyChange` to use `updateProject` hook, enabling local currency persistence in standalone mode which previously failed due to direct Supabase calls.
+
+### 22. Enhanced Localization & UI Integrity
+**Files Changed:**
+- `src/lib/i18n.ts`
+- `src/components/PWAInstructions.tsx`
+- `src/components/ProjectSwitcher.tsx`
+
+**Changes:**
+- Added missing translation keys for PWA instructions (`pwa.iosInstructions`, etc.) and standalone-specific dashboard descriptions.
+- Removed all `|| "Fallback"` patterns from `t()` calls in PWA and Admin components to rely exclusively on the i18n registry.
+- Refactored `ProjectSwitcher` project list items from `<button>` to `<div>` with `role="button"` to resolve a critical React nesting warning ("<button> cannot appear as a descendant of <button>").
+
+### 23. Project Management Refinement
+**Files Changed:**
+- `src/hooks/useProjects.tsx`
+- `src/components/ProjectSwitcher.tsx`
+
+**Changes:**
+- Implemented `updateProject` mutation support for local storage projects.
+- Added inline renaming functionality to the Project Switcher.
+- Optimized pencil icon visibility for mobile (always visible for owners) and added logic to hide it when simulating non-owner roles.
+
 ## Standalone & Offline Refinements
 
 ### 16. Aggressive State Clearing on Logout

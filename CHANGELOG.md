@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-01
+
+### Added
+- **Workflow-Specific Branding**:
+  - Dynamically customized application name and icons based on the deployment environment (e.g., Pull Request vs. Main branch).
+  - Integrated Vite environment variables (`VITE_APP_TITLE`, `VITE_APP_ICON_SUFFIX`) into build pipeline.
+  - Automated fallback to default icons if variant assets are missing.
+- **Project Renaming**:
+  - Added ability for project owners to rename projects and update descriptions directly from the project switcher.
+  - Context-aware UI respects role simulation mode (pencil icon hidden when simulating non-owner roles).
+
+### Security
+- **Hardened Standalone Mode**:
+  - Restricted access to Supabase-dependent features in Admin page (Members, Invites, Archive, and Backend Stats).
+  - Hidden "Change Password" option in User Menu when in standalone mode.
+  - Restricted system administration access to authenticated global admins only.
+
+### Changed
+- **Localization (i18n)**:
+  - Comprehensive Korean and English translations for PWA installation guides and iOS-specific instructions.
+  - Standardized "Get Started" messaging for standalone mode to remove confusing cloud-sync references.
+  - Removed hardcoded English fallbacks from the UI to ensure 100% localized experience.
+
+### Fixed
+- **Currency Management**: Resolved issue where changing project currency failed in standalone mode.
+- **UI Integrity**: Fixed "validateDOMNesting" warning by refactoring project list items from nested buttons to accessible div elements.
+- **Build Reliability**: Ensured `vite.config.ts` handles missing assets gracefully during environment-specific builds.
+
 ## [1.2.0] - 2026-04-01
 
 ### Added
