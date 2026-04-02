@@ -68,6 +68,14 @@ const AdminPage = () => {
     quotaPretty: string;
     percent: number;
   } | null>(null);
+  const [standaloneStats, setStandaloneStats] = useState<{
+    projects: number;
+    transactions: number;
+    categories: number;
+    files: number;
+    filesSize: number;
+    columns: number;
+  } | null>(null);
   const [standaloneQuota, setStandaloneQuota] = useState<number>(() => {
     const stored = localStorage.getItem("standalone-quota-gb");
     return stored ? Number(stored) * 1024 * 1024 * 1024 : 5 * 1024 * 1024 * 1024; // Default 5GB
@@ -98,6 +106,33 @@ const AdminPage = () => {
     };
     fetchStats();
   }, [isOwner, isStandalone]);
+
+  useEffect(() => {
+    if (!isStandalone || !activeProject?.id) return;
+
+    const calculateStandaloneStats = async () => {
+      try {
+        const localProjects = JSON.parse(localStorage.getItem("local_projects") || "[]");
+        const localTransactions = JSON.parse(localStorage.getItem(`local_transactions_${activeProject.id}`) || "[]");
+        const localCategories = JSON.parse(localStorage.getItem(`local_categories_${activeProject.id}`) || "[]");
+        const localColumns = JSON.parse(localStorage.getItem(`local_custom_columns_${activeProject.id}`) || "[]");
+        const localFiles: any[] = await get(`files-metadata-${activeProject.id}`) || [];
+
+        setStandaloneStats({
+          projects: localProjects.length,
+          transactions: localTransactions.length,
+          categories: localCategories.length,
+          files: localFiles.length,
+          filesSize: localFiles.reduce((sum, f) => sum + (f.file_size || 0), 0),
+          columns: localColumns.length
+        });
+      } catch (err) {
+        console.error("Failed to calculate standalone stats:", err);
+      }
+    };
+
+    calculateStandaloneStats();
+  }, [isStandalone, activeProject?.id]);
 
   useEffect(() => {
     if (!isStandalone) return;
@@ -860,6 +895,62 @@ const handleTransferOwnership = async (newOwnerId: string) => {
                 <span>{t("admin.storageQuota")}: {localStorageStats.quotaPretty}</span>
               </div>
             </div>
+
+            {standaloneStats && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-border/30">
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.dbTransactions")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Archive className="h-3 w-3 text-primary" />
+                    {standaloneStats.transactions}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.storageTotalFiles")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Database className="h-3 w-3 text-primary" />
+                    {standaloneStats.files}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("files.size")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5 font-mono text-[11px]">
+                    <HardDrive className="h-3 w-3 text-primary" />
+                    {localStorageStats?.usagePretty ? (
+                      (() => {
+                        const bytes = standaloneStats.filesSize;
+                        if (bytes === 0) return "0 B";
+                        const k = 1024;
+                        const sizes = ["B", "KB", "MB", "GB", "TB"];
+                        const i = Math.floor(Math.log(bytes) / Math.log(k));
+                        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+                      })()
+                    ) : "..."}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.categories")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Plus className="h-3 w-3 text-primary" />
+                    {standaloneStats.categories}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.customColumns")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Shield className="h-3 w-3 text-primary" />
+                    {standaloneStats.columns}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.projects")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Crown className="h-3 w-3 text-primary" />
+                    {standaloneStats.projects}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2 pt-2 border-t border-border/30">
               <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">

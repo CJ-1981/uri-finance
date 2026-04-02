@@ -336,10 +336,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbStatsDesc": "Monitor storage usage and table sizes.",
     "admin.dbSize": "Total Size",
     "admin.dbMaxSize": "Max Size (500 MB)",
-    "admin.dbRows": "rows",
+    "admin.dbRows": "Rows",
+    "admin.dbTransactions": "Transactions",
     "admin.dbLoading": "Loading stats...",
     "admin.dbError": "Failed to load database stats",
     "admin.dbTables": "Tables",
+    "admin.projects": "Projects",
 
     // Storage Stats (SPEC-STORAGE-001)
     "admin.storageStats": "Storage Usage",
@@ -926,9 +928,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbSize": "전체 크기",
     "admin.dbMaxSize": "최대 용량 (500 MB)",
     "admin.dbRows": "행",
+    "admin.dbTransactions": "거래",
     "admin.dbLoading": "통계 로딩 중...",
     "admin.dbError": "데이터베이스 통계를 불러오지 못했습니다",
     "admin.dbTables": "테이블",
+    "admin.projects": "프로젝트",
 
     // Storage Stats (SPEC-STORAGE-001)
     "admin.storageStats": "저장소 사용량",
