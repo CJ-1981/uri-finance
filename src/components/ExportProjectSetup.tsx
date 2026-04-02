@@ -7,6 +7,7 @@ import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useI18n } from "@/hooks/useI18n";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   categories: Category[];
@@ -52,6 +53,7 @@ const ExportProjectSetup = ({
   onColumnsRefresh,
 }: Props) => {
   const { t } = useI18n();
+  const { isStandalone } = useAuth();
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,75 +122,84 @@ const ExportProjectSetup = ({
         throw new Error(t("setup.invalidFormat") || "Invalid file format");
       }
 
-      // Import categories - Pass 1: Insert all categories
-      const categoryMap = new Map<string, string>(); // (code, name) -> id
-      
-      for (const cat of importData.categories) {
-        const { data, error } = await supabase
-          .from("project_categories")
-          .insert({
+      if (isStandalone) {
+        // --- Standalone Mode Import ---
+        const LOCAL_CATEGORIES_KEY = `local_categories_${projectId}`;
+        const LOCAL_COLUMNS_KEY = `local_custom_columns_${projectId}`;
+        const LOCAL_PROJECTS_KEY = "local_projects";
+        const ACTIVE_PROJECT_CACHE_KEY = "active_project_cache";
+
+        // Import categories
+        const categoryMap = new Map<string, string>(); // (code, name) -> id
+        const processedCategories: Category[] = [];
+
+        // Pass 1: Create all categories with new IDs
+        for (const cat of importData.categories) {
+          const id = crypto.randomUUID();
+          processedCategories.push({
+            id,
             project_id: projectId,
             name: cat.name,
             code: cat.code,
             icon: cat.icon,
             sort_order: cat.sort_order,
-          })
-          .select()
-          .single();
-          
-        if (error) {
-          console.error("Failed to import category:", cat.name, error);
-        } else if (data) {
+            parent_id: null,
+            created_at: new Date().toISOString(),
+          });
           const key = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
-          categoryMap.set(key, data.id);
+          categoryMap.set(key, id);
         }
-      }
-      // Import categories - Pass 2: Set parent_id
-      for (const cat of importData.categories) {
-        if (cat.parent_code || cat.parent_name) {
-          const childKey = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
-          const childId = categoryMap.get(childKey);
-          
-          const parentKey = Array.from(categoryMap.keys()).find(k => k.endsWith(`-${cat.parent_code || ""}-${cat.parent_name || ""}`));
-          const parentId = parentKey ? categoryMap.get(parentKey) : null;
-          
-          if (childId && parentId) {
-            await supabase
-              .from("project_categories")
-              .update({ parent_id: parentId })
-              .eq("id", childId);
+
+        // Pass 2: Set parent_id
+        for (let i = 0; i < importData.categories.length; i++) {
+          const cat = importData.categories[i];
+          if (cat.parent_code || cat.parent_name) {
+            const parentKey = Array.from(categoryMap.keys()).find(k => k.endsWith(`-${cat.parent_code || ""}-${cat.parent_name || ""}`));
+            const parentId = parentKey ? categoryMap.get(parentKey) : null;
+            if (parentId) {
+              processedCategories[i].parent_id = parentId;
+            }
           }
         }
-      }
+        localStorage.setItem(LOCAL_CATEGORIES_KEY, JSON.stringify(processedCategories));
 
-      // Import custom columns
-      for (const col of importData.customColumns) {
-        const { error } = await supabase
-          .from("custom_columns")
-          .insert({
-            project_id: projectId,
-            name: col.name,
-            column_type: col.column_type,
-            masked: col.masked,
-            required: col.required,
-            sort_order: col.sort_order,
-            suggestions: col.suggestions,
-            suggestion_colors: col.suggestion_colors,
-          });
-        if (error) {
-          console.error("Failed to import column:", col.name, error);
+        // Import custom columns
+        const processedColumns: CustomColumn[] = importData.customColumns.map(col => ({
+          id: crypto.randomUUID(),
+          project_id: projectId,
+          name: col.name,
+          column_type: col.column_type,
+          masked: col.masked,
+          required: col.required,
+          sort_order: col.sort_order,
+          suggestions: col.suggestions,
+          suggestion_colors: col.suggestion_colors,
+          created_at: new Date().toISOString(),
+        }));
+        localStorage.setItem(LOCAL_COLUMNS_KEY, JSON.stringify(processedColumns));
+
+        // Update project currency and column headers
+        const localProjects = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
+        const updatedProjects = localProjects.map((p: any) => {
+          if (p.id === projectId) {
+            const updates: any = {};
+            if (importData.currency) updates.currency = importData.currency.toUpperCase();
+            if (importData.columnHeaders) updates.column_headers = importData.columnHeaders;
+            return { ...p, ...updates };
+          }
+          return p;
+        });
+        localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updatedProjects));
+
+        // Update active project cache if it's the current one
+        const activeProj = JSON.parse(localStorage.getItem(ACTIVE_PROJECT_CACHE_KEY) || "null");
+        if (activeProj && activeProj.id === projectId) {
+          if (importData.currency) activeProj.currency = importData.currency.toUpperCase();
+          if (importData.columnHeaders) activeProj.column_headers = importData.columnHeaders;
+          localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(activeProj));
         }
-      }
 
-      // Import currency if provided
-      if (importData.currency) {
-        const { error: currencyError } = await supabase
-          .from("projects")
-          .update({ currency: importData.currency.toUpperCase() })
-          .eq("id", projectId);
-        if (currencyError) {
-          console.error("Failed to import currency:", currencyError);
-        } else {
+        if (importData.currency) {
           toast.success(
             (t("setup.currencyUpdated") || "Currency updated to {currency}").replace(
               "{currency}",
@@ -196,18 +207,100 @@ const ExportProjectSetup = ({
             )
           );
         }
-      }
-
-      // Import column headers if provided
-      if (importData.columnHeaders) {
-        const { error: headersError } = await supabase
-          .from("projects")
-          .update({ column_headers: importData.columnHeaders } as unknown as Record<string, unknown>)
-          .eq("id", projectId);
-        if (headersError) {
-          console.error("Failed to import column headers:", headersError);
-        } else {
+        if (importData.columnHeaders) {
           toast.success(t("setup.headersImported") || "Column headers imported");
+        }
+      } else {
+        // --- Supabase Mode Import ---
+        // Import categories - Pass 1: Insert all categories
+        const categoryMap = new Map<string, string>(); // (code, name) -> id
+        
+        for (const cat of importData.categories) {
+          const { data, error } = await supabase
+            .from("project_categories")
+            .insert({
+              project_id: projectId,
+              name: cat.name,
+              code: cat.code,
+              icon: cat.icon,
+              sort_order: cat.sort_order,
+            })
+            .select()
+            .single();
+            
+          if (error) {
+            console.error("Failed to import category:", cat.name, error);
+          } else if (data) {
+            const key = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
+            categoryMap.set(key, data.id);
+          }
+        }
+        // Import categories - Pass 2: Set parent_id
+        for (const cat of importData.categories) {
+          if (cat.parent_code || cat.parent_name) {
+            const childKey = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
+            const childId = categoryMap.get(childKey);
+            
+            const parentKey = Array.from(categoryMap.keys()).find(k => k.endsWith(`-${cat.parent_code || ""}-${cat.parent_name || ""}`));
+            const parentId = parentKey ? categoryMap.get(parentKey) : null;
+            
+            if (childId && parentId) {
+              await supabase
+                .from("project_categories")
+                .update({ parent_id: parentId })
+                .eq("id", childId);
+            }
+          }
+        }
+
+        // Import custom columns
+        for (const col of importData.customColumns) {
+          const { error } = await supabase
+            .from("custom_columns")
+            .insert({
+              project_id: projectId,
+              name: col.name,
+              column_type: col.column_type,
+              masked: col.masked,
+              required: col.required,
+              sort_order: col.sort_order,
+              suggestions: col.suggestions,
+              suggestion_colors: col.suggestion_colors,
+            });
+          if (error) {
+            console.error("Failed to import column:", col.name, error);
+          }
+        }
+
+        // Import currency if provided
+        if (importData.currency) {
+          const { error: currencyError } = await supabase
+            .from("projects")
+            .update({ currency: importData.currency.toUpperCase() })
+            .eq("id", projectId);
+          if (currencyError) {
+            console.error("Failed to import currency:", currencyError);
+          } else {
+            toast.success(
+              (t("setup.currencyUpdated") || "Currency updated to {currency}").replace(
+                "{currency}",
+                importData.currency.toUpperCase()
+              )
+            );
+          }
+        }
+
+        // Import column headers if provided
+        if (importData.columnHeaders) {
+          const { error: headersError } = await supabase
+            .from("projects")
+            .update({ column_headers: importData.columnHeaders } as unknown as Record<string, unknown>)
+            .eq("id", projectId);
+          if (headersError) {
+            console.error("Failed to import column headers:", headersError);
+          } else {
+            toast.success(t("setup.headersImported") || "Column headers imported");
+          }
         }
       }
 
