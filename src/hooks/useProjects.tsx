@@ -6,7 +6,7 @@ import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 import { useSystemAdmin } from "@/hooks/useSystemAdmin";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { get, del } from "idb-keyval";
+import { get, del, keys } from "idb-keyval";
 
 export interface Project {
   id: string;
@@ -310,36 +310,61 @@ export const useProjects = () => {
 
   const deleteProject = async (projectId: string): Promise<boolean> => {
     if (isStandalone || !user) {
+      console.log(`[useProjects] Starting thorough cleanup for local project: ${projectId}`);
       // Local delete - perform thorough cleanup
       try {
         // 1. Clear basic project lists
         const existing = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
         const updated = existing.filter((p: any) => p.id !== projectId);
         localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updated));
+        console.log(`[useProjects] Removed project ${projectId} from local_projects list`);
 
-        // 2. Clear project-specific data from LocalStorage
-        localStorage.removeItem(`local_transactions_${projectId}`);
-        localStorage.removeItem(`local_categories_${projectId}`);
-        localStorage.removeItem(`local_custom_columns_${projectId}`);
-        localStorage.removeItem(`local_column_headers_${projectId}`);
+        // 2. Aggressively clear ALL project-specific data from LocalStorage by searching keys
+        console.log(`[useProjects] Scanning LocalStorage for project-related keys...`);
+        const keysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes(projectId)) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => {
+          localStorage.removeItem(key);
+          console.log(`[useProjects] Removed LocalStorage key: ${key}`);
+        });
 
-        // 3. Clear file metadata and content from IndexedDB
+        // 3. Clear file content and other project-specific data from IndexedDB
+        console.log(`[useProjects] Scanning IndexedDB for project-related keys...`);
         const fileMetadataKey = `files-metadata-${projectId}`;
         const localFiles: any[] = await get(fileMetadataKey) || [];
         
-        console.log(`[useProjects] Clearing ${localFiles.length} files for project ${projectId}`);
-        
-        // Delete every individual file content
+        // Delete individual file content (their keys usually don't contain projectId, but fileId)
         for (const file of localFiles) {
           if (file.id) {
-            await del(`file-content-${file.id}`);
+            const contentKey = `file-content-${file.id}`;
+            await del(contentKey);
+            console.log(`[useProjects] Cleared IndexedDB file content: ${contentKey}`);
           }
         }
         
-        // Delete the metadata list itself
-        await del(fileMetadataKey);
+        // Now scan all IDB keys for anything else containing the projectId
+        const allIdbKeys = await keys();
+        for (const key of allIdbKeys) {
+          if (typeof key === 'string' && key.includes(projectId)) {
+            await del(key);
+            console.log(`[useProjects] Removed IndexedDB key: ${key}`);
+          }
+        }
 
-        // 4. Update UI state
+        // 4. Clear related query cache to prevent ghost data
+        queryClient.removeQueries({ queryKey: ["project_categories", projectId] });
+        queryClient.removeQueries({ queryKey: ["project_custom_columns", projectId] });
+        queryClient.removeQueries({ queryKey: ["project_column_headers", projectId] });
+        queryClient.removeQueries({ queryKey: ["infinite_transactions", projectId] });
+        queryClient.removeQueries({ queryKey: ["project-files", projectId] });
+        console.log(`[useProjects] Invalidated React Query cache for project: ${projectId}`);
+
+        // 5. Update UI state
         queryClient.invalidateQueries({ queryKey: ["user_projects", isStandalone ? "standalone" : "anonymous"] });
         if (activeProject?.id === projectId) handleSetActiveProject(null, 'user-selection');
         
