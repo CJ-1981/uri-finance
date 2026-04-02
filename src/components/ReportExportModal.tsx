@@ -44,12 +44,15 @@ const CHART_SELECTORS: Record<"pie" | "trend" | "cumulative", string> = {
   cumulative: "[data-chart-type='cumulative']",
 };
 
-function getPeriodLabel(period: PeriodKey, customRange: DateRange, t: (k: string) => string): string {
+function getPeriodLabel(period: PeriodKey, customRange: DateRange, t: (k: string) => string, locale: string): string {
   const pLabel = t(`period.${period}`);
   if (period === "all") return pLabel;
 
   const f = (d: Date | undefined) => {
     if (!d) return "...";
+    if (locale === "ko") {
+      return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+    }
     return format(d, "MMM d");
   };
 
@@ -94,7 +97,7 @@ export default function ReportExportModal({
   customRange,
   hasData,
 }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [exportFormat, setExportFormat] = useState<"pdf" | "markdown">("pdf");
   const [chartSelection, setChartSelection] = useState<ChartSelection>({
     pie: true,
@@ -127,7 +130,7 @@ export default function ReportExportModal({
     setGenerating(true);
 
     try {
-      const periodLabel = getPeriodLabel(period, customRange, t);
+      const periodLabel = getPeriodLabel(period, customRange, t, locale);
       const generatedAt = new Date();
 
       // Step 1: Capture charts

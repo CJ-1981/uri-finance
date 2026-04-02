@@ -9,6 +9,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFiles } from './useFiles';
 import { supabase } from '@/integrations/supabase/client';
 
+// Mock useAuth
+vi.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user-id' },
+    isStandalone: false,
+  }),
+}));
+
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {

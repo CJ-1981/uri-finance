@@ -514,7 +514,6 @@ const Dashboard = () => {
                 <Calculator className="h-4 w-4 shrink-0" />
                 <span className={view === "cash" ? "inline" : "hidden sm:inline"}>{t("cash.title")}</span>
               </button>
-              {!isStandalone && (
               <button
                 onClick={() => setView("files")}
                 data-testid="view-files"
@@ -525,7 +524,6 @@ const Dashboard = () => {
                 <FileText className="h-4 w-4 shrink-0" />
                 <span className={view === "files" ? "inline" : "hidden sm:inline"}>{t("files.title")}</span>
               </button>
-              )}
             </div>
 
             {/* Content */}
@@ -587,16 +585,12 @@ const Dashboard = () => {
               </div>
             ) : view === "cash" ? (
               <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
-            ) : !isStandalone ? (
+            ) : (
               <FileManager
                 projectId={activeProject.id}
                 canDelete={!isViewer && (isOwner || effectiveRole === "admin")}
                 onTransactionClick={handleTransactionClickFromFile}
               />
-            ) : (
-              <div className="py-20 text-center">
-                <p className="text-sm text-muted-foreground">{t("dash.standaloneFilesNotice")}</p>
-              </div>
             )}
 
             {/* FAB - hidden for viewers */}

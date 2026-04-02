@@ -61,6 +61,13 @@ const AdminPage = () => {
     largest_file: { file_name: string; file_size: number; file_size_pretty: string; file_type: string } | null;
     recent_files: Array<{ id: string; file_name: string; file_size: number; file_type: string; uploaded_at: string }>;
   } | null>(null);
+  const [localStorageStats, setLocalStorageStats] = useState<{
+    usage: number;
+    quota: number;
+    usagePretty: string;
+    quotaPretty: string;
+    percent: number;
+  } | null>(null);
   const [storageLoading, setStorageLoading] = useState(false);
   const [archiveFrom, setArchiveFrom] = useState("");
   const [archiveTo, setArchiveTo] = useState("");
@@ -86,6 +93,40 @@ const AdminPage = () => {
     };
     fetchStats();
   }, [isOwner, isStandalone]);
+
+  useEffect(() => {
+    if (!isStandalone) return;
+    
+    const fetchLocalEstimate = async () => {
+      if (navigator.storage && navigator.storage.estimate) {
+        try {
+          const estimate = await navigator.storage.estimate();
+          const usage = estimate.usage || 0;
+          const quota = estimate.quota || 0;
+          
+          const formatSize = (bytes: number) => {
+            if (bytes === 0) return "0 B";
+            const k = 1024;
+            const sizes = ["B", "KB", "MB", "GB", "TB"];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+          };
+
+          setLocalStorageStats({
+            usage,
+            quota,
+            usagePretty: formatSize(usage),
+            quotaPretty: formatSize(quota),
+            percent: quota > 0 ? (usage / quota) * 100 : 0
+          });
+        } catch (err) {
+          console.error("Failed to fetch storage estimate:", err);
+        }
+      }
+    };
+    
+    fetchLocalEstimate();
+  }, [isStandalone]);
 
   useEffect(() => {
     if (!activeProject?.id || isStandalone) return;
@@ -771,6 +812,43 @@ const AdminPage = () => {
             </Button>
           </div>
         </section>
+
+        {/* Local Storage Stats - Only in standalone mode */}
+        {isStandalone && localStorageStats && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              {t("admin.storageStats")}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {t("admin.localStorageDesc")}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{t("admin.storageUsed")}</span>
+                <span className="font-mono text-foreground">{localStorageStats.usagePretty}</span>
+              </div>
+              <Progress
+                value={Math.min(localStorageStats.percent, 100)}
+                className="h-2"
+              />
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{localStorageStats.percent.toFixed(2)}%</span>
+                <span>{t("admin.storageQuota")}: {localStorageStats.quotaPretty}</span>
+              </div>
+            </div>
+            
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="text-xs text-muted-foreground leading-relaxed italic">
+                {t("admin.standaloneStorageNote")}
+              </p>
+            </div>
+          </div>
+        </section>
+        )}
 
         {/* Database Stats - NOT in standalone mode */}
         {!isStandalone && (

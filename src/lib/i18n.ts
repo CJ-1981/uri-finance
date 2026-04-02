@@ -339,8 +339,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbTables": "Tables",
 
     // Storage Stats (SPEC-STORAGE-001)
-    "admin.storageStats": "File Storage Status",
-    "admin.storageStatsDesc": "Monitor file storage usage and statistics.",
+    "admin.storageStats": "Storage Usage",
+    "admin.storageStatsDesc": "Monitor storage usage and statistics.",
+    "admin.localStorageDesc": "Local storage usage on your device (Browser/PWA).",
+    "admin.storageUsed": "Used",
+    "admin.storageQuota": "Quota",
+    "admin.standaloneStorageNote": "In Standalone mode, all data (transactions, categories, settings, and files) are stored locally in your browser's IndexedDB and LocalStorage.",
     "admin.storageTotalFiles": "Total Files",
     "admin.storageTotalSize": "Total Size",
     "admin.storageMaxSize": "Max Size (1 GB)",
@@ -918,8 +922,12 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.dbTables": "테이블",
 
     // Storage Stats (SPEC-STORAGE-001)
-    "admin.storageStats": "파일 저장소 상태",
-    "admin.storageStatsDesc": "파일 저장소 사용량 및 통계를 확인합니다.",
+    "admin.storageStats": "저장소 사용량",
+    "admin.storageStatsDesc": "저장소 사용량 및 통계를 확인합니다.",
+    "admin.localStorageDesc": "현재 기기(브라우저/PWA)의 로컬 저장소 사용량입니다.",
+    "admin.storageUsed": "사용 중",
+    "admin.storageQuota": "전체 용량",
+    "admin.standaloneStorageNote": "독립 실행 모드에서는 모든 데이터(거래, 카테고리, 설정 및 파일)가 브라우저의 IndexedDB 및 LocalStorage에 로컬로 저장됩니다.",
     "admin.storageTotalFiles": "전체 파일",
     "admin.storageTotalSize": "전체 크기",
     "admin.storageMaxSize": "최대 용량 (1 GB)",

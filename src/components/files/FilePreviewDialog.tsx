@@ -15,11 +15,13 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { get } from 'idb-keyval';
 
 /**
  * Info required for previewing a file
  */
 export interface FilePreviewInfo {
+  id?: string;
   file_name: string;
   file_type: string;
   storage_path?: string | null;
@@ -76,26 +78,47 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
         setPreviewUrl(objectUrl);
         setIsLoading(false);
       } else if (file.storage_path) {
-        // Remote file preview via Signed URL
         setIsLoading(true);
-        supabase.storage
-          .from('project-files')
-          .createSignedUrl(file.storage_path, 3600)
-          .then(({ data, error }) => {
-            if (error) {
-              console.error('[FilePreviewDialog] Signed URL error:', error);
+        if (file.storage_path.startsWith('standalone/') && file.id) {
+          // Handle standalone mode
+          get(`file-content-${file.id}`)
+            .then((blob) => {
+              if (blob) {
+                objectUrl = URL.createObjectURL(blob as Blob);
+                setPreviewUrl(objectUrl);
+              } else {
+                console.error('[FilePreviewDialog] Local file not found:', file.id);
+                setPreviewUrl(null);
+              }
+            })
+            .catch((err) => {
+              console.error('[FilePreviewDialog] IDB error:', err);
               setPreviewUrl(null);
-            } else {
-              setPreviewUrl(data.signedUrl);
-            }
-          })
-          .catch((err) => {
-            console.error('[FilePreviewDialog] Exception:', err);
-            setPreviewUrl(null);
-          })
-          .finally(() => {
-            setIsLoading(false);
-          });
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+        } else {
+          // Remote file preview via Signed URL
+          supabase.storage
+            .from('project-files')
+            .createSignedUrl(file.storage_path, 3600)
+            .then(({ data, error }) => {
+              if (error) {
+                console.error('[FilePreviewDialog] Signed URL error:', error);
+                setPreviewUrl(null);
+              } else {
+                setPreviewUrl(data.signedUrl);
+              }
+            })
+            .catch((err) => {
+              console.error('[FilePreviewDialog] Exception:', err);
+              setPreviewUrl(null);
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+        }
       }
     } else {
       setPreviewUrl(null);
