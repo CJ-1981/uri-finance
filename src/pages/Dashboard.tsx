@@ -367,7 +367,7 @@ const Dashboard = () => {
         {activeProject && (
           <div className="flex items-center gap-2 mt-1">
             <p className="text-[10px] text-muted-foreground truncate flex-1">{activeProject.name}</p>
-            {realOwner && isVisible && (
+            {realOwner && isVisible && !isStandalone && (
               <div className="flex items-center gap-0.5 shrink-0">
                 <Eye className="h-3 w-3 text-muted-foreground" />
                 {(["owner", "admin", "member", "viewer"] as UserRole[]).map((r) => {
