@@ -248,6 +248,15 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
     return filteredTransactions.slice(start, start + pageSize);
   }, [filteredTransactions, safePage, pageSize]);
 
+  // Handle page navigation with infinite loading integration
+  const handleNextPage = useCallback(() => {
+    if (safePage < totalPages - 1) {
+      setPage(safePage + 1);
+    } else if (hasNextPage && fetchNextPage) {
+      fetchNextPage();
+    }
+  }, [safePage, totalPages, hasNextPage, fetchNextPage]);
+
   // Sum of selected transactions grouped by currency
   const selectedSummary = useMemo(() => {
     if (!selectMode || selected.size === 0) return null;
@@ -310,7 +319,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   }
 
   return (
-    <div className="space-y-2 w-full" data-testid="transaction-list">
+    <div className="space-y-2 w-full animate-fade-in" data-testid="transaction-list">
       {/* Search */}
       <div className="relative px-1">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -411,12 +420,11 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
           onTouchStart={(e) => handleTouchStart(tx, e)}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex items-center gap-3 rounded-xl px-4 py-3 animate-fade-in cursor-pointer active:scale-[0.98] transition-all ${
+          className={`flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer active:scale-[0.98] transition-all ${
             selected.has(tx.id)
               ? "bg-primary/10 ring-1 ring-primary/30"
-              : "bg-muted/30"
+              : "bg-muted/30 hover:bg-muted/50"
           }`}
-          style={{ animationDelay: `${i * 50}ms` }}
         >
           {selectMode ? (
             <div className="flex h-10 w-10 shrink-0 items-center justify-center">
@@ -488,24 +496,6 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
       {/* Pagination controls */}
       {filteredTransactions.length > 0 && (
         <div className="flex flex-col gap-4 px-2 pt-2 pb-1">
-          {hasNextPage && (
-            <Button
-              variant="outline"
-              className="w-full py-6 border-dashed border-border/50 text-muted-foreground hover:text-foreground"
-              onClick={() => fetchNextPage?.()}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  {t("global.loading") || "Loading..."}
-                </>
-              ) : (
-                t("common.loadMore") || "Load More Transactions"
-              )}
-            </Button>
-          )}
-
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <NumberedSelect
@@ -534,10 +524,14 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                disabled={safePage >= totalPages - 1}
-                onClick={() => setPage(safePage + 1)}
+                disabled={safePage >= totalPages - 1 && !hasNextPage}
+                onClick={handleNextPage}
               >
-                <ChevronRight className="h-4 w-4" />
+                {isFetchingNextPage ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
