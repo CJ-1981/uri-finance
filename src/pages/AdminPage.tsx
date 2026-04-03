@@ -470,6 +470,68 @@ const handleTransferOwnership = async (newOwnerId: string) => {
       </header>
 
       <main className="px-4 pt-6 max-w-lg mx-auto space-y-8">
+        {/* Project Setup Export/Import - Owner only */}
+        {isOwner && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">{t("setup.title")}</h2>
+            <p className="text-xs text-muted-foreground">{t("setup.desc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4">
+            <ExportProjectSetup
+              categories={categories}
+              customColumns={customColumns}
+              columnHeaders={headers}
+              currency={activeProject.currency}
+              projectId={activeProject.id}
+              onCategoriesRefresh={fetchCategories}
+              onColumnsRefresh={fetchColumns}
+              onProjectRefresh={fetchProjects}
+              onRefresh={() => setRefreshTrigger(prev => prev + 1)}
+            />
+          </div>
+        </section>
+        )}
+
+        {/* Project Info - Owner only */}
+        {isOwner && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">{t("admin.projectInfo")}</h2>
+            <p className="text-xs text-muted-foreground">{t("admin.projectInfoDesc")}</p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground w-24">{t("admin.currency")}</span>
+              <Input
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="flex-1 bg-background text-sm uppercase"
+                maxLength={5}
+                placeholder="EUR"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCurrencyChange}
+                disabled={savingCurrency || currency.trim().toUpperCase() === activeProject.currency}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteProject}
+              className="w-full"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t("admin.deleteProject")}
+            </Button>
+          </div>
+        </section>
+        )}
+
         {/* Deleted Transactions (Trash) - Owner only */}
         {isOwner && (
         <section className="space-y-4">
@@ -818,29 +880,6 @@ const handleTransferOwnership = async (newOwnerId: string) => {
           </div>
         </section>
 
-        {/* Project Setup Export/Import - Owner only */}
-        {isOwner && (
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">{t("setup.title")}</h2>
-            <p className="text-xs text-muted-foreground">{t("setup.desc")}</p>
-          </div>
-          <div className="rounded-xl border border-border/50 bg-card p-4">
-            <ExportProjectSetup
-              categories={categories}
-              customColumns={customColumns}
-              columnHeaders={headers}
-              currency={activeProject.currency}
-              projectId={activeProject.id}
-              onCategoriesRefresh={fetchCategories}
-              onColumnsRefresh={fetchColumns}
-              onProjectRefresh={fetchProjects}
-              onRefresh={() => setRefreshTrigger(prev => prev + 1)}
-            />
-          </div>
-        </section>
-        )}
-
         {/* Categories */}
         <section className="space-y-4">
           <div>
@@ -852,44 +891,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
           </div>
         </section>
 
-        {/* Project Info - Owner only */}
         {isOwner && (<>
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">{t("admin.projectInfo")}</h2>
-            <p className="text-xs text-muted-foreground">{t("admin.projectInfoDesc")}</p>
-          </div>
-          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground w-24">{t("admin.currency")}</span>
-              <Input
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="flex-1 bg-background text-sm uppercase"
-                maxLength={5}
-                placeholder="EUR"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleCurrencyChange}
-                disabled={savingCurrency || currency.trim().toUpperCase() === activeProject.currency}
-              >
-                <Check className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDeleteProject}
-              className="w-full"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {t("admin.deleteProject")}
-            </Button>
-          </div>
-        </section>
-
         {/* Local Storage Stats - Only in standalone mode */}
         {isStandalone && localStorageStats && (
         <section className="space-y-4">

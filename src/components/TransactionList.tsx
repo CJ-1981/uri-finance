@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useImperativeHandle, forwardRef, useCallback } from "react";
+import { useState, useMemo, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from "react";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { TrendingUp, TrendingDown, CheckSquare, Square, Trash2, Edit3, X, CheckCheck, Search, ChevronLeft, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
@@ -243,6 +243,28 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   const safePage = Math.min(page, totalPages - 1);
   if (safePage !== page) setPage(safePage);
 
+  // Track totalPages growth to auto-advance after fetchNextPage
+  const [isWaitingForNextPage, setIsWaitingForNextPage] = useState(false);
+  const totalPagesBeforeFetchRef = useRef(totalPages);
+
+  useEffect(() => {
+    if (isFetchingNextPage) {
+      if (!isWaitingForNextPage) {
+        setIsWaitingForNextPage(true);
+        totalPagesBeforeFetchRef.current = totalPages;
+      }
+    } else if (isWaitingForNextPage) {
+      // Fetch finished
+      if (totalPages > totalPagesBeforeFetchRef.current) {
+        setPage(totalPagesBeforeFetchRef.current);
+      }
+      setIsWaitingForNextPage(false);
+    } else {
+      // Update baseline when not fetching or waiting
+      totalPagesBeforeFetchRef.current = totalPages;
+    }
+  }, [isFetchingNextPage, totalPages, isWaitingForNextPage]);
+
   const paginatedTransactions = useMemo(() => {
     const start = safePage * pageSize;
     return filteredTransactions.slice(start, start + pageSize);
@@ -250,12 +272,13 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
 
   // Handle page navigation with infinite loading integration
   const handleNextPage = useCallback(() => {
+    if (isFetchingNextPage) return;
     if (safePage < totalPages - 1) {
       setPage(safePage + 1);
     } else if (hasNextPage && fetchNextPage) {
       fetchNextPage();
     }
-  }, [safePage, totalPages, hasNextPage, fetchNextPage]);
+  }, [safePage, totalPages, hasNextPage, fetchNextPage, isFetchingNextPage]);
 
   // Sum of selected transactions grouped by currency
   const selectedSummary = useMemo(() => {
@@ -524,7 +547,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
-                disabled={safePage >= totalPages - 1 && !hasNextPage}
+                disabled={isFetchingNextPage || (safePage >= totalPages - 1 && !hasNextPage)}
                 onClick={handleNextPage}
               >
                 {isFetchingNextPage ? (
