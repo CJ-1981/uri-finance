@@ -44,6 +44,7 @@ const AdminPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [currency, setCurrency] = useState(activeProject?.currency || "EUR");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Sync currency when activeProject updates
   useEffect(() => {
@@ -148,7 +149,7 @@ const AdminPage = () => {
 
     calculateStandaloneStats();
     return () => controller.abort();
-  }, [isStandalone, activeProject?.id]);
+  }, [isStandalone, activeProject?.id, standaloneQuota, refreshTrigger, categories, customColumns, projects]);
 
   useEffect(() => {
     if (!isStandalone) return;
@@ -822,6 +823,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
               onCategoriesRefresh={fetchCategories}
               onColumnsRefresh={fetchColumns}
               onProjectRefresh={fetchProjects}
+              onRefresh={() => setRefreshTrigger(prev => prev + 1)}
             />
           </div>
         </section>

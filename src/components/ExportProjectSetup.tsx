@@ -27,6 +27,7 @@ interface Props {
   onCategoriesRefresh: () => Promise<void>;
   onColumnsRefresh: () => Promise<void>;
   onProjectRefresh?: () => Promise<void>;
+  onRefresh?: () => void;
 }
 
 interface ProjectSetupExport {
@@ -62,6 +63,7 @@ const ExportProjectSetup = ({
   onCategoriesRefresh,
   onColumnsRefresh,
   onProjectRefresh,
+  onRefresh,
 }: Props) => {
   const { t } = useI18n();
   const { isStandalone } = useAuth();
@@ -120,7 +122,8 @@ const ExportProjectSetup = ({
     if (useSample) {
       setImporting(true);
       try {
-        const response = await fetch("/demo-project-setup.json");
+        const demoUrl = `${import.meta.env.BASE_URL}demo-project-setup.json`.replace(/\/+/g, "/");
+        const response = await fetch(demoUrl);
         if (!response.ok) {
           throw new Error(`Failed to fetch demo setup: ${response.status} ${response.statusText}`);
         }
@@ -161,6 +164,8 @@ const ExportProjectSetup = ({
     if (!importData.categories || !importData.customColumns) {
       throw new Error(t("setup.invalidFormat") || "Invalid file format");
     }
+
+    const errors: string[] = [];
 
     if (isStandalone) {
       // --- Standalone Mode Import ---
@@ -222,8 +227,9 @@ const ExportProjectSetup = ({
       const localProjects: Project[] = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
       const updatedProjects = localProjects.map((p) => {
         if (p.id === projectId) {
-          const updates: Partial<Project> = {};
+          const updates: any = {};
           if (importData.currency) updates.currency = importData.currency.toUpperCase();
+          if (importData.columnHeaders) updates.column_headers = importData.columnHeaders;
           return { ...p, ...updates };
         }
         return p;
@@ -231,15 +237,15 @@ const ExportProjectSetup = ({
       localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updatedProjects));
 
       // Update active project cache if it's the current one
-      const activeProj: Project | null = JSON.parse(localStorage.getItem(ACTIVE_PROJECT_CACHE_KEY) || "null");
+      const activeProj: any = JSON.parse(localStorage.getItem(ACTIVE_PROJECT_CACHE_KEY) || "null");
       if (activeProj && activeProj.id === projectId) {
         if (importData.currency) activeProj.currency = importData.currency.toUpperCase();
+        if (importData.columnHeaders) activeProj.column_headers = importData.columnHeaders;
         localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(activeProj));
       }
     } else {
       // --- Supabase Mode Import ---
       const categoryMap = new Map<string, string>(); // (code, name) -> id
-      const errors: string[] = [];
       const getCategoryKey = (code?: string, name?: string) => `${code || ""}::${name || ""}`;
       
       // Import categories - Pass 1: Insert all categories
@@ -334,18 +340,22 @@ const ExportProjectSetup = ({
       onProjectRefresh?.()
     ]);
 
-    let summary = (t("setup.imported") || "Project setup imported").replace(
-      "{n}",
-      String(importData.categories.length + importData.customColumns.length)
-    );
-    if (importData.currency || importData.columnHeaders) {
-      summary += " (" + [
-        importData.currency ? t("proj.currency") || "Currency" : null,
-        importData.columnHeaders ? t("admin.columnHeaders") || "Headers" : null
-      ].filter(Boolean).join(", ") + ")";
-    }
+    onRefresh?.();
 
-    toast.success(summary);
+    if (errors.length === 0) {
+      let summary = (t("setup.imported") || "Project setup imported").replace(
+        "{n}",
+        String(importData.categories.length + importData.customColumns.length)
+      );
+      if (importData.currency || importData.columnHeaders) {
+        summary += " (" + [
+          importData.currency ? t("proj.currency") || "Currency" : null,
+          importData.columnHeaders ? t("admin.columnHeaders") || "Headers" : null
+        ].filter(Boolean).join(", ") + ")";
+      }
+
+      toast.success(summary);
+    }
   };
 
   return (
