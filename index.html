@@ -42,8 +42,21 @@
         try {
           const theme = localStorage.getItem('theme');
           const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
-          if (theme === 'dark' || (!theme && supportDarkMode)) {
+          const isDark = theme === 'dark' || (theme !== 'light' && supportDarkMode);
+          
+          if (isDark) {
             document.documentElement.classList.add('dark');
+          }
+          
+          // Update theme-color meta tag immediately to avoid status bar mismatch on iOS
+          const themeColor = isDark ? "#121212" : "#f8fafc";
+          const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+          metaTags.forEach(tag => tag.setAttribute('content', themeColor));
+          
+          // Update apple-mobile-web-app-status-bar-style
+          const statusMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+          if (statusMeta) {
+            statusMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
           }
         } catch (e) {}
       })();

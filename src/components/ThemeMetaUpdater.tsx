@@ -25,15 +25,34 @@ export const ThemeMetaUpdater = () => {
   const [isReloading, setIsReloading] = useState(false);
 
   useEffect(() => {
-    // Skip on initial mount - don't reload when app first loads
-    if (isInitialMountRef.current) {
-      isInitialMountRef.current = false;
-      previousThemeRef.current = theme === "system" ? systemTheme : theme;
-      return;
-    }
-
     // Determine the actual theme being used
     const currentTheme = theme === "system" ? systemTheme : theme;
+
+    // Map theme to background color (matching CSS --background values)
+    // Light: 210 20% 98% -> #f8fafc
+    // Dark: 220 20% 7% -> #121212
+    const themeColor = currentTheme === "dark" ? "#121212" : "#f8fafc";
+
+    // Update theme-color meta tag (works on non-iOS browsers)
+    const existingThemeColorTags = document.querySelectorAll('meta[name="theme-color"]');
+    existingThemeColorTags.forEach(tag => tag.setAttribute("content", themeColor));
+
+    // Update apple-mobile-web-app-status-bar-style meta tag
+    const statusMetaTag = document.querySelector(
+      'meta[name="apple-mobile-web-app-status-bar-style"]'
+    );
+
+    if (statusMetaTag) {
+      const statusBarStyle = currentTheme === "dark" ? "black-translucent" : "default";
+      statusMetaTag.setAttribute("content", statusBarStyle);
+    }
+
+    // Skip reload logic on initial mount - don't reload when app first loads
+    if (isInitialMountRef.current) {
+      isInitialMountRef.current = false;
+      previousThemeRef.current = currentTheme;
+      return;
+    }
 
     // Skip if theme hasn't actually changed
     if (currentTheme === previousThemeRef.current) {
@@ -46,34 +65,10 @@ export const ThemeMetaUpdater = () => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.userAgent.includes("Mac") && "ontouchend" in document);
 
-    // Map theme to background color (matching CSS --background values)
-    // Light: 210 20% 98% -> #f8fafc
-    // Dark: 220 20% 7% -> #121212
-    const themeColor = currentTheme === "dark" ? "#121212" : "#f8fafc";
-
-    // Update theme-color meta tag (works on non-iOS browsers)
-    const existingThemeColorTags = document.querySelectorAll('meta[name="theme-color"]');
-    existingThemeColorTags.forEach(tag => tag.remove());
-
-    const metaTag = document.createElement("meta");
-    metaTag.setAttribute("name", "theme-color");
-    metaTag.setAttribute("content", themeColor);
-    document.head.appendChild(metaTag);
-
-    // On iOS, we need to reload the page to update the status bar
+    // On iOS, we need to reload the page to update the status bar color
     if (isIOS) {
       // Show loading spinner
       setIsReloading(true);
-
-      // Update apple-mobile-web-app-status-bar-style meta tag
-      const statusMetaTag = document.querySelector(
-        'meta[name="apple-mobile-web-app-status-bar-style"]'
-      );
-
-      if (statusMetaTag) {
-        const statusBarStyle = currentTheme === "dark" ? "black-translucent" : "default";
-        statusMetaTag.setAttribute("content", statusBarStyle);
-      }
 
       // Reload the page after a short delay to allow UI to update
       // next-themes automatically saves theme to localStorage, so it will be preserved

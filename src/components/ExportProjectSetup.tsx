@@ -17,6 +17,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   categories: Category[];
@@ -67,6 +73,7 @@ const ExportProjectSetup = ({
 }: Props) => {
   const { t } = useI18n();
   const { isStandalone } = useAuth();
+  const isMobile = useIsMobile();
   const [importing, setImporting] = useState(false);
   const [useSample, setUseSample] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -248,25 +255,26 @@ const ExportProjectSetup = ({
       const categoryMap = new Map<string, string>(); // (code, name) -> id
       const getCategoryKey = (code?: string, name?: string) => `${code || ""}::${name || ""}`;
       
-      // Import categories - Pass 1: Insert all categories
-      for (const cat of importData.categories) {
-        const { data, error } = await supabase
-          .from("project_categories")
-          .insert({
-            project_id: projectId,
-            name: cat.name,
-            code: cat.code,
-            icon: cat.icon,
-            sort_order: cat.sort_order,
-          })
-          .select()
-          .single();
+      // Import categories - Pass 1: Insert all categories in batch
+      const categoryPayloads = importData.categories.map(cat => ({
+        project_id: projectId,
+        name: cat.name,
+        code: cat.code,
+        icon: cat.icon,
+        sort_order: cat.sort_order,
+      }));
+
+      const { data: insertedCats, error: batchError } = await supabase
+        .from("project_categories")
+        .insert(categoryPayloads)
+        .select();
           
-        if (error) {
-          errors.push(`${t("admin.categories")}: ${cat.name} (${error.message})`);
-        } else if (data) {
-          categoryMap.set(getCategoryKey(cat.code, cat.name), data.id);
-        }
+      if (batchError) {
+        errors.push(`${t("admin.categories")}: ${batchError.message}`);
+      } else if (insertedCats) {
+        insertedCats.forEach((row: any) => {
+          categoryMap.set(getCategoryKey(row.code, row.name), row.id);
+        });
       }
       
       // Import categories - Pass 2: Set parent_id
@@ -287,23 +295,24 @@ const ExportProjectSetup = ({
         }
       }
 
-      // Import custom columns
-      for (const col of importData.customColumns) {
-        const { error } = await supabase
-          .from("custom_columns")
-          .insert({
-            project_id: projectId,
-            name: col.name,
-            column_type: col.column_type,
-            masked: col.masked,
-            required: col.required,
-            sort_order: col.sort_order,
-            suggestions: col.suggestions,
-            suggestion_colors: col.suggestion_colors,
-          });
-        if (error) {
-          errors.push(`${t("admin.customColumns")}: ${col.name} (${error.message})`);
-        }
+      // Import custom columns in batch
+      const columnPayloads = importData.customColumns.map(col => ({
+        project_id: projectId,
+        name: col.name,
+        column_type: col.column_type,
+        masked: col.masked,
+        required: col.required,
+        sort_order: col.sort_order,
+        suggestions: col.suggestions,
+        suggestion_colors: col.suggestion_colors,
+      }));
+
+      const { error: colError } = await supabase
+        .from("custom_columns")
+        .insert(columnPayloads);
+
+      if (colError) {
+        errors.push(`${t("admin.customColumns")}: ${colError.message}`);
       }
 
       // Import currency if provided
@@ -362,7 +371,7 @@ const ExportProjectSetup = ({
     <div className="space-y-4">
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={handleExport} className="flex-1">
-          <Download className="h-4 w-4 mr-2" />
+          <Upload className="h-4 w-4 mr-2" />
           {t("setup.export") || "Export"}
         </Button>
         <Button
@@ -372,7 +381,7 @@ const ExportProjectSetup = ({
           disabled={importing}
           className="flex-1 transition-all"
         >
-          {useSample ? <Sparkles className="h-4 w-4 mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+          {useSample ? <Sparkles className="h-4 w-4 mr-2" /> : <Download className="h-4 w-4 mr-2" />}
           {importing 
             ? t("setup.importing") || "Importing..." 
             : useSample 
@@ -392,16 +401,29 @@ const ExportProjectSetup = ({
             {t("setup.useSample") || "Use Demo Project Setup"}
           </Label>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-[200px] text-xs">
-              <p>{t("setup.useSampleHelp")}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {isMobile ? (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 p-0">
+                <Info className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="max-w-[250px] text-xs p-3" side="top" align="end">
+              <p>{t("setup.useSampleHelp") || "Imports a predefined church finance setup (EUR, Korean headers, common categories) for a quick start."}</p>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[200px] text-xs">
+                <p>{t("setup.useSampleHelp") || "Imports a predefined church finance setup (EUR, Korean headers, common categories) for a quick start."}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       <input
