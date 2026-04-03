@@ -231,10 +231,18 @@ const handleTransferOwnership = async (newOwnerId: string) => {
 
   const handleQuotaChange = () => {
     const val = parseFloat(quotaInput);
+    const MAX_GB = 100;
+
     if (isNaN(val) || val <= 0) {
       toast.error(t("admin.invalidQuota"));
       return;
     }
+    
+    if (val > MAX_GB) {
+      toast.error(t("admin.invalidQuota")); // Or a more specific message if available
+      return;
+    }
+
     const bytes = val * 1024 * 1024 * 1024;
     setStandaloneQuota(bytes);
     localStorage.setItem("standalone-quota-gb", val.toString());

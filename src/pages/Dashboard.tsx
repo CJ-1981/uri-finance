@@ -259,16 +259,15 @@ const Dashboard = () => {
   const goToCash = useCallback(() => setView("cash"), []);
   const goToFile = useCallback(() => setView("files"), []);
 
-  // Open period dropdown with '4'
+  // Open period dropdown with '5'
   const openPeriodSelector = useCallback(() => {
     periodSelectorRef.current?.open();
   }, []);
 
-  // Open category dropdown with '5'
+  // Open category dropdown with '6'
   const openCategorySelector = useCallback(() => {
     categorySelectorRef.current?.open();
   }, []);
-
   useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
   useKeyboardShortcut("tabList", goToList, !!activeProject && noModalOpen);
   useKeyboardShortcut("tabCharts", goToCharts, !!activeProject && noModalOpen);

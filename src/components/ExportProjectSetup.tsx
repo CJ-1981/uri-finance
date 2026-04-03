@@ -8,6 +8,7 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
 import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
+import { Project } from "@/hooks/useProjects";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -116,20 +117,16 @@ const ExportProjectSetup = ({
   };
 
   const handleImportClick = async () => {
-    console.log("[ExportProjectSetup] Import button clicked. useSample:", useSample);
     if (useSample) {
       setImporting(true);
       try {
-        console.log("[ExportProjectSetup] Fetching demo-project-setup.json...");
         const response = await fetch("/demo-project-setup.json");
         if (!response.ok) {
           throw new Error(`Failed to fetch demo setup: ${response.status} ${response.statusText}`);
         }
         const demoData = await response.json();
-        console.log("[ExportProjectSetup] Demo data fetched successfully. Performing import...");
         await performImport(demoData);
       } catch (err) {
-        console.error("[ExportProjectSetup] Demo import failed:", err);
         toast.error("Failed to import demo project setup: " + (err instanceof Error ? err.message : String(err)));
       } finally {
         setImporting(false);
@@ -150,7 +147,7 @@ const ExportProjectSetup = ({
       await performImport(importData);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      toast.error((t("setup.importError") || "Failed to import project setup") + errorMessage);
+      toast.error(`${t("setup.importError") || "Failed to import project setup"}: ${errorMessage}`);
     } finally {
       setImporting(false);
       if (fileInputRef.current) {
@@ -222,12 +219,11 @@ const ExportProjectSetup = ({
       localStorage.setItem(LOCAL_COLUMNS_KEY, JSON.stringify(processedColumns));
 
       // Update project currency and column headers
-      const localProjects = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
-      const updatedProjects = localProjects.map((p: any) => {
+      const localProjects: Project[] = JSON.parse(localStorage.getItem(LOCAL_PROJECTS_KEY) || "[]");
+      const updatedProjects = localProjects.map((p) => {
         if (p.id === projectId) {
-          const updates: any = {};
+          const updates: Partial<Project> = {};
           if (importData.currency) updates.currency = importData.currency.toUpperCase();
-          if (importData.columnHeaders) updates.column_headers = importData.columnHeaders;
           return { ...p, ...updates };
         }
         return p;
@@ -235,10 +231,9 @@ const ExportProjectSetup = ({
       localStorage.setItem(LOCAL_PROJECTS_KEY, JSON.stringify(updatedProjects));
 
       // Update active project cache if it's the current one
-      const activeProj = JSON.parse(localStorage.getItem(ACTIVE_PROJECT_CACHE_KEY) || "null");
+      const activeProj: Project | null = JSON.parse(localStorage.getItem(ACTIVE_PROJECT_CACHE_KEY) || "null");
       if (activeProj && activeProj.id === projectId) {
         if (importData.currency) activeProj.currency = importData.currency.toUpperCase();
-        if (importData.columnHeaders) activeProj.column_headers = importData.columnHeaders;
         localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(activeProj));
       }
     } else {
@@ -351,7 +346,7 @@ const ExportProjectSetup = ({
     <div className="space-y-4">
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={handleExport} className="flex-1">
-          <Upload className="h-4 w-4 mr-2" />
+          <Download className="h-4 w-4 mr-2" />
           {t("setup.export") || "Export"}
         </Button>
         <Button
@@ -361,7 +356,7 @@ const ExportProjectSetup = ({
           disabled={importing}
           className="flex-1 transition-all"
         >
-          {useSample ? <Sparkles className="h-4 w-4 mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+          {useSample ? <Sparkles className="h-4 w-4 mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
           {importing 
             ? t("setup.importing") || "Importing..." 
             : useSample 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useImperativeHandle, forwardRef, useRef, useEffect } from "react";
 import { startOfDay, subDays, subMonths, parseISO } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDate as sharedFormatDate } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/hooks/useI18n";
@@ -54,13 +54,8 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
   ], [t]);
 
   const formatDate = useCallback((d: Date | undefined) => {
-    if (!d) return "...";
-    if (locale === "ko") {
-      return `${d.getMonth() + 1}월 ${d.getDate()}일`;
-    }
-    const monthName = monthNames[d.getMonth()].substring(0, 3);
-    return `${monthName} ${d.getDate()}`;
-  }, [locale, monthNames]);
+    return sharedFormatDate(d, locale);
+  }, [locale]);
 
   // Update displayedYear, displayedMonth, and reset pickers when calendar opens
   useEffect(() => {

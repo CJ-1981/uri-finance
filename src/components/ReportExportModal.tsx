@@ -20,6 +20,7 @@ import { captureCharts, captureElementAtWidth, CAPTURE_WIDTH } from "@/lib/chart
 import { generatePdfReport } from "@/lib/pdfGenerator";
 import { generateMarkdownReport } from "@/lib/markdownGenerator";
 import { format } from "date-fns";
+import { formatDate } from "@/lib/utils";
 import { PeriodKey, DateRange, getStartDate } from "@/components/PeriodSelector";
 
 interface ChartSelection {
@@ -48,28 +49,20 @@ function getPeriodLabel(period: PeriodKey, customRange: DateRange, t: (k: string
   const pLabel = t(`period.${period}`);
   if (period === "all") return pLabel;
 
-  const f = (d: Date | undefined) => {
-    if (!d) return "...";
-    if (locale === "ko") {
-      return `${d.getMonth() + 1}월 ${d.getDate()}일`;
-    }
-    return format(d, "MMM d");
-  };
-
   let range = "";
   if (period === "today") {
-    range = f(new Date());
+    range = formatDate(new Date(), locale);
   } else if (period === "custom") {
     if (customRange.from && customRange.to && 
         customRange.from.getTime() === customRange.to.getTime()) {
-      range = f(customRange.from);
+      range = formatDate(customRange.from, locale);
     } else {
-      range = `${f(customRange.from || undefined)} - ${f(customRange.to || undefined)}`;
+      range = `${formatDate(customRange.from || undefined, locale)} - ${formatDate(customRange.to || undefined, locale)}`;
     }
   } else {
     const start = getStartDate(period);
     const end = new Date();
-    range = `${f(start)} - ${f(end)}`;
+    range = `${formatDate(start, locale)} - ${formatDate(end, locale)}`;
   }
 
   return `${pLabel} (${range})`;
@@ -313,6 +306,7 @@ export default function ReportExportModal({
     customRange,
     summaryData,
     t,
+    locale,
     onOpenChange,
   ]);
 

@@ -26,6 +26,7 @@ test.describe('Standalone Mode Screenshots', () => {
         category: "식비",
         description: "마트 장보기",
         transaction_date: new Date().toISOString().split('T')[0],
+        currency: "KRW",
         created_at: new Date().toISOString()
       },
       {
@@ -36,6 +37,7 @@ test.describe('Standalone Mode Screenshots', () => {
         category: "교통",
         description: "주유비",
         transaction_date: new Date().toISOString().split('T')[0],
+        currency: "KRW",
         created_at: new Date().toISOString()
       },
       {
@@ -46,6 +48,7 @@ test.describe('Standalone Mode Screenshots', () => {
         category: "월급",
         description: "3월 급여",
         transaction_date: new Date().toISOString().split('T')[0],
+        currency: "KRW",
         created_at: new Date().toISOString()
       }
     ];

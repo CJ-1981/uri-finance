@@ -737,4 +737,4 @@ COMMENT ON TABLE public.project_files IS 'Stores metadata for files uploaded to 
 COMMENT ON COLUMN public.project_files.storage_path IS 'Path in Supabase Storage bucket (format: projects/{projectId}/files/{fileId}{ext})';
 COMMENT ON COLUMN public.project_files.file_size IS 'File size in bytes';
 COMMENT ON CONSTRAINT storage_path_bounded_to_project ON public.project_files IS 'Ensures storage_path is scoped to project_id';
-COMMENT ON FUNCTION public.get_storage_stats(UUID) IS 'Returns storage statistics for a project including file counts, sizes, and recent uploads';
+COMMENT ON FUNCTION public.get_storage_stats(TEXT) IS 'Returns storage statistics for a project including file counts, sizes, and recent uploads';
