@@ -1,1 +1,1 @@
-ALTER TABLE public.transactions ADD COLUMN currency text NOT NULL DEFAULT 'USD';
+ALTER TABLE public.transactions ADD COLUMN currency text NOT NULL DEFAULT 'EUR';

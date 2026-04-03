@@ -150,7 +150,7 @@ const Dashboard = () => {
     return result;
   }, [transactions, period, customRange, selectedCategoryId, categories]);
 
-  const projectCurrency = activeProject?.currency || "USD";
+  const projectCurrency = activeProject?.currency || "EUR";
 
   // Group filtered transactions by currency
   const currencyTotals = useMemo(() => {
@@ -259,16 +259,15 @@ const Dashboard = () => {
   const goToCash = useCallback(() => setView("cash"), []);
   const goToFile = useCallback(() => setView("files"), []);
 
-  // Open period dropdown with '4'
+  // Open period dropdown with '5'
   const openPeriodSelector = useCallback(() => {
     periodSelectorRef.current?.open();
   }, []);
 
-  // Open category dropdown with '5'
+  // Open category dropdown with '6'
   const openCategorySelector = useCallback(() => {
     categorySelectorRef.current?.open();
   }, []);
-
   useKeyboardShortcut("addTransaction", openAddTx, !!activeProject && !isViewer && noModalOpen, "addTransactionAlt");
   useKeyboardShortcut("tabList", goToList, !!activeProject && noModalOpen);
   useKeyboardShortcut("tabCharts", goToCharts, !!activeProject && noModalOpen);
@@ -514,7 +513,6 @@ const Dashboard = () => {
                 <Calculator className="h-4 w-4 shrink-0" />
                 <span className={view === "cash" ? "inline" : "hidden sm:inline"}>{t("cash.title")}</span>
               </button>
-              {!isStandalone && (
               <button
                 onClick={() => setView("files")}
                 data-testid="view-files"
@@ -525,7 +523,6 @@ const Dashboard = () => {
                 <FileText className="h-4 w-4 shrink-0" />
                 <span className={view === "files" ? "inline" : "hidden sm:inline"}>{t("files.title")}</span>
               </button>
-              )}
             </div>
 
             {/* Content */}
@@ -587,16 +584,12 @@ const Dashboard = () => {
               </div>
             ) : view === "cash" ? (
               <CashCalculator currency={projectCurrency} targetAmount={totalIncome} />
-            ) : !isStandalone ? (
+            ) : (
               <FileManager
                 projectId={activeProject.id}
                 canDelete={!isViewer && (isOwner || effectiveRole === "admin")}
                 onTransactionClick={handleTransactionClickFromFile}
               />
-            ) : (
-              <div className="py-20 text-center">
-                <p className="text-sm text-muted-foreground">{t("dash.standaloneFilesNotice")}</p>
-              </div>
             )}
 
             {/* FAB - hidden for viewers */}

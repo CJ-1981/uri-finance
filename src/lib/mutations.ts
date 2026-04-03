@@ -18,7 +18,7 @@ export const mutationFunctions = {
         description: tx.description || null,
         transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
         custom_values: tx.custom_values || {},
-        currency: tx.currency || "USD",
+        currency: tx.currency || "EUR",
         created_at: new Date().toISOString(),
         deleted_at: null,
       };
@@ -36,7 +36,7 @@ export const mutationFunctions = {
       description: tx.description || null,
       transaction_date: tx.transaction_date || format(new Date(), "yyyy-MM-dd"),
       custom_values: tx.custom_values || {},
-      currency: tx.currency || "USD",
+      currency: tx.currency || "EUR",
     });
     if (error) throw error;
     return tx.id;

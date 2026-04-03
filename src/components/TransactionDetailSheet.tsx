@@ -60,7 +60,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
-  const [currency, setCurrency] = useState(projectCurrency || "USD");
+  const [currency, setCurrency] = useState(projectCurrency || "EUR");
   const [isCustomCurrency, setIsCustomCurrency] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
@@ -106,7 +106,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
     setCategory(tx.category);
     setDescription(tx.description || "");
     setDate(tx.transaction_date);
-    setCurrency(tx.currency || "USD");
+    setCurrency(tx.currency || "EUR");
     setIsCustomCurrency(!!tx.currency && !CURRENCIES.includes(tx.currency));
     const cv: Record<string, string> = {};
     if (tx.custom_values) {
@@ -548,7 +548,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                     onClick={() => {
                       setIsCustomCurrency(false);
                       if (!CURRENCIES.includes(currency)) {
-                        setCurrency(projectCurrency || "USD");
+                        setCurrency(projectCurrency || "EUR");
                       }
                     }}
                   >

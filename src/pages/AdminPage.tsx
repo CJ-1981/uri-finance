@@ -18,13 +18,20 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon, Eye, Loader2, HardDrive } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ArrowLeft, ShieldCheck, Check, Trash2, Ban, Plus, Copy, UserMinus, Database, Shield, Crown, EyeOff, Archive, CalendarIcon, Eye, Loader2, HardDrive, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parse } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 import { UserRole } from "@/hooks/useUserRole";
+import { get } from "idb-keyval";
 
 const AdminPage = () => {
   const { user, isStandalone } = useAuth();
@@ -36,7 +43,8 @@ const AdminPage = () => {
   const { t } = useI18n();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [currency, setCurrency] = useState(activeProject?.currency || "USD");
+  const [currency, setCurrency] = useState(activeProject?.currency || "EUR");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Sync currency when activeProject updates
   useEffect(() => {
@@ -61,6 +69,28 @@ const AdminPage = () => {
     largest_file: { file_name: string; file_size: number; file_size_pretty: string; file_type: string } | null;
     recent_files: Array<{ id: string; file_name: string; file_size: number; file_type: string; uploaded_at: string }>;
   } | null>(null);
+  const [localStorageStats, setLocalStorageStats] = useState<{
+    usage: number;
+    quota: number;
+    usagePretty: string;
+    quotaPretty: string;
+    percent: number;
+  } | null>(null);
+  const [standaloneStats, setStandaloneStats] = useState<{
+    projects: number;
+    transactions: number;
+    categories: number;
+    files: number;
+    filesSize: number;
+    columns: number;
+  } | null>(null);
+  const [standaloneQuota, setStandaloneQuota] = useState<number>(() => {
+    const stored = localStorage.getItem("standalone-quota-gb");
+    const parsed = stored ? parseFloat(stored) : NaN;
+    const defaultQuota = 5 * 1024 * 1024 * 1024;
+    return isFinite(parsed) && parsed > 0 ? parsed * 1024 * 1024 * 1024 : defaultQuota;
+  });
+  const [quotaInput, setQuotaInput] = useState<string>((standaloneQuota / (1024 * 1024 * 1024)).toString());
   const [storageLoading, setStorageLoading] = useState(false);
   const [archiveFrom, setArchiveFrom] = useState("");
   const [archiveTo, setArchiveTo] = useState("");
@@ -88,10 +118,71 @@ const AdminPage = () => {
   }, [isOwner, isStandalone]);
 
   useEffect(() => {
+    if (!isStandalone || !activeProject?.id) return;
+
+    const controller = new AbortController();
+
+    const calculateStandaloneStats = async () => {
+      try {
+        const localProjects = JSON.parse(localStorage.getItem("local_projects") || "[]");
+        const localTransactions = JSON.parse(localStorage.getItem(`local_transactions_${activeProject.id}`) || "[]");
+        const localCategories = JSON.parse(localStorage.getItem(`local_categories_${activeProject.id}`) || "[]");
+        const localColumns = JSON.parse(localStorage.getItem(`local_custom_columns_${activeProject.id}`) || "[]");
+        const localFiles: any[] = await get(`files-metadata-${activeProject.id}`) || [];
+
+        if (controller.signal.aborted) return;
+
+        setStandaloneStats({
+          projects: localProjects.length,
+          transactions: localTransactions.length,
+          categories: localCategories.length,
+          files: localFiles.length,
+          filesSize: localFiles.reduce((sum, f) => sum + (f.file_size || 0), 0),
+          columns: localColumns.length
+        });
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to calculate standalone stats:", err);
+        }
+      }
+    };
+
+    calculateStandaloneStats();
+    return () => controller.abort();
+  }, [isStandalone, activeProject?.id, standaloneQuota, refreshTrigger, categories, customColumns, projects]);
+
+  useEffect(() => {
+    if (!isStandalone) return;
+    
+    const fetchLocalEstimate = async () => {
+      if (navigator.storage && navigator.storage.estimate) {
+        try {
+          const estimate = await navigator.storage.estimate();
+          const usage = estimate.usage || 0;
+          const quota = estimate.quota || 0;
+          
+          // Use user-defined quota if smaller than browser quota, otherwise use browser quota
+          const effectiveQuota = Math.min(quota, standaloneQuota);
+          
+          setLocalStorageStats({
+            usage,
+            quota: effectiveQuota,
+            usagePretty: formatBytes(usage),
+            quotaPretty: formatBytes(effectiveQuota),
+            percent: effectiveQuota > 0 ? (usage / effectiveQuota) * 100 : 0
+          });
+        } catch (err) {
+          console.error("Failed to fetch storage estimate:", err);
+        }
+      }
+    };
+    
+    fetchLocalEstimate();
+  }, [isStandalone, standaloneQuota]);
+
+  useEffect(() => {
     if (!activeProject?.id || isStandalone) return;
     const fetchStorageStats = async () => {
-      console.log('[AdminPage] Fetching storage stats for project:', activeProject.id);
-      console.log('[AdminPage] Project ID type:', typeof activeProject.id);
       setStorageLoading(true);
 
       const { data, error } = await supabase.rpc("get_storage_stats", { p_project_id: activeProject.id });
@@ -100,13 +191,7 @@ const AdminPage = () => {
 
       if (error) {
         console.error('[AdminPage] Storage stats error:', error);
-        console.error('[AdminPage] Error name:', error.name);
-        console.error('[AdminPage] Error message:', error.message);
-        console.error('[AdminPage] Error details:', error);
-        console.error('[AdminPage] Error hint:', error.hint);
-        console.error('[AdminPage] Full error object:', JSON.stringify(error, null, 2));
       } else {
-        console.log('[AdminPage] Storage stats success:', data);
         setStorageStats(data);
       }
     };
@@ -140,19 +225,38 @@ const AdminPage = () => {
     if (ok) toast.success(t("admin.promoted"));
     else toast.error(t("admin.promoteFailed"));
   };
+const handleTransferOwnership = async (newOwnerId: string) => {
+  if (!user || !activeProject) return;
+  const confirmed = window.confirm(t("admin.transferConfirm"));
+  if (!confirmed) return;
+  const ok = await transferOwnership(newOwnerId, user.id);
+  if (ok) {
+    toast.success(t("admin.transferred"));
+    await fetchProjects();
+    navigate("/");
+  } else {
+    toast.error(t("admin.transferFailed"));
+  }
+};
 
-  const handleTransferOwnership = async (newOwnerId: string) => {
-    if (!user || !activeProject) return;
-    const confirmed = window.confirm(t("admin.transferConfirm"));
-    if (!confirmed) return;
-    const ok = await transferOwnership(newOwnerId, user.id);
-    if (ok) {
-      toast.success(t("admin.transferred"));
-      await fetchProjects();
-      navigate("/");
-    } else {
-      toast.error(t("admin.transferFailed"));
+  const handleQuotaChange = () => {
+    const val = parseFloat(quotaInput);
+    const MAX_GB = 100;
+
+    if (isNaN(val) || val <= 0) {
+      toast.error(t("admin.invalidQuota"));
+      return;
     }
+    
+    if (val > MAX_GB) {
+      toast.error(t("admin.invalidQuota")); // Or a more specific message if available
+      return;
+    }
+
+    const bytes = val * 1024 * 1024 * 1024;
+    setStandaloneQuota(bytes);
+    localStorage.setItem("standalone-quota-gb", val.toString());
+    toast.success(t("admin.quotaUpdated").replace("{val}", val.toString()));
   };
 
   const handleCreateInvite = async () => {
@@ -278,7 +382,7 @@ const AdminPage = () => {
 
   if (loading && !activeProject) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20 text-center animate-fade-in" data-testid="admin-page">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="mt-4 text-sm text-muted-foreground">{t("global.loading")}</p>
       </div>
@@ -287,7 +391,7 @@ const AdminPage = () => {
 
   if (!activeProject) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center" data-testid="admin-page">
         <p className="text-muted-foreground">{t("admin.noProject")}</p>
       </div>
     );
@@ -295,7 +399,7 @@ const AdminPage = () => {
 
   if (!canAccess) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4" data-testid="admin-page">
         <ShieldCheck className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground text-sm">{t("admin.ownerOnly")}</p>
         <Button variant="outline" onClick={() => navigate("/")}>
@@ -718,6 +822,8 @@ const AdminPage = () => {
               projectId={activeProject.id}
               onCategoriesRefresh={fetchCategories}
               onColumnsRefresh={fetchColumns}
+              onProjectRefresh={fetchProjects}
+              onRefresh={() => setRefreshTrigger(prev => prev + 1)}
             />
           </div>
         </section>
@@ -749,7 +855,7 @@ const AdminPage = () => {
                 onChange={(e) => setCurrency(e.target.value)}
                 className="flex-1 bg-background text-sm uppercase"
                 maxLength={5}
-                placeholder="USD"
+                placeholder="EUR"
               />
               <Button
                 size="sm"
@@ -771,6 +877,122 @@ const AdminPage = () => {
             </Button>
           </div>
         </section>
+
+        {/* Local Storage Stats - Only in standalone mode */}
+        {isStandalone && localStorageStats && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              {t("admin.storageStats")}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {t("admin.localStorageDesc")}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border/50 bg-card p-4 space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  {t("admin.storageUsed")}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-[200px] text-[10px]">
+                        <p>{t("admin.originStorageNote") || "This represents the total storage used by the entire application on your device, including all projects and browser overhead."}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+                <span className="font-mono text-foreground">{localStorageStats.usagePretty}</span>
+              </div>
+              <Progress
+                value={Math.min(localStorageStats.percent, 100)}
+                className="h-2"
+              />
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{localStorageStats.percent.toFixed(2)}%</span>
+                <span>{t("admin.storageQuota")}: {localStorageStats.quotaPretty}</span>
+              </div>
+            </div>
+
+            {standaloneStats && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-border/30">
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.dbTransactions")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Archive className="h-3 w-3 text-primary" />
+                    {standaloneStats.transactions}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.storageTotalFiles")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Database className="h-3 w-3 text-primary" />
+                    {standaloneStats.files}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("files.size")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5 font-mono text-[11px]">
+                    <HardDrive className="h-3 w-3 text-primary" />
+                    {formatBytes(standaloneStats.filesSize, 1)}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.categories")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Plus className="h-3 w-3 text-primary" />
+                    {standaloneStats.categories}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.customColumns")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Shield className="h-3 w-3 text-primary" />
+                    {standaloneStats.columns}
+                  </span>
+                </div>
+                <div className="p-2 bg-muted/20 rounded-lg space-y-1">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("admin.projects")}</span>
+                  <span className="text-sm font-semibold flex items-center gap-1.5">
+                    <Crown className="h-3 w-3 text-primary" />
+                    {standaloneStats.projects}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2 pt-2 border-t border-border/30">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("admin.changeQuota") || "Change Quota (GB)"}
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={quotaInput}
+                  onChange={(e) => setQuotaInput(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                <Button size="sm" variant="outline" className="h-8" onClick={handleQuotaChange}>
+                  <Check className="h-3.5 w-3.5 mr-1.5" />
+                  {t("admin.save") || "Save"}
+                </Button>
+              </div>
+            </div>
+            
+            <div className="p-3 bg-muted/30 rounded-lg">
+              <p className="text-xs text-muted-foreground leading-relaxed italic">
+                {t("admin.standaloneStorageNote")}
+              </p>
+            </div>
+          </div>
+        </section>
+        )}
 
         {/* Database Stats - NOT in standalone mode */}
         {!isStandalone && (

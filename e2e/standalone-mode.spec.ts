@@ -2,32 +2,25 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Standalone Mode", () => {
   test.beforeEach(async ({ page, context }) => {
-    // Clear all storage to start fresh
+    // Clear cookies
     await context.clearCookies();
-    await page.goto("/");
+    
+    // Go to auth page and clear everything ONCE
+    await page.goto("/auth");
     await page.evaluate(async () => {
       localStorage.clear();
-      sessionStorage.clear();
+      localStorage.setItem("app-locale", "en");
+      
       const databases = await window.indexedDB.databases();
-      await Promise.all(databases.map(db => {
+      for (const db of databases) {
         if (db.name) {
-          return new Promise((resolve, reject) => {
-            const req = window.indexedDB.deleteDatabase(db.name!);
-            req.onsuccess = resolve;
-            req.onerror = reject;
-            req.onblocked = () => reject(new Error('deleteDatabase blocked'));
-          });
+          window.indexedDB.deleteDatabase(db.name);
         }
-        return Promise.resolve();
-      }));
+      }
     });
+    
+    // Reload to ensure app starts with fresh state
     await page.reload();
-    // Ensure English
-    const langBtn = page.getByRole("button", { name: /한국어|EN/i });
-    const langText = await langBtn.textContent();
-    if (langText?.includes("한국어")) {
-      await langBtn.click();
-    }
   });
 
   test("should enable standalone mode and create a project", async ({ page }) => {
@@ -42,19 +35,22 @@ test.describe("Standalone Mode", () => {
     await expect(page).toHaveURL(/\/$/);
 
     // Should show get started section
-    await expect(page.getByText(/Create a project or join one/i)).toBeVisible();
+    await expect(page.getByText(/Create a local project to start tracking your finances/i)).toBeVisible();
 
     // Verify Join Project button is hidden
     await expect(page.getByRole("button", { name: /Join Project/i })).not.toBeVisible();
 
     // Create a new project
-    await page.getByRole("button", { name: /Create New/i }).click();
+    const createBtn = page.getByRole("button", { name: /Create New/i });
+    await expect(createBtn).toBeVisible();
+    await createBtn.click();
+    
     await page.getByPlaceholder(/e\.g\. Household Budget/i).fill("Standalone Project");
     await page.getByRole("button", { name: /Create Project/i }).click();
 
     // Verify project created
     await expect(page.getByText(/Project created locally!/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Standalone Project" })).toBeVisible();
+    await expect(page.getByText("Standalone Project").first()).toBeVisible();
 
     // Ensure switcher is closed (it should be, but let's be sure)
     await expect(page.locator("role=dialog")).not.toBeVisible();
@@ -70,7 +66,7 @@ test.describe("Standalone Mode", () => {
     await page.getByPlaceholder("0.00").fill("100");
     
     // Select category
-    const categoryTrigger = page.locator('button').filter({ has: page.locator('svg[data-lucide="tag"]') });
+    const categoryTrigger = page.getByTestId("add-transaction-form").getByTestId("category-selector-trigger");
     await expect(categoryTrigger).toBeVisible();
     await categoryTrigger.click();
     
@@ -78,7 +74,7 @@ test.describe("Standalone Mode", () => {
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Enter");
     
-    await page.getByRole("button", { name: /Add Transaction/i }).click();
+    await page.getByTestId("transaction-submit-button").click();
 
     // Verify transaction added
     await expect(page.getByText(/Transaction added!/i)).toBeVisible();
@@ -86,7 +82,7 @@ test.describe("Standalone Mode", () => {
 
     // Reload and check persistence
     await page.reload();
-    await expect(page.getByRole("button", { name: "Standalone Project" })).toBeVisible();
+    await expect(page.getByText("Standalone Project").first()).toBeVisible();
     await expect(page.getByText("100.00").first()).toBeVisible();
   });
 

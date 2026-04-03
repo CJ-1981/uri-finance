@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { get, set, update, del } from 'idb-keyval';
 import {
   ProjectFile,
   MAX_FILE_SIZE,
@@ -119,7 +120,10 @@ export const useFiles = (projectId: string) => {
   } = useQuery({
     queryKey: ['project-files', projectId],
     queryFn: async () => {
-      if (isStandalone) return [];
+      if (isStandalone) {
+        const localFiles = await get(`files-metadata-${projectId}`);
+        return (localFiles || []) as ProjectFile[];
+      }
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_project_files_with_email', {
         p_project_id: projectId,
       });
@@ -145,9 +149,6 @@ export const useFiles = (projectId: string) => {
   const uploadFileMutation = useMutation({
     mutationKey: ["uploadFile", projectId],
     mutationFn: async (params: { file: File; remark?: string; transactionId?: string }) => {
-      if (isStandalone) {
-        throw new Error(t("error.standaloneNotSupported"));
-      }
       const { file, remark = '', transactionId } = params;
       let resolvedMime = file.type;
       if (!resolvedMime || resolvedMime === '') {
@@ -164,9 +165,35 @@ export const useFiles = (projectId: string) => {
 
       if (!isFileTypeAllowed(fileForValidation)) throw new Error(t('files.invalidFileType') || 'File type not allowed');
       if (fileToUpload.size > MAX_FILE_SIZE) throw new Error(t('files.sizeExceeds').replace('{size}', `${MAX_FILE_SIZE / (1024 * 1024)} MB`));
+
+      const fileId = crypto.randomUUID();
+
+      if (isStandalone) {
+        // Create local metadata
+        const newFileMetadata: ProjectFile = {
+          id: fileId,
+          project_id: projectId,
+          uploaded_by: 'standalone-user',
+          file_name: file.name,
+          file_type: resolvedMime,
+          file_size: fileToUpload.size,
+          storage_path: `standalone/${projectId}/${fileId}`,
+          remark: remark.trim() || null,
+          transaction_id: transactionId || null,
+          created_at: new Date().toISOString(),
+        };
+
+        // Store file content
+        await set(`file-content-${fileId}`, fileToUpload);
+
+        // Store metadata
+        await update(`files-metadata-${projectId}`, (old: any) => [newFileMetadata, ...(old || [])]);
+
+        return newFileMetadata;
+      }
+
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error(t('files.notAuthenticated') || 'User not authenticated');
-      const fileId = crypto.randomUUID();
       const ext = getFileExtension(file.name);
       const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
       const { error: uploadError } = await supabase.storage.from('project-files').upload(storagePath, fileToUpload, { cacheControl: '3600', upsert: false, contentType: resolvedMime });
@@ -195,9 +222,13 @@ export const useFiles = (projectId: string) => {
   });
 
   const downloadFileMutation = useMutation({
-    mutationKey: ["downloadFile", projectId],
-    mutationFn: async (file: ProjectFile): Promise<Blob> => {
-      if (isStandalone) throw new Error(t("error.standaloneDownloadsNotSupported"));
+    mutationKey: ["downloadFile"],
+    mutationFn: async (file: ProjectFile) => {
+      if (isStandalone) {
+        const localBlob = await get(`file-content-${file.id}`);
+        if (!localBlob) throw new Error(t('files.downloadFailed') || 'File not found in local storage');
+        return localBlob as Blob;
+      }
       const { data, error } = await supabase.storage.from('project-files').createSignedUrl(file.storage_path, SIGNED_URL_EXPIRY);
       if (error) throw new Error(`${t('files.downloadFailed') || 'Failed to generate download URL'}: ${error.message}`);
       setDownloadProgress(0);
@@ -235,7 +266,11 @@ export const useFiles = (projectId: string) => {
     mutationKey: ["deleteFile", projectId],
     mutationFn: async (fileId: string) => {
       if (isStandalone) {
-        throw new Error(t("error.standaloneNotSupported"));
+        // Remove content
+        await del(`file-content-${fileId}`);
+        // Remove metadata
+        await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => f.id !== fileId));
+        return;
       }
       const { data: fileData, error: fetchError } = await supabase.from('project_files').select('storage_path').eq('id', fileId).eq('project_id', projectId).single();
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
@@ -273,10 +308,23 @@ export const useFiles = (projectId: string) => {
   const updateFileMutation = useMutation({
     mutationKey: ["updateFile", projectId],
     mutationFn: async (params: { fileId: string; remark: string | null }) => {
-      if (isStandalone) {
-        throw new Error(t("error.standaloneNotSupported"));
-      }
       const { fileId, remark } = params;
+      if (isStandalone) {
+        let updatedFile: ProjectFile | null = null;
+        await update(`files-metadata-${projectId}`, (old: any) => {
+          const files = (old || []) as ProjectFile[];
+          const idx = files.findIndex(f => f.id === fileId);
+          if (idx !== -1) {
+            updatedFile = { ...files[idx], remark: remark?.trim() || null };
+            const newList = [...files];
+            newList[idx] = updatedFile;
+            return newList;
+          }
+          return files;
+        });
+        if (!updatedFile) throw new Error(t('files.fetchFailed') || 'File not found');
+        return updatedFile;
+      }
       const { data, error } = await supabase.from('project_files').update({ remark: remark?.trim() || null }).eq('id', fileId).eq('project_id', projectId).select().single();
       if (error) throw error;
       return data as ProjectFile;

@@ -9,7 +9,7 @@ CREATE TABLE public.projects (
   description TEXT,
   owner_id UUID NOT NULL,
   invite_code TEXT NOT NULL DEFAULT substr(md5(random()::text), 1, 8),
-  currency TEXT NOT NULL DEFAULT 'USD',
+  currency TEXT NOT NULL DEFAULT 'EUR',
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );

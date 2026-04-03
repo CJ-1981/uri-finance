@@ -99,6 +99,10 @@ const ShortcutSettings = ({ open, onOpenChange }: ShortcutSettingsProps) => {
               <label className="text-xs text-muted-foreground">{t("shortcut.tabCash")}</label>
               {renderKeyButton("tabCash", shortcuts.tabCash)}
             </div>
+            <div className="space-y-1">
+              <label className="text-xs text-muted-foreground">{t("shortcut.tabFiles")}</label>
+              {renderKeyButton("tabFiles", shortcuts.tabFiles)}
+            </div>
           </div>
 
           <div className="border-t border-border/50 pt-3 space-y-2">

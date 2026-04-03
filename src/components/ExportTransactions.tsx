@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Download, Import, FileSpreadsheet, FileText, AlertTriangle, CheckCircle2, X } from "lucide-react";
+import { Download, Import, FileSpreadsheet, FileText, AlertTriangle, CheckCircle2, X, ArrowUpDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
@@ -407,7 +407,7 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-            <Download className="h-4 w-4" />
+            <ArrowUpDown className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

@@ -15,6 +15,7 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 import { Transaction } from "@/hooks/useTransactions";
 import { useI18n } from "@/hooks/useI18n";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import AutoSuggestInput from "@/components/AutoSuggestInput";
 import ColoredBadge from "@/components/ColoredBadge";
@@ -50,6 +51,7 @@ interface Props {
 
 const AddTransactionSheet = ({ categories, customColumns, transactions, projectCurrency, externalOpen, onExternalOpenChange, onAdd, onUploadFile }: Props) => {
   const isOnline = useOnlineStatus();
+  const { isStandalone } = useAuth();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = externalOpen !== undefined ? externalOpen : internalOpen;
   const setOpen = (v: boolean) => {
@@ -61,7 +63,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [currency, setCurrency] = useState(projectCurrency || "USD");
+  const [currency, setCurrency] = useState(projectCurrency || "EUR");
   const [isCustomCurrency, setIsCustomCurrency] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [customValues, setCustomValues] = useState<Record<string, string>>(() => {
@@ -159,7 +161,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
       // SPEC-TRANSACTION-FILES: Upload pending files after transaction is created
       if (result && pendingFiles.length > 0 && onUploadFile) {
-        if (!isOnline) {
+        if (!isOnline && !isStandalone) {
           toast.warning(t("tx.offlineFilesWarning") || "You are offline. Transaction saved, but files will not be uploaded.");
           // DO NOT clear pendingFiles here, so they stay in the UI for retry
         } else {
@@ -458,7 +460,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
                     onClick={() => {
                       setIsCustomCurrency(false);
                       if (!CURRENCIES.includes(currency)) {
-                        setCurrency(projectCurrency || "USD");
+                        setCurrency(projectCurrency || "EUR");
                       }
                     }}
                   >

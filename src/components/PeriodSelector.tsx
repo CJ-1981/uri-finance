@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useImperativeHandle, forwardRef, useRef, useEffect } from "react";
 import { startOfDay, subDays, subMonths, parseISO } from "date-fns";
 import { CalendarIcon, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatDate as sharedFormatDate } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useI18n } from "@/hooks/useI18n";
@@ -27,7 +27,7 @@ interface Props {
 }
 
 const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeriodChange, customRange, onCustomRangeChange }, ref) => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectingStart, setSelectingStart] = useState(true);
@@ -52,6 +52,10 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
     t("calendar.november"),
     t("calendar.december"),
   ], [t]);
+
+  const formatDate = useCallback((d: Date | undefined) => {
+    return sharedFormatDate(d, locale);
+  }, [locale]);
 
   // Update displayedYear, displayedMonth, and reset pickers when calendar opens
   useEffect(() => {
@@ -93,37 +97,29 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
 
   const startDateLabel = useMemo(() => {
     if (customRange.from) {
-      const monthName = monthNames[customRange.from.getMonth()].substring(0, 3);
-      return `${monthName} ${customRange.from.getDate()}`;
+      return formatDate(customRange.from);
     }
     return t("period.start");
-  }, [customRange.from, t, monthNames]);
+  }, [customRange.from, t, formatDate]);
 
   const endDateLabel = useMemo(() => {
     if (customRange.to) {
-      const monthName = monthNames[customRange.to.getMonth()].substring(0, 3);
-      return `${monthName} ${customRange.to.getDate()}`;
+      return formatDate(customRange.to);
     }
     return t("period.end");
-  }, [customRange.to, t, monthNames]);
+  }, [customRange.to, t, formatDate]);
 
   const formatRange = useCallback((pKey: PeriodKey) => {
     if (pKey === "all") return "";
     
-    const f = (d: Date | undefined) => {
-      if (!d) return "...";
-      const monthName = monthNames[d.getMonth()].substring(0, 3);
-      return `${monthName} ${d.getDate()}`;
-    };
-
     if (pKey === "today") {
-      return f(new Date());
+      return formatDate(new Date());
     }
 
     if (pKey === "custom") {
       if (customRange.from && customRange.to && 
           customRange.from.getTime() === customRange.to.getTime()) {
-        return f(customRange.from);
+        return formatDate(customRange.from);
       }
       return `${startDateLabel} - ${endDateLabel}`;
     }
@@ -131,8 +127,8 @@ const PeriodSelector = forwardRef<PeriodSelectorHandle, Props>(({ period, onPeri
     const start = getStartDate(pKey);
     const end = new Date();
 
-    return `${f(start)} - ${f(end)}`;
-  }, [monthNames, startDateLabel, endDateLabel, customRange.from, customRange.to]);
+    return `${formatDate(start)} - ${formatDate(end)}`;
+  }, [formatDate, startDateLabel, endDateLabel, customRange.from, customRange.to]);
 
   const handleSelect = (key: PeriodKey) => {
     if (key === "custom") {
