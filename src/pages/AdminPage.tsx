@@ -85,7 +85,9 @@ const AdminPage = () => {
   } | null>(null);
   const [standaloneQuota, setStandaloneQuota] = useState<number>(() => {
     const stored = localStorage.getItem("standalone-quota-gb");
-    return stored ? Number(stored) * 1024 * 1024 * 1024 : 5 * 1024 * 1024 * 1024; // Default 5GB
+    const parsed = stored ? parseFloat(stored) : NaN;
+    const defaultQuota = 5 * 1024 * 1024 * 1024;
+    return isFinite(parsed) && parsed > 0 ? parsed * 1024 * 1024 * 1024 : defaultQuota;
   });
   const [quotaInput, setQuotaInput] = useState<string>((standaloneQuota / (1024 * 1024 * 1024)).toString());
   const [storageLoading, setStorageLoading] = useState(false);
@@ -117,6 +119,8 @@ const AdminPage = () => {
   useEffect(() => {
     if (!isStandalone || !activeProject?.id) return;
 
+    const controller = new AbortController();
+
     const calculateStandaloneStats = async () => {
       try {
         const localProjects = JSON.parse(localStorage.getItem("local_projects") || "[]");
@@ -124,6 +128,8 @@ const AdminPage = () => {
         const localCategories = JSON.parse(localStorage.getItem(`local_categories_${activeProject.id}`) || "[]");
         const localColumns = JSON.parse(localStorage.getItem(`local_custom_columns_${activeProject.id}`) || "[]");
         const localFiles: any[] = await get(`files-metadata-${activeProject.id}`) || [];
+
+        if (controller.signal.aborted) return;
 
         setStandaloneStats({
           projects: localProjects.length,
@@ -134,11 +140,14 @@ const AdminPage = () => {
           columns: localColumns.length
         });
       } catch (err) {
-        console.error("Failed to calculate standalone stats:", err);
+        if (!controller.signal.aborted) {
+          console.error("Failed to calculate standalone stats:", err);
+        }
       }
     };
 
     calculateStandaloneStats();
+    return () => controller.abort();
   }, [isStandalone, activeProject?.id]);
 
   useEffect(() => {
@@ -927,7 +936,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{t("files.size")}</span>
                   <span className="text-sm font-semibold flex items-center gap-1.5 font-mono text-[11px]">
                     <HardDrive className="h-3 w-3 text-primary" />
-                    {localStorageStats?.usagePretty ? formatBytes(standaloneStats.filesSize, 1) : "..."}
+                    {formatBytes(standaloneStats.filesSize, 1)}
                   </span>
                 </div>
                 <div className="p-2 bg-muted/20 rounded-lg space-y-1">

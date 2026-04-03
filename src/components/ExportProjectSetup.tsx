@@ -127,7 +127,7 @@ const ExportProjectSetup = ({
         const demoData = await response.json();
         await performImport(demoData);
       } catch (err) {
-        toast.error("Failed to import demo project setup: " + (err instanceof Error ? err.message : String(err)));
+        toast.error(`${t("setup.importError") || "Failed to import project setup"}: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
         setImporting(false);
       }
@@ -173,6 +173,8 @@ const ExportProjectSetup = ({
       const categoryMap = new Map<string, string>(); // (code, name) -> id
       const processedCategories: Category[] = [];
 
+      const getCategoryKey = (code?: string, name?: string) => `${code || ""}::${name || ""}`;
+
       // Pass 1: Create all categories with new IDs
       for (const cat of importData.categories) {
         const id = crypto.randomUUID();
@@ -186,16 +188,14 @@ const ExportProjectSetup = ({
           parent_id: null,
           created_at: new Date().toISOString(),
         });
-        const key = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
-        categoryMap.set(key, id);
+        categoryMap.set(getCategoryKey(cat.code, cat.name), id);
       }
 
       // Pass 2: Set parent_id
       for (let i = 0; i < importData.categories.length; i++) {
         const cat = importData.categories[i];
         if (cat.parent_code || cat.parent_name) {
-          const parentKey = Array.from(categoryMap.keys()).find(k => k.endsWith(`-${cat.parent_code || ""}-${cat.parent_name || ""}`));
-          const parentId = parentKey ? categoryMap.get(parentKey) : null;
+          const parentId = categoryMap.get(getCategoryKey(cat.parent_code, cat.parent_name));
           if (parentId) {
             processedCategories[i].parent_id = parentId;
           }
@@ -238,9 +238,11 @@ const ExportProjectSetup = ({
       }
     } else {
       // --- Supabase Mode Import ---
-      // Import categories - Pass 1: Insert all categories
       const categoryMap = new Map<string, string>(); // (code, name) -> id
+      const errors: string[] = [];
+      const getCategoryKey = (code?: string, name?: string) => `${code || ""}::${name || ""}`;
       
+      // Import categories - Pass 1: Insert all categories
       for (const cat of importData.categories) {
         const { data, error } = await supabase
           .from("project_categories")
@@ -255,26 +257,26 @@ const ExportProjectSetup = ({
           .single();
           
         if (error) {
-          console.error("Failed to import category:", cat.name, error);
+          errors.push(`${t("admin.categories")}: ${cat.name} (${error.message})`);
         } else if (data) {
-          const key = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
-          categoryMap.set(key, data.id);
+          categoryMap.set(getCategoryKey(cat.code, cat.name), data.id);
         }
       }
+      
       // Import categories - Pass 2: Set parent_id
       for (const cat of importData.categories) {
         if (cat.parent_code || cat.parent_name) {
-          const childKey = `${cat.parent_code || ""}-${cat.parent_name || ""}-${cat.code || ""}-${cat.name}`;
-          const childId = categoryMap.get(childKey);
-          
-          const parentKey = Array.from(categoryMap.keys()).find(k => k.endsWith(`-${cat.parent_code || ""}-${cat.parent_name || ""}`));
-          const parentId = parentKey ? categoryMap.get(parentKey) : null;
+          const childId = categoryMap.get(getCategoryKey(cat.code, cat.name));
+          const parentId = categoryMap.get(getCategoryKey(cat.parent_code, cat.parent_name));
           
           if (childId && parentId) {
-            await supabase
+            const { error } = await supabase
               .from("project_categories")
               .update({ parent_id: parentId })
               .eq("id", childId);
+            if (error) {
+              errors.push(`${t("admin.categories")} (parent): ${cat.name} (${error.message})`);
+            }
           }
         }
       }
@@ -294,30 +296,34 @@ const ExportProjectSetup = ({
             suggestion_colors: col.suggestion_colors,
           });
         if (error) {
-          console.error("Failed to import column:", col.name, error);
+          errors.push(`${t("admin.customColumns")}: ${col.name} (${error.message})`);
         }
       }
 
       // Import currency if provided
       if (importData.currency) {
-        const { error: currencyError } = await supabase
+        const { error } = await supabase
           .from("projects")
           .update({ currency: importData.currency.toUpperCase() })
           .eq("id", projectId);
-        if (currencyError) {
-          console.error("Failed to import currency:", currencyError);
+        if (error) {
+          errors.push(`${t("admin.currency")}: ${error.message}`);
         }
       }
 
       // Import column headers if provided
       if (importData.columnHeaders) {
-        const { error: headersError } = await supabase
+        const { error } = await supabase
           .from("projects")
           .update({ column_headers: importData.columnHeaders } as unknown as Record<string, unknown>)
           .eq("id", projectId);
-        if (headersError) {
-          console.error("Failed to import column headers:", headersError);
+        if (error) {
+          errors.push(`${t("admin.columnHeaders")}: ${error.message}`);
         }
+      }
+
+      if (errors.length > 0) {
+        toast.error(`${t("setup.importError") || "Import completed with errors"}: ${errors.slice(0, 3).join(", ")}${errors.length > 3 ? "..." : ""}`);
       }
     }
 

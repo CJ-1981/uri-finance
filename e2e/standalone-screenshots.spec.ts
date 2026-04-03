@@ -17,39 +17,48 @@ test.describe('Standalone Mode Screenshots', () => {
       created_at: new Date().toISOString()
     };
 
-    const mockTransactions: any[] = [
+    const mockTransactions: Transaction[] = [
       {
         id: "tx-1",
         project_id: projectId,
+        user_id: "standalone-user",
         amount: 50000,
         type: "income",
         category: "식비",
         description: "마트 장보기",
         transaction_date: new Date().toISOString().split('T')[0],
         currency: "KRW",
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        custom_values: {},
+        deleted_at: null
       },
       {
         id: "tx-2",
         project_id: projectId,
+        user_id: "standalone-user",
         amount: 15000,
         type: "expense",
         category: "교통",
         description: "주유비",
         transaction_date: new Date().toISOString().split('T')[0],
         currency: "KRW",
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        custom_values: {},
+        deleted_at: null
       },
       {
         id: "tx-3",
         project_id: projectId,
+        user_id: "standalone-user",
         amount: 1200000,
         type: "income",
         category: "월급",
         description: "3월 급여",
         transaction_date: new Date().toISOString().split('T')[0],
         currency: "KRW",
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        custom_values: {},
+        deleted_at: null
       }
     ];
 
@@ -104,8 +113,8 @@ test.describe('Standalone Mode Screenshots', () => {
     await page.goto('/');
     await page.waitForSelector('[data-testid="dashboard"]');
     // Open project switcher - using the button with FolderOpen icon
-    await page.locator('button:has(svg.lucide-folder-open)').first().click();
-    await page.waitForTimeout(1000);
+    await page.click('[data-testid="project-switcher-trigger"]');
+    await page.waitForSelector('[data-testid="project-switcher-content"]');
     await page.screenshot({
       path: 'docs/screenshots/standalone-project-switcher.png',
       fullPage: false,

@@ -137,11 +137,21 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title={active?.name || t("proj.selectProject")}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-muted-foreground hover:text-foreground" 
+          title={active?.name || t("proj.selectProject")}
+          data-testid="project-switcher-trigger"
+        >
           <FolderOpen className="h-4 w-4" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[80vh] overflow-y-auto">
+      <SheetContent 
+        side="bottom" 
+        className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 max-h-[80vh] overflow-y-auto"
+        data-testid="project-switcher-content"
+      >
         <SheetHeader>
           <SheetTitle className="text-foreground">{t("proj.projects")}</SheetTitle>
           <SheetDescription className="sr-only">{t("proj.projectsDesc")}</SheetDescription>
