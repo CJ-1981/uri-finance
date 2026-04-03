@@ -432,7 +432,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
             <h1 className="text-sm font-semibold text-foreground">{t("admin.title")}</h1>
             <p className="text-xs text-muted-foreground">{activeProject.name}</p>
           </div>
-          {realOwner && (
+          {realOwner && !isStandalone && (
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="ghost"
