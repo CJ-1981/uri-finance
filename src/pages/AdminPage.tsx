@@ -206,15 +206,27 @@ const AdminPage = () => {
   };
 
   const handleRemoveMember = async (memberId: string) => {
+    if (!window.confirm(t("admin.removeMemberConfirm") || "Remove this member from the project?")) return;
     const ok = await removeMember(memberId);
     if (ok) toast.success(t("admin.memberRemoved"));
     else toast.error(t("admin.removeFailed"));
   };
 
   const handleBanMember = async (userId: string, memberId: string) => {
+    if (!window.confirm(t("admin.banMemberConfirm") || "Ban this user from the project? They will not be able to join again.")) return;
     const ok = await banMember(userId, memberId);
     if (ok) toast.success(t("admin.memberBanned"));
     else toast.error(t("admin.removeFailed"));
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!window.confirm(t("admin.deleteCategoryConfirm") || "Delete this category?")) return;
+    await deleteCategory({ id, project_id: activeProject!.id });
+  };
+
+  const handleDeleteColumn = async (id: string) => {
+    if (!window.confirm(t("admin.deleteColumnConfirm") || "Delete this custom column and all its data?")) return;
+    await deleteColumn(id);
   };
 
   const handleCycleRole = async (memberId: string, currentRole: string) => {
@@ -802,7 +814,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
             <p className="text-xs text-muted-foreground">{t("admin.customColumnsDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={deleteColumn} onToggleMasked={toggleMasked} onToggleRequired={toggleRequired} onUpdateSuggestions={updateSuggestions} onReorderAll={reorderColumns} onRename={renameColumn} />
+            <CustomColumnManager columns={customColumns} onAdd={addColumn} onDelete={handleDeleteColumn} onToggleMasked={toggleMasked} onToggleRequired={toggleRequired} onUpdateSuggestions={updateSuggestions} onReorderAll={reorderColumns} onRename={renameColumn} />
           </div>
         </section>
 
@@ -836,7 +848,7 @@ const handleTransferOwnership = async (newOwnerId: string) => {
             <p className="text-xs text-muted-foreground">{t("admin.categoriesDesc")}</p>
           </div>
           <div className="rounded-xl border border-border/50 bg-card p-4">
-            <CategoryManager categories={categories} onAdd={addCategory} onAddSubCategory={addSubCategory} onDelete={deleteCategory} onUpdateName={renameCategory} onUpdateCode={updateCategoryCode} onUpdateIcon={updateCategoryIcon} onReorderAll={reorderCategories} onBulkUpdate={bulkUpdateCategories} inline />
+            <CategoryManager categories={categories} onAdd={addCategory} onAddSubCategory={addSubCategory} onDelete={handleDeleteCategory} onUpdateName={renameCategory} onUpdateCode={updateCategoryCode} onUpdateIcon={updateCategoryIcon} onReorderAll={reorderCategories} onBulkUpdate={bulkUpdateCategories} inline />
           </div>
         </section>
 
