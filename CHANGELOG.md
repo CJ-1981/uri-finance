@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-04-03
+
+### Changed
+- **Administrative Interface**:
+  - Reordered the Admin page sections to prioritize project-wide configuration ("Project Setup") and basic settings ("Project Info").
+  - Simplified transaction list animations by replacing staggered item fades with a single container-level fade-in to reduce flickering during page transitions.
+- **Transaction List Refinements**:
+  - Integrated "Load More" functionality directly into the pagination's "Next" button for a more unified navigation experience.
+  - Hidden membership simulation buttons in standalone mode as they are only relevant for cloud-synced projects.
+
+### Fixed
+- **Pagination Race Condition**: Implemented a robust `useEffect`-based auto-advance logic in `TransactionList` that ensures the page only increments after background data fetching successfully completes and total page count increases.
+- **Duplicate Fetch Guard**: Added a state-based guard to prevent duplicate `fetchNextPage` calls when the "Next" button is clicked multiple times during an active request.
+- **Administrative Deletions**: Migrated member removal, banning, category deletion, and column deletion to use standard system confirmation popups for a consistent and reliable user experience.
+
 ## [1.3.0] - 2026-04-01
 
 ### Added

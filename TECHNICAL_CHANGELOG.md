@@ -2,6 +2,47 @@
 
 Detailed technical changes made during codebase review and improvement session.
 
+## Session Date: 2026-04-03
+
+## Administrative UX & Pagination Refinement
+
+### 24. Transaction List Pagination Guard & Auto-Advance
+**Files Changed:**
+- `src/components/TransactionList.tsx`
+
+**Changes:**
+- Implemented `isWaitingForNextPage` state and `totalPagesBeforeFetchRef` to track pagination state across async fetches.
+- Added `useEffect` hook to automatically advance to the next page index once `isFetchingNextPage` becomes false and the total page count has increased, resolving a long-standing race condition where users had to manually click "Next" twice.
+- Integrated `fetchNextPage` trigger directly into the `handleNextPage` logic, allowing the "Next" button to act as a "Load More" trigger when at the end of the current local dataset.
+- Added a strict `isFetchingNextPage` guard to both the `handleNextPage` callback and the `Button`'s `disabled` prop to prevent duplicate network requests and UI flickering.
+- Simplified list animations by removing staggered item-level `framer-motion` variants in favor of a single `animate-fade-in` class on the container, significantly reducing layout shift and flickering during rapid navigation.
+
+### 25. Admin Page Structural Reorganization
+**Files Changed:**
+- `src/pages/AdminPage.tsx`
+
+**Changes:**
+- Reordered the `main` content area to place "Project Setup" (Export/Import) at the very top, followed by "Project Info" (Currency/Deletion).
+- This shift prioritizes high-impact project-level administrative tasks that were previously buried at the bottom of the page.
+- Maintained existing `isOwner` and `isStandalone` guards while flattening the section hierarchy for better visual flow.
+
+### 26. Unified Administrative Confirmation Flow
+**Files Changed:**
+- `src/pages/AdminPage.tsx`
+
+**Changes:**
+- Replaced custom `AlertDialog` components for specific deletions (members, categories, custom columns) with standardized `window.confirm()` calls.
+- Leveraged existing `i18n` translation strings to provide localized confirmation messages (English and Korean).
+- This change ensures a more reliable and consistent administrative experience across different browsers and reduced component-level state complexity.
+
+### 27. Standalone Mode Role Simulation Guard
+**Files Changed:**
+- `src/pages/AdminPage.tsx`
+
+**Changes:**
+- Gated the membership role simulation buttons behind a `!isStandalone` check.
+- Prevents confusing UX where users could attempt to "simulate" roles in a local-only environment where multi-user collaboration is not supported.
+
 ## Session Date: 2026-04-01
 
 ## Workflow & Branding Automation
