@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-04-03
+
+### Added
+- **Bulk Operations**:
+  - Implemented multi-select and batch deletion for transactions with efficient server-side processing.
+  - Added batch restore and permanent delete capabilities for the trash manager.
+  - Enhanced file management with a multi-select toolbar and "Select All/Deselect All" functionality.
+- **Workflow & AI Documentation**:
+  - Integrated MoAI/Agency development workflows and rules into project documentation.
+  - Standardized agent role profiles and quality routing logic for AI-driven production pipelines.
+
+### Changed
+- **Performance Optimization**: Increased transaction list pagination `PAGE_SIZE` from 50 to 100 for smoother browsing.
+- **Project Reliability**: Simplified active project restoration logic and implemented automatic project data synchronization with server.
+- **User Interface**: Added robust confirmation dialogs for all destructive actions (restore/delete) across the application.
+
+### Fixed
+- **UI Integrity**: Refined file list scrolling and multi-select UI layout for better accessibility and visual consistency.
+- **Localization**: Added missing Korean and English translations for bulk operations, trash management, and common status messages.
+
 ## [1.3.1] - 2026-04-03
 
 ### Changed

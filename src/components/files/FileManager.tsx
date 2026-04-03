@@ -172,78 +172,92 @@ export const FileManager = ({
   return (
     <div className="space-y-4">
       {/* Header with Multi-Select Actions */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold">{t('files.title')}</h2>
-          {filteredFiles.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleSelectionMode}
-              className="gap-2"
-            >
-              {isSelectionMode ? (
-                <>
-                  <X className="h-4 w-4" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <CheckSquare className="h-4 w-4" />
-                  Select
-                </>
-              )}
-            </Button>
+      <div className="space-y-3">
+        {/* Title Row */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <h2 className="text-2xl font-bold shrink-0">{t('files.title')}</h2>
+            {filteredFiles.length > 0 && !isSelectionMode && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSelectionMode}
+                className="gap-2 shrink-0"
+              >
+                <CheckSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Select</span>
+              </Button>
+            )}
+          </div>
+          {!isSelectionMode && (
+            <FileUploadSheet onUpload={handleUpload} isUploading={isUploading} remark={uploadRemark} onRemarkChange={setUploadRemark} />
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {isSelectionMode && (
-            <>
+        {/* Multi-Select Toolbar */}
+        {isSelectionMode && (
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-medium text-foreground px-2">
+                {selectedCount} {selectedCount === 1 ? 'file' : 'files'} selected
+              </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={selectAll}
-                className="gap-2"
+                className="gap-1.5 h-8 px-2 text-xs"
               >
                 {allSelected ? (
                   <>
-                    <Square className="h-4 w-4" />
-                    Deselect All
+                    <Square className="h-3.5 w-3.5" />
+                    <span className="hidden xs:inline">Deselect</span>
                   </>
                 ) : (
                   <>
-                    <CheckSquare className="h-4 w-4" />
-                    Select All ({selectedCount}/{filteredFiles.length})
+                    <CheckSquare className="h-3.5 w-3.5" />
+                    <span className="hidden xs:inline">All ({selectedCount})</span>
                   </>
                 )}
               </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleBatchDownload}
-                className="gap-2"
+                className="gap-1.5 h-8 px-2 text-xs"
                 disabled={selectedCount === 0}
               >
-                <Download className="h-4 w-4" />
-                Download {selectedCount > 0 ? `(${selectedCount})` : ''}
+                <Download className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline">Download</span>
+                {selectedCount > 0 && <span className="xs:hidden">({selectedCount})</span>}
               </Button>
               {canDelete && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleBatchDeleteClick}
-                  className="gap-2 text-destructive hover:text-destructive"
+                  className="gap-1.5 h-8 px-2 text-xs text-destructive hover:text-destructive"
                   disabled={selectedCount === 0 || isDeleting}
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Delete {selectedCount > 0 ? `(${selectedCount})` : ''}
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span className="hidden xs:inline">Delete</span>
+                  {selectedCount > 0 && <span className="xs:hidden">({selectedCount})</span>}
                 </Button>
               )}
-            </>
-          )}
-          <FileUploadSheet onUpload={handleUpload} isUploading={isUploading} remark={uploadRemark} onRemarkChange={setUploadRemark} />
-        </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSelectionMode}
+                className="gap-1.5 h-8 px-2 text-xs text-muted-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Cancel</span>
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Search Bar */}
@@ -287,7 +301,7 @@ export const FileManager = ({
           )}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
           {filteredFiles.map((file) => (
             <FileListItem
               key={file.id}

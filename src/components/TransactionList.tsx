@@ -81,6 +81,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmTx, setDeleteConfirmTx] = useState<Transaction | null>(null);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState<number>(() => {
     const saved = localStorage.getItem("tx_page_size");
@@ -322,6 +323,11 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   };
 
   const handleBulkDelete = async () => {
+    setBulkDeleteConfirm(true);
+  };
+
+  const executeBulkDelete = async () => {
+    setBulkDeleteConfirm(false);
     setDeleting(true);
     await onBulkDelete(Array.from(selected));
     setDeleting(false);
@@ -623,6 +629,44 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   {t("tx.delete") || "Delete"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk delete confirmation dialog */}
+      <AlertDialog open={bulkDeleteConfirm} onOpenChange={(open) => !open && setBulkDeleteConfirm(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("tx.bulkDeleteTitle") || "Delete selected transactions?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium">
+                {selected.size} {selected.size === 1 ? t("admin.transaction") || "transaction" : t("admin.transactions") || "transactions"} {t("common.selected") || "selected"}
+              </span>
+              <br />
+              <span className="text-destructive">{t("tx.deleteDesc") || "This action cannot be undone."}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("tx.cancel") || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeBulkDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                  {t("common.deleting") || "Deleting..."}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("tx.bulkDelete") || "Delete"}
                 </>
               )}
             </AlertDialogAction>

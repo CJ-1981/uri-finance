@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/hooks/useI18n";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { RotateCcw, Trash2, TrendingUp, TrendingDown, CheckSquare, Square, X, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
@@ -23,12 +34,22 @@ interface Props {
 
 const TrashManager = ({ projectId, currency }: Props) => {
   const { t } = useI18n();
+  const queryClient = useQueryClient();
   const [items, setItems] = useState<DeletedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [restoreConfirmId, setRestoreConfirmId] = useState<string | null>(null);
+  const [permDeleteConfirmId, setPermDeleteConfirmId] = useState<string | null>(null);
+  const [bulkRestoreConfirm, setBulkRestoreConfirm] = useState(false);
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [isRestoringItem, setIsRestoringItem] = useState(false);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+
+  const MAX_DELETED_DISPLAY = 500; // Max deleted items to display in trash
+  const MAX_BULK_OPERATION = 1000; // Max items for bulk restore/delete (Supabase limit)
 
   const fetchDeleted = async () => {
     setLoading(true);
@@ -38,7 +59,7 @@ const TrashManager = ({ projectId, currency }: Props) => {
       .eq("project_id", projectId)
       .not("deleted_at", "is", null)
       .order("deleted_at", { ascending: false })
-      .limit(50);
+      .limit(MAX_DELETED_DISPLAY);
     setItems((data as DeletedTransaction[]) || []);
     setLoading(false);
   };
@@ -48,29 +69,51 @@ const TrashManager = ({ projectId, currency }: Props) => {
   }, [projectId]);
 
   const handleRestore = async (id: string) => {
+    setRestoreConfirmId(id);
+  };
+
+  const executeRestore = async () => {
+    if (!restoreConfirmId) return;
+    setIsRestoringItem(true);
     const { error } = await supabase
       .from("transactions")
       .update({ deleted_at: null })
-      .eq("id", id);
+      .eq("id", restoreConfirmId);
     if (error) {
       toast.error(t("admin.restoreFailed"));
+      setIsRestoringItem(false);
       return;
     }
+    // Refresh the list from server to get updated data
+    await fetchDeleted();
+    // Refetch transactions query to update main list immediately
+    await queryClient.refetchQueries({ queryKey: ["infinite_transactions", projectId] });
     toast.success(t("admin.restored"));
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setIsRestoringItem(false);
+    setRestoreConfirmId(null);
   };
 
   const handlePermDelete = async (id: string) => {
+    setPermDeleteConfirmId(id);
+  };
+
+  const executePermDelete = async () => {
+    if (!permDeleteConfirmId) return;
+    setIsDeletingItem(true);
     const { error } = await supabase
       .from("transactions")
       .delete()
-      .eq("id", id);
+      .eq("id", permDeleteConfirmId);
     if (error) {
       toast.error(t("admin.permDeleteFailed"));
+      setIsDeletingItem(false);
       return;
     }
+    // Refresh the list from server to get updated data
+    await fetchDeleted();
     toast.success(t("admin.permDeleted"));
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setIsDeletingItem(false);
+    setPermDeleteConfirmId(null);
   };
 
   const toggleSelect = (id: string) => {
@@ -96,6 +139,16 @@ const TrashManager = ({ projectId, currency }: Props) => {
   };
 
   const handleBulkRestore = async () => {
+    if (selected.size > MAX_BULK_OPERATION) {
+      toast.error(t("admin.bulkLimitError") || `Cannot restore more than ${MAX_BULK_OPERATION} items at once. Please reduce your selection.`, {
+        description: `${selected.size} ${selected.size === 1 ? 'item' : 'items'} selected (max: ${MAX_BULK_OPERATION})`
+      });
+      return;
+    }
+    setBulkRestoreConfirm(true);
+  };
+
+  const executeBulkRestore = async () => {
     setRestoring(true);
     const ids = Array.from(selected);
     const { error } = await supabase
@@ -105,14 +158,28 @@ const TrashManager = ({ projectId, currency }: Props) => {
     if (error) {
       toast.error(t("admin.restoreFailed"));
     } else {
+      // Refresh the list from server to get updated data
+      await fetchDeleted();
+      // Refetch transactions query to update main list immediately
+      await queryClient.refetchQueries({ queryKey: ["infinite_transactions", projectId] });
       toast.success(t("admin.restored"));
-      setItems((prev) => prev.filter((i) => !selected.has(i.id)));
       exitSelectMode();
     }
     setRestoring(false);
+    setBulkRestoreConfirm(false);
   };
 
   const handleBulkDelete = async () => {
+    if (selected.size > MAX_BULK_OPERATION) {
+      toast.error(t("admin.bulkLimitError") || `Cannot delete more than ${MAX_BULK_OPERATION} items at once. Please reduce your selection.`, {
+        description: `${selected.size} ${selected.size === 1 ? 'item' : 'items'} selected (max: ${MAX_BULK_OPERATION})`
+      });
+      return;
+    }
+    setBulkDeleteConfirm(true);
+  };
+
+  const executeBulkDelete = async () => {
     setDeleting(true);
     const ids = Array.from(selected);
     const { error } = await supabase
@@ -122,11 +189,13 @@ const TrashManager = ({ projectId, currency }: Props) => {
     if (error) {
       toast.error(t("admin.permDeleteFailed"));
     } else {
+      // Refresh the list from server to get updated data
+      await fetchDeleted();
       toast.success(t("admin.permDeleted"));
-      setItems((prev) => prev.filter((i) => !selected.has(i.id)));
       exitSelectMode();
     }
     setDeleting(false);
+    setBulkDeleteConfirm(false);
   };
 
   if (loading) {
@@ -152,12 +221,17 @@ const TrashManager = ({ projectId, currency }: Props) => {
             </Button>
             <span className="text-xs text-muted-foreground flex-1">
               {t("admin.selected").replace("{n}", String(selected.size))}
+              {selected.size > 100 && (
+                <span className={`ml-2 ${selected.size > MAX_BULK_OPERATION ? 'text-destructive font-semibold' : 'text-amber-500'}`}>
+                  ({selected.size}/{MAX_BULK_OPERATION})
+                </span>
+              )}
             </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleBulkRestore}
-              disabled={selected.size === 0 || restoring}
+              disabled={selected.size === 0 || restoring || selected.size > MAX_BULK_OPERATION}
               className="text-primary h-8 px-2"
             >
               <RotateCcw className="h-4 w-4 mr-1" />
@@ -167,7 +241,7 @@ const TrashManager = ({ projectId, currency }: Props) => {
               variant="ghost"
               size="sm"
               onClick={handleBulkDelete}
-              disabled={selected.size === 0 || deleting}
+              disabled={selected.size === 0 || deleting || selected.size > MAX_BULK_OPERATION}
               className="text-destructive hover:text-destructive h-8 px-2"
             >
               <Trash2 className="h-4 w-4 mr-1" />
@@ -176,90 +250,287 @@ const TrashManager = ({ projectId, currency }: Props) => {
           </div>
         ) : (
           <div className="flex items-center justify-between px-2 py-1 w-full">
+            <div className="w-10 shrink-0 flex items-center justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectMode(true)}
+                className="text-muted-foreground h-7 w-8 px-0 text-[10px]"
+              >
+                <CheckSquare className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
               {t("admin.trash")}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectMode(true)}
-              className="text-muted-foreground h-7 w-8 px-0 text-[10px] shrink-0"
-              title={t("admin.selectMode")}
-            >
-              <CheckSquare className="h-3.5 w-3.5" />
-            </Button>
           </div>
         )}
       </div>
 
-      {items.map((tx) => (
-        <div
-          key={tx.id}
-          onClick={() => selectMode ? toggleSelect(tx.id) : undefined}
-          className={`flex items-center gap-3 rounded-lg px-3 py-2 animate-fade-in cursor-pointer ${
-            selected.has(tx.id)
-              ? "bg-primary/10 ring-1 ring-primary/30"
-              : "bg-muted/30"
-          }`}
-        >
-          {selectMode ? (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-              {selected.has(tx.id) ? (
-                <CheckSquare className="h-5 w-5 text-primary" />
-              ) : (
-                <Square className="h-5 w-5 text-muted-foreground" />
-              )}
+      {/* Items with scroll */}
+      <div className="max-h-[400px] overflow-y-auto space-y-2">
+        {items.map((tx) => (
+          <div
+            key={tx.id}
+            onClick={() => selectMode ? toggleSelect(tx.id) : undefined}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 animate-fade-in cursor-pointer ${
+              selected.has(tx.id)
+                ? "bg-primary/10 ring-1 ring-primary/30"
+                : "bg-muted/30"
+            }`}
+          >
+            {selectMode ? (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                {selected.has(tx.id) ? (
+                  <CheckSquare className="h-5 w-5 text-primary" />
+                ) : (
+                  <Square className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            ) : (
+              <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                  tx.type === "income" ? "income-badge" : "expense-badge"
+                }`}
+              >
+                {tx.type === "income" ? (
+                  <TrendingUp className="h-3.5 w-3.5" />
+                ) : (
+                  <TrendingDown className="h-3.5 w-3.5" />
+                )}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-foreground truncate">
+                {tx.description || tx.category}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                {tx.category} · {format(parseISO(tx.transaction_date), "MMM d")}
+                {" · "}{t("admin.deletedOn")} {format(parseISO(tx.deleted_at), "MMM d, HH:mm")}
+              </p>
             </div>
-          ) : (
-            <div
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-                tx.type === "income" ? "income-badge" : "expense-badge"
-              }`}
-            >
-              {tx.type === "income" ? (
-                <TrendingUp className="h-3.5 w-3.5" />
-              ) : (
-                <TrendingDown className="h-3.5 w-3.5" />
-              )}
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-foreground truncate">
-              {tx.description || tx.category}
+            <p className={`text-sm font-semibold shrink-0 ${tx.type === "income" ? "text-income" : "text-expense"}`}>
+              {tx.type === "income" ? "+" : "-"}
+              {Number(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </p>
-            <p className="text-[10px] text-muted-foreground">
-              {tx.category} · {format(parseISO(tx.transaction_date), "MMM d")}
-              {" · "}{t("admin.deletedOn")} {format(parseISO(tx.deleted_at), "MMM d, HH:mm")}
-            </p>
+            {!selectMode && (
+              <div className="flex gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-primary"
+                  onClick={(e) => { e.stopPropagation(); handleRestore(tx.id); }}
+                  title={t("admin.restore")}
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                  onClick={(e) => { e.stopPropagation(); handlePermDelete(tx.id); }}
+                  title={t("admin.permDelete")}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
           </div>
-          <p className={`text-sm font-semibold shrink-0 ${tx.type === "income" ? "text-income" : "text-expense"}`}>
-            {tx.type === "income" ? "+" : "-"}
-            {Number(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-          </p>
-          {!selectMode && (
-            <div className="flex gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-primary"
-                onClick={(e) => { e.stopPropagation(); handleRestore(tx.id); }}
-                title={t("admin.restore")}
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                onClick={(e) => { e.stopPropagation(); handlePermDelete(tx.id); }}
-                title={t("admin.permDelete")}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
+
+      {/* Confirmation dialogs */}
+      {/* Restore confirmation */}
+      <AlertDialog open={!!restoreConfirmId} onOpenChange={(open) => !open && !isRestoringItem && setRestoreConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.restoreConfirmTitle") || "Restore transaction?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isRestoringItem ? (
+                <div className="flex items-center gap-2 py-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span>{t("admin.restoring") || "Restoring..."}</span>
+                </div>
+              ) : (
+                <span className="text-primary">{t("admin.restoreConfirmDesc") || "This will restore the transaction to your main list."}</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isRestoringItem}>
+              {t("tx.cancel") || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeRestore}
+              disabled={isRestoringItem}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {isRestoringItem ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                  {t("admin.restoring") || "Restoring..."}
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  {t("admin.restore") || "Restore"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Permanent delete confirmation */}
+      <AlertDialog open={!!permDeleteConfirmId} onOpenChange={(open) => !open && !isDeletingItem && setPermDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.permDeleteConfirmTitle") || "Permanently delete?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isDeletingItem ? (
+                <div className="flex items-center gap-2 py-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+                  <span>{t("common.deleting") || "Deleting..."}</span>
+                </div>
+              ) : (
+                <span className="text-destructive">{t("admin.permDeleteConfirmDesc") || "This action cannot be undone. The transaction will be permanently removed."}</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingItem}>
+              {t("tx.cancel") || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executePermDelete}
+              disabled={isDeletingItem}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeletingItem ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                  {t("common.deleting") || "Deleting..."}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("admin.permDelete") || "Delete"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk restore confirmation */}
+      <AlertDialog open={bulkRestoreConfirm} onOpenChange={(open) => !open && !restoring && setBulkRestoreConfirm(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.bulkRestoreConfirmTitle") || "Restore selected transactions?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {restoring ? (
+                <div className="flex items-center gap-2 py-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <span>{t("admin.restoring") || "Restoring..."}</span>
+                </div>
+              ) : (
+                <>
+                  <span className="font-medium">
+                    {selected.size} {selected.size === 1 ? t("admin.transaction") || "transaction" : t("admin.transactions") || "transactions"} {t("common.selected") || "selected"}
+                  </span>
+                  {selected.size > 100 && (
+                    <span className={`text-xs block mt-1 ${selected.size > MAX_BULK_OPERATION ? 'text-destructive' : 'text-amber-500'}`}>
+                      {selected.size > MAX_BULK_OPERATION
+                        ? `⚠️ Maximum ${MAX_BULK_OPERATION} items allowed per operation`
+                        : `Note: Maximum ${MAX_BULK_OPERATION} items per operation`
+                      }
+                    </span>
+                  )}
+                  <br />
+                  <span className="text-primary">{t("admin.restoreConfirmDesc") || "This will restore the transactions to your main list."}</span>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={restoring}>
+              {t("tx.cancel") || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeBulkRestore}
+              disabled={restoring}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {restoring ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                  {t("admin.restoring") || "Restoring..."}
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  {t("admin.bulkRestore") || "Restore"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk delete confirmation */}
+      <AlertDialog open={bulkDeleteConfirm} onOpenChange={(open) => !open && !deleting && setBulkDeleteConfirm(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.bulkDeleteConfirmTitle") || "Permanently delete selected?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting ? (
+                <div className="flex items-center gap-2 py-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+                  <span>{t("common.deleting") || "Deleting..."}</span>
+                </div>
+              ) : (
+                <>
+                  <span className="font-medium">
+                    {selected.size} {selected.size === 1 ? t("admin.transaction") || "transaction" : t("admin.transactions") || "transactions"} {t("common.selected") || "selected"}
+                  </span>
+                  {selected.size > 100 && (
+                    <span className={`text-xs block mt-1 ${selected.size > MAX_BULK_OPERATION ? 'text-destructive' : 'text-amber-500'}`}>
+                      {selected.size > MAX_BULK_OPERATION
+                        ? `⚠️ Maximum ${MAX_BULK_OPERATION} items allowed per operation`
+                        : `Note: Maximum ${MAX_BULK_OPERATION} items per operation`
+                      }
+                    </span>
+                  )}
+                  <br />
+                  <span className="text-destructive">{t("admin.permDeleteConfirmDesc") || "This action cannot be undone. The transaction will be permanently removed."}</span>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>
+              {t("tx.cancel") || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeBulkDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mr-2" />
+                  {t("common.deleting") || "Deleting..."}
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {t("admin.bulkDelete") || "Delete"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

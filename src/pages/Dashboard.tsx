@@ -33,6 +33,8 @@ import { useReportData } from "@/hooks/useReportData";
 import { Download, CloudOff } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 const getAmountFontSize = (text: string) => {
   const len = text.length;
   if (len <= 10) return "text-lg";
@@ -213,8 +215,57 @@ const Dashboard = () => {
   };
 
   const handleBulkDelete = async (ids: string[]) => {
-    for (const id of ids) {
-      await deleteTransaction(id);
+    if (!activeProject?.id || ids.length === 0) return;
+
+    const isStandalone = localStorage.getItem("is_standalone") === "true";
+
+    // Show loading toast
+    const loadingToast = toast.loading(`Deleting ${ids.length} transaction${ids.length > 1 ? 's' : ''}...`, {
+      description: "Please wait..."
+    });
+
+    try {
+      if (isStandalone) {
+        // Local storage: batch update
+        const key = `local_transactions_${activeProject.id}`;
+        const local = localStorage.getItem(key);
+        const existing = local ? JSON.parse(local) : [];
+        const updated = existing.map((t: any) =>
+          ids.includes(t.id) ? { ...t, deleted_at: new Date().toISOString() } : t
+        );
+        localStorage.setItem(key, JSON.stringify(updated));
+      } else {
+        // Supabase: batch soft delete
+        const { error } = await supabase
+          .from("transactions")
+          .update({ deleted_at: new Date().toISOString() })
+          .in("id", ids);
+
+        if (error) throw error;
+
+        // Unlink files from all deleted transactions in a single query
+        const { error: unlinkError } = await supabase
+          .from("project_files")
+          .update({ transaction_id: null })
+          .in("transaction_id", ids);
+
+        if (unlinkError) {
+          console.error("Failed to unlink files from transactions:", unlinkError);
+        }
+      }
+
+      // Show success toast
+      toast.success(`Deleted ${ids.length} transaction${ids.length > 1 ? 's' : ''}`, {
+        id: loadingToast
+      });
+
+      // Refresh transaction list
+      await fetchTransactions();
+    } catch (error) {
+      console.error("Bulk delete failed:", error);
+      toast.error(`Failed to delete ${ids.length} transaction${ids.length > 1 ? 's' : ''}`, {
+        id: loadingToast
+      });
     }
   };
 

@@ -22,7 +22,7 @@ export interface Transaction {
   _sync_status?: "optimistic" | "synced" | "deleted";
 }
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 100;
 
 const safeReadLocalTransactions = (key: string): Transaction[] => {
   try {

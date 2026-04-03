@@ -82,20 +82,6 @@ export const useProjects = () => {
     networkMode: "always",
   });
 
-  // Revalidate cached project against current list
-  const validateProject = useCallback((project: Project | null): Project | null => {
-    if (!project) return null;
-    if (projects.length === 0) return null; // If no projects, nothing is valid
-    const found = projects.find(p => p.id === project.id);
-    if (!found) {
-      console.warn("[useProjects] Active project is invalid. Clearing cache.");
-      localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
-      localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
-      return null;
-    }
-    return found;
-  }, [projects]);
-
   // Persist selected project
   const handleSetActiveProject = useCallback((project: Project | null, source: ProjectSource = 'user-selection'): void => {
     setLastSource(source);
@@ -127,30 +113,60 @@ export const useProjects = () => {
   // Restore logic
   useEffect(() => {
     if (loading) return;
-    
+
     // 1. If no projects exist, ensure active project is cleared
     if (projects.length === 0) {
       if (activeProject) handleSetActiveProject(null, 'server');
       return;
     }
 
-    // 2. If we have projects but none active, try to restore
+    // 2. If we have projects but none active, try to restore from cache
     if (!activeProject) {
       const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
-      const found = projects.find(p => p.id === cachedId) || projects[0];
-      handleSetActiveProject(found, 'cache');
+      const found = projects.find((p: Project) => p.id === cachedId);
+
+      if (found) {
+        // Cached project is still valid, use it
+        handleSetActiveProject(found, 'cache');
+      } else {
+        // Cached ID not found in projects (might be deleted or access revoked)
+        // Only fall back to first project if no cached ID exists
+        if (!cachedId) {
+          handleSetActiveProject(projects[0], 'cache');
+        } else {
+          // Cached ID exists but project not found - clear invalid cache and fall back
+          console.warn('[useProjects] Cached project ID not found in current project list, clearing cache');
+          localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
+          localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+          handleSetActiveProject(projects[0], 'cache');
+        }
+      }
       return;
     }
 
-    // 3. If we have an active project, revalidate it (unless recently set by user)
-    if (lastSource !== 'user-selection') {
-      const validated = validateProject(activeProject);
-      if (!validated) {
-        // Fallback to first project if current became invalid
-        handleSetActiveProject(projects[0], 'cache');
+    // 3. If we have an active project, update it with fresh data from server
+    // This ensures the active project always has the latest server data
+    const freshProject = projects.find((p: Project) => p.id === activeProject.id);
+    if (freshProject) {
+      // Update active project with fresh server data (silent update, no source change)
+      // Only update if data actually changed to avoid unnecessary re-renders
+      if (JSON.stringify(freshProject) !== JSON.stringify(activeProject)) {
+        console.log('[useProjects] Updating active project with fresh server data');
+        localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(freshProject));
+        setActiveProject(freshProject);
       }
+    } else if (lastSource === 'user-selection') {
+      // User's selected project became invalid (deleted or access revoked), fall back to first project
+      console.warn('[useProjects] User-selected project became invalid, falling back to first project');
+      handleSetActiveProject(projects[0], 'cache');
+    } else {
+      // Cached project became invalid, clear cache and fall back to first project
+      console.warn('[useProjects] Cached project no longer available, clearing cache and falling back');
+      localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
+      localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+      handleSetActiveProject(projects[0], 'cache');
     }
-  }, [loading, projects, activeProject, handleSetActiveProject, validateProject, lastSource]);
+  }, [loading, projects, activeProject, handleSetActiveProject, lastSource]);
 
   const createProject = async (name: string, description?: string) => {
     if (isStandalone || !user) {
