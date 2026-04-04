@@ -229,15 +229,30 @@ export const useFiles = (projectId: string) => {
       // Get authenticated user ONCE before starting parallel uploads
       let userId: string | null = null;
       if (!isStandalone) {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
+        // Explicitly get session to ensure fresh auth context for parallel operations
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.user) {
           throw new Error(t('files.notAuthenticated') || 'User not authenticated');
         }
-        userId = user.id;
+        userId = session.user.id;
+
+        // Optionally refresh session if it's close to expiry
+        if (session.expires_at) {
+          const expiresAt = new Date(session.expires_at * 1000);
+          const now = new Date();
+          const timeUntilExpiry = expiresAt.getTime() - now.getTime();
+          // Refresh if less than 5 minutes remaining
+          if (timeUntilExpiry < 5 * 60 * 1000) {
+            const { error: refreshError } = await supabase.auth.refreshSession();
+            if (refreshError) {
+              console.warn('Failed to refresh session:', refreshError);
+            }
+          }
+        }
       }
 
-      // Upload all files in parallel
-      const uploadPromises = files.map(async ({ file, remark }) => {
+      // Process files: upload to storage in parallel, but insert metadata sequentially to avoid RLS concurrency issues
+      const fileData = await Promise.all(files.map(async ({ file, remark }) => {
         let resolvedMime = file.type;
         if (!resolvedMime || resolvedMime === '') {
           const ext = getFileExtension(file.name);
@@ -271,30 +286,20 @@ export const useFiles = (projectId: string) => {
           });
           await set(`file-content-${fileId}`, base64);
 
-          // Create metadata
-          const newFileMetadata: ProjectFile = {
+          return {
             id: fileId,
-            project_id: projectId,
-            uploaded_by: 'standalone-user',
+            fileToUpload,
             file_name: file.name,
             file_type: resolvedMime,
             file_size: file.size,
-            storage_path: fileId, // Use ID as path for standalone
+            storage_path: fileId,
             remark: remark?.trim() || null,
-            transaction_id: transactionId || null,
-            created_at: new Date().toISOString(),
           };
-          await update(`files-metadata-${projectId}`, (old: any) => {
-            const files = (old || []) as ProjectFile[];
-            return [...files, newFileMetadata];
-          });
-
-          return newFileMetadata;
         }
 
-        // Supabase upload path
+        // Supabase upload path - upload to storage in parallel
         const filePath = `${projectId}/${fileId}/${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('project-files')
           .upload(filePath, fileToUpload, {
             cacheControl: '3600',
@@ -305,34 +310,64 @@ export const useFiles = (projectId: string) => {
           throw new Error(`${file.name}: Upload failed: ${uploadError.message}`);
         }
 
-        // Create metadata record
-        const { data: fileData, error: insertError } = await supabase
-          .from('project_files')
-          .insert({
-            id: fileId,
+        return {
+          id: fileId,
+          filePath,
+          file_name: file.name,
+          file_type: resolvedMime,
+          file_size: file.size,
+          remark: remark?.trim() || null,
+        };
+      }));
+
+      // Insert metadata sequentially to avoid RLS concurrency issues
+      const results: ProjectFile[] = [];
+      for (const fileDatum of fileData) {
+        if (isStandalone) {
+          const newFileMetadata: ProjectFile = {
+            id: fileDatum.id,
             project_id: projectId,
-            storage_path: filePath,
-            file_name: file.name,
-            file_type: resolvedMime,
-            file_size: file.size,
-            uploaded_by: userId,
-            remark: remark?.trim() || null,
+            uploaded_by: 'standalone-user',
+            file_name: fileDatum.file_name,
+            file_type: fileDatum.file_type,
+            file_size: fileDatum.file_size,
+            storage_path: fileDatum.storage_path,
+            remark: fileDatum.remark,
             transaction_id: transactionId || null,
-          })
-          .select()
-          .single();
+            created_at: new Date().toISOString(),
+          };
+          await update(`files-metadata-${projectId}`, (old: any) => {
+            const files = (old || []) as ProjectFile[];
+            return [...files, newFileMetadata];
+          });
+          results.push(newFileMetadata);
+        } else {
+          const { data: fileData, error: insertError } = await supabase
+            .from('project_files')
+            .insert({
+              id: fileDatum.id,
+              project_id: projectId,
+              storage_path: fileDatum.filePath,
+              file_name: fileDatum.file_name,
+              file_type: fileDatum.file_type,
+              file_size: fileDatum.file_size,
+              uploaded_by: userId,
+              remark: fileDatum.remark,
+              transaction_id: transactionId || null,
+            })
+            .select()
+            .single();
 
-        if (insertError) {
-          // Cleanup storage if metadata insert fails
-          await supabase.storage.from('project-files').remove([filePath]);
-          throw new Error(`${file.name}: ${insertError.message}`);
+          if (insertError) {
+            // Cleanup storage if metadata insert fails
+            await supabase.storage.from('project-files').remove([fileDatum.filePath]);
+            throw new Error(`${fileDatum.file_name}: ${insertError.message}`);
+          }
+
+          results.push(fileData as ProjectFile);
         }
+      }
 
-        return fileData as ProjectFile;
-      });
-
-      // Wait for all uploads to complete
-      const results = await Promise.all(uploadPromises);
       return results;
     },
     onSuccess: (results) => {
