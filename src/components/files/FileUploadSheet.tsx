@@ -36,6 +36,11 @@ type OldUploadHandler = (file: File, remark: string) => Promise<void>;
 type NewUploadHandler = (files: Array<{ file: File; remark?: string }>, onProgress?: (current: number, total: number) => void) => Promise<void>;
 
 /**
+ * Upload mode for FileUploadSheet
+ */
+type UploadMode = 'single' | 'batch';
+
+/**
  * Props for FileUploadSheet component
  */
 interface FileUploadSheetProps {
@@ -49,6 +54,8 @@ interface FileUploadSheetProps {
   onRemarkChange?: (remark: string) => void;
   /** Optional transaction ID to associate the uploaded file(s) with */
   transactionId?: string;
+  /** Explicit upload mode to detect handler type (optional, auto-detected if not provided) */
+  uploadMode?: UploadMode;
 }
 
 /**
@@ -66,7 +73,7 @@ const formatFileSizeLimit = (bytes: number): string => {
  * Supports multiple file selection for batch uploads
  * Accepts optional transactionId for associating uploads with transactions
  */
-export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange, transactionId: _transactionId }: FileUploadSheetProps) => {
+export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange, transactionId: _transactionId, uploadMode }: FileUploadSheetProps) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Array<{ file: File; error?: string }>>([]);
@@ -129,7 +136,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
   const handleUpload = async () => {
     const validFiles = selectedFiles.filter(f => !f.error);
     if (validFiles.length === 0) {
-      setError(t('files.uploadFailed') || 'No valid files to upload');
+      setError(t('files.noValidFiles'));
       return;
     }
 
@@ -138,16 +145,19 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     setUploadProgress(null);
 
     try {
-      // Detect if onUpload is old-style (single file) or new-style (batch)
+      // Auto-detect upload mode if not explicitly provided
       // Old signature: (file: File, remark: string) => Promise<void>
       // New signature: (files: Array<{ file: File; remark?: string }>, onProgress?: (current, total) => void) => Promise<void>
-      const isOldSignature = onUpload.length === 2; // Old signature has 2 params (file, remark), new has 2 params (files, onProgress) but onProgress is optional
+      // Detection: Both have length 2, so we use uploadMode prop or check if onUpload is a function and try to determine from context
+      const isOldSignature = uploadMode === 'single' || (!uploadMode && onUpload.length === 2);
 
       if (isOldSignature) {
         // Use old single-file signature - loop through files sequentially
         for (let i = 0; i < validFiles.length; i++) {
           const { file } = validFiles[i];
           await (onUpload as OldUploadHandler)(file, localRemark.trim());
+          // Remove successfully uploaded file from selection to avoid duplicate submissions
+          setSelectedFiles(prev => prev.filter(f => f.file !== file));
           // Update progress after each file
           setUploadProgress({ current: i + 1, total: validFiles.length });
         }
@@ -173,7 +183,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       }
     } catch (err) {
       // Error: keep sheet open to show error
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : t('files.uploadError'));
     } finally {
       setIsUploadingFile(false);
       setUploadProgress(null);
@@ -240,7 +250,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
         <SheetHeader>
           <SheetTitle>{t('files.uploadFile')}</SheetTitle>
           <SheetDescription className="sr-only">
-            Select one or multiple files to upload to the project with drag-and-drop or file picker.
+            {t('files.sheetDescription')}
           </SheetDescription>
         </SheetHeader>
 

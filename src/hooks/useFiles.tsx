@@ -213,11 +213,10 @@ export const useFiles = (projectId: string) => {
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
@@ -386,11 +385,10 @@ export const useFiles = (projectId: string) => {
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
@@ -470,11 +468,10 @@ export const useFiles = (projectId: string) => {
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
@@ -518,11 +515,10 @@ export const useFiles = (projectId: string) => {
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
@@ -590,16 +586,16 @@ export const useFiles = (projectId: string) => {
       toast.success(message);
     },
     onError: (error: Error, _variables, context) => {
-      if (isNetworkError(error)) return;
+      // Always restore optimistic state before returning
       queryClient.setQueryData(['project-files', projectId], context?.previous);
+      if (isNetworkError(error)) return;
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
