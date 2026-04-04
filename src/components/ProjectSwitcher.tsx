@@ -1,4 +1,4 @@
-import { useState, useImperativeHandle, forwardRef } from "react";
+import { useState, useImperativeHandle, forwardRef, useMemo } from "react";
 import { Project } from "@/hooks/useProjects";
 import { UserRole } from "@/hooks/useUserRole";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -14,6 +14,16 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities';
 
 import { useAuth } from "@/hooks/useAuth";
+
+// SPEC-PROJ-001: Local storage key for project preferences
+const LOCAL_PROJECT_PREFERENCES_KEY = "project_preferences";
+
+// Local project preference interface (matches useProjects.tsx)
+interface LocalProjectPreference {
+  project_id: string;
+  display_order: number;
+  is_default: boolean;
+}
 
 export interface ProjectSwitcherHandle {
   openJoinTab: () => void;
@@ -136,6 +146,22 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
   const [editDesc, setEditDesc] = useState("");
   const { t } = useI18n();
   const isOnline = useOnlineStatus();
+
+  // SPEC-PROJ-001: State to trigger re-read of default project when changed
+  const [, forceUpdate] = useState({});
+
+  // SPEC-PROJ-001: Fetch project preferences from localStorage to determine default project
+  const defaultProjectId = useMemo(() => {
+    try {
+      const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
+      if (!localPrefs) return null;
+      const prefs = JSON.parse(localPrefs);
+      const defaultPref = prefs.find((p: LocalProjectPreference) => p.is_default);
+      return defaultPref?.project_id || null;
+    } catch {
+      return null;
+    }
+  }, [forceUpdate]); // Re-read when forceUpdate changes (triggered after setting default)
 
   // SPEC-PROJ-001: DnD sensors configuration
   const sensors = useSensors(
@@ -262,14 +288,16 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
     }
   };
 
-  // SPEC-PROJ-001: Handle set default project
+  // SPEC-PROJ-001: Handle set default project (works for all users)
   const handleSetDefault = async (project: Project) => {
-    if (!onSetDefaultProject || !user) return;
+    if (!onSetDefaultProject) return;
 
-    const isCurrentlyDefault = project.id === active?.id;
+    const isCurrentlyDefault = defaultProjectId === project.id;
 
     try {
       await onSetDefaultProject(isCurrentlyDefault ? "" : project.id);
+      // Trigger re-render to update star icons
+      forceUpdate({});
       if (isCurrentlyDefault) {
         toast.success(t("proj.removeDefault"));
       } else {
@@ -354,8 +382,8 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
                       const realOwner = isStandalone || (user && p.owner_id === user.id);
                       const isOwner = isSimulating ? simulatedRole === "owner" : realOwner;
                       const isEditing = editingProjectId === p.id;
-                      // SPEC-PROJ-001: Check if this is the default project
-                      const isDefault = active?.id === p.id;
+                      // SPEC-PROJ-001: Check if this is the default project (from localStorage preferences)
+                      const isDefault = defaultProjectId === p.id;
 
                       if (isEditing) {
                         return (
