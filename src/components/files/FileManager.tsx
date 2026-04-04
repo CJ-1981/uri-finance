@@ -42,7 +42,7 @@ export const FileManager = ({
   onTransactionClick?: (transactionId: string) => void;
 }) => {
   const { t } = useI18n();
-  const { files, isLoading, uploadFile, isUploading, downloadFile, deleteFile, isDeleting, updateFile } = useFiles(projectId);
+  const { files, isLoading, uploadFile, isUploading, downloadFile, deleteFile, deleteFilesBatch, isDeleting, updateFile } = useFiles(projectId);
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -120,16 +120,14 @@ export const FileManager = ({
   };
 
   const handleBatchDeleteConfirm = async () => {
-    for (const fileId of selectedIds) {
-      try {
-        await deleteFile(fileId);
-      } catch (error) {
-        console.error('Delete failed for file:', fileId, error);
-      }
+    try {
+      await deleteFilesBatch(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+      setBatchDeleteConfirmOpen(false);
+    } catch (error) {
+      console.error('Batch delete failed:', error);
     }
-    setSelectedIds(new Set());
-    setIsSelectionMode(false);
-    setBatchDeleteConfirmOpen(false);
   };
 
   // Handle batch download

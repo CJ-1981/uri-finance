@@ -353,6 +353,68 @@ export const useFiles = (projectId: string) => {
     },
   });
 
+  const deleteFilesBatchMutation = useMutation({
+    mutationKey: ["deleteFilesBatch", projectId],
+    mutationFn: async (fileIds: string[]) => {
+      if (isStandalone) {
+        // Remove content for all files
+        for (const fileId of fileIds) {
+          await del(`file-content-${fileId}`);
+        }
+        // Remove metadata
+        await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
+        return;
+      }
+
+      // Fetch all storage paths first
+      const { data: fileData, error: fetchError } = await supabase
+        .from('project_files')
+        .select('storage_path')
+        .eq('project_id', projectId)
+        .in('id', fileIds);
+
+      if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
+
+      // Delete from storage
+      const storagePaths = fileData.map(f => f.storage_path);
+      if (storagePaths.length > 0) {
+        const { error: storageError } = await supabase.storage.from('project-files').remove(storagePaths);
+        if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
+      }
+
+      // Delete metadata
+      const { error: deleteError } = await supabase
+        .from('project_files')
+        .delete()
+        .eq('project_id', projectId)
+        .in('id', fileIds);
+
+      if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
+    },
+    onMutate: async (fileIds) => {
+      const queryKey = ['project-files', projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any) => (old as ProjectFile[])?.filter(f => !fileIds.includes(f.id)));
+      return { previous };
+    },
+    onSuccess: (_, fileIds) => {
+      toast.success(`${fileIds.length} ${t('files.deleted') || 'files deleted'}`);
+    },
+    onError: (error: Error, variables, context) => {
+      if (isNetworkError(error)) return;
+      queryClient.setQueryData(['project-files', projectId], context?.previous);
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+        }, 2000);
+      }
+    },
+  });
+
   return {
     files,
     isLoading,
@@ -364,7 +426,8 @@ export const useFiles = (projectId: string) => {
     downloadProgress,
     downloadedBytes,
     deleteFile: deleteFileMutation.mutateAsync,
-    isDeleting: deleteFileMutation.isPending,
+    deleteFilesBatch: deleteFilesBatchMutation.mutateAsync,
+    isDeleting: deleteFileMutation.isPending || deleteFilesBatchMutation.isPending,
     updateFile: updateFileMutation.mutateAsync,
     isUpdating: updateFileMutation.isPending,
     getTransactionFiles: (transactionId: string) => files.filter(f => f.transaction_id === transactionId),
