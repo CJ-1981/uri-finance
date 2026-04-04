@@ -328,6 +328,9 @@ export const useFiles = (projectId: string) => {
             .single();
 
           if (insertError) {
+            // Add to successfulUploads BEFORE cleanup so rollback includes this file
+            successfulUploads.push({ fileId, storagePath, isStandalone: false });
+
             // Cleanup storage if metadata insert fails
             const { error: cleanupError } = await supabase.storage.from('project-files').remove([storagePath]);
             if (cleanupError) {
@@ -337,7 +340,6 @@ export const useFiles = (projectId: string) => {
           }
 
           results.push(fileData as ProjectFile);
-          successfulUploads.push({ fileId, storagePath, isStandalone: false });
         }
 
         return results;
@@ -542,14 +544,26 @@ export const useFiles = (projectId: string) => {
       try {
         if (isStandalone) {
           // Remove content for all files
-          for (let i = 0; i < fileIds.length; i++) {
-            const fileId = fileIds[i];
-            await del(`file-content-${fileId}`);
-            successfullyDeleted.push(fileId);
-            onProgress?.(i + 1, fileIds.length);
+          try {
+            for (let i = 0; i < fileIds.length; i++) {
+              const fileId = fileIds[i];
+              await del(`file-content-${fileId}`);
+              successfullyDeleted.push(fileId);
+              onProgress?.(i + 1, fileIds.length);
+            }
+            // Remove metadata only after all content deletes succeed
+            await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
+          } catch (error) {
+            // Clean up metadata for successfully deleted files to prevent broken references
+            if (successfullyDeleted.length > 0) {
+              try {
+                await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !successfullyDeleted.includes(f.id)));
+              } catch (metadataCleanupError) {
+                console.error('[deleteFilesBatch] Failed to clean up metadata after error:', metadataCleanupError);
+              }
+            }
+            throw error;
           }
-          // Remove metadata
-          await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
           return;
         }
 
@@ -609,14 +623,14 @@ export const useFiles = (projectId: string) => {
         : t('files.deletedMultiple').replace('{count}', String(count)) || `${count} files deleted`;
       toast.success(message);
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       // Restore only files that were NOT successfully deleted
       // to avoid reappearing items that were already removed from server
       const successfullyDeleted = (error as any).successfullyDeleted || [];
       queryClient.setQueryData(['project-files', projectId], () => {
         const previousFiles = (context?.previous as ProjectFile[]) || [];
-        const failedIds = variables.fileIds.filter((id: string) => !successfullyDeleted.includes(id));
-        return previousFiles.filter(f => failedIds.includes(f.id));
+        // Keep all previous files EXCEPT successfullyDeleted ones
+        return previousFiles.filter(f => !successfullyDeleted.includes(f.id));
       });
       if (isNetworkError(error)) return;
       toast.error(error.message);

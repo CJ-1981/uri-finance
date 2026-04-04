@@ -580,6 +580,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.downloadToView": "Please download to view the file",
     "files.remarkLabel": "Description",
     "files.remarkPlaceholder": "Add a note or description (optional)",
+    "files.removeFile": "Remove {name}",
     "files.uploadedBy": "Uploaded by {email}",
     "files.selected": "{count} selected",
     // SPEC-TRANSACTION-FILES
@@ -1209,6 +1210,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.downloadToView": "파일을 다운로드하여 확인하세요",
     "files.remarkLabel": "설명",
     "files.remarkPlaceholder": "메모나 설명을 추가하세요 (선택사항)",
+    "files.removeFile": "{name} 제거",
     "files.uploadedBy": "업로더: {email}",
     "files.selected": "{count}개 선택됨",
     // SPEC-TRANSACTION-FILES

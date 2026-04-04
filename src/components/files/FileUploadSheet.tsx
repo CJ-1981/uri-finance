@@ -231,6 +231,14 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     }
   };
 
+  const handleZoneKeyDown = (e: React.KeyboardEvent) => {
+    // Trigger file picker on Enter or Space key
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleZoneClick();
+    }
+  };
+
   const validFileCount = selectedFiles.filter(f => !f.error).length;
 
   return (
@@ -310,6 +318,10 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={handleZoneClick}
+              onKeyDown={handleZoneKeyDown}
+              tabIndex={0}
+              role="button"
+              aria-disabled={isUploading || isUploadingFile}
             >
               <input
                 ref={fileInputRef}
@@ -379,6 +391,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                       className="h-6 w-6 p-0 shrink-0"
                       onClick={() => removeFile(index)}
                       disabled={isUploading || isUploadingFile}
+                      aria-label={t('files.removeFile').replace('{name}', item.file.name) || `Remove ${item.file.name}`}
                     >
                       <XCircle className="h-3.5 w-3.5" />
                     </Button>
