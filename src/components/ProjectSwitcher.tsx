@@ -1,4 +1,4 @@
-import { useState, useImperativeHandle, forwardRef, useMemo } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { Project } from "@/hooks/useProjects";
 import { UserRole } from "@/hooks/useUserRole";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -147,11 +147,8 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
   const { t } = useI18n();
   const isOnline = useOnlineStatus();
 
-  // SPEC-PROJ-001: State to trigger re-read of default project when changed
-  const [, forceUpdate] = useState({});
-
-  // SPEC-PROJ-001: Fetch project preferences from localStorage to determine default project
-  const defaultProjectId = useMemo(() => {
+  // SPEC-PROJ-001: State for default project ID - read from localStorage
+  const [defaultProjectId, setDefaultProjectId] = useState<string | null>(() => {
     try {
       const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
       if (!localPrefs) return null;
@@ -161,7 +158,25 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
     } catch {
       return null;
     }
-  }, [forceUpdate]); // Re-read when forceUpdate changes (triggered after setting default)
+  });
+
+  // SPEC-PROJ-001: Refresh default project ID when sheet opens
+  useEffect(() => {
+    if (open) {
+      try {
+        const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
+        if (!localPrefs) {
+          setDefaultProjectId(null);
+          return;
+        }
+        const prefs = JSON.parse(localPrefs);
+        const defaultPref = prefs.find((p: LocalProjectPreference) => p.is_default);
+        setDefaultProjectId(defaultPref?.project_id || null);
+      } catch {
+        setDefaultProjectId(null);
+      }
+    }
+  }, [open]);
 
   // SPEC-PROJ-001: DnD sensors configuration
   const sensors = useSensors(
@@ -296,8 +311,8 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
 
     try {
       await onSetDefaultProject(isCurrentlyDefault ? "" : project.id);
-      // Trigger re-render to update star icons
-      forceUpdate({});
+      // Update local state immediately to reflect the change
+      setDefaultProjectId(isCurrentlyDefault ? null : project.id);
       if (isCurrentlyDefault) {
         toast.success(t("proj.removeDefault"));
       } else {

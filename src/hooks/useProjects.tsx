@@ -73,11 +73,14 @@ export const useProjects = () => {
       });
 
       localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
+
+      // Invalidate query to trigger re-sort with new order
+      queryClient.invalidateQueries({ queryKey: ["user_projects", isStandalone ? "standalone" : (user?.id || "anonymous")] });
     } catch (err) {
       console.error('Failed to save project order to localStorage:', err);
       throw err;
     }
-  }, []);
+  }, [queryClient, isStandalone, user?.id]);
 
   // SPEC-PROJ-001: Set default project (localStorage only, works for all users)
   const setDefaultProject = useCallback(async (projectId: string): Promise<void> => {
@@ -105,6 +108,9 @@ export const useProjects = () => {
       }
 
       localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
+
+      // Note: No need to invalidate query here since default status is read from localStorage in ProjectSwitcher
+      // The preferenceUpdateCounter in ProjectSwitcher will trigger re-render
     } catch (err) {
       console.error('Failed to save default project to localStorage:', err);
       throw err;
