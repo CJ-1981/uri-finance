@@ -6,7 +6,7 @@
 // Updated: 2026-03-21 - Added transaction link support
 // Updated: 2026-03-22 - Added text search functionality
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { FileUp, CheckSquare, Square, Download, Trash2, X, Search, Loader2 } from 'lucide-react';
 import { useFiles } from '@/hooks/useFiles';
 import { useI18n } from '@/hooks/useI18n';
@@ -51,6 +51,7 @@ export const FileManager = ({
   const [batchDeleteConfirmOpen, setBatchDeleteConfirmOpen] = useState(false);
   const [uploadRemark, setUploadRemark] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteProgress, setDeleteProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Filter files based on search query
   const filteredFiles = useMemo(() => {
@@ -66,6 +67,12 @@ export const FileManager = ({
       return false;
     });
   }, [files, searchQuery]);
+
+  // Debug: Track deleteProgress changes
+  useEffect(() => {
+    console.log('[FileManager] deleteProgress changed:', deleteProgress);
+    console.log('[FileManager] Render - deleteProgress:', deleteProgress, 'isDeleting:', isDeleting);
+  }, [deleteProgress, isDeleting]);
 
   // Toggle selection mode
   const toggleSelectionMode = () => {
@@ -100,7 +107,8 @@ export const FileManager = ({
     setDeleteConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent dialog from closing immediately
     if (fileToDelete) {
       try {
         await deleteFile(fileToDelete);
@@ -119,14 +127,30 @@ export const FileManager = ({
     }
   };
 
-  const handleBatchDeleteConfirm = async () => {
+  const handleBatchDeleteConfirm = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent dialog from closing
+    const fileIds = Array.from(selectedIds);
+    console.log('[FileManager] Starting batch delete:', fileIds.length, 'files');
+    setDeleteProgress(null);
     try {
-      await deleteFilesBatch(Array.from(selectedIds));
-      setSelectedIds(new Set());
-      setIsSelectionMode(false);
-      setBatchDeleteConfirmOpen(false);
+      await deleteFilesBatch(fileIds, (current, total) => {
+        console.log('[FileManager] Progress callback:', current, '/', total);
+        setDeleteProgress({ current, total });
+      });
+      console.log('[FileManager] Batch delete completed');
+
+      // Show completion state briefly before closing dialog
+      // Use setTimeout to allow React to render the final progress state first
+      setTimeout(() => {
+        console.log('[FileManager] Closing dialog after delay');
+        setSelectedIds(new Set());
+        setIsSelectionMode(false);
+        setBatchDeleteConfirmOpen(false);
+        setDeleteProgress(null);
+      }, 2000);
     } catch (error) {
       console.error('Batch delete failed:', error);
+      setDeleteProgress(null);
     }
   };
 
@@ -343,7 +367,7 @@ export const FileManager = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t('tx.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting || deleteProgress !== null}>{t('tx.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -366,22 +390,36 @@ export const FileManager = ({
       <AlertDialog open={batchDeleteConfirmOpen} onOpenChange={(open) => !open && !isDeleting && setBatchDeleteConfirmOpen(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('files.deleteMultipleTitle').replace('{count}', String(selectedCount))}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {(() => {
+                const titleText = deleteProgress
+                  ? `${t('files.deleting')} ${deleteProgress.current}/${deleteProgress.total}`
+                  : t('files.deleteMultipleTitle').replace('{count}', String(selectedCount));
+                console.log('[AlertDialogTitle] Rendering:', titleText, 'deleteProgress:', deleteProgress);
+                return titleText;
+              })()}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('files.deleteMultipleDesc').replace('{count}', String(selectedCount))}
+              {deleteProgress
+                ? `${t('files.pleaseWait')}...`
+                : t('files.deleteMultipleDesc').replace('{count}', String(selectedCount))
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t('tx.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting || deleteProgress !== null}>{t('tx.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBatchDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
+              disabled={isDeleting || deleteProgress !== null}
             >
-              {isDeleting ? (
+              {(isDeleting || deleteProgress !== null) ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('files.deletingMultiple')}
+                  {deleteProgress
+                    ? `${deleteProgress.current}/${deleteProgress.total}`
+                    : t('files.deletingMultiple')
+                  }
                 </span>
               ) : (
                 t('files.deleteMultipleButton').replace('{count}', String(selectedCount))

@@ -481,11 +481,13 @@ export const useFiles = (projectId: string) => {
 
   const deleteFilesBatchMutation = useMutation({
     mutationKey: ["deleteFilesBatch", projectId],
-    mutationFn: async (fileIds: string[]) => {
+    mutationFn: async ({ fileIds, onProgress }: { fileIds: string[]; onProgress?: (current: number, total: number) => void }) => {
       if (isStandalone) {
         // Remove content for all files
-        for (const fileId of fileIds) {
+        for (let i = 0; i < fileIds.length; i++) {
+          const fileId = fileIds[i];
           await del(`file-content-${fileId}`);
+          onProgress?.(i + 1, fileIds.length);
         }
         // Remove metadata
         await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
@@ -501,31 +503,44 @@ export const useFiles = (projectId: string) => {
 
       if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
 
-      // Delete from storage
-      const storagePaths = fileData.map(f => f.storage_path);
-      if (storagePaths.length > 0) {
-        const { error: storageError } = await supabase.storage.from('project-files').remove(storagePaths);
-        if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
+      // Delete from storage and metadata sequentially to report progress
+      for (let i = 0; i < fileIds.length; i++) {
+        const fileId = fileIds[i];
+        const fileRecord = fileData?.find((f: any) => f.id === fileId);
+        const storagePath = fileRecord?.storage_path;
+
+        if (storagePath) {
+          const { error: storageError } = await supabase.storage.from('project-files').remove([storagePath]);
+          if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
+        }
+
+        const { error: deleteError } = await supabase
+          .from('project_files')
+          .delete()
+          .eq('id', fileId)
+          .eq('project_id', projectId);
+
+        if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
+
+        console.log(`[deleteFilesBatch] Progress: ${i + 1}/${fileIds.length}`);
+        onProgress?.(i + 1, fileIds.length);
+
+        // Force a synchronous delay - this blocks execution but allows UI to update
+        const start = Date.now();
+        while (Date.now() - start < 800) {
+          // Busy wait to force visibility
+        }
       }
-
-      // Delete metadata
-      const { error: deleteError } = await supabase
-        .from('project_files')
-        .delete()
-        .eq('project_id', projectId)
-        .in('id', fileIds);
-
-      if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
     },
-    onMutate: async (fileIds) => {
+    onMutate: async ({ fileIds }) => {
       const queryKey = ['project-files', projectId];
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
       queryClient.setQueryData(queryKey, (old: any) => (old as ProjectFile[])?.filter(f => !fileIds.includes(f.id)));
       return { previous };
     },
-    onSuccess: (_, fileIds) => {
-      toast.success(`${fileIds.length} ${t('files.deleted') || 'files deleted'}`);
+    onSuccess: (_, variables) => {
+      toast.success(`${variables.fileIds.length} ${t('files.deleted') || 'files deleted'}`);
     },
     onError: (error: Error, variables, context) => {
       if (isNetworkError(error)) return;
@@ -553,7 +568,7 @@ export const useFiles = (projectId: string) => {
     downloadProgress,
     downloadedBytes,
     deleteFile: deleteFileMutation.mutateAsync,
-    deleteFilesBatch: deleteFilesBatchMutation.mutateAsync,
+    deleteFilesBatch: (fileIds: string[], onProgress?: (current: number, total: number) => void) => deleteFilesBatchMutation.mutateAsync({ fileIds, onProgress }),
     isDeleting: deleteFileMutation.isPending || deleteFilesBatchMutation.isPending,
     updateFile: updateFileMutation.mutateAsync,
     isUpdating: updateFileMutation.isPending,

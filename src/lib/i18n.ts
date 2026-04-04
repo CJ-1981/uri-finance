@@ -504,6 +504,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.optional": "optional",
     "common.or": "OR",
     "common.selected": "selected",
+    "common.delete": "Delete",
+    "common.cancel": "Cancel",
 
     // PWA
     "pwa.installTitle": "Install App",
@@ -564,7 +566,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.deleteMultipleDesc": "This action cannot be undone. All {count} selected files will be permanently deleted.",
     "files.deleteMultipleButton": "Delete {count} Files",
     "files.deletingMultiple": "Deleting...",
+    "files.deleting": "Deleting",
     "files.deleted": "File deleted",
+    "files.pleaseWait": "Please wait",
     "files.previewNotAvailable": "Preview not available for this file type",
     "files.downloadToView": "Please download to view the file",
     "files.remarkLabel": "Description",
@@ -1122,6 +1126,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "common.optional": "선택 사항",
     "common.or": "또는",
     "common.selected": "선택됨",
+    "common.delete": "삭제",
+    "common.cancel": "취소",
 
     // PWA
     "pwa.installTitle": "앱 설치",
@@ -1182,7 +1188,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.deleteMultipleDesc": "이 작업은 되돌릴 수 없습니다. 선택한 {count}개 파일이 영구적으로 삭제됩니다.",
     "files.deleteMultipleButton": "{count}개 삭제",
     "files.deletingMultiple": "삭제 중...",
+    "files.deleting": "삭제 중",
     "files.deleted": "파일이 삭제되었습니다",
+    "files.pleaseWait": "잠시만 기다려주세요",
     "files.previewNotAvailable": "이 파일 형식은 미리보기를 지원하지 않습니다",
     "files.downloadToView": "파일을 다운로드하여 확인하세요",
     "files.remarkLabel": "설명",
