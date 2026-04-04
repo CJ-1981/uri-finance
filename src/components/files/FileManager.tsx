@@ -218,7 +218,7 @@ export const FileManager = ({
                 )}
               </Button>
               <span className="text-sm font-medium text-foreground px-2">
-                {t('files.selected', { count: selectedCount })}
+                {t('files.selected').replace('{count}', String(selectedCount))}
               </span>
             </div>
 
