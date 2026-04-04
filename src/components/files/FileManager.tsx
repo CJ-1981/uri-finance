@@ -6,7 +6,7 @@
 // Updated: 2026-03-21 - Added transaction link support
 // Updated: 2026-03-22 - Added text search functionality
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { FileUp, CheckSquare, Square, Download, Trash2, X, Search, Loader2 } from 'lucide-react';
 import { useFiles } from '@/hooks/useFiles';
 import { useI18n } from '@/hooks/useI18n';
@@ -67,12 +67,6 @@ export const FileManager = ({
       return false;
     });
   }, [files, searchQuery]);
-
-  // Debug: Track deleteProgress changes
-  useEffect(() => {
-    console.log('[FileManager] deleteProgress changed:', deleteProgress);
-    console.log('[FileManager] Render - deleteProgress:', deleteProgress, 'isDeleting:', isDeleting);
-  }, [deleteProgress, isDeleting]);
 
   // Toggle selection mode
   const toggleSelectionMode = () => {
@@ -391,13 +385,9 @@ export const FileManager = ({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {(() => {
-                const titleText = deleteProgress
-                  ? `${t('files.deleting')} ${deleteProgress.current}/${deleteProgress.total}`
-                  : t('files.deleteMultipleTitle').replace('{count}', String(selectedCount));
-                console.log('[AlertDialogTitle] Rendering:', titleText, 'deleteProgress:', deleteProgress);
-                return titleText;
-              })()}
+              {deleteProgress
+                ? `${t('files.deleting')} ${deleteProgress.current}/${deleteProgress.total}`
+                : t('files.deleteMultipleTitle').replace('{count}', String(selectedCount))}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteProgress

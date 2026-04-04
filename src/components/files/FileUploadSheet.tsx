@@ -7,11 +7,10 @@
 // Updated: 2026-04-04 - Added multi-file upload support
 
 import { useState, useRef } from 'react';
-import { Upload, X, XCircle, File as FileIcon, Loader2 } from 'lucide-react';
+import { Upload, XCircle, File as FileIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import {
   Sheet,
   SheetContent,
@@ -67,7 +66,7 @@ const formatFileSizeLimit = (bytes: number): string => {
  * Supports multiple file selection for batch uploads
  * Accepts optional transactionId for associating uploads with transactions
  */
-export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange, transactionId }: FileUploadSheetProps) => {
+export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange, transactionId: _transactionId }: FileUploadSheetProps) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<Array<{ file: File; error?: string }>>([]);
@@ -112,7 +111,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
         if (isDuplicate) {
           newFiles.push({
             file,
-            error: t('files.uploadFailed') + ': ' + t('files.fetchFailed') // Reuse translation as "Already exists"
+            error: 'File already selected'
           });
         } else {
           newFiles.push({ file });
@@ -144,10 +143,14 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       // New signature: (files: Array<{ file: File; remark?: string }>, onProgress?: (current, total) => void) => Promise<void>
       const isOldSignature = onUpload.length === 2; // Old signature has 2 params (file, remark), new has 2 params (files, onProgress) but onProgress is optional
 
-      if (isOldSignature && validFiles.length === 1) {
-        // Use old single-file signature
-        const { file } = validFiles[0];
-        await (onUpload as OldUploadHandler)(file, localRemark.trim());
+      if (isOldSignature) {
+        // Use old single-file signature - loop through files sequentially
+        for (let i = 0; i < validFiles.length; i++) {
+          const { file } = validFiles[i];
+          await (onUpload as OldUploadHandler)(file, localRemark.trim());
+          // Update progress after each file
+          setUploadProgress({ current: i + 1, total: validFiles.length });
+        }
       } else {
         // Use new batch signature
         const filesWithRemark = validFiles.map(({ file }) => ({
@@ -164,7 +167,6 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       setSelectedFiles([]);
       setLocalRemark('');
       setOpen(false);
-      setUploadProgress(null);
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -172,7 +174,6 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     } catch (err) {
       // Error: keep sheet open to show error
       setError(err instanceof Error ? err.message : 'Upload failed');
-      setUploadProgress(null);
     } finally {
       setIsUploadingFile(false);
       setUploadProgress(null);
@@ -217,7 +218,6 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     }
   };
 
-  const hasErrors = selectedFiles.some(f => f.error);
   const validFileCount = selectedFiles.filter(f => !f.error).length;
 
   return (

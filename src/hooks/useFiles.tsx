@@ -371,7 +371,11 @@ export const useFiles = (projectId: string) => {
       }
     },
     onSuccess: (results) => {
-      toast.success(`${results.length} ${t('files.uploaded') || 'files uploaded successfully'}`);
+      const count = results.length;
+      const message = count === 1
+        ? t('files.uploaded') || 'File uploaded successfully'
+        : `${count} ${t('files.uploaded') || 'files uploaded successfully'}`;
+      toast.success(message);
     },
     onError: (error: Error) => {
       if (isNetworkError(error)) return;
@@ -576,7 +580,11 @@ export const useFiles = (projectId: string) => {
       return { previous };
     },
     onSuccess: (_, variables) => {
-      toast.success(`${variables.fileIds.length} ${t('files.deleted') || 'files deleted'}`);
+      const count = variables.fileIds.length;
+      const message = count === 1
+        ? t('files.deleted') || 'File deleted'
+        : `${count} ${t('files.deleted') || 'files deleted'}`;
+      toast.success(message);
     },
     onError: (error: Error, _variables, context) => {
       if (isNetworkError(error)) return;
