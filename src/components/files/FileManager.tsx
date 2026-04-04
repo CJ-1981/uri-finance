@@ -183,9 +183,10 @@ export const FileManager = ({
                 size="sm"
                 onClick={toggleSelectionMode}
                 className="gap-2 shrink-0"
+                aria-label={t('files.select')}
               >
                 <CheckSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Select</span>
+                <span className="hidden sm:inline">{t('files.select')}</span>
               </Button>
             )}
           </div>
@@ -208,7 +209,7 @@ export const FileManager = ({
                 {allSelected ? (
                   <>
                     <Square className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{t('files.deselect')}</span>
+                    <span className="hidden sm:inline">{t('files.deselectAll')}</span>
                   </>
                 ) : (
                   <>
