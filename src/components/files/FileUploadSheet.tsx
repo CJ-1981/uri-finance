@@ -95,6 +95,8 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     const files = e.target.files;
     if (files && files.length > 0) {
       addFiles(Array.from(files));
+      // Reset input value so selecting the same file again triggers onChange
+      e.target.value = '';
     }
   };
 

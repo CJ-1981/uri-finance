@@ -329,7 +329,10 @@ export const useFiles = (projectId: string) => {
 
           if (insertError) {
             // Cleanup storage if metadata insert fails
-            await supabase.storage.from('project-files').remove([storagePath]);
+            const { error: cleanupError } = await supabase.storage.from('project-files').remove([storagePath]);
+            if (cleanupError) {
+              throw new Error(`${file.name}: ${t('files.storageDeleteFailed') || 'Failed to cleanup file from storage'}: ${cleanupError.message}`);
+            }
             throw new Error(`${file.name}: ${t('files.saveMetadataFailed') || 'Failed to save file metadata'}: ${insertError.message}`);
           }
 
@@ -359,9 +362,15 @@ export const useFiles = (projectId: string) => {
           .map(async ({ fileId, storagePath }) => {
             try {
               // Delete from storage
-              await supabase.storage.from('project-files').remove([storagePath]);
+              const { error: storageError } = await supabase.storage.from('project-files').remove([storagePath]);
+              if (storageError) {
+                throw new Error(`Failed to delete file from storage: ${storageError.message}`);
+              }
               // Delete metadata
-              await supabase.from('project_files').delete().eq('id', fileId);
+              const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId);
+              if (deleteError) {
+                throw new Error(`Failed to delete file metadata: ${deleteError.message}`);
+              }
             } catch (rollbackError) {
               console.error(`[uploadFilesBatch] Failed to rollback server file ${fileId}:`, rollbackError);
             }
@@ -463,8 +472,9 @@ export const useFiles = (projectId: string) => {
       toast.success(t('files.deleted') || 'File deleted');
     },
     onError: (error: Error, _variables, context) => {
-      if (isNetworkError(error)) return;
+      // Always restore optimistic state before returning
       queryClient.setQueryData(['project-files', projectId], context?.previous);
+      if (isNetworkError(error)) return;
       toast.error(error.message);
     },
     onSettled: () => {
@@ -510,8 +520,9 @@ export const useFiles = (projectId: string) => {
       toast.success(t('files.updated') || 'File updated');
     },
     onError: (error: Error, _variables, context) => {
-      if (isNetworkError(error)) return;
+      // Always restore optimistic state before returning
       queryClient.setQueryData(['project-files', projectId], context?.previous);
+      if (isNetworkError(error)) return;
       toast.error(error.message);
     },
     onSettled: () => {
@@ -525,50 +536,62 @@ export const useFiles = (projectId: string) => {
   const deleteFilesBatchMutation = useMutation({
     mutationKey: ["deleteFilesBatch", projectId],
     mutationFn: async ({ fileIds, onProgress }: { fileIds: string[]; onProgress?: (current: number, total: number) => void }) => {
-      if (isStandalone) {
-        // Remove content for all files
+      // Track successfully deleted IDs in closure for error recovery
+      const successfullyDeleted: string[] = [];
+
+      try {
+        if (isStandalone) {
+          // Remove content for all files
+          for (let i = 0; i < fileIds.length; i++) {
+            const fileId = fileIds[i];
+            await del(`file-content-${fileId}`);
+            successfullyDeleted.push(fileId);
+            onProgress?.(i + 1, fileIds.length);
+          }
+          // Remove metadata
+          await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
+          return;
+        }
+
+        // Fetch all storage paths and ids first
+        const { data: fileData, error: fetchError } = await supabase
+          .from('project_files')
+          .select('id, storage_path')
+          .eq('project_id', projectId)
+          .in('id', fileIds);
+
+        if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
+
+        // Delete from storage and metadata sequentially to report progress
         for (let i = 0; i < fileIds.length; i++) {
           const fileId = fileIds[i];
-          await del(`file-content-${fileId}`);
+          const fileRecord = fileData?.find((f: any) => f.id === fileId);
+          const storagePath = fileRecord?.storage_path;
+
+          if (storagePath) {
+            const { error: storageError } = await supabase.storage.from('project-files').remove([storagePath]);
+            if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
+          }
+
+          const { error: deleteError } = await supabase
+            .from('project_files')
+            .delete()
+            .eq('id', fileId)
+            .eq('project_id', projectId);
+
+          if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
+
+          // Track successfully deleted file
+          successfullyDeleted.push(fileId);
           onProgress?.(i + 1, fileIds.length);
+
+          // Use async delay instead of busy-wait to allow UI to repaint
+          await new Promise(resolve => setTimeout(resolve, 800));
         }
-        // Remove metadata
-        await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
-        return;
-      }
-
-      // Fetch all storage paths and ids first
-      const { data: fileData, error: fetchError } = await supabase
-        .from('project_files')
-        .select('id, storage_path')
-        .eq('project_id', projectId)
-        .in('id', fileIds);
-
-      if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
-
-      // Delete from storage and metadata sequentially to report progress
-      for (let i = 0; i < fileIds.length; i++) {
-        const fileId = fileIds[i];
-        const fileRecord = fileData?.find((f: any) => f.id === fileId);
-        const storagePath = fileRecord?.storage_path;
-
-        if (storagePath) {
-          const { error: storageError } = await supabase.storage.from('project-files').remove([storagePath]);
-          if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
-        }
-
-        const { error: deleteError } = await supabase
-          .from('project_files')
-          .delete()
-          .eq('id', fileId)
-          .eq('project_id', projectId);
-
-        if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
-
-        onProgress?.(i + 1, fileIds.length);
-
-        // Use async delay instead of busy-wait to allow UI to repaint
-        await new Promise(resolve => setTimeout(resolve, 800));
+      } catch (error) {
+        // Attach successfully deleted IDs to error for onError handler
+        (error as any).successfullyDeleted = successfullyDeleted;
+        throw error;
       }
     },
     onMutate: async ({ fileIds }) => {
@@ -576,7 +599,8 @@ export const useFiles = (projectId: string) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
       queryClient.setQueryData(queryKey, (old: any) => (old as ProjectFile[])?.filter(f => !fileIds.includes(f.id)));
-      return { previous };
+      // Track which files are being deleted for error recovery
+      return { previous, fileIds };
     },
     onSuccess: (_, variables) => {
       const count = variables.fileIds.length;
@@ -585,9 +609,15 @@ export const useFiles = (projectId: string) => {
         : t('files.deletedMultiple').replace('{count}', String(count)) || `${count} files deleted`;
       toast.success(message);
     },
-    onError: (error: Error, _variables, context) => {
-      // Always restore optimistic state before returning
-      queryClient.setQueryData(['project-files', projectId], context?.previous);
+    onError: (error: Error, variables, context) => {
+      // Restore only files that were NOT successfully deleted
+      // to avoid reappearing items that were already removed from server
+      const successfullyDeleted = (error as any).successfullyDeleted || [];
+      queryClient.setQueryData(['project-files', projectId], () => {
+        const previousFiles = (context?.previous as ProjectFile[]) || [];
+        const failedIds = variables.fileIds.filter((id: string) => !successfullyDeleted.includes(id));
+        return previousFiles.filter(f => failedIds.includes(f.id));
+      });
       if (isNetworkError(error)) return;
       toast.error(error.message);
     },
