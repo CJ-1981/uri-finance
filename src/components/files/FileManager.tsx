@@ -7,7 +7,7 @@
 // Updated: 2026-03-22 - Added text search functionality
 
 import { useState, useMemo } from 'react';
-import { FileUp, CheckSquare, Square, Download, Trash2, X, Search } from 'lucide-react';
+import { FileUp, CheckSquare, Square, Download, Trash2, X, Search, Loader2 } from 'lucide-react';
 import { useFiles } from '@/hooks/useFiles';
 import { useI18n } from '@/hooks/useI18n';
 import { Button } from '@/components/ui/button';
@@ -334,7 +334,7 @@ export const FileManager = ({
       />
 
       {/* Single Delete Confirmation */}
-      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={(open) => !open && !isDeleting && setDeleteConfirmOpen(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('files.deleteConfirm')}</AlertDialogTitle>
@@ -343,19 +343,27 @@ export const FileManager = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('tx.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('tx.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
             >
-              {t('files.delete')}
+              {isDeleting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="sr-only">{t('common.deleting')}</span>
+                </span>
+              ) : (
+                t('files.delete')
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Batch Delete Confirmation */}
-      <AlertDialog open={batchDeleteConfirmOpen} onOpenChange={setBatchDeleteConfirmOpen}>
+      <AlertDialog open={batchDeleteConfirmOpen} onOpenChange={(open) => !open && !isDeleting && setBatchDeleteConfirmOpen(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('files.deleteMultipleTitle').replace('{count}', String(selectedCount))}</AlertDialogTitle>
@@ -364,13 +372,20 @@ export const FileManager = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('tx.cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('tx.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBatchDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
             >
-              {isDeleting ? t('files.deletingMultiple') : t('files.deleteMultipleButton').replace('{count}', String(selectedCount))}
+              {isDeleting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t('files.deletingMultiple')}
+                </span>
+              ) : (
+                t('files.deleteMultipleButton').replace('{count}', String(selectedCount))
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
