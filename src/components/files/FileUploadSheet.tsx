@@ -148,8 +148,9 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       // Auto-detect upload mode if not explicitly provided
       // Old signature: (file: File, remark: string) => Promise<void>
       // New signature: (files: Array<{ file: File; remark?: string }>, onProgress?: (current, total) => void) => Promise<void>
-      // Detection: Both have length 2, so we use uploadMode prop or check if onUpload is a function and try to determine from context
-      const isOldSignature = uploadMode === 'single' || (!uploadMode && onUpload.length === 2);
+      // Both have length 2, so we default to 'batch' when uploadMode is not specified
+      // Callers should explicitly pass uploadMode='single' if using the old signature
+      const isOldSignature = uploadMode === 'single';
 
       if (isOldSignature) {
         // Use old single-file signature - loop through files sequentially
