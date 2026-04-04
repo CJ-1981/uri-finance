@@ -260,7 +260,7 @@ const TrashManager = ({ projectId, currency }: Props) => {
               </Button>
             </div>
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {t("admin.trash")}
+              {t("admin.trash")} ({items.length})
             </span>
           </div>
         )}
