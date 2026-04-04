@@ -226,8 +226,10 @@ export const useFiles = (projectId: string) => {
     mutationFn: async (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }) => {
       const { files, transactionId } = params;
 
-      // Process files: upload to storage in parallel, but insert metadata sequentially to avoid RLS concurrency issues
-      const fileData = await Promise.all(files.map(async ({ file, remark }) => {
+      // Process files sequentially using the exact same logic as single file upload
+      const results: ProjectFile[] = [];
+
+      for (const { file, remark } of files) {
         let resolvedMime = file.type;
         if (!resolvedMime || resolvedMime === '') {
           const ext = getFileExtension(file.name);
@@ -252,101 +254,75 @@ export const useFiles = (projectId: string) => {
         const fileId = crypto.randomUUID();
 
         if (isStandalone) {
-          // Store content as base64
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = () => reject(new Error('Failed to read file'));
-            reader.readAsDataURL(fileToUpload);
-          });
-          await set(`file-content-${fileId}`, base64);
-
-          return {
-            id: fileId,
-            fileToUpload,
-            file_name: file.name,
-            file_type: resolvedMime,
-            file_size: file.size,
-            storage_path: fileId,
-            remark: remark?.trim() || null,
-          };
-        }
-
-        // Supabase upload path - upload to storage in parallel
-        const filePath = `${projectId}/${fileId}/${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from('project-files')
-          .upload(filePath, fileToUpload, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (uploadError) {
-          throw new Error(`${file.name}: Upload failed: ${uploadError.message}`);
-        }
-
-        return {
-          id: fileId,
-          filePath,
-          file_name: file.name,
-          file_type: resolvedMime,
-          file_size: file.size,
-          remark: remark?.trim() || null,
-        };
-      }));
-
-      // Insert metadata sequentially to avoid RLS concurrency issues
-      const results: ProjectFile[] = [];
-      for (const fileDatum of fileData) {
-        if (isStandalone) {
+          // Create local metadata
           const newFileMetadata: ProjectFile = {
-            id: fileDatum.id,
+            id: fileId,
             project_id: projectId,
             uploaded_by: 'standalone-user',
-            file_name: fileDatum.file_name,
-            file_type: fileDatum.file_type,
-            file_size: fileDatum.file_size,
-            storage_path: fileDatum.storage_path,
-            remark: fileDatum.remark,
+            file_name: file.name,
+            file_type: resolvedMime,
+            file_size: fileToUpload.size,
+            storage_path: `standalone/${projectId}/${fileId}`,
+            remark: remark?.trim() || null,
             transaction_id: transactionId || null,
             created_at: new Date().toISOString(),
           };
+
+          // Store file content
+          await set(`file-content-${fileId}`, fileToUpload);
+
+          // Store metadata
           await update(`files-metadata-${projectId}`, (old: any) => {
-            const files = (old || []) as ProjectFile[];
-            return [...files, newFileMetadata];
+            return [newFileMetadata, ...(old || [])];
           });
+
           results.push(newFileMetadata);
-        } else {
-          // Get user fresh for each insert to ensure RLS auth context
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
-          if (userError || !user) {
-            throw new Error(t('files.notAuthenticated') || 'User not authenticated');
-          }
-
-          const { data: fileData, error: insertError } = await supabase
-            .from('project_files')
-            .insert({
-              id: fileDatum.id,
-              project_id: projectId,
-              storage_path: fileDatum.filePath,
-              file_name: fileDatum.file_name,
-              file_type: fileDatum.file_type,
-              file_size: fileDatum.file_size,
-              uploaded_by: user.id,
-              remark: fileDatum.remark,
-              transaction_id: transactionId || null,
-            })
-            .select()
-            .single();
-
-          if (insertError) {
-            // Cleanup storage if metadata insert fails
-            await supabase.storage.from('project-files').remove([fileDatum.filePath]);
-            throw new Error(`${fileDatum.file_name}: ${insertError.message}`);
-          }
-
-          results.push(fileData as ProjectFile);
+          continue;
         }
+
+        // Get authenticated user - same as single file upload
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          throw new Error(t('files.notAuthenticated') || 'User not authenticated');
+        }
+
+        const ext = getFileExtension(file.name);
+        const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('project-files')
+          .upload(storagePath, fileToUpload, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: resolvedMime,
+          });
+
+        if (uploadError) {
+          throw new Error(`${file.name}: ${t('files.uploadFailed') || 'Failed to upload file'}: ${uploadError.message}`);
+        }
+
+        const { data: fileData, error: insertError } = await supabase
+          .from('project_files')
+          .insert({
+            id: fileId,
+            project_id: projectId,
+            uploaded_by: user.id,
+            file_name: file.name,
+            file_type: resolvedMime,
+            file_size: fileToUpload.size,
+            storage_path: storagePath,
+            remark: remark?.trim() || null,
+            transaction_id: transactionId || null,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          // Cleanup storage if metadata insert fails
+          await supabase.storage.from('project-files').remove([storagePath]);
+          throw new Error(`${file.name}: ${t('files.saveMetadataFailed') || 'Failed to save file metadata'}: ${insertError.message}`);
+        }
+
+        results.push(fileData as ProjectFile);
       }
 
       return results;
