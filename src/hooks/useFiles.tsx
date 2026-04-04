@@ -205,10 +205,38 @@ export const useFiles = (projectId: string) => {
       }
       return fileData as ProjectFile;
     },
+    onMutate: async ({ file, remark }) => {
+      const queryKey = ['project-files', projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+
+      // Optimistically add file to cache for immediate UI update
+      if (isStandalone) {
+        const fileId = crypto.randomUUID();
+        const newFile: ProjectFile = {
+          id: fileId,
+          project_id: projectId,
+          uploaded_by: 'standalone-user',
+          file_name: file.name,
+          file_type: file.type || '',
+          file_size: file.size,
+          storage_path: `standalone/${projectId}/${fileId}`,
+          remark: remark?.trim() || null,
+          transaction_id: null,
+          created_at: new Date().toISOString(),
+        };
+        queryClient.setQueryData(queryKey, (old: any) => [newFile, ...(old || [])]);
+      }
+
+      return { previous };
+    },
     onSuccess: () => {
       toast.success(t('files.uploaded') || 'File uploaded successfully');
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (isStandalone) {
+        queryClient.setQueryData(['project-files', projectId], context?.previous);
+      }
       if (isNetworkError(error)) return;
       toast.error(error.message);
     },
@@ -384,6 +412,33 @@ export const useFiles = (projectId: string) => {
         throw error;
       }
     },
+    onMutate: async ({ files }) => {
+      const queryKey = ['project-files', projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+
+      // Optimistically add files to cache for immediate UI update
+      if (isStandalone) {
+        const optimisticFiles: ProjectFile[] = files.map(({ file, remark }) => {
+          const fileId = crypto.randomUUID();
+          return {
+            id: fileId,
+            project_id: projectId,
+            uploaded_by: 'standalone-user',
+            file_name: file.name,
+            file_type: file.type || '',
+            file_size: file.size,
+            storage_path: `standalone/${projectId}/${fileId}`,
+            remark: remark?.trim() || null,
+            transaction_id: null,
+            created_at: new Date().toISOString(),
+          };
+        });
+        queryClient.setQueryData(queryKey, (old: any) => [...optimisticFiles, ...(old || [])]);
+      }
+
+      return { previous };
+    },
     onSuccess: (results) => {
       const count = results.length;
       const message = count === 1
@@ -391,7 +446,10 @@ export const useFiles = (projectId: string) => {
         : t('files.uploadedMultiple').replace('{count}', String(count)) || `${count} files uploaded successfully`;
       toast.success(message);
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (isStandalone) {
+        queryClient.setQueryData(['project-files', projectId], context?.previous);
+      }
       if (isNetworkError(error)) return;
       toast.error(error.message);
     },
