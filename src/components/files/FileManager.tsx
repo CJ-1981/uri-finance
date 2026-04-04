@@ -42,7 +42,7 @@ export const FileManager = ({
   onTransactionClick?: (transactionId: string) => void;
 }) => {
   const { t } = useI18n();
-  const { files, isLoading, uploadFile, isUploading, downloadFile, deleteFile, deleteFilesBatch, isDeleting, updateFile } = useFiles(projectId);
+  const { files, isLoading, uploadFilesBatch, isUploading, downloadFile, deleteFile, deleteFilesBatch, isDeleting, updateFile } = useFiles(projectId);
   const [previewFile, setPreviewFile] = useState<ProjectFile | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -154,9 +154,9 @@ export const FileManager = ({
     setPreviewFile(file);
   };
 
-  const handleUpload = async (file: File, remark: string) => {
+  const handleUpload = async (files: Array<{ file: File; remark?: string }>) => {
     try {
-      await uploadFile({ file, remark });
+      await uploadFilesBatch({ files });
     } catch (error) {
       console.error('Upload failed:', error);
       throw error;

@@ -221,6 +221,126 @@ export const useFiles = (projectId: string) => {
     },
   });
 
+  const uploadFilesBatchMutation = useMutation({
+    mutationKey: ["uploadFilesBatch", projectId],
+    mutationFn: async (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }) => {
+      const { files, transactionId } = params;
+
+      // Upload all files in parallel
+      const uploadPromises = files.map(async ({ file, remark }) => {
+        let resolvedMime = file.type;
+        if (!resolvedMime || resolvedMime === '') {
+          const ext = getFileExtension(file.name);
+          resolvedMime = EXTENSION_TO_MIME[ext] || '';
+        }
+
+        const fileToUpload = await autoCompressImageIfNeeded(file);
+
+        // Construct an actual File instance using constructor
+        const fileForValidation = new File([fileToUpload], fileToUpload.name, {
+          type: resolvedMime,
+          lastModified: fileToUpload.lastModified
+        });
+
+        if (!isFileTypeAllowed(fileForValidation)) {
+          throw new Error(`${file.name}: ${t('files.invalidFileType') || 'File type not allowed'}`);
+        }
+        if (fileToUpload.size > MAX_FILE_SIZE) {
+          throw new Error(`${file.name}: ${t('files.sizeExceeds').replace('{size}', `${MAX_FILE_SIZE / (1024 * 1024)} MB`)}`);
+        }
+
+        const fileId = crypto.randomUUID();
+
+        if (isStandalone) {
+          // Store content as base64
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsDataURL(fileToUpload);
+          });
+          await set(`file-content-${fileId}`, base64);
+
+          // Create metadata
+          const newFileMetadata: ProjectFile = {
+            id: fileId,
+            project_id: projectId,
+            uploaded_by: 'standalone-user',
+            file_name: file.name,
+            file_type: resolvedMime,
+            file_size: file.size,
+            storage_path: fileId, // Use ID as path for standalone
+            remark: remark?.trim() || null,
+            transaction_id: transactionId || null,
+            created_at: new Date().toISOString(),
+          };
+          await update(`files-metadata-${projectId}`, (old: any) => {
+            const files = (old || []) as ProjectFile[];
+            return [...files, newFileMetadata];
+          });
+
+          return newFileMetadata;
+        }
+
+        // Supabase upload path
+        const filePath = `${projectId}/${fileId}/${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('project-files')
+          .upload(filePath, fileToUpload, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          throw new Error(`${file.name}: Upload failed: ${uploadError.message}`);
+        }
+
+        // Create metadata record
+        const { data: fileData, error: insertError } = await supabase
+          .from('project_files')
+          .insert({
+            id: fileId,
+            project_id: projectId,
+            storage_path: filePath,
+            file_name: file.name,
+            file_type: resolvedMime,
+            file_size: file.size,
+            uploaded_by: (await supabase.auth.getUser()).data.user?.id || null,
+            remark: remark?.trim() || null,
+            transaction_id: transactionId || null,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          // Cleanup storage if metadata insert fails
+          await supabase.storage.from('project-files').remove([filePath]);
+          throw new Error(`${file.name}: ${insertError.message}`);
+        }
+
+        return fileData as ProjectFile;
+      });
+
+      // Wait for all uploads to complete
+      const results = await Promise.all(uploadPromises);
+      return results;
+    },
+    onSuccess: (results) => {
+      toast.success(`${results.length} ${t('files.uploaded') || 'files uploaded successfully'}`);
+    },
+    onError: (error: Error) => {
+      if (isNetworkError(error)) return;
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      if (navigator.onLine) {
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+        }, 2000);
+      }
+    },
+  });
+
   const downloadFileMutation = useMutation({
     mutationKey: ["downloadFile"],
     mutationFn: async (file: ProjectFile) => {
@@ -420,7 +540,8 @@ export const useFiles = (projectId: string) => {
     isLoading,
     error,
     uploadFile: (params: { file: File; remark?: string; transactionId?: string }) => uploadFileMutation.mutateAsync(params),
-    isUploading: uploadFileMutation.isPending,
+    uploadFilesBatch: (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }) => uploadFilesBatchMutation.mutateAsync(params),
+    isUploading: uploadFileMutation.isPending || uploadFilesBatchMutation.isPending,
     downloadFile: downloadFileMutation.mutateAsync,
     isDownloading: downloadFileMutation.isPending,
     downloadProgress,

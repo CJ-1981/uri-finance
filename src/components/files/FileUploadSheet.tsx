@@ -4,9 +4,10 @@
 // Created: 2026-03-21
 // Updated: 2026-03-21 - Fixed upload button response, added proper async handling, remark field
 // Updated: 2026-03-21 - Added transactionId prop for transaction file association
+// Updated: 2026-04-04 - Added multi-file upload support
 
 import { useState, useRef } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, XCircle, File as FileIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,15 +30,15 @@ const generateFileInputId = () => `file-input-${Math.random().toString(36).subst
  * Props for FileUploadSheet component
  */
 interface FileUploadSheetProps {
-  /** Callback when file is selected for upload with remark */
-  onUpload: (file: File, remark: string) => Promise<void>;
+  /** Callback when file(s) are selected for upload */
+  onUpload: (files: Array<{ file: File; remark?: string }>) => Promise<void>;
   /** Whether upload is in progress */
   isUploading: boolean;
   /** Current remark value */
   remark?: string;
   /** Callback when remark changes */
   onRemarkChange?: (remark: string) => void;
-  /** Optional transaction ID to associate the uploaded file with */
+  /** Optional transaction ID to associate the uploaded file(s) with */
   transactionId?: string;
 }
 
@@ -53,12 +54,13 @@ const formatFileSizeLimit = (bytes: number): string => {
 /**
  * FileUploadSheet component
  * Upload dialog with drag-and-drop zone and optional remark field
+ * Supports multiple file selection for batch uploads
  * Accepts optional transactionId for associating uploads with transactions
  */
 export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkChange, transactionId }: FileUploadSheetProps) => {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Array<{ file: File; error?: string }>>([]);
   const [localRemark, setLocalRemark] = useState(remark);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -75,47 +77,84 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const file = files[0];
-
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
-        setError(t('files.sizeExceeds').replace('{size}', formatFileSizeLimit(MAX_FILE_SIZE)));
-        return;
-      }
-
-      setError(null);
-      setSelectedFile(file);
+      addFiles(Array.from(files));
     }
   };
 
-  const handleUpload = async () => {
-    if (selectedFile && !isUploadingFile) {
-      setIsUploadingFile(true);
-      setError(null);
+  // Add files to selection with validation
+  const addFiles = (files: File[]) => {
+    setError(null);
+    const newFiles: Array<{ file: File; error?: string }> = [];
 
-      try {
-        await onUpload(selectedFile, localRemark);
-        // Success: close sheet and reset state
-        setSelectedFile(null);
-        setLocalRemark('');
-        setOpen(false);
-        // Reset file input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+    for (const file of files) {
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        newFiles.push({
+          file,
+          error: t('files.sizeExceeds').replace('{size}', formatFileSizeLimit(MAX_FILE_SIZE))
+        });
+      } else {
+        // Check for duplicates (same name and size)
+        const isDuplicate = selectedFiles.some(
+          sf => sf.file.name === file.name && sf.file.size === file.size
+        );
+        if (isDuplicate) {
+          newFiles.push({
+            file,
+            error: t('files.uploadFailed') + ': ' + t('files.fetchFailed') // Reuse translation as "Already exists"
+          });
+        } else {
+          newFiles.push({ file });
         }
-      } catch (err) {
-        // Error: keep sheet open to show error
-        setError(err instanceof Error ? err.message : 'Upload failed');
-      } finally {
-        setIsUploadingFile(false);
       }
+    }
+
+    setSelectedFiles([...selectedFiles, ...newFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async () => {
+    const validFiles = selectedFiles.filter(f => !f.error);
+    if (validFiles.length === 0) {
+      setError(t('files.uploadFailed') || 'No valid files to upload');
+      return;
+    }
+
+    setIsUploadingFile(true);
+    setError(null);
+
+    try {
+      // Apply remark to all files
+      const filesWithRemark = validFiles.map(({ file }) => ({
+        file,
+        remark: localRemark.trim()
+      }));
+
+      await onUpload(filesWithRemark);
+
+      // Success: close sheet and reset state
+      setSelectedFiles([]);
+      setLocalRemark('');
+      setOpen(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err) {
+      // Error: keep sheet open to show error
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    } finally {
+      setIsUploadingFile(false);
     }
   };
 
   const handleClose = () => {
     if (!isUploading && !isUploadingFile) {
       setOpen(false);
-      setSelectedFile(null);
+      setSelectedFiles([]);
       setLocalRemark('');
       setError(null);
       // Reset file input
@@ -140,13 +179,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      const file = files[0];
-      if (file.size > MAX_FILE_SIZE) {
-        setError(t('files.sizeExceeds').replace('{size}', formatFileSizeLimit(MAX_FILE_SIZE)));
-        return;
-      }
-      setError(null);
-      setSelectedFile(file);
+      addFiles(Array.from(files));
     }
   };
 
@@ -155,6 +188,9 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
       fileInputRef.current?.click();
     }
   };
+
+  const hasErrors = selectedFiles.some(f => f.error);
+  const validFileCount = selectedFiles.filter(f => !f.error).length;
 
   return (
     <Sheet open={open} onOpenChange={(newOpen) => {
@@ -176,7 +212,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
         <SheetHeader>
           <SheetTitle>{t('files.uploadFile')}</SheetTitle>
           <SheetDescription className="sr-only">
-            Drag and drop a file or click to select a file to upload to the project.
+            Select one or multiple files to upload to the project with drag-and-drop or file picker.
           </SheetDescription>
         </SheetHeader>
 
@@ -193,6 +229,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                   const cameraInput = document.createElement('input');
                   cameraInput.type = 'file';
                   cameraInput.accept = 'image/*';
+                  cameraInput.multiple = true;
                   cameraInput.capture = 'environment';
                   cameraInput.onchange = (e) => {
                     const target = e.target as HTMLInputElement;
@@ -223,7 +260,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
 
             {/* Desktop: Drag and drop zone */}
             <div
-              className={`hidden sm:block border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+              className={`hidden sm:block border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                 isDragging
                   ? 'border-primary bg-primary/10'
                   : 'border-border/50 hover:border-primary/50 hover:bg-muted/30'
@@ -241,6 +278,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                 onChange={handleFileInput}
                 disabled={isUploading || isUploadingFile}
                 accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+                multiple
               />
               <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
               <div className="space-y-1">
@@ -248,83 +286,109 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                 <p className="text-xs text-muted-foreground">
                   {t('files.maxSize').replace('{size}', formatFileSizeLimit(MAX_FILE_SIZE))}
                 </p>
+                {selectedFiles.length > 0 && (
+                  <p className="text-xs text-primary">
+                    {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} selected
+                  </p>
+                )}
               </div>
             </div>
           </div>
+
+          {/* Selected Files List */}
+          {selectedFiles.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  {t('files.selected').replace('{count}', String(selectedFiles.length))}
+                </Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedFiles([])}
+                  disabled={isUploading || isUploadingFile}
+                  className="h-8 px-2 text-xs"
+                >
+                  {t('common.clear')}
+                </Button>
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-1 rounded-md border">
+                {selectedFiles.map((item, index) => (
+                  <div
+                    key={`${item.file.name}-${index}`}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md ${
+                      item.error
+                        ? 'bg-destructive/10 text-destructive'
+                        : 'bg-muted/30'
+                    }`}
+                  >
+                    <FileIcon className="h-4 w-4 shrink-0 flex-shrink-0" />
+                    <span className="flex-1 truncate">{item.file.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {(item.file.size / 1024).toFixed(1)} KB
+                    </span>
+                    {item.error && (
+                      <span className="text-xs text-destructive truncate" title={item.error}>
+                        {item.error.split(':')[0]}...
+                      </span>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 shrink-0"
+                      onClick={() => removeFile(index)}
+                      disabled={isUploading || isUploadingFile}
+                    >
+                      <XCircle className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Remark Input */}
           <div className="space-y-2">
-            <Label htmlFor="file-remark">{t('files.remarkLabel')}</Label>
+            <Label htmlFor={`remark-${fileInputIdRef.current}`}>{t('files.remarkLabel')}</Label>
             <Input
-              id="file-remark"
-              placeholder={t('files.remarkPlaceholder')}
+              id={`remark-${fileInputIdRef.current}`}
               value={localRemark}
               onChange={(e) => handleRemarkChange(e.target.value)}
+              placeholder={t('files.remarkPlaceholder')}
               disabled={isUploading || isUploadingFile}
+              className="h-9"
             />
           </div>
 
-          {/* Error Message */}
+          {/* Error Display */}
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
-
-          {/* Selected File Info */}
-          {selectedFile && (
-            <div className="p-3 bg-muted/50 border border-border/50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate" title={selectedFile.name}>
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {(selectedFile.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={() => setSelectedFile(null)}
-                  disabled={isUploading || isUploadingFile}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Upload Progress */}
-          {(isUploading || isUploadingFile) && (
-            <div className="space-y-2">
-              <Progress value={undefined} className="h-2" />
-              <p className="text-xs text-center text-muted-foreground">{t('files.uploading')}</p>
+            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+              {error}
             </div>
           )}
 
           {/* Upload Button */}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              onPointerDown={(e) => e.stopPropagation()}
-              disabled={isUploading || isUploadingFile}
-            >
-              {t('tx.cancel')}
-            </Button>
-            <Button
-              type="button"
-              onClick={handleUpload}
-              onPointerDown={(e) => e.stopPropagation()}
-              disabled={!selectedFile || isUploading || isUploadingFile}
-            >
-              {t('files.uploadFile')}
-            </Button>
-          </div>
+          <Button
+            onClick={handleUpload}
+            disabled={validFileCount === 0 || isUploading || isUploadingFile || hasErrors}
+            className="w-full"
+            size="lg"
+          >
+            {isUploadingFile ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t('files.uploading')}
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                {selectedFiles.length === 1
+                  ? t('files.uploadFile')
+                  : `${t('files.upload')} ${selectedFiles.length} ${t('files.files')}`
+                }
+              </>
+            )}
+          </Button>
         </div>
       </SheetContent>
     </Sheet>
