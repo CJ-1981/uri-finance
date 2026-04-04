@@ -205,19 +205,259 @@ export const useFiles = (projectId: string) => {
       }
       return fileData as ProjectFile;
     },
+    onMutate: async ({ file, remark }) => {
+      const queryKey = ['project-files', projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+
+      // Optimistically add file to cache for immediate UI update
+      if (isStandalone) {
+        const fileId = crypto.randomUUID();
+        const newFile: ProjectFile = {
+          id: fileId,
+          project_id: projectId,
+          uploaded_by: 'standalone-user',
+          file_name: file.name,
+          file_type: file.type || '',
+          file_size: file.size,
+          storage_path: `standalone/${projectId}/${fileId}`,
+          remark: remark?.trim() || null,
+          transaction_id: null,
+          created_at: new Date().toISOString(),
+        };
+        queryClient.setQueryData(queryKey, (old: any) => [newFile, ...(old || [])]);
+      }
+
+      return { previous };
+    },
     onSuccess: () => {
       toast.success(t('files.uploaded') || 'File uploaded successfully');
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _variables, context) => {
+      if (isStandalone) {
+        queryClient.setQueryData(['project-files', projectId], context?.previous);
+      }
       if (isNetworkError(error)) return;
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
+    },
+  });
+
+  const uploadFilesBatchMutation = useMutation({
+    mutationKey: ["uploadFilesBatch", projectId],
+    mutationFn: async ({ files, transactionId, onProgress }: { files: Array<{ file: File; remark?: string }>; transactionId?: string; onProgress?: (current: number, total: number) => void }) => {
+
+      // Process files sequentially using the exact same logic as single file upload
+      const results: ProjectFile[] = [];
+      // Track successful uploads for rollback in case of error
+      const successfulUploads: Array<{ fileId: string; storagePath?: string; isStandalone: boolean }> = [];
+
+      try {
+        // Get authenticated user once before the loop (for non-standalone mode)
+        let user: any | null = null;
+        if (!isStandalone) {
+          const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+          if (userError || !authUser) {
+            throw new Error(t('files.notAuthenticated') || 'User not authenticated');
+          }
+          user = authUser;
+        }
+
+        for (let i = 0; i < files.length; i++) {
+          const { file, remark } = files[i];
+
+          // Report progress
+          onProgress?.(i + 1, files.length);
+
+          let resolvedMime = file.type;
+          if (!resolvedMime || resolvedMime === '') {
+            const ext = getFileExtension(file.name);
+            resolvedMime = EXTENSION_TO_MIME[ext] || '';
+          }
+
+          const fileToUpload = await autoCompressImageIfNeeded(file);
+
+          // Construct an actual File instance using constructor
+          const fileForValidation = new File([fileToUpload], fileToUpload.name, {
+            type: resolvedMime,
+            lastModified: fileToUpload.lastModified
+          });
+
+          if (!isFileTypeAllowed(fileForValidation)) {
+            throw new Error(`${file.name}: ${t('files.invalidFileType') || 'File type not allowed'}`);
+          }
+          if (fileToUpload.size > MAX_FILE_SIZE) {
+            throw new Error(`${file.name}: ${t('files.sizeExceeds').replace('{size}', `${MAX_FILE_SIZE / (1024 * 1024)} MB`)}`);
+          }
+
+          const fileId = crypto.randomUUID();
+
+          if (isStandalone) {
+            // Create local metadata
+            const newFileMetadata: ProjectFile = {
+              id: fileId,
+              project_id: projectId,
+              uploaded_by: 'standalone-user',
+              file_name: file.name,
+              file_type: resolvedMime,
+              file_size: fileToUpload.size,
+              storage_path: `standalone/${projectId}/${fileId}`,
+              remark: remark?.trim() || null,
+              transaction_id: transactionId || null,
+              created_at: new Date().toISOString(),
+            };
+
+            // Store file content
+            await set(`file-content-${fileId}`, fileToUpload);
+
+            // Store metadata
+            await update(`files-metadata-${projectId}`, (old: any) => {
+              return [newFileMetadata, ...(old || [])];
+            });
+
+            results.push(newFileMetadata);
+            successfulUploads.push({ fileId, isStandalone: true });
+            continue;
+          }
+
+          const ext = getFileExtension(file.name);
+          const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from('project-files')
+            .upload(storagePath, fileToUpload, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: resolvedMime,
+            });
+
+          if (uploadError) {
+            throw new Error(`${file.name}: ${t('files.uploadFailed') || 'Failed to upload file'}: ${uploadError.message}`);
+          }
+
+          const { data: fileData, error: insertError } = await supabase
+            .from('project_files')
+            .insert({
+              id: fileId,
+              project_id: projectId,
+              uploaded_by: user.id,
+              file_name: file.name,
+              file_type: resolvedMime,
+              file_size: fileToUpload.size,
+              storage_path: storagePath,
+              remark: remark?.trim() || null,
+              transaction_id: transactionId || null,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            // Add to successfulUploads BEFORE cleanup so rollback includes this file
+            successfulUploads.push({ fileId, storagePath, isStandalone: false });
+
+            // Cleanup storage if metadata insert fails
+            const { error: cleanupError } = await supabase.storage.from('project-files').remove([storagePath]);
+            if (cleanupError) {
+              throw new Error(`${file.name}: ${t('files.storageDeleteFailed') || 'Failed to cleanup file from storage'}: ${cleanupError.message}`);
+            }
+            throw new Error(`${file.name}: ${t('files.saveMetadataFailed') || 'Failed to save file metadata'}: ${insertError.message}`);
+          }
+
+          results.push(fileData as ProjectFile);
+        }
+
+        return results;
+      } catch (error) {
+        // Rollback: Delete all successfully uploaded files
+        console.error('[uploadFilesBatch] Error during batch upload, rolling back successful uploads:', error);
+
+        // Process rollbacks in parallel (standalone and server separately)
+        const standaloneRollbacks = successfulUploads
+          .filter(upload => upload.isStandalone)
+          .map(async ({ fileId }) => {
+            try {
+              await del(`file-content-${fileId}`);
+              await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => f.id !== fileId));
+            } catch (rollbackError) {
+              console.error(`[uploadFilesBatch] Failed to rollback standalone file ${fileId}:`, rollbackError);
+            }
+          });
+
+        const serverRollbacks = successfulUploads
+          .filter(upload => !upload.isStandalone && upload.storagePath)
+          .map(async ({ fileId, storagePath }) => {
+            try {
+              // Delete from storage
+              const { error: storageError } = await supabase.storage.from('project-files').remove([storagePath]);
+              if (storageError) {
+                throw new Error(`Failed to delete file from storage: ${storageError.message}`);
+              }
+              // Delete metadata
+              const { error: deleteError } = await supabase.from('project_files').delete().eq('id', fileId);
+              if (deleteError) {
+                throw new Error(`Failed to delete file metadata: ${deleteError.message}`);
+              }
+            } catch (rollbackError) {
+              console.error(`[uploadFilesBatch] Failed to rollback server file ${fileId}:`, rollbackError);
+            }
+          });
+
+        await Promise.all([...standaloneRollbacks, ...serverRollbacks]);
+
+        // Re-throw the original error
+        throw error;
       }
+    },
+    onMutate: async ({ files }) => {
+      const queryKey = ['project-files', projectId];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+
+      // Optimistically add files to cache for immediate UI update
+      if (isStandalone) {
+        const optimisticFiles: ProjectFile[] = files.map(({ file, remark }) => {
+          const fileId = crypto.randomUUID();
+          return {
+            id: fileId,
+            project_id: projectId,
+            uploaded_by: 'standalone-user',
+            file_name: file.name,
+            file_type: file.type || '',
+            file_size: file.size,
+            storage_path: `standalone/${projectId}/${fileId}`,
+            remark: remark?.trim() || null,
+            transaction_id: null,
+            created_at: new Date().toISOString(),
+          };
+        });
+        queryClient.setQueryData(queryKey, (old: any) => [...optimisticFiles, ...(old || [])]);
+      }
+
+      return { previous };
+    },
+    onSuccess: (results) => {
+      const count = results.length;
+      const message = count === 1
+        ? t('files.uploaded') || 'File uploaded successfully'
+        : t('files.uploadedMultiple').replace('{count}', String(count)) || `${count} files uploaded successfully`;
+      toast.success(message);
+    },
+    onError: (error: Error, _variables, context) => {
+      if (isStandalone) {
+        queryClient.setQueryData(['project-files', projectId], context?.previous);
+      }
+      if (isNetworkError(error)) return;
+      toast.error(error.message);
+    },
+    onSettled: () => {
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
@@ -291,17 +531,17 @@ export const useFiles = (projectId: string) => {
     onSuccess: () => {
       toast.success(t('files.deleted') || 'File deleted');
     },
-    onError: (error: Error, variables, context) => {
-      if (isNetworkError(error)) return;
+    onError: (error: Error, _variables, context) => {
+      // Always restore optimistic state before returning
       queryClient.setQueryData(['project-files', projectId], context?.previous);
+      if (isNetworkError(error)) return;
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
@@ -339,79 +579,125 @@ export const useFiles = (projectId: string) => {
     onSuccess: () => {
       toast.success(t('files.updated') || 'File updated');
     },
-    onError: (error: Error, variables, context) => {
-      if (isNetworkError(error)) return;
+    onError: (error: Error, _variables, context) => {
+      // Always restore optimistic state before returning
       queryClient.setQueryData(['project-files', projectId], context?.previous);
+      if (isNetworkError(error)) return;
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
   const deleteFilesBatchMutation = useMutation({
     mutationKey: ["deleteFilesBatch", projectId],
-    mutationFn: async (fileIds: string[]) => {
-      if (isStandalone) {
-        // Remove content for all files
-        for (const fileId of fileIds) {
-          await del(`file-content-${fileId}`);
+    mutationFn: async ({ fileIds, onProgress }: { fileIds: string[]; onProgress?: (current: number, total: number) => void }) => {
+      // Track successfully deleted IDs in closure for error recovery
+      const successfullyDeleted: string[] = [];
+
+      try {
+        if (isStandalone) {
+          // Remove content for all files
+          try {
+            for (let i = 0; i < fileIds.length; i++) {
+              const fileId = fileIds[i];
+              await del(`file-content-${fileId}`);
+              successfullyDeleted.push(fileId);
+              onProgress?.(i + 1, fileIds.length);
+            }
+            // Remove metadata only after all content deletes succeed
+            await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
+          } catch (error) {
+            // Clean up metadata for successfully deleted files to prevent broken references
+            if (successfullyDeleted.length > 0) {
+              try {
+                await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !successfullyDeleted.includes(f.id)));
+              } catch (metadataCleanupError) {
+                console.error('[deleteFilesBatch] Failed to clean up metadata after error:', metadataCleanupError);
+              }
+            }
+            throw error;
+          }
+          return;
         }
-        // Remove metadata
-        await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => !fileIds.includes(f.id)));
-        return;
+
+        // Fetch all storage paths and ids first
+        const { data: fileData, error: fetchError } = await supabase
+          .from('project_files')
+          .select('id, storage_path')
+          .eq('project_id', projectId)
+          .in('id', fileIds);
+
+        if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
+
+        // Delete from storage and metadata sequentially to report progress
+        for (let i = 0; i < fileIds.length; i++) {
+          const fileId = fileIds[i];
+          const fileRecord = fileData?.find((f: any) => f.id === fileId);
+          const storagePath = fileRecord?.storage_path;
+
+          if (storagePath) {
+            const { error: storageError } = await supabase.storage.from('project-files').remove([storagePath]);
+            if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
+          }
+
+          const { error: deleteError } = await supabase
+            .from('project_files')
+            .delete()
+            .eq('id', fileId)
+            .eq('project_id', projectId);
+
+          if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
+
+          // Track successfully deleted file
+          successfullyDeleted.push(fileId);
+          onProgress?.(i + 1, fileIds.length);
+
+          // Use async delay instead of busy-wait to allow UI to repaint
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
+      } catch (error) {
+        // Attach successfully deleted IDs to error for onError handler
+        (error as any).successfullyDeleted = successfullyDeleted;
+        throw error;
       }
-
-      // Fetch all storage paths first
-      const { data: fileData, error: fetchError } = await supabase
-        .from('project_files')
-        .select('storage_path')
-        .eq('project_id', projectId)
-        .in('id', fileIds);
-
-      if (fetchError) throw new Error(`${t('files.fetchFailed') || 'Failed to fetch file metadata'}: ${fetchError.message}`);
-
-      // Delete from storage
-      const storagePaths = fileData.map(f => f.storage_path);
-      if (storagePaths.length > 0) {
-        const { error: storageError } = await supabase.storage.from('project-files').remove(storagePaths);
-        if (storageError) throw new Error(`${t('files.storageDeleteFailed') || 'Failed to delete file from storage'}: ${storageError.message}`);
-      }
-
-      // Delete metadata
-      const { error: deleteError } = await supabase
-        .from('project_files')
-        .delete()
-        .eq('project_id', projectId)
-        .in('id', fileIds);
-
-      if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
     },
-    onMutate: async (fileIds) => {
+    onMutate: async ({ fileIds }) => {
       const queryKey = ['project-files', projectId];
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
       queryClient.setQueryData(queryKey, (old: any) => (old as ProjectFile[])?.filter(f => !fileIds.includes(f.id)));
-      return { previous };
+      // Track which files are being deleted for error recovery
+      return { previous, fileIds };
     },
-    onSuccess: (_, fileIds) => {
-      toast.success(`${fileIds.length} ${t('files.deleted') || 'files deleted'}`);
+    onSuccess: (_, variables) => {
+      const count = variables.fileIds.length;
+      const message = count === 1
+        ? t('files.deleted') || 'File deleted'
+        : t('files.deletedMultiple').replace('{count}', String(count)) || `${count} files deleted`;
+      toast.success(message);
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
+      // Restore only files that were NOT successfully deleted
+      // to avoid reappearing items that were already removed from server
+      const successfullyDeleted = (error as any).successfullyDeleted || [];
+      queryClient.setQueryData(['project-files', projectId], () => {
+        const previousFiles = (context?.previous as ProjectFile[]) || [];
+        // Keep all previous files EXCEPT successfullyDeleted ones
+        return previousFiles.filter(f => !successfullyDeleted.includes(f.id));
+      });
       if (isNetworkError(error)) return;
-      queryClient.setQueryData(['project-files', projectId], context?.previous);
       toast.error(error.message);
     },
     onSettled: () => {
-      if (navigator.onLine) {
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
-        }, 2000);
-      }
+      // Always invalidate queries to support offline/standalone mode
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['project-files', projectId] });
+      }, 2000);
     },
   });
 
@@ -420,13 +706,14 @@ export const useFiles = (projectId: string) => {
     isLoading,
     error,
     uploadFile: (params: { file: File; remark?: string; transactionId?: string }) => uploadFileMutation.mutateAsync(params),
-    isUploading: uploadFileMutation.isPending,
+    uploadFilesBatch: (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }, onProgress?: (current: number, total: number) => void) => uploadFilesBatchMutation.mutateAsync({ ...params, onProgress }),
+    isUploading: uploadFileMutation.isPending || uploadFilesBatchMutation.isPending,
     downloadFile: downloadFileMutation.mutateAsync,
     isDownloading: downloadFileMutation.isPending,
     downloadProgress,
     downloadedBytes,
     deleteFile: deleteFileMutation.mutateAsync,
-    deleteFilesBatch: deleteFilesBatchMutation.mutateAsync,
+    deleteFilesBatch: (fileIds: string[], onProgress?: (current: number, total: number) => void) => deleteFilesBatchMutation.mutateAsync({ fileIds, onProgress }),
     isDeleting: deleteFileMutation.isPending || deleteFilesBatchMutation.isPending,
     updateFile: updateFileMutation.mutateAsync,
     isUpdating: updateFileMutation.isPending,
