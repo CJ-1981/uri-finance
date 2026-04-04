@@ -223,13 +223,17 @@ export const useFiles = (projectId: string) => {
 
   const uploadFilesBatchMutation = useMutation({
     mutationKey: ["uploadFilesBatch", projectId],
-    mutationFn: async (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }) => {
-      const { files, transactionId } = params;
+    mutationFn: async ({ files, transactionId, onProgress }: { files: Array<{ file: File; remark?: string }>; transactionId?: string; onProgress?: (current: number, total: number) => void }) => {
 
       // Process files sequentially using the exact same logic as single file upload
       const results: ProjectFile[] = [];
 
-      for (const { file, remark } of files) {
+      for (let i = 0; i < files.length; i++) {
+        const { file, remark } = files[i];
+
+        // Report progress
+        onProgress?.(i + 1, files.length);
+
         let resolvedMime = file.type;
         if (!resolvedMime || resolvedMime === '') {
           const ext = getFileExtension(file.name);
@@ -542,7 +546,7 @@ export const useFiles = (projectId: string) => {
     isLoading,
     error,
     uploadFile: (params: { file: File; remark?: string; transactionId?: string }) => uploadFileMutation.mutateAsync(params),
-    uploadFilesBatch: (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }) => uploadFilesBatchMutation.mutateAsync(params),
+    uploadFilesBatch: (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }, onProgress?: (current: number, total: number) => void) => uploadFilesBatchMutation.mutateAsync({ ...params, onProgress }),
     isUploading: uploadFileMutation.isPending || uploadFilesBatchMutation.isPending,
     downloadFile: downloadFileMutation.mutateAsync,
     isDownloading: downloadFileMutation.isPending,

@@ -31,7 +31,7 @@ const generateFileInputId = () => `file-input-${Math.random().toString(36).subst
  */
 interface FileUploadSheetProps {
   /** Callback when file(s) are selected for upload */
-  onUpload: (files: Array<{ file: File; remark?: string }>) => Promise<void>;
+  onUpload: (files: Array<{ file: File; remark?: string }>, onProgress?: (current: number, total: number) => void) => Promise<void>;
   /** Whether upload is in progress */
   isUploading: boolean;
   /** Current remark value */
@@ -65,6 +65,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const fileInputIdRef = useRef<string>(generateFileInputId());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -125,6 +126,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
 
     setIsUploadingFile(true);
     setError(null);
+    setUploadProgress(null);
 
     try {
       // Apply remark to all files
@@ -133,12 +135,15 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
         remark: localRemark.trim()
       }));
 
-      await onUpload(filesWithRemark);
+      await onUpload(filesWithRemark, (current, total) => {
+        setUploadProgress({ current, total });
+      });
 
       // Success: close sheet and reset state
       setSelectedFiles([]);
       setLocalRemark('');
       setOpen(false);
+      setUploadProgress(null);
       // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -146,8 +151,10 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     } catch (err) {
       // Error: keep sheet open to show error
       setError(err instanceof Error ? err.message : 'Upload failed');
+      setUploadProgress(null);
     } finally {
       setIsUploadingFile(false);
+      setUploadProgress(null);
     }
   };
 
@@ -377,7 +384,10 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
             {isUploadingFile ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t('files.uploading')}
+                {uploadProgress
+                  ? `${uploadProgress.current}/${uploadProgress.total}`
+                  : t('files.uploading')
+                }
               </>
             ) : (
               <>

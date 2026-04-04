@@ -154,9 +154,9 @@ export const FileManager = ({
     setPreviewFile(file);
   };
 
-  const handleUpload = async (files: Array<{ file: File; remark?: string }>) => {
+  const handleUpload = async (files: Array<{ file: File; remark?: string }>, onProgress?: (current: number, total: number) => void) => {
     try {
-      await uploadFilesBatch({ files });
+      await uploadFilesBatch({ files }, onProgress);
     } catch (error) {
       console.error('Upload failed:', error);
       throw error;
