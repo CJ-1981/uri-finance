@@ -359,9 +359,9 @@ export const FileManager = ({
       <AlertDialog open={batchDeleteConfirmOpen} onOpenChange={setBatchDeleteConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedCount} Files?</AlertDialogTitle>
+            <AlertDialogTitle>{t('files.deleteMultipleTitle').replace('{count}', String(selectedCount))}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. All {selectedCount} selected files will be permanently deleted.
+              {t('files.deleteMultipleDesc').replace('{count}', String(selectedCount))}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -371,7 +371,7 @@ export const FileManager = ({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
             >
-              {isDeleting ? 'Deleting...' : `Delete ${selectedCount} Files`}
+              {isDeleting ? t('files.deletingMultiple') : t('files.deleteMultipleButton').replace('{count}', String(selectedCount))}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
