@@ -226,17 +226,6 @@ export const useFiles = (projectId: string) => {
     mutationFn: async (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }) => {
       const { files, transactionId } = params;
 
-      // Get authenticated user ONCE before starting parallel uploads
-      let userId: string | null = null;
-      if (!isStandalone) {
-        // Use same pattern as single file upload - getUser instead of getSession
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          throw new Error(t('files.notAuthenticated') || 'User not authenticated');
-        }
-        userId = user.id;
-      }
-
       // Process files: upload to storage in parallel, but insert metadata sequentially to avoid RLS concurrency issues
       const fileData = await Promise.all(files.map(async ({ file, remark }) => {
         let resolvedMime = file.type;
@@ -328,6 +317,12 @@ export const useFiles = (projectId: string) => {
           });
           results.push(newFileMetadata);
         } else {
+          // Get user fresh for each insert to ensure RLS auth context
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError || !user) {
+            throw new Error(t('files.notAuthenticated') || 'User not authenticated');
+          }
+
           const { data: fileData, error: insertError } = await supabase
             .from('project_files')
             .insert({
@@ -337,7 +332,7 @@ export const useFiles = (projectId: string) => {
               file_name: fileDatum.file_name,
               file_type: fileDatum.file_type,
               file_size: fileDatum.file_size,
-              uploaded_by: userId,
+              uploaded_by: user.id,
               remark: fileDatum.remark,
               transaction_id: transactionId || null,
             })
