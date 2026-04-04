@@ -682,13 +682,22 @@ const CategoryContent = ({ categories, onAdd, onAddSubCategory, onDelete, onUpda
 const CategoryManager = ({ categories, onAdd, onAddSubCategory, onDelete, onUpdateName, onUpdateCode, onUpdateIcon, onReorderAll, onBulkUpdate, inline }: Props) => {
   const [open, setOpen] = useState(false);
   const { t } = useI18n();
- 
+
+  // Handle Sheet open/close with proper focus management to prevent aria-hidden violations
+  const handleSheetOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Blur the currently focused element before closing to prevent aria-hidden violation
+      (document.activeElement as HTMLElement)?.blur();
+    }
+    setOpen(newOpen);
+  };
+
   if (inline) {
     return <CategoryContent categories={categories} onAdd={onAdd} onAddSubCategory={onAddSubCategory} onDelete={onDelete} onUpdateName={onUpdateName} onUpdateCode={onUpdateCode} onUpdateIcon={onUpdateIcon} onReorderAll={onReorderAll} onBulkUpdate={onBulkUpdate} />;
   }
- 
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
           <Settings2 className="h-4 w-4" />

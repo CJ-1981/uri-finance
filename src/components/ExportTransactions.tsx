@@ -397,8 +397,13 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
   };
 
   const handleImportClose = (v: boolean) => {
+    if (!v) {
+      // Blur currently focused element when sheet closes to prevent aria-hidden violation
+      (document.activeElement as HTMLElement)?.blur();
+      setResults(null);
+      setFileName("");
+    }
     setImportOpen(v);
-    if (!v) { setResults(null); setFileName(""); }
   };
 
   return (

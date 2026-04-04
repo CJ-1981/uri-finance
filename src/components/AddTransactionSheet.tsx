@@ -273,6 +273,9 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     if (newOpen) {
       // Blur trigger button when sheet opens to avoid aria-hidden conflict
       triggerRef.current?.blur();
+    } else {
+      // Blur currently focused element when sheet closes to prevent aria-hidden violation
+      (document.activeElement as HTMLElement)?.blur();
     }
     setOpen(newOpen);
   }, [setOpen]);

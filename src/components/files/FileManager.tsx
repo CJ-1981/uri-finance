@@ -197,28 +197,29 @@ export const FileManager = ({
         {/* Multi-Select Toolbar */}
         {isSelectionMode && (
           <div className="flex items-center justify-between gap-2 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-foreground px-2">
-                {selectedCount} {selectedCount === 1 ? 'file' : 'files'} selected
-              </span>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={selectAll}
                 className="gap-1.5 h-8 px-2 text-xs"
+                aria-label={allSelected ? t('files.deselectAll') : t('files.selectAll')}
               >
                 {allSelected ? (
                   <>
                     <Square className="h-3.5 w-3.5" />
-                    <span className="hidden xs:inline">Deselect</span>
+                    <span className="hidden sm:inline">{t('files.deselect')}</span>
                   </>
                 ) : (
                   <>
                     <CheckSquare className="h-3.5 w-3.5" />
-                    <span className="hidden xs:inline">All ({selectedCount})</span>
+                    <span className="hidden sm:inline">{t('files.selectAll')}</span>
                   </>
                 )}
               </Button>
+              <span className="text-sm font-medium text-foreground px-2">
+                {t('files.selected', { count: selectedCount })}
+              </span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -228,10 +229,11 @@ export const FileManager = ({
                 onClick={handleBatchDownload}
                 className="gap-1.5 h-8 px-2 text-xs"
                 disabled={selectedCount === 0}
+                aria-label={t('files.download')}
               >
                 <Download className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline">Download</span>
-                {selectedCount > 0 && <span className="xs:hidden">({selectedCount})</span>}
+                <span className="hidden sm:inline">{t('files.download')}</span>
+                {selectedCount > 0 && <span className="sm:hidden">({selectedCount})</span>}
               </Button>
               {canDelete && (
                 <Button
@@ -240,10 +242,11 @@ export const FileManager = ({
                   onClick={handleBatchDeleteClick}
                   className="gap-1.5 h-8 px-2 text-xs text-destructive hover:text-destructive"
                   disabled={selectedCount === 0 || isDeleting}
+                  aria-label={t('common.delete')}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  <span className="hidden xs:inline">Delete</span>
-                  {selectedCount > 0 && <span className="xs:hidden">({selectedCount})</span>}
+                  <span className="hidden sm:inline">{t('common.delete')}</span>
+                  {selectedCount > 0 && <span className="sm:hidden">({selectedCount})</span>}
                 </Button>
               )}
               <Button
@@ -251,9 +254,10 @@ export const FileManager = ({
                 size="sm"
                 onClick={toggleSelectionMode}
                 className="gap-1.5 h-8 px-2 text-xs text-muted-foreground"
+                aria-label={t('common.cancel')}
               >
                 <X className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Cancel</span>
+                <span className="hidden sm:inline">{t('common.cancel')}</span>
               </Button>
             </div>
           </div>

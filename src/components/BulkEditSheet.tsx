@@ -34,6 +34,15 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
     { value: "expense", label: t("tx.expense") },
   ], [t]);
 
+  // Handle Sheet open/close with proper focus management to prevent aria-hidden violations
+  const handleSheetOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      // Blur the currently focused element before closing to prevent aria-hidden violation
+      (document.activeElement as HTMLElement)?.blur();
+    }
+    onOpenChange(newOpen);
+  };
+
   const handleSave = async () => {
     const ids = transactions.map((tx) => tx.id);
     const updates: Partial<Pick<Transaction, "type" | "category">> = {};
@@ -49,7 +58,7 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleSheetOpenChange}>
       <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[60vh] flex flex-col">
         <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
           <SheetHeader>

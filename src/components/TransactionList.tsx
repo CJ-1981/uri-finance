@@ -329,9 +329,15 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   const executeBulkDelete = async () => {
     setBulkDeleteConfirm(false);
     setDeleting(true);
-    await onBulkDelete(Array.from(selected));
-    setDeleting(false);
-    exitSelectMode();
+    try {
+      await onBulkDelete(Array.from(selected));
+      exitSelectMode(); // Only exit on success
+    } catch (error) {
+      // Re-throw to allow parent to handle error display
+      throw error;
+    } finally {
+      setDeleting(false); // Always clear deleting state
+    }
   };
 
   const handleBulkEdit = () => {

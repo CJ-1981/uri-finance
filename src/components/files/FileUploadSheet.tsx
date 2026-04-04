@@ -159,6 +159,8 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
   return (
     <Sheet open={open} onOpenChange={(newOpen) => {
       if (!newOpen) {
+        // Blur the currently focused element before closing to prevent aria-hidden violation
+        (document.activeElement as HTMLElement)?.blur();
         handleClose();
       } else {
         setOpen(newOpen);

@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { RotateCcw, Trash2, TrendingUp, TrendingDown, CheckSquare, Square, X, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
 
 interface DeletedTransaction {
   id: string;
@@ -33,7 +32,7 @@ interface Props {
 }
 
 const TrashManager = ({ projectId, currency }: Props) => {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const queryClient = useQueryClient();
   const [items, setItems] = useState<DeletedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,8 +139,8 @@ const TrashManager = ({ projectId, currency }: Props) => {
 
   const handleBulkRestore = async () => {
     if (selected.size > MAX_BULK_OPERATION) {
-      toast.error(t("admin.bulkLimitError") || `Cannot restore more than ${MAX_BULK_OPERATION} items at once. Please reduce your selection.`, {
-        description: `${selected.size} ${selected.size === 1 ? 'item' : 'items'} selected (max: ${MAX_BULK_OPERATION})`
+      toast.error(t("admin.bulkLimitError", { max: MAX_BULK_OPERATION }), {
+        description: t("admin.itemsSelected", { count: selected.size }) + ` (max: ${MAX_BULK_OPERATION})`
       });
       return;
     }
@@ -171,8 +170,8 @@ const TrashManager = ({ projectId, currency }: Props) => {
 
   const handleBulkDelete = async () => {
     if (selected.size > MAX_BULK_OPERATION) {
-      toast.error(t("admin.bulkLimitError") || `Cannot delete more than ${MAX_BULK_OPERATION} items at once. Please reduce your selection.`, {
-        description: `${selected.size} ${selected.size === 1 ? 'item' : 'items'} selected (max: ${MAX_BULK_OPERATION})`
+      toast.error(t("admin.bulkLimitError", { max: MAX_BULK_OPERATION }), {
+        description: t("admin.itemsSelected", { count: selected.size }) + ` (max: ${MAX_BULK_OPERATION})`
       });
       return;
     }
@@ -212,7 +211,7 @@ const TrashManager = ({ projectId, currency }: Props) => {
       <div className="flex items-center justify-between px-1">
         {selectMode ? (
           <div className="flex items-center gap-2 w-full animate-fade-in">
-            <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-muted-foreground h-8 px-2">
+            <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-muted-foreground h-8 px-2" aria-label={t("admin.exitSelectMode")}>
               <X className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="sm" onClick={toggleAll} className="text-muted-foreground h-8 px-2">
@@ -272,12 +271,21 @@ const TrashManager = ({ projectId, currency }: Props) => {
         {items.map((tx) => (
           <div
             key={tx.id}
+            role="checkbox"
+            aria-checked={selected.has(tx.id)}
+            tabIndex={selectMode ? 0 : -1}
             onClick={() => selectMode ? toggleSelect(tx.id) : undefined}
+            onKeyDown={(e) => {
+              if (selectMode && (e.key === ' ' || e.key === 'Enter')) {
+                e.preventDefault();
+                toggleSelect(tx.id);
+              }
+            }}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 animate-fade-in cursor-pointer ${
               selected.has(tx.id)
                 ? "bg-primary/10 ring-1 ring-primary/30"
                 : "bg-muted/30"
-            }`}
+            }${selectMode ? ' focus:ring-2 focus:ring-primary focus:outline-none' : ''}`}
           >
             {selectMode ? (
               <div className="flex h-8 w-8 shrink-0 items-center justify-center">
@@ -305,13 +313,13 @@ const TrashManager = ({ projectId, currency }: Props) => {
                 {tx.description || tx.category}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                {tx.category} · {format(parseISO(tx.transaction_date), "MMM d")}
-                {" · "}{t("admin.deletedOn")} {format(parseISO(tx.deleted_at), "MMM d, HH:mm")}
+                {tx.category} · {new Intl.DateTimeFormat(language, { month: "short", day: "numeric" }).format(new Date(tx.transaction_date))}
+                {" · "}{t("admin.deletedOn")} {new Intl.DateTimeFormat(language, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(tx.deleted_at))}
               </p>
             </div>
             <p className={`text-sm font-semibold shrink-0 ${tx.type === "income" ? "text-income" : "text-expense"}`}>
               {tx.type === "income" ? "+" : "-"}
-              {Number(tx.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              {new Intl.NumberFormat(language, { style: "currency", currency: currency, minimumFractionDigits: 2 }).format(tx.amount)}
             </p>
             {!selectMode && (
               <div className="flex gap-1 shrink-0">
@@ -429,20 +437,20 @@ const TrashManager = ({ projectId, currency }: Props) => {
             <AlertDialogTitle>{t("admin.bulkRestoreConfirmTitle") || "Restore selected transactions?"}</AlertDialogTitle>
             <AlertDialogDescription>
               {restoring ? (
-                <div className="flex items-center gap-2 py-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <span className="flex items-center gap-2 py-2 inline-flex">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent block" />
                   <span>{t("admin.restoring") || "Restoring..."}</span>
-                </div>
+                </span>
               ) : (
                 <>
                   <span className="font-medium">
-                    {selected.size} {selected.size === 1 ? t("admin.transaction") || "transaction" : t("admin.transactions") || "transactions"} {t("common.selected") || "selected"}
+                    {selected.size} {selected.size === 1 ? t("admin.transaction") : t("admin.transactions")} {t("common.selected")}
                   </span>
                   {selected.size > 100 && (
                     <span className={`text-xs block mt-1 ${selected.size > MAX_BULK_OPERATION ? 'text-destructive' : 'text-amber-500'}`}>
                       {selected.size > MAX_BULK_OPERATION
-                        ? `⚠️ Maximum ${MAX_BULK_OPERATION} items allowed per operation`
-                        : `Note: Maximum ${MAX_BULK_OPERATION} items per operation`
+                        ? `⚠️ ${t("admin.maxItemsAllowed", { max: MAX_BULK_OPERATION })}`
+                        : t("admin.maxItemsNote", { max: MAX_BULK_OPERATION })
                       }
                     </span>
                   )}
@@ -484,20 +492,20 @@ const TrashManager = ({ projectId, currency }: Props) => {
             <AlertDialogTitle>{t("admin.bulkDeleteConfirmTitle") || "Permanently delete selected?"}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleting ? (
-                <div className="flex items-center gap-2 py-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />
+                <span className="flex items-center gap-2 py-2 inline-flex">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent block" />
                   <span>{t("common.deleting") || "Deleting..."}</span>
-                </div>
+                </span>
               ) : (
                 <>
                   <span className="font-medium">
-                    {selected.size} {selected.size === 1 ? t("admin.transaction") || "transaction" : t("admin.transactions") || "transactions"} {t("common.selected") || "selected"}
+                    {selected.size} {selected.size === 1 ? t("admin.transaction") : t("admin.transactions")} {t("common.selected")}
                   </span>
                   {selected.size > 100 && (
                     <span className={`text-xs block mt-1 ${selected.size > MAX_BULK_OPERATION ? 'text-destructive' : 'text-amber-500'}`}>
                       {selected.size > MAX_BULK_OPERATION
-                        ? `⚠️ Maximum ${MAX_BULK_OPERATION} items allowed per operation`
-                        : `Note: Maximum ${MAX_BULK_OPERATION} items per operation`
+                        ? `⚠️ ${t("admin.maxItemsAllowed", { max: MAX_BULK_OPERATION })}`
+                        : t("admin.maxItemsNote", { max: MAX_BULK_OPERATION })
                       }
                     </span>
                   )}

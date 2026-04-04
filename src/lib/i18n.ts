@@ -563,6 +563,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.remarkLabel": "Description",
     "files.remarkPlaceholder": "Add a note or description (optional)",
     "files.uploadedBy": "Uploaded by {email}",
+    "files.selected": "{count} selected",
     // SPEC-TRANSACTION-FILES
     "files.linkToTransaction": "View Transaction",
     "files.attachments": "Attachments",
@@ -1172,6 +1173,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.remarkLabel": "설명",
     "files.remarkPlaceholder": "메모나 설명을 추가하세요 (선택사항)",
     "files.uploadedBy": "업로더: {email}",
+    "files.selected": "{count}개 선택됨",
     // SPEC-TRANSACTION-FILES
     "files.linkToTransaction": "거래 보기",
     "files.attachments": "첨부파일",

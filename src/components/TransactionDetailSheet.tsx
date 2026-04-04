@@ -124,6 +124,10 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
 
   const handleOpenChange = (val: boolean) => {
     if (val && transaction) loadTransaction(transaction);
+    if (!val) {
+      // Blur currently focused element when sheet closes to prevent aria-hidden violation
+      (document.activeElement as HTMLElement)?.blur();
+    }
     onOpenChange(val);
   };
 
