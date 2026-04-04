@@ -20,10 +20,23 @@ export interface Project {
 
 type ProjectSource = 'user-selection' | 'cache' | 'server';
 
+// @MX:NOTE: Project preference interface for SPEC-PROJ-001
+// Stores user's custom ordering and default project selection
+interface ProjectPreference {
+  id: string;
+  user_id: string;
+  project_id: string;
+  display_order: number;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // Constants for local storage keys
 const LOCAL_PROJECTS_KEY = "local_projects";
 const ACTIVE_PROJECT_ID_KEY = "active_project_id";
 const ACTIVE_PROJECT_CACHE_KEY = "active_project_cache";
+const LOCAL_PROJECT_PREFERENCES_KEY = "project_preferences"; // SPEC-PROJ-001
 
 export const useProjects = () => {
   const { user, isStandalone } = useAuth();
@@ -31,6 +44,122 @@ export const useProjects = () => {
   const { isSystemAdmin: isRealSystemAdmin } = useSystemAdmin();
   const isOnline = useOnlineStatus();
   const queryClient = useQueryClient();
+
+  // SPEC-PROJ-001: Fetch user project preferences from Supabase
+  const fetchProjectPreferences = useCallback(async (userId: string): Promise<ProjectPreference[]> => {
+    if (isStandalone || !isOnline) {
+      // Fallback to localStorage for offline mode
+      try {
+        const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
+        return localPrefs ? JSON.parse(localPrefs) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('user_project_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .order('display_order', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  }, [isStandalone, isOnline]);
+
+  // SPEC-PROJ-001: Update display order for multiple projects
+  const updateProjectOrder = useCallback(async (userId: string, updates: Array<{project_id: string, display_order: number}>): Promise<void> => {
+    if (isStandalone || !isOnline) {
+      // Save to localStorage for offline mode
+      try {
+        const existingPrefs = JSON.parse(localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY) || "[]");
+        const prefsMap = new Map(existingPrefs.map((p: ProjectPreference) => [p.project_id, p]));
+
+        updates.forEach(update => {
+          const existing = prefsMap.get(update.project_id) as ProjectPreference | undefined;
+          if (existing) {
+            existing.display_order = update.display_order;
+          } else {
+            prefsMap.set(update.project_id, {
+              id: crypto.randomUUID(),
+              user_id: userId,
+              project_id: update.project_id,
+              display_order: update.display_order,
+              is_default: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          }
+        });
+
+        localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
+      } catch (err) {
+        console.error('Failed to save project order to localStorage:', err);
+      }
+      return;
+    }
+
+    const { error } = await supabase
+      .from('user_project_preferences')
+      .upsert(updates.map(u => ({ ...u, user_id: userId })), { onConflict: 'user_id,project_id' });
+
+    if (error) throw error;
+  }, [isStandalone, isOnline]);
+
+  // SPEC-PROJ-001: Set default project for a user
+  const setDefaultProject = useCallback(async (userId: string, projectId: string): Promise<void> => {
+    if (isStandalone || !isOnline) {
+      // Save to localStorage for offline mode
+      try {
+        const existingPrefs = JSON.parse(localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY) || "[]");
+        const prefsMap = new Map(existingPrefs.map((p: ProjectPreference) => [p.project_id, p]));
+
+        // Remove default from all projects
+        prefsMap.forEach((pref: ProjectPreference) => {
+          pref.is_default = false;
+        });
+
+        // Set new default
+        if (projectId) {
+          const target = prefsMap.get(projectId) as ProjectPreference | undefined;
+          if (target) {
+            target.is_default = true;
+          } else {
+            prefsMap.set(projectId, {
+              id: crypto.randomUUID(),
+              user_id: userId,
+              project_id: projectId,
+              display_order: 0,
+              is_default: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+
+        localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
+      } catch (err) {
+        console.error('Failed to save default project to localStorage:', err);
+      }
+      return;
+    }
+
+    // Remove default from all projects
+    await supabase
+      .from('user_project_preferences')
+      .update({ is_default: false })
+      .eq('user_id', userId)
+      .eq('is_default', true);
+
+    // Set new default (if projectId is not empty)
+    if (projectId) {
+      const { error } = await supabase
+        .from('user_project_preferences')
+        .upsert({ user_id: userId, project_id: projectId, is_default: true }, { onConflict: 'user_id,project_id' });
+
+      if (error) throw error;
+    }
+  }, [isStandalone, isOnline]);
 
   // In standalone mode, everyone is an admin of their local projects
   const isSystemAdmin = isStandalone || isRealSystemAdmin;
@@ -49,7 +178,8 @@ export const useProjects = () => {
   const [lastSource, setLastSource] = useState<ProjectSource | null>(null);
 
   // Query: Fetch projects (either from Supabase or local storage)
-  const { data: projects = [], isLoading: loading } = useQuery({
+  // SPEC-PROJ-001: Enhanced to fetch user preferences for custom ordering
+  const { data: projects = [], isLoading: loading, isFetching } = useQuery({
     queryKey: ["user_projects", isStandalone ? "standalone" : (user?.id || "anonymous")],
     queryFn: async () => {
       // Guard: If standalone, no user, or using the mock standalone user ID, use local storage
@@ -58,7 +188,7 @@ export const useProjects = () => {
         const local = localStorage.getItem(LOCAL_PROJECTS_KEY);
         return local ? JSON.parse(local) : [];
       }
-      
+
       const { data: memberships, error: memError } = await supabase
         .from("project_members")
         .select("project_id")
@@ -71,11 +201,30 @@ export const useProjects = () => {
       const { data, error: projError } = await supabase
         .from("projects")
         .select("*")
-        .order("created_at", { ascending: false })
         .in("id", ids);
 
       if (projError) throw projError;
-      return data as Project[];
+
+      // SPEC-PROJ-001: Fetch user preferences for custom ordering
+      const preferences = await fetchProjectPreferences(user.id);
+
+      // Build order map from preferences
+      const orderMap = new Map(preferences.map(p => [p.project_id, p.display_order]));
+
+      // Sort projects by display_order, fallback to created_at DESC
+      const sortedProjects = (data || []).sort((a, b) => {
+        const orderA = orderMap.get(a.id) ?? Infinity;
+        const orderB = orderMap.get(b.id) ?? Infinity;
+
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+
+        // Fallback to created_at DESC
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      return sortedProjects as Project[];
     },
     enabled: true,
     staleTime: 1000 * 60 * 10,
@@ -111,62 +260,86 @@ export const useProjects = () => {
   }, [isOnline, user, isStandalone]);
 
   // Restore logic
+  // SPEC-PROJ-001: Enhanced to prioritize user's default project
   useEffect(() => {
-    if (loading) return;
+    (async () => {
+      if (loading) return;
 
-    // 1. If no projects exist, ensure active project is cleared
-    if (projects.length === 0) {
-      if (activeProject) handleSetActiveProject(null, 'server');
-      return;
-    }
+      // 1. If no projects exist, ensure active project is cleared
+      if (projects.length === 0) {
+        if (activeProject) handleSetActiveProject(null, 'server');
+        return;
+      }
 
-    // 2. If we have projects but none active, try to restore from cache
-    if (!activeProject) {
-      const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
-      const found = projects.find((p: Project) => p.id === cachedId);
+      // 2. If we have projects but none active, try to restore from cache or default
+      if (!activeProject) {
+        // SPEC-PROJ-001: Priority 1 - User's default project from preferences
+        if (!isStandalone && user && isOnline) {
+          try {
+            const preferences = await fetchProjectPreferences(user.id);
+            const defaultPref = preferences.find(p => p.is_default);
+            if (defaultPref) {
+              const defaultProject = projects.find((p: Project) => p.id === defaultPref.project_id);
+              if (defaultProject) {
+                handleSetActiveProject(defaultProject, 'cache');
+                return;
+              }
+            }
+          } catch (err) {
+            console.warn('[useProjects] Failed to fetch default project preference:', err);
+          }
+        }
 
-      if (found) {
-        // Cached project is still valid, use it
-        handleSetActiveProject(found, 'cache');
-      } else {
-        // Cached ID not found in projects (might be deleted or access revoked)
-        // Only fall back to first project if no cached ID exists
-        if (!cachedId) {
-          handleSetActiveProject(projects[0], 'cache');
+        // SPEC-PROJ-001: Priority 2 - Cached project from localStorage
+        const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
+        const found = projects.find((p: Project) => p.id === cachedId);
+
+        if (found) {
+          // Cached project is still valid, use it
+          handleSetActiveProject(found, 'cache');
         } else {
-          // Cached ID exists but project not found - clear invalid cache and fall back
-          console.warn('[useProjects] Cached project ID not found in current project list, clearing cache');
-          localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
-          localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+          // Cached ID not found in projects (might be deleted or access revoked)
+          // Only fall back to first project if no cached ID exists
+          if (!cachedId) {
+            handleSetActiveProject(projects[0], 'cache');
+          } else {
+            // Cached ID exists but project not found - clear invalid cache and fall back
+            console.warn('[useProjects] Cached project ID not found in current project list, clearing cache');
+            localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
+            localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+            handleSetActiveProject(projects[0], 'cache');
+          }
+        }
+        return;
+      }
+
+      // 3. If we have an active project, update it with fresh data from server
+      // This ensures the active project always has the latest server data
+      const freshProject = projects.find((p: Project) => p.id === activeProject.id);
+      if (freshProject) {
+        // Update active project with fresh server data (silent update, no source change)
+        // Only update if data actually changed to avoid unnecessary re-renders
+        if (JSON.stringify(freshProject) !== JSON.stringify(activeProject)) {
+          console.log('[useProjects] Updating active project with fresh server data');
+          localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(freshProject));
+          setActiveProject(freshProject);
+        }
+      } else if (lastSource === 'user-selection') {
+        // Only fall back if we're not currently fetching
+        // This prevents overwriting a recent user selection during background refetches
+        if (!isFetching) {
+          console.warn('[useProjects] User-selected project became invalid, falling back to first project');
           handleSetActiveProject(projects[0], 'cache');
         }
+      } else {
+        // Cached project became invalid, clear cache and fall back to first project
+        console.warn('[useProjects] Cached project no longer available, clearing cache and falling back');
+        localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
+        localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+        handleSetActiveProject(projects[0], 'cache');
       }
-      return;
-    }
-
-    // 3. If we have an active project, update it with fresh data from server
-    // This ensures the active project always has the latest server data
-    const freshProject = projects.find((p: Project) => p.id === activeProject.id);
-    if (freshProject) {
-      // Update active project with fresh server data (silent update, no source change)
-      // Only update if data actually changed to avoid unnecessary re-renders
-      if (JSON.stringify(freshProject) !== JSON.stringify(activeProject)) {
-        console.log('[useProjects] Updating active project with fresh server data');
-        localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(freshProject));
-        setActiveProject(freshProject);
-      }
-    } else if (lastSource === 'user-selection') {
-      // User's selected project became invalid (deleted or access revoked), fall back to first project
-      console.warn('[useProjects] User-selected project became invalid, falling back to first project');
-      handleSetActiveProject(projects[0], 'cache');
-    } else {
-      // Cached project became invalid, clear cache and fall back to first project
-      console.warn('[useProjects] Cached project no longer available, clearing cache and falling back');
-      localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
-      localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
-      handleSetActiveProject(projects[0], 'cache');
-    }
-  }, [loading, projects, activeProject, handleSetActiveProject, lastSource]);
+    })();
+  }, [loading, isFetching, projects, activeProject, handleSetActiveProject, lastSource, user, isStandalone, isOnline, fetchProjectPreferences]);
 
   const createProject = async (name: string, description?: string) => {
     if (isStandalone || !user) {
@@ -468,6 +641,10 @@ export const useProjects = () => {
     },
     deleteProject,
     updateProject,
-    isSystemAdmin
+    isSystemAdmin,
+    // SPEC-PROJ-001: Export new preference management functions
+    updateProjectOrder,
+    setDefaultProject,
+    fetchProjectPreferences,
   };
 };

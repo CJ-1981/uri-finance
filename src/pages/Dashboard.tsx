@@ -61,7 +61,18 @@ const Dashboard = () => {
     filters: { status: 'pending' },
   });
   const pendingCount = pendingMutations.length;
-  const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin } = useProjects();
+  const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin, updateProjectOrder, setDefaultProject } = useProjects();
+
+  // SPEC-PROJ-001: Wrapper functions for ProjectSwitcher (passes userId automatically)
+  const handleUpdateProjectOrder = async (updates: Array<{ project_id: string; display_order: number }>) => {
+    if (!user?.id) throw new Error('User not authenticated');
+    await updateProjectOrder(user.id, updates);
+  };
+
+  const handleSetDefaultProject = async (projectId: string) => {
+    if (!user?.id) throw new Error('User not authenticated');
+    await setDefaultProject(user.id, projectId);
+  };
   const { 
     transactions, 
     addTransaction, 
@@ -220,8 +231,8 @@ const Dashboard = () => {
     const isStandalone = localStorage.getItem("is_standalone") === "true";
 
     // Show loading toast
-    const loadingToast = toast.loading(`Deleting ${ids.length} transaction${ids.length > 1 ? 's' : ''}...`, {
-      description: "Please wait..."
+    const loadingToast = toast.loading(t('admin.deletingTransactions', { count: ids.length }), {
+      description: t('common.pleaseWait')
     });
 
     try {
@@ -239,6 +250,7 @@ const Dashboard = () => {
         const { error } = await supabase
           .from("transactions")
           .update({ deleted_at: new Date().toISOString() })
+          .eq("project_id", activeProject.id)
           .in("id", ids);
 
         if (error) throw error;
@@ -247,15 +259,17 @@ const Dashboard = () => {
         const { error: unlinkError } = await supabase
           .from("project_files")
           .update({ transaction_id: null })
+          .eq("project_id", activeProject.id)
           .in("transaction_id", ids);
 
         if (unlinkError) {
           console.error("Failed to unlink files from transactions:", unlinkError);
+          throw new Error("Failed to unlink files");
         }
       }
 
       // Show success toast
-      toast.success(`Deleted ${ids.length} transaction${ids.length > 1 ? 's' : ''}`, {
+      toast.success(t('admin.deleteSuccess', { count: ids.length }), {
         id: loadingToast
       });
 
@@ -263,9 +277,11 @@ const Dashboard = () => {
       await fetchTransactions();
     } catch (error) {
       console.error("Bulk delete failed:", error);
-      toast.error(`Failed to delete ${ids.length} transaction${ids.length > 1 ? 's' : ''}`, {
+      toast.error(t('admin.deleteError', { count: ids.length }), {
         id: loadingToast
       });
+      // Re-throw error so caller can detect failure
+      throw error;
     }
   };
 
@@ -355,6 +371,9 @@ const Dashboard = () => {
               onCreate={createProject}
               onUpdate={updateProject}
               onJoin={joinProject}
+              // SPEC-PROJ-001: Pass new preference management functions
+              onUpdateProjectOrder={handleUpdateProjectOrder}
+              onSetDefaultProject={handleSetDefaultProject}
               isSystemAdmin={isSystemAdmin}
               isSimulating={isSimulating}
               simulatedRole={simulatedRole}
