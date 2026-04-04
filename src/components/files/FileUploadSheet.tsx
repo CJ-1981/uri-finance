@@ -27,11 +27,21 @@ import { MAX_FILE_SIZE } from '@/types/files';
 const generateFileInputId = () => `file-input-${Math.random().toString(36).substring(2, 9)}`;
 
 /**
+ * Old-style single file upload handler signature
+ */
+type OldUploadHandler = (file: File, remark: string) => Promise<void>;
+
+/**
+ * New-style batch file upload handler signature
+ */
+type NewUploadHandler = (files: Array<{ file: File; remark?: string }>, onProgress?: (current: number, total: number) => void) => Promise<void>;
+
+/**
  * Props for FileUploadSheet component
  */
 interface FileUploadSheetProps {
-  /** Callback when file(s) are selected for upload */
-  onUpload: (files: Array<{ file: File; remark?: string }>, onProgress?: (current: number, total: number) => void) => Promise<void>;
+  /** Callback when file(s) are selected for upload (supports both old and new signatures) */
+  onUpload: OldUploadHandler | NewUploadHandler;
   /** Whether upload is in progress */
   isUploading: boolean;
   /** Current remark value */
@@ -129,15 +139,26 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
     setUploadProgress(null);
 
     try {
-      // Apply remark to all files
-      const filesWithRemark = validFiles.map(({ file }) => ({
-        file,
-        remark: localRemark.trim()
-      }));
+      // Detect if onUpload is old-style (single file) or new-style (batch)
+      // Old signature: (file: File, remark: string) => Promise<void>
+      // New signature: (files: Array<{ file: File; remark?: string }>, onProgress?: (current, total) => void) => Promise<void>
+      const isOldSignature = onUpload.length === 2; // Old signature has 2 params (file, remark), new has 2 params (files, onProgress) but onProgress is optional
 
-      await onUpload(filesWithRemark, (current, total) => {
-        setUploadProgress({ current, total });
-      });
+      if (isOldSignature && validFiles.length === 1) {
+        // Use old single-file signature
+        const { file } = validFiles[0];
+        await (onUpload as OldUploadHandler)(file, localRemark.trim());
+      } else {
+        // Use new batch signature
+        const filesWithRemark = validFiles.map(({ file }) => ({
+          file,
+          remark: localRemark.trim()
+        }));
+
+        await (onUpload as NewUploadHandler)(filesWithRemark, (current, total) => {
+          setUploadProgress({ current, total });
+        });
+      }
 
       // Success: close sheet and reset state
       setSelectedFiles([]);
@@ -377,7 +398,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
           {/* Upload Button */}
           <Button
             onClick={handleUpload}
-            disabled={validFileCount === 0 || isUploading || isUploadingFile || hasErrors}
+            disabled={validFileCount === 0 || isUploading || isUploadingFile}
             className="w-full"
             size="lg"
           >

@@ -227,109 +227,148 @@ export const useFiles = (projectId: string) => {
 
       // Process files sequentially using the exact same logic as single file upload
       const results: ProjectFile[] = [];
+      // Track successful uploads for rollback in case of error
+      const successfulUploads: Array<{ fileId: string; storagePath?: string; isStandalone: boolean }> = [];
 
-      for (let i = 0; i < files.length; i++) {
-        const { file, remark } = files[i];
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const { file, remark } = files[i];
 
-        // Report progress
-        onProgress?.(i + 1, files.length);
+          // Report progress
+          onProgress?.(i + 1, files.length);
 
-        let resolvedMime = file.type;
-        if (!resolvedMime || resolvedMime === '') {
+          let resolvedMime = file.type;
+          if (!resolvedMime || resolvedMime === '') {
+            const ext = getFileExtension(file.name);
+            resolvedMime = EXTENSION_TO_MIME[ext] || '';
+          }
+
+          const fileToUpload = await autoCompressImageIfNeeded(file);
+
+          // Construct an actual File instance using constructor
+          const fileForValidation = new File([fileToUpload], fileToUpload.name, {
+            type: resolvedMime,
+            lastModified: fileToUpload.lastModified
+          });
+
+          if (!isFileTypeAllowed(fileForValidation)) {
+            throw new Error(`${file.name}: ${t('files.invalidFileType') || 'File type not allowed'}`);
+          }
+          if (fileToUpload.size > MAX_FILE_SIZE) {
+            throw new Error(`${file.name}: ${t('files.sizeExceeds').replace('{size}', `${MAX_FILE_SIZE / (1024 * 1024)} MB`)}`);
+          }
+
+          const fileId = crypto.randomUUID();
+
+          if (isStandalone) {
+            // Create local metadata
+            const newFileMetadata: ProjectFile = {
+              id: fileId,
+              project_id: projectId,
+              uploaded_by: 'standalone-user',
+              file_name: file.name,
+              file_type: resolvedMime,
+              file_size: fileToUpload.size,
+              storage_path: `standalone/${projectId}/${fileId}`,
+              remark: remark?.trim() || null,
+              transaction_id: transactionId || null,
+              created_at: new Date().toISOString(),
+            };
+
+            // Store file content
+            await set(`file-content-${fileId}`, fileToUpload);
+
+            // Store metadata
+            await update(`files-metadata-${projectId}`, (old: any) => {
+              return [newFileMetadata, ...(old || [])];
+            });
+
+            results.push(newFileMetadata);
+            successfulUploads.push({ fileId, isStandalone: true });
+            continue;
+          }
+
+          // Get authenticated user - same as single file upload
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (userError || !user) {
+            throw new Error(t('files.notAuthenticated') || 'User not authenticated');
+          }
+
           const ext = getFileExtension(file.name);
-          resolvedMime = EXTENSION_TO_MIME[ext] || '';
+          const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
+          const { error: uploadError } = await supabase.storage
+            .from('project-files')
+            .upload(storagePath, fileToUpload, {
+              cacheControl: '3600',
+              upsert: false,
+              contentType: resolvedMime,
+            });
+
+          if (uploadError) {
+            throw new Error(`${file.name}: ${t('files.uploadFailed') || 'Failed to upload file'}: ${uploadError.message}`);
+          }
+
+          const { data: fileData, error: insertError } = await supabase
+            .from('project_files')
+            .insert({
+              id: fileId,
+              project_id: projectId,
+              uploaded_by: user.id,
+              file_name: file.name,
+              file_type: resolvedMime,
+              file_size: fileToUpload.size,
+              storage_path: storagePath,
+              remark: remark?.trim() || null,
+              transaction_id: transactionId || null,
+            })
+            .select()
+            .single();
+
+          if (insertError) {
+            // Cleanup storage if metadata insert fails
+            await supabase.storage.from('project-files').remove([storagePath]);
+            throw new Error(`${file.name}: ${t('files.saveMetadataFailed') || 'Failed to save file metadata'}: ${insertError.message}`);
+          }
+
+          results.push(fileData as ProjectFile);
+          successfulUploads.push({ fileId, storagePath, isStandalone: false });
         }
 
-        const fileToUpload = await autoCompressImageIfNeeded(file);
+        return results;
+      } catch (error) {
+        // Rollback: Delete all successfully uploaded files
+        console.error('[uploadFilesBatch] Error during batch upload, rolling back successful uploads:', error);
 
-        // Construct an actual File instance using constructor
-        const fileForValidation = new File([fileToUpload], fileToUpload.name, {
-          type: resolvedMime,
-          lastModified: fileToUpload.lastModified
-        });
-
-        if (!isFileTypeAllowed(fileForValidation)) {
-          throw new Error(`${file.name}: ${t('files.invalidFileType') || 'File type not allowed'}`);
-        }
-        if (fileToUpload.size > MAX_FILE_SIZE) {
-          throw new Error(`${file.name}: ${t('files.sizeExceeds').replace('{size}', `${MAX_FILE_SIZE / (1024 * 1024)} MB`)}`);
-        }
-
-        const fileId = crypto.randomUUID();
-
-        if (isStandalone) {
-          // Create local metadata
-          const newFileMetadata: ProjectFile = {
-            id: fileId,
-            project_id: projectId,
-            uploaded_by: 'standalone-user',
-            file_name: file.name,
-            file_type: resolvedMime,
-            file_size: fileToUpload.size,
-            storage_path: `standalone/${projectId}/${fileId}`,
-            remark: remark?.trim() || null,
-            transaction_id: transactionId || null,
-            created_at: new Date().toISOString(),
-          };
-
-          // Store file content
-          await set(`file-content-${fileId}`, fileToUpload);
-
-          // Store metadata
-          await update(`files-metadata-${projectId}`, (old: any) => {
-            return [newFileMetadata, ...(old || [])];
+        // Process rollbacks in parallel (standalone and server separately)
+        const standaloneRollbacks = successfulUploads
+          .filter(upload => upload.isStandalone)
+          .map(async ({ fileId }) => {
+            try {
+              await del(`file-content-${fileId}`);
+              await update(`files-metadata-${projectId}`, (old: any) => (old || []).filter((f: any) => f.id !== fileId));
+            } catch (rollbackError) {
+              console.error(`[uploadFilesBatch] Failed to rollback standalone file ${fileId}:`, rollbackError);
+            }
           });
 
-          results.push(newFileMetadata);
-          continue;
-        }
-
-        // Get authenticated user - same as single file upload
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          throw new Error(t('files.notAuthenticated') || 'User not authenticated');
-        }
-
-        const ext = getFileExtension(file.name);
-        const storagePath = `projects/${projectId}/files/${fileId}${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from('project-files')
-          .upload(storagePath, fileToUpload, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: resolvedMime,
+        const serverRollbacks = successfulUploads
+          .filter(upload => !upload.isStandalone && upload.storagePath)
+          .map(async ({ fileId, storagePath }) => {
+            try {
+              // Delete from storage
+              await supabase.storage.from('project-files').remove([storagePath]);
+              // Delete metadata
+              await supabase.from('project_files').delete().eq('id', fileId);
+            } catch (rollbackError) {
+              console.error(`[uploadFilesBatch] Failed to rollback server file ${fileId}:`, rollbackError);
+            }
           });
 
-        if (uploadError) {
-          throw new Error(`${file.name}: ${t('files.uploadFailed') || 'Failed to upload file'}: ${uploadError.message}`);
-        }
+        await Promise.all([...standaloneRollbacks, ...serverRollbacks]);
 
-        const { data: fileData, error: insertError } = await supabase
-          .from('project_files')
-          .insert({
-            id: fileId,
-            project_id: projectId,
-            uploaded_by: user.id,
-            file_name: file.name,
-            file_type: resolvedMime,
-            file_size: fileToUpload.size,
-            storage_path: storagePath,
-            remark: remark?.trim() || null,
-            transaction_id: transactionId || null,
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          // Cleanup storage if metadata insert fails
-          await supabase.storage.from('project-files').remove([storagePath]);
-          throw new Error(`${file.name}: ${t('files.saveMetadataFailed') || 'Failed to save file metadata'}: ${insertError.message}`);
-        }
-
-        results.push(fileData as ProjectFile);
+        // Re-throw the original error
+        throw error;
       }
-
-      return results;
     },
     onSuccess: (results) => {
       toast.success(`${results.length} ${t('files.uploaded') || 'files uploaded successfully'}`);
@@ -417,7 +456,7 @@ export const useFiles = (projectId: string) => {
     onSuccess: () => {
       toast.success(t('files.deleted') || 'File deleted');
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       if (isNetworkError(error)) return;
       queryClient.setQueryData(['project-files', projectId], context?.previous);
       toast.error(error.message);
@@ -465,7 +504,7 @@ export const useFiles = (projectId: string) => {
     onSuccess: () => {
       toast.success(t('files.updated') || 'File updated');
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       if (isNetworkError(error)) return;
       queryClient.setQueryData(['project-files', projectId], context?.previous);
       toast.error(error.message);
@@ -494,10 +533,10 @@ export const useFiles = (projectId: string) => {
         return;
       }
 
-      // Fetch all storage paths first
+      // Fetch all storage paths and ids first
       const { data: fileData, error: fetchError } = await supabase
         .from('project_files')
-        .select('storage_path')
+        .select('id, storage_path')
         .eq('project_id', projectId)
         .in('id', fileIds);
 
@@ -525,11 +564,8 @@ export const useFiles = (projectId: string) => {
         console.log(`[deleteFilesBatch] Progress: ${i + 1}/${fileIds.length}`);
         onProgress?.(i + 1, fileIds.length);
 
-        // Force a synchronous delay - this blocks execution but allows UI to update
-        const start = Date.now();
-        while (Date.now() - start < 800) {
-          // Busy wait to force visibility
-        }
+        // Use async delay instead of busy-wait to allow UI to repaint
+        await new Promise(resolve => setTimeout(resolve, 800));
       }
     },
     onMutate: async ({ fileIds }) => {
@@ -542,7 +578,7 @@ export const useFiles = (projectId: string) => {
     onSuccess: (_, variables) => {
       toast.success(`${variables.fileIds.length} ${t('files.deleted') || 'files deleted'}`);
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       if (isNetworkError(error)) return;
       queryClient.setQueryData(['project-files', projectId], context?.previous);
       toast.error(error.message);

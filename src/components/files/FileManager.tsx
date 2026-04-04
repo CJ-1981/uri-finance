@@ -387,7 +387,7 @@ export const FileManager = ({
       </AlertDialog>
 
       {/* Batch Delete Confirmation */}
-      <AlertDialog open={batchDeleteConfirmOpen} onOpenChange={(open) => !open && !isDeleting && setBatchDeleteConfirmOpen(open)}>
+      <AlertDialog open={batchDeleteConfirmOpen} onOpenChange={(open) => !open && !isDeleting && deleteProgress === null && setBatchDeleteConfirmOpen(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
