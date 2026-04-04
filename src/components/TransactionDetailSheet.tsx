@@ -466,7 +466,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                             setTimeout(() => URL.revokeObjectURL(url), 100);
                           } catch (error) {
                             console.error('Download failed:', error);
-                            toast.error('Failed to download file');
+                            toast.error(t('files.downloadFailed'));
                           }
                         }}
                         title={t('files.download') || 'Download'}
