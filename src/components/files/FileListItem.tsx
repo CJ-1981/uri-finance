@@ -56,7 +56,7 @@ const formatFileSize = (bytes: number): string => {
  * @returns true if file can be previewed
  */
 const canPreview = (mimeType: string): boolean => {
-  return mimeType.startsWith('image/') || mimeType === 'application/pdf';
+  return mimeType.startsWith('image/');
 };
 
 /**
