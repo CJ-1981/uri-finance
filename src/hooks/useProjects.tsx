@@ -20,16 +20,13 @@ export interface Project {
 
 type ProjectSource = 'user-selection' | 'cache' | 'server';
 
-// @MX:NOTE: Project preference interface for SPEC-PROJ-001
-// Stores user's custom ordering and default project selection
-interface ProjectPreference {
-  id: string;
-  user_id: string;
+// @MX:NOTE: Local project preference interface for SPEC-PROJ-001
+// Stores user's custom ordering and default project selection in localStorage
+// Works for all users regardless of membership level, works offline/standalone
+interface LocalProjectPreference {
   project_id: string;
   display_order: number;
   is_default: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 // Constants for local storage keys
@@ -45,121 +42,74 @@ export const useProjects = () => {
   const isOnline = useOnlineStatus();
   const queryClient = useQueryClient();
 
-  // SPEC-PROJ-001: Fetch user project preferences from Supabase
-  const fetchProjectPreferences = useCallback(async (userId: string): Promise<ProjectPreference[]> => {
-    if (isStandalone || !isOnline) {
-      // Fallback to localStorage for offline mode
-      try {
-        const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
-        return localPrefs ? JSON.parse(localPrefs) : [];
-      } catch {
-        return [];
-      }
+  // SPEC-PROJ-001: Fetch user project preferences from localStorage
+  // Works for all users, works offline/standalone, no database dependency
+  const fetchProjectPreferences = useCallback((): LocalProjectPreference[] => {
+    try {
+      const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
+      return localPrefs ? JSON.parse(localPrefs) : [];
+    } catch {
+      return [];
     }
+  }, []);
 
-    const { data, error } = await supabase
-      .from('user_project_preferences')
-      .select('*')
-      .eq('user_id', userId)
-      .order('display_order', { ascending: true });
+  // SPEC-PROJ-001: Update display order for multiple projects (localStorage only)
+  const updateProjectOrder = useCallback(async (updates: Array<{project_id: string, display_order: number}>): Promise<void> => {
+    try {
+      const existingPrefs = JSON.parse(localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY) || "[]");
+      const prefsMap = new Map(existingPrefs.map((p: LocalProjectPreference) => [p.project_id, p]));
 
-    if (error) throw error;
-    return data || [];
-  }, [isStandalone, isOnline]);
-
-  // SPEC-PROJ-001: Update display order for multiple projects
-  const updateProjectOrder = useCallback(async (userId: string, updates: Array<{project_id: string, display_order: number}>): Promise<void> => {
-    if (isStandalone || !isOnline) {
-      // Save to localStorage for offline mode
-      try {
-        const existingPrefs = JSON.parse(localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY) || "[]");
-        const prefsMap = new Map(existingPrefs.map((p: ProjectPreference) => [p.project_id, p]));
-
-        updates.forEach(update => {
-          const existing = prefsMap.get(update.project_id) as ProjectPreference | undefined;
-          if (existing) {
-            existing.display_order = update.display_order;
-          } else {
-            prefsMap.set(update.project_id, {
-              id: crypto.randomUUID(),
-              user_id: userId,
-              project_id: update.project_id,
-              display_order: update.display_order,
-              is_default: false,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }
-        });
-
-        localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
-      } catch (err) {
-        console.error('Failed to save project order to localStorage:', err);
-      }
-      return;
-    }
-
-    const { error } = await supabase
-      .from('user_project_preferences')
-      .upsert(updates.map(u => ({ ...u, user_id: userId })), { onConflict: 'user_id,project_id' });
-
-    if (error) throw error;
-  }, [isStandalone, isOnline]);
-
-  // SPEC-PROJ-001: Set default project for a user
-  const setDefaultProject = useCallback(async (userId: string, projectId: string): Promise<void> => {
-    if (isStandalone || !isOnline) {
-      // Save to localStorage for offline mode
-      try {
-        const existingPrefs = JSON.parse(localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY) || "[]");
-        const prefsMap = new Map(existingPrefs.map((p: ProjectPreference) => [p.project_id, p]));
-
-        // Remove default from all projects
-        prefsMap.forEach((pref: ProjectPreference) => {
-          pref.is_default = false;
-        });
-
-        // Set new default
-        if (projectId) {
-          const target = prefsMap.get(projectId) as ProjectPreference | undefined;
-          if (target) {
-            target.is_default = true;
-          } else {
-            prefsMap.set(projectId, {
-              id: crypto.randomUUID(),
-              user_id: userId,
-              project_id: projectId,
-              display_order: 0,
-              is_default: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          }
+      updates.forEach(update => {
+        const existing = prefsMap.get(update.project_id) as LocalProjectPreference | undefined;
+        if (existing) {
+          existing.display_order = update.display_order;
+        } else {
+          prefsMap.set(update.project_id, {
+            project_id: update.project_id,
+            display_order: update.display_order,
+            is_default: false,
+          });
         }
+      });
 
-        localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
-      } catch (err) {
-        console.error('Failed to save default project to localStorage:', err);
+      localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
+    } catch (err) {
+      console.error('Failed to save project order to localStorage:', err);
+      throw err;
+    }
+  }, []);
+
+  // SPEC-PROJ-001: Set default project (localStorage only, works for all users)
+  const setDefaultProject = useCallback(async (projectId: string): Promise<void> => {
+    try {
+      const existingPrefs = JSON.parse(localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY) || "[]");
+      const prefsMap = new Map(existingPrefs.map((p: LocalProjectPreference) => [p.project_id, p]));
+
+      // Remove default from all projects
+      prefsMap.forEach((pref: LocalProjectPreference) => {
+        pref.is_default = false;
+      });
+
+      // Set new default
+      if (projectId) {
+        const target = prefsMap.get(projectId) as LocalProjectPreference | undefined;
+        if (target) {
+          target.is_default = true;
+        } else {
+          prefsMap.set(projectId, {
+            project_id: projectId,
+            display_order: 0,
+            is_default: true,
+          });
+        }
       }
-      return;
+
+      localStorage.setItem(LOCAL_PROJECT_PREFERENCES_KEY, JSON.stringify(Array.from(prefsMap.values())));
+    } catch (err) {
+      console.error('Failed to save default project to localStorage:', err);
+      throw err;
     }
-
-    // Remove default from all projects
-    await supabase
-      .from('user_project_preferences')
-      .update({ is_default: false })
-      .eq('user_id', userId)
-      .eq('is_default', true);
-
-    // Set new default (if projectId is not empty)
-    if (projectId) {
-      const { error } = await supabase
-        .from('user_project_preferences')
-        .upsert({ user_id: userId, project_id: projectId, is_default: true }, { onConflict: 'user_id,project_id' });
-
-      if (error) throw error;
-    }
-  }, [isStandalone, isOnline]);
+  }, []);
 
   // In standalone mode, everyone is an admin of their local projects
   const isSystemAdmin = isStandalone || isRealSystemAdmin;
@@ -205,8 +155,8 @@ export const useProjects = () => {
 
       if (projError) throw projError;
 
-      // SPEC-PROJ-001: Fetch user preferences for custom ordering
-      const preferences = await fetchProjectPreferences(user.id);
+      // SPEC-PROJ-001: Fetch user preferences from localStorage for custom ordering
+      const preferences = fetchProjectPreferences();
 
       // Build order map from preferences
       const orderMap = new Map(preferences.map(p => [p.project_id, p.display_order]));
@@ -231,33 +181,19 @@ export const useProjects = () => {
     networkMode: "always",
   });
 
-  // Persist selected project
+  // Persist selected project to localStorage
   const handleSetActiveProject = useCallback((project: Project | null, source: ProjectSource = 'user-selection'): void => {
     setLastSource(source);
-    
+
     if (project) {
       localStorage.setItem(ACTIVE_PROJECT_ID_KEY, project.id);
       localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(project));
-      
-      if (!isStandalone && isOnline && user && source === 'user-selection') {
-        supabase.from('user_preferences').upsert({
-          user_id: user.id,
-          default_project_id: project.id
-        }, { onConflict: 'user_id' }).then(({ error }) => {
-          if (error) console.debug('Failed to save preference:', error);
-        });
-      }
     } else {
       localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
       localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
-      if (!isStandalone && isOnline && user) {
-        supabase.from('user_preferences').update({ default_project_id: null }).eq('user_id', user.id).then(({ error }) => {
-          if (error) console.debug('Failed to clear preference:', error);
-        });
-      }
     }
     setActiveProject(project);
-  }, [isOnline, user, isStandalone]);
+  }, []);
 
   // Restore logic
   // SPEC-PROJ-001: Enhanced to prioritize user's default project
@@ -273,21 +209,19 @@ export const useProjects = () => {
 
       // 2. If we have projects but none active, try to restore from cache or default
       if (!activeProject) {
-        // SPEC-PROJ-001: Priority 1 - User's default project from preferences
-        if (!isStandalone && user && isOnline) {
-          try {
-            const preferences = await fetchProjectPreferences(user.id);
-            const defaultPref = preferences.find(p => p.is_default);
-            if (defaultPref) {
-              const defaultProject = projects.find((p: Project) => p.id === defaultPref.project_id);
-              if (defaultProject) {
-                handleSetActiveProject(defaultProject, 'cache');
-                return;
-              }
+        // SPEC-PROJ-001: Priority 1 - User's default project from localStorage preferences
+        try {
+          const preferences = fetchProjectPreferences();
+          const defaultPref = preferences.find(p => p.is_default);
+          if (defaultPref) {
+            const defaultProject = projects.find((p: Project) => p.id === defaultPref.project_id);
+            if (defaultProject) {
+              handleSetActiveProject(defaultProject, 'cache');
+              return;
             }
-          } catch (err) {
-            console.warn('[useProjects] Failed to fetch default project preference:', err);
           }
+        } catch (err) {
+          console.warn('[useProjects] Failed to fetch default project preference:', err);
         }
 
         // SPEC-PROJ-001: Priority 2 - Cached project from localStorage

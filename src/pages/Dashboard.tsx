@@ -63,15 +63,14 @@ const Dashboard = () => {
   const pendingCount = pendingMutations.length;
   const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin, updateProjectOrder, setDefaultProject } = useProjects();
 
-  // SPEC-PROJ-001: Wrapper functions for ProjectSwitcher (passes userId automatically)
+  // SPEC-PROJ-001: Wrapper functions for ProjectSwitcher
+  // Works for all users regardless of authentication level, uses localStorage
   const handleUpdateProjectOrder = async (updates: Array<{ project_id: string; display_order: number }>) => {
-    if (!user?.id) throw new Error('User not authenticated');
-    await updateProjectOrder(user.id, updates);
+    await updateProjectOrder(updates);
   };
 
   const handleSetDefaultProject = async (projectId: string) => {
-    if (!user?.id) throw new Error('User not authenticated');
-    await setDefaultProject(user.id, projectId);
+    await setDefaultProject(projectId);
   };
   const { 
     transactions, 
