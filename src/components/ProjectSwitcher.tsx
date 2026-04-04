@@ -52,17 +52,27 @@ const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, 
     <div
       ref={setNodeRef}
       style={style}
-      className={`w-full text-left rounded-xl px-4 py-3 transition-all group relative outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(project)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(project);
+        }
+      }}
+      className={`w-full text-left rounded-xl px-4 py-3 transition-all group relative outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer ${
         isActive ? "bg-primary/10 ring-1 ring-primary/30" : "bg-muted/30 hover:bg-muted/50"
       } ${isDragging ? "opacity-50" : ""}`}
     >
       {/* Drag Handle (owners only) */}
       {isOwner && (
         <div
-          className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-2 touch-manipulation"
+          className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-2 touch-manipulation z-10"
           {...attributes}
           {...listeners}
           aria-label="Drag to reorder"
+          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -83,12 +93,15 @@ const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, 
 
       {/* Actions */}
       {isOwner && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 z-10">
           <Button
             size="icon"
             variant="ghost"
             className="h-8 w-8"
-            onClick={() => onSetDefault(project)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSetDefault(project);
+            }}
             aria-label={isDefault ? "Remove default" : "Set as default"}
           >
             <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-primary text-primary" : ""}`} />
