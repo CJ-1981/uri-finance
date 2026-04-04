@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-04-04
+
+### Added
+- **Multi-File Upload**:
+  - Upload multiple files simultaneously with drag-and-drop or file picker
+  - Real-time progress indicator showing current/total files during upload (e.g., "1/3", "2/3")
+  - Camera button on mobile for quick photo capture
+  - File list showing selected files with size and error states
+  - Validation for file size limits and duplicate detection
+  - Optional remark field applied to all files in batch
+- **Multi-File Delete**:
+  - Delete multiple files with confirmation dialog
+  - Progress indicator showing deletion progress (e.g., "Deleting 2/3")
+  - Select all/deselect all functionality
+  - Batch download support for selected files
+- **Accessibility**:
+  - Keyboard navigation for dropzone (tabIndex, Enter/Space keys)
+  - Screen reader support with aria-labels for remove buttons
+  - Proper ARIA attributes for disabled states
+- **Offline/Standalone Mode**:
+  - Optimistic UI updates for immediate feedback in standalone mode
+  - Files appear instantly after upload without waiting for query invalidation
+  - Metadata cleanup on partial failures to prevent broken references
+
+### Changed
+- **Error Handling**:
+  - Improved state restoration before early return on network errors
+  - Per-file delete tracking to prevent reappearing items on partial failure
+  - Storage cleanup error checking in upload flow and rollback
+  - Metadata sync for standalone mode deletions
+- **User Interface**:
+  - Dynamic dialog title/description updates during multi-file operations
+  - Loading spinners with progress counters
+  - Disabled state for buttons during operations
+  - Mobile-optimized with camera/file picker buttons
+
+### Fixed
+- **RLS Policy Compliance**: Sequential uploads with getUser() called per file to satisfy Supabase Row Level Security
+- **Orphaned Files**: Added files to rollback list before cleanup attempt to prevent orphaned storage blobs
+- **Metadata Sync**: Fixed standalone mode deletion to clean up metadata for successfully deleted files
+- **Query Cache**: Fixed onError restore logic to keep unrelated files when partial failures occur
+- **File Input Reset**: Reset file input value after selection to allow re-selecting the same file
+
 ## [1.3.2] - 2026-04-03
 
 ### Added
