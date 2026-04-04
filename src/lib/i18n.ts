@@ -270,6 +270,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.codePlaceholder": "Code",
     "cat.editName": "Edit name",
     "cat.editCode": "Edit code",
+    "cat.toggleChildren": "Toggle children",
+    "cat.setIcon": "Set emoji icon",
     "cat.manageCategories": "Manage Categories",
     "cat.manageCategoriesDesc": "Add, remove, or reorder transaction categories.",
     "cat.addSubCategory": "Add sub-category",
@@ -570,6 +572,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.selected": "{count} selected",
     // SPEC-TRANSACTION-FILES
     "files.linkToTransaction": "View Transaction",
+    "files.viewInFiles": "View in Files",
     "files.attachments": "Attachments",
     "files.addDescription": "Add description...",
     "files.updateFailed": "Update failed",
@@ -884,6 +887,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     "cat.codePlaceholder": "코드",
     "cat.editName": "이름 수정",
     "cat.editCode": "코드 수정",
+    "cat.toggleChildren": "하위 카테고리 토글",
+    "cat.setIcon": "이모지 아이콘 설정",
     "cat.manageCategories": "카테고리 관리",
     "cat.manageCategoriesDesc": "거래 카테고리를 추가, 삭제 또는 순서를 변경합니다.",
     "cat.addSubCategory": "하위 카테고리 추가",
@@ -1184,6 +1189,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "files.selected": "{count}개 선택됨",
     // SPEC-TRANSACTION-FILES
     "files.linkToTransaction": "거래 보기",
+    "files.viewInFiles": "파일에서 보기",
     "files.attachments": "첨부파일",
     "files.addDescription": "설명 추가...",
     "files.updateFailed": "업데이트 실패",

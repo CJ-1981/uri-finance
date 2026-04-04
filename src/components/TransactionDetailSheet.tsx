@@ -482,7 +482,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
                           onOpenChange(false); // Close the detail sheet
                           onViewInFiles?.(file.id); // Navigate to files view with file highlight
                         }}
-                        title="View in Files"
+                        title={t("files.viewInFiles")}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>

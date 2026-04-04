@@ -79,7 +79,7 @@ const CategoryTreeItem = ({ node, depth, onDelete, onUpdateName, onUpdateCode, o
           <button
             onClick={() => setExpanded(!expanded)}
             className="shrink-0 rounded transition-colors p-0.5 min-w-[20px] min-h-[20px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"
-            title="Toggle children"
+            title={t("cat.toggleChildren")}
           >
             {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </button>
@@ -345,7 +345,7 @@ const SortableCategoryItem = ({
             setEditIconValue(cat.icon || "");
           }}
           className="text-base w-6 h-6 flex items-center justify-center rounded hover:bg-muted transition-colors shrink-0"
-          title="Set emoji icon"
+          title={t("cat.setIcon")}
         >
           {cat.icon || "·"}
         </button>
