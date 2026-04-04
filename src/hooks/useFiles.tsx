@@ -229,26 +229,12 @@ export const useFiles = (projectId: string) => {
       // Get authenticated user ONCE before starting parallel uploads
       let userId: string | null = null;
       if (!isStandalone) {
-        // Explicitly get session to ensure fresh auth context for parallel operations
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.user) {
+        // Use same pattern as single file upload - getUser instead of getSession
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
           throw new Error(t('files.notAuthenticated') || 'User not authenticated');
         }
-        userId = session.user.id;
-
-        // Optionally refresh session if it's close to expiry
-        if (session.expires_at) {
-          const expiresAt = new Date(session.expires_at * 1000);
-          const now = new Date();
-          const timeUntilExpiry = expiresAt.getTime() - now.getTime();
-          // Refresh if less than 5 minutes remaining
-          if (timeUntilExpiry < 5 * 60 * 1000) {
-            const { error: refreshError } = await supabase.auth.refreshSession();
-            if (refreshError) {
-              console.warn('Failed to refresh session:', refreshError);
-            }
-          }
-        }
+        userId = user.id;
       }
 
       // Process files: upload to storage in parallel, but insert metadata sequentially to avoid RLS concurrency issues
