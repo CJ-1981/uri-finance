@@ -231,6 +231,16 @@ export const useFiles = (projectId: string) => {
       const successfulUploads: Array<{ fileId: string; storagePath?: string; isStandalone: boolean }> = [];
 
       try {
+        // Get authenticated user once before the loop (for non-standalone mode)
+        let user: any | null = null;
+        if (!isStandalone) {
+          const { data: { user: authUser }, error: userError } = await supabase.auth.getUser();
+          if (userError || !authUser) {
+            throw new Error(t('files.notAuthenticated') || 'User not authenticated');
+          }
+          user = authUser;
+        }
+
         for (let i = 0; i < files.length; i++) {
           const { file, remark } = files[i];
 
@@ -286,12 +296,6 @@ export const useFiles = (projectId: string) => {
             results.push(newFileMetadata);
             successfulUploads.push({ fileId, isStandalone: true });
             continue;
-          }
-
-          // Get authenticated user - same as single file upload
-          const { data: { user }, error: userError } = await supabase.auth.getUser();
-          if (userError || !user) {
-            throw new Error(t('files.notAuthenticated') || 'User not authenticated');
           }
 
           const ext = getFileExtension(file.name);
@@ -374,7 +378,7 @@ export const useFiles = (projectId: string) => {
       const count = results.length;
       const message = count === 1
         ? t('files.uploaded') || 'File uploaded successfully'
-        : `${count} ${t('files.uploaded') || 'files uploaded successfully'}`;
+        : t('files.uploadedMultiple').replace('{count}', String(count)) || `${count} files uploaded successfully`;
       toast.success(message);
     },
     onError: (error: Error) => {
@@ -565,7 +569,6 @@ export const useFiles = (projectId: string) => {
 
         if (deleteError) throw new Error(`${t('files.deleteFailed') || 'Failed to delete file metadata'}: ${deleteError.message}`);
 
-        console.log(`[deleteFilesBatch] Progress: ${i + 1}/${fileIds.length}`);
         onProgress?.(i + 1, fileIds.length);
 
         // Use async delay instead of busy-wait to allow UI to repaint
@@ -583,7 +586,7 @@ export const useFiles = (projectId: string) => {
       const count = variables.fileIds.length;
       const message = count === 1
         ? t('files.deleted') || 'File deleted'
-        : `${count} ${t('files.deleted') || 'files deleted'}`;
+        : t('files.deletedMultiple').replace('{count}', String(count)) || `${count} files deleted`;
       toast.success(message);
     },
     onError: (error: Error, _variables, context) => {

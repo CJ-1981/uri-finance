@@ -111,7 +111,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
         if (isDuplicate) {
           newFiles.push({
             file,
-            error: 'File already selected'
+            error: t('files.duplicateFile')
           });
         } else {
           newFiles.push({ file });
@@ -316,7 +316,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                 </p>
                 {selectedFiles.length > 0 && (
                   <p className="text-xs text-primary">
-                    {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} selected
+                    {t('files.selected').replace('{count}', String(selectedFiles.length))}
                   </p>
                 )}
               </div>
@@ -357,7 +357,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                     </span>
                     {item.error && (
                       <span className="text-xs text-destructive truncate" title={item.error}>
-                        {item.error.split(':')[0]}...
+                        {item.error}
                       </span>
                     )}
                     <Button
@@ -415,7 +415,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
                 <Upload className="mr-2 h-4 w-4" />
                 {selectedFiles.length === 1
                   ? t('files.uploadFile')
-                  : `${t('files.upload')} ${selectedFiles.length} ${t('files.files')}`
+                  : t('files.uploadMultiple').replace('{count}', String(selectedFiles.length))
                 }
               </>
             )}

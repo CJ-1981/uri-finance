@@ -124,26 +124,21 @@ export const FileManager = ({
   const handleBatchDeleteConfirm = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent dialog from closing
     const fileIds = Array.from(selectedIds);
-    console.log('[FileManager] Starting batch delete:', fileIds.length, 'files');
     setDeleteProgress(null);
     try {
       await deleteFilesBatch(fileIds, (current, total) => {
-        console.log('[FileManager] Progress callback:', current, '/', total);
         setDeleteProgress({ current, total });
       });
-      console.log('[FileManager] Batch delete completed');
 
       // Show completion state briefly before closing dialog
       // Use setTimeout to allow React to render the final progress state first
       setTimeout(() => {
-        console.log('[FileManager] Closing dialog after delay');
         setSelectedIds(new Set());
         setIsSelectionMode(false);
         setBatchDeleteConfirmOpen(false);
         setDeleteProgress(null);
       }, 2000);
     } catch (error) {
-      console.error('Batch delete failed:', error);
       setDeleteProgress(null);
     }
   };
