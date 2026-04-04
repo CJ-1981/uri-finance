@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Settings2, RotateCcw } from "lucide-react";
 import { ColumnHeaders } from "@/hooks/useColumnHeaders";
+import { useI18n } from "@/hooks/useI18n";
 
 interface Props {
   headers: ColumnHeaders;
@@ -22,6 +23,7 @@ const FIELD_KEYS: { key: keyof ColumnHeaders; placeholder: string }[] = [
 
 const ColumnHeaderEditor = ({ headers, onUpdate, onReset }: Props) => {
   const [open, setOpen] = useState(false);
+  const { t } = useI18n();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -32,7 +34,7 @@ const ColumnHeaderEditor = ({ headers, onUpdate, onReset }: Props) => {
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-foreground">Column Headers</p>
+          <p className="text-sm font-medium text-foreground">{t("admin.columnHeaders")}</p>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={onReset}>
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
