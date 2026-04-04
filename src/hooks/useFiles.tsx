@@ -226,6 +226,16 @@ export const useFiles = (projectId: string) => {
     mutationFn: async (params: { files: Array<{ file: File; remark?: string }>; transactionId?: string }) => {
       const { files, transactionId } = params;
 
+      // Get authenticated user ONCE before starting parallel uploads
+      let userId: string | null = null;
+      if (!isStandalone) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+          throw new Error(t('files.notAuthenticated') || 'User not authenticated');
+        }
+        userId = user.id;
+      }
+
       // Upload all files in parallel
       const uploadPromises = files.map(async ({ file, remark }) => {
         let resolvedMime = file.type;
@@ -305,7 +315,7 @@ export const useFiles = (projectId: string) => {
             file_name: file.name,
             file_type: resolvedMime,
             file_size: file.size,
-            uploaded_by: (await supabase.auth.getUser()).data.user?.id || null,
+            uploaded_by: userId,
             remark: remark?.trim() || null,
             transaction_id: transactionId || null,
           })
