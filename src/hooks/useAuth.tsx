@@ -86,8 +86,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string) => {
     // Construct the email redirect URL with the correct base path
-    const baseUrl = import.meta.env.VITE_BASE_URL || '/';
-    const redirectTo = `${window.location.origin}${baseUrl}auth/callback`;
+    // Remove leading/trailing slashes from baseUrl to ensure consistent construction
+    const rawBaseUrl = import.meta.env.VITE_BASE_URL || '/';
+    const baseUrl = rawBaseUrl.startsWith('/') ? rawBaseUrl : `/${rawBaseUrl}`;
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const redirectTo = `${window.location.origin}${normalizedBaseUrl}auth/callback`;
 
     const { error } = await supabase.auth.signUp({
       email,
@@ -150,8 +153,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetPassword = async (email: string) => {
-    const baseUrl = import.meta.env.VITE_BASE_URL || '/';
-    const redirectTo = `${window.location.origin}${baseUrl}auth/callback`;
+    const rawBaseUrl = import.meta.env.VITE_BASE_URL || '/';
+    const baseUrl = rawBaseUrl.startsWith('/') ? rawBaseUrl : `/${rawBaseUrl}`;
+    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const redirectTo = `${window.location.origin}${normalizedBaseUrl}auth/callback`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo,

@@ -22,7 +22,23 @@ const Index = () => {
     );
   }
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) {
+    // SPEC-004: If the URL contains recovery info or an access token, 
+    // DON'T redirect yet. Let the AuthProvider/Supabase client process it.
+    const hasToken = window.location.hash.includes("access_token=") || 
+                     window.location.search.includes("type=recovery") ||
+                     window.location.search.includes("code=");
+    
+    if (hasToken) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="animate-pulse text-muted-foreground">{t("auth.loading")}</div>
+        </div>
+      );
+    }
+
+    return <Navigate to="/auth" replace />;
+  }
 
   return (
     <>

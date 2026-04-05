@@ -12,6 +12,13 @@ const Auth = () => {
   const { user, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
+  
+  // Detect if we are in recovery mode via URL
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(() => {
+    return window.location.hash.includes("type=recovery") || 
+           window.location.search.includes("type=recovery");
+  });
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -166,11 +173,70 @@ const Auth = () => {
 
         <div className="glass-card p-6">
           <h2 className="mb-6 text-lg font-semibold text-foreground">
-            {isPasswordReset ? t("auth.resetPassword") : isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
+            {isUpdatingPassword ? t("auth.changePassword") : isPasswordReset ? t("auth.resetPassword") : isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
           </h2>
 
-          {/* Password Reset Form */}
-          {isPasswordReset ? (
+          {/* Update Password Form (Recovery Mode) */}
+          {isUpdatingPassword ? (
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {t("auth.recoveryModeDesc")}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-password" id="new-password-label" className="text-muted-foreground text-sm">
+                  {t("auth.newPassword")}
+                </Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  className="bg-muted/50 border-border/50"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t("auth.passwordGuideline")}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password" id="confirm-password-label" className="text-muted-foreground text-sm">
+                  {t("auth.confirmPassword")}
+                </Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  className="bg-muted/50 border-border/50"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+              >
+                {submitting ? t("auth.submitting") : t("auth.updatePassword")}
+              </Button>
+
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsUpdatingPassword(false)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  {t("auth.backToSignIn")}
+                </button>
+              </div>
+            </form>
+          ) : isPasswordReset ? (
             <form onSubmit={handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
