@@ -194,6 +194,8 @@ export const useProjects = () => {
     setActiveProject(project);
   }, []);
 
+  const [hasRestored, setHasRestored] = useState(false);
+
   // Restore logic
   // SPEC-PROJ-001: Enhanced to prioritize user's default project from local cache only
   useEffect(() => {
@@ -206,18 +208,20 @@ export const useProjects = () => {
         localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
         setActiveProject(null);
       }
+      setHasRestored(true);
       return;
     }
 
     // 2. If we have projects but none active, try to restore from cache or default preference
-    if (!activeProject) {
+    if (!activeProject && !hasRestored) {
       // SPEC-PROJ-001: Priority 1 - Cached project from localStorage (last selected)
-      // This ensures we keep the last project on page refresh
+      // This ensures we keep the last project on page refresh if the state was lost but storage remains
       const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
       const foundCached = projects.find((p: Project) => p.id === cachedId);
 
       if (foundCached) {
         handleSetActiveProject(foundCached, 'cache');
+        setHasRestored(true);
         return;
       }
 
@@ -230,37 +234,58 @@ export const useProjects = () => {
         const defaultProject = projects.find((p: Project) => p.id === defaultPref.project_id);
         if (defaultProject) {
           handleSetActiveProject(defaultProject, 'cache');
+          setHasRestored(true);
           return;
         }
       }
 
       // Fallback to first project if nothing else matches
       handleSetActiveProject(projects[0], 'cache');
+      setHasRestored(true);
       return;
     }
 
     // 3. If we have an active project, update it with fresh data from server
-    const freshProject = projects.find((p: Project) => p.id === activeProject.id);
-    if (freshProject) {
-      // Update active project with fresh data if it changed (e.g. name, currency)
-      if (JSON.stringify(freshProject) !== JSON.stringify(activeProject)) {
-        console.log('[useProjects] Updating active project with fresh data');
-        localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(freshProject));
-        setActiveProject(freshProject);
+    // SPEC-PROJ-001: Ensure the active project object is still in the projects list
+    if (activeProject) {
+      const freshProject = projects.find((p: Project) => p.id === activeProject.id);
+      if (freshProject) {
+        // Update active project with fresh data if it changed (e.g. name, currency)
+        // Only do this if it's not a fresh user selection to avoid race conditions
+        if (JSON.stringify(freshProject) !== JSON.stringify(activeProject)) {
+          console.log('[useProjects] Updating active project with fresh data');
+          localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(freshProject));
+          setActiveProject(freshProject);
+        }
+      } else {
+        // Current active project is no longer in the projects list (deleted or access revoked)
+        // Fall back to Priority 1 (Cache) then Priority 2 (Default)
+        console.warn('[useProjects] Active project no longer available, attempting fallback');
+        
+        const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
+        const foundCached = projects.find((p: Project) => p.id === cachedId);
+        if (foundCached && foundCached.id !== activeProject.id) {
+          handleSetActiveProject(foundCached, 'cache');
+        } else {
+          const preferences = fetchProjectPreferences();
+          const defaultPref = preferences.find(p => p.is_default);
+          const defaultProject = defaultPref ? projects.find((p: Project) => p.id === defaultPref.project_id) : null;
+          
+          if (defaultProject) {
+            handleSetActiveProject(defaultProject, 'cache');
+          } else {
+            handleSetActiveProject(projects[0], 'cache');
+          }
+        }
       }
-    } else if (lastSource === 'user-selection') {
-      // User's selected project became invalid (deleted or access revoked), fall back to first project
-      // but only if we are not currently refetching to avoid premature fallback
-      if (!isFetching) {
-        console.warn('[useProjects] User-selected project no longer available, falling back');
-        handleSetActiveProject(projects[0], 'cache');
-      }
-    } else {
-      // Cached project became invalid, fall back
-      console.warn('[useProjects] Cached project no longer available, falling back');
-      handleSetActiveProject(projects[0], 'cache');
+      setHasRestored(true);
     }
-  }, [loading, isFetching, projects, activeProject, handleSetActiveProject, lastSource, fetchProjectPreferences]);
+  }, [loading, projects, activeProject, hasRestored, handleSetActiveProject, fetchProjectPreferences]);
+
+  // Reset restoration flag when user or mode changes
+  useEffect(() => {
+    setHasRestored(false);
+  }, [user?.id, isStandalone]);
 
   const createProject = async (name: string, description?: string) => {
     if (isStandalone || !user) {
