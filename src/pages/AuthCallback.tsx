@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { hasAuthMarkers } from "./Index";
 import { ArrowRightLeft } from "lucide-react";
 
 /**
@@ -17,9 +18,18 @@ import { ArrowRightLeft } from "lucide-react";
  */
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const { disableStandaloneMode } = useAuth();
+  const { user, loading: authLoading, disableStandaloneMode } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(true);
+
+  // @MX:ANCHOR: Ensure standalone mode is disabled once a real session is confirmed
+  // This is deferred until AuthProvider has rehydrated to prevent early user reset
+  useEffect(() => {
+    if (!authLoading && user && user.id !== "standalone-user") {
+      console.log('AuthCallback: Real session confirmed, disabling standalone mode');
+      disableStandaloneMode();
+    }
+  }, [authLoading, user, disableStandaloneMode]);
 
   useEffect(() => {
     console.log('AuthCallback: Component mounted, processing auth hash...');
@@ -74,10 +84,8 @@ const AuthCallback = () => {
 
         if (session) {
           console.log('AuthCallback: Session established, redirecting to dashboard');
-          // If we have a real session, ensure standalone mode is off
-          disableStandaloneMode();
           
-          // SPEC-004: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
+          // @MX:NOTE: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
           if (isRecovery) {
             sessionStorage.setItem("auth_recovery", "1");
           }
@@ -88,7 +96,7 @@ const AuthCallback = () => {
           return;
         } 
         
-        if (!hasAccessToken && !hasCode) {
+        if (!hasAuthMarkers()) {
           // No auth credentials (token or code) and no session - redirect to auth page
           console.log('AuthCallback: No auth credentials found, redirecting to auth page');
           navigate('/auth', { replace: true });
@@ -121,10 +129,8 @@ const AuthCallback = () => {
 
         if (event === 'SIGNED_IN' && session) {
           console.log('AuthCallback: User signed in, redirecting...');
-          // If we have a real session, ensure standalone mode is off
-          disableStandaloneMode();
           
-          // SPEC-004: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
+          // @MX:NOTE: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
           if (isRecovery) {
             sessionStorage.setItem("auth_recovery", "1");
           }
@@ -144,7 +150,7 @@ const AuthCallback = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, disableStandaloneMode]);
+  }, [navigate]);
 
   // Show loading state while Supabase processes the auth hash
   if (processing && !error) {

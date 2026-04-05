@@ -6,6 +6,16 @@ import { useI18n } from "@/hooks/useI18n";
 
 import { PWAInstructions } from "@/components/PWAInstructions";
 
+/**
+ * Helper to detect authentication-related markers in the URL hash or search parameters.
+ * These markers indicate that a session is being established (e.g., email confirmation or recovery).
+ */
+export const hasAuthMarkers = () => {
+  return window.location.hash.includes("access_token=") || 
+         window.location.search.includes("type=recovery") ||
+         window.location.search.includes("code=");
+};
+
 const Index = () => {
   const { user, loading } = useAuth();
   const { t } = useI18n();
@@ -16,13 +26,9 @@ const Index = () => {
     console.log('Index: Component rendered', { user, loading });
   }, [user, loading]);
 
-  // SPEC-004: Fallback timeout for when URL auth markers are present but session fails to establish
+  // @MX:NOTE: Fallback timeout for when URL auth markers are present but session fails to establish
   useEffect(() => {
-    const hasAuthMarkers = window.location.hash.includes("access_token=") || 
-                           window.location.search.includes("type=recovery") ||
-                           window.location.search.includes("code=");
-
-    if (!user && !loading && hasAuthMarkers && !timedOut) {
+    if (!user && !loading && hasAuthMarkers() && !timedOut) {
       const timer = setTimeout(() => {
         console.log('Index: Auth session establishment timed out, redirecting to auth page');
         setTimedOut(true);
@@ -45,13 +51,9 @@ const Index = () => {
   }
 
   if (!user) {
-    // SPEC-004: If the URL contains recovery info or an access token, 
+    // @MX:ANCHOR: If the URL contains recovery info or an access token, 
     // DON'T redirect yet. Let the AuthProvider/Supabase client process it.
-    const hasAuthMarkers = window.location.hash.includes("access_token=") || 
-                           window.location.search.includes("type=recovery") ||
-                           window.location.search.includes("code=");
-    
-    if (hasAuthMarkers) {
+    if (hasAuthMarkers()) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="animate-pulse text-muted-foreground">{t("auth.loading")}</div>

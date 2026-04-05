@@ -37,7 +37,7 @@ const getStandaloneUser = (): User => ({
 
 // Helper to build normalized redirect URL for auth emails
 const buildAuthRedirectUrl = () => {
-  const rawBaseUrl = import.meta.env.VITE_BASE_URL || '/';
+  const rawBaseUrl = import.meta.env.BASE_URL || '/';
   const baseUrl = rawBaseUrl.startsWith('/') ? rawBaseUrl : `/${rawBaseUrl}`;
   const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
   return `${window.location.origin}${normalizedBaseUrl}auth/callback`;

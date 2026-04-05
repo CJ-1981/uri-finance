@@ -13,6 +13,16 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   
+  const [authError, setAuthError] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error_description') || params.get('error');
+    if (error) {
+      // Clear URL params to avoid re-showing error on manual refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    return error;
+  });
+
   // Detect if we are in recovery mode via URL or sessionStorage flag (preserved from AuthCallback)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(() => {
     const hasUrlFlag = window.location.hash.includes("type=recovery") || 
@@ -61,7 +71,7 @@ const Auth = () => {
 
     if (error) {
       const isRateLimit = error.message?.toLowerCase().includes("rate limit") || 
-                          (typeof error === 'object' && error !== null && 'status' in error && (error as any).status === 429);
+                          (error as any)?.status === 429;
       toast.error(isRateLimit ? t("auth.rateLimitError") || "Too many requests. Please wait a while before trying again." : t("auth.resetPasswordError"));
       console.error("Password reset error:", error);
     } else {
@@ -95,7 +105,7 @@ const Auth = () => {
       toast.success(t("auth.updatePasswordSuccess"));
       setNewPassword("");
       setConfirmPassword("");
-      setIsPasswordReset(false);
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -186,235 +196,258 @@ const Auth = () => {
         </div>
 
         <div className="glass-card p-6">
-          <h2 className="mb-6 text-lg font-semibold text-foreground">
-            {isUpdatingPassword ? t("auth.changePassword") : isPasswordReset ? t("auth.resetPassword") : isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
-          </h2>
-
-          {/* Update Password Form (Recovery Mode) */}
-          {isUpdatingPassword ? (
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {t("auth.recoveryModeDesc")}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="new-password" id="new-password-label" className="text-muted-foreground text-sm">
-                  {t("auth.newPassword")}
-                </Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  className="bg-muted/50 border-border/50"
-                />
-                <p className="text-xs text-muted-foreground">
-                  {t("auth.passwordGuideline")}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password" id="confirm-password-label" className="text-muted-foreground text-sm">
-                  {t("auth.confirmPassword")}
-                </Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  className="bg-muted/50 border-border/50"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+          {authError ? (
+            <div className="text-center space-y-4">
+              <h2 className="text-lg font-semibold text-destructive">
+                {authError.toLowerCase().includes("expired") || authError.toLowerCase().includes("invalid") 
+                  ? t("auth.invalidLink") 
+                  : "Authentication Error"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {authError.toLowerCase().includes("expired") || authError.toLowerCase().includes("invalid")
+                  ? t("auth.invalidLinkDesc")
+                  : authError}
+              </p>
+              <Button 
+                onClick={() => setAuthError(null)} 
+                className="w-full gradient-primary"
               >
-                {submitting ? t("auth.submitting") : t("auth.updatePassword")}
+                {t("auth.backToSignIn")}
               </Button>
-
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsUpdatingPassword(false)}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {t("auth.backToSignIn")}
-                </button>
-              </div>
-            </form>
-          ) : isPasswordReset ? (
-            <form onSubmit={handlePasswordReset} className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {t("auth.resetPasswordDesc")}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reset-email" className="text-muted-foreground text-sm">
-                  {t("auth.email")}
-                </Label>
-                <Input
-                  id="reset-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  className="bg-muted/50 border-border/50"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
-              >
-                {submitting ? t("auth.submitting") : t("auth.resetPasswordSubmit")}
-              </Button>
-
-              <div className="mt-4 text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsPasswordReset(false)}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {t("auth.backToSignIn")}
-                </button>
-              </div>
-            </form>
+            </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-muted-foreground text-sm">
-                  {t("auth.email")}
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete={isLogin ? "username" : "email"}
-                  className="bg-muted/50 border-border/50"
-                />
-              </div>
+            <>
+              <h2 className="mb-6 text-lg font-semibold text-foreground">
+                {isUpdatingPassword ? t("auth.changePassword") : isPasswordReset ? t("auth.resetPassword") : isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
+              </h2>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-muted-foreground text-sm">
-                    {t("auth.password")}
-                  </Label>
-                  {isLogin && (
+              {/* Update Password Form (Recovery Mode) */}
+              {isUpdatingPassword ? (
+                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      {t("auth.recoveryModeDesc")}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password" id="new-password-label" className="text-muted-foreground text-sm">
+                      {t("auth.newPassword")}
+                    </Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      className="bg-muted/50 border-border/50"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {t("auth.passwordGuideline")}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password" id="confirm-password-label" className="text-muted-foreground text-sm">
+                      {t("auth.confirmPassword")}
+                    </Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      autoComplete="new-password"
+                      className="bg-muted/50 border-border/50"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+                  >
+                    {submitting ? t("auth.submitting") : t("auth.updatePassword")}
+                  </Button>
+
+                  <div className="mt-4 text-center">
                     <button
                       type="button"
-                      onClick={() => setIsPasswordReset(true)}
-                      className="text-xs text-primary hover:text-primary/80 transition-colors"
+                      onClick={() => setIsUpdatingPassword(false)}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
                     >
-                      {t("auth.forgotPassword")}
+                      {t("auth.backToSignIn")}
                     </button>
+                  </div>
+                </form>
+              ) : isPasswordReset ? (
+                <form onSubmit={handlePasswordReset} className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      {t("auth.resetPasswordDesc")}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email" className="text-muted-foreground text-sm">
+                      {t("auth.email")}
+                    </Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      className="bg-muted/50 border-border/50"
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+                  >
+                    {submitting ? t("auth.submitting") : t("auth.resetPasswordSubmit")}
+                  </Button>
+
+                  <div className="mt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordReset(false)}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {t("auth.backToSignIn")}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-muted-foreground text-sm">
+                      {t("auth.email")}
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      autoComplete={isLogin ? "username" : "email"}
+                      className="bg-muted/50 border-border/50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="text-muted-foreground text-sm">
+                        {t("auth.password")}
+                      </Label>
+                      {isLogin && (
+                        <button
+                          type="button"
+                          onClick={() => setIsPasswordReset(true)}
+                          className="text-xs text-primary hover:text-primary/80 transition-colors"
+                        >
+                          {t("auth.forgotPassword")}
+                        </button>
+                      )}
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      minLength={6}
+                      autoComplete={isLogin ? "current-password" : "new-password"}
+                      className="bg-muted/50 border-border/50"
+                    />
+                    {!isLogin && (
+                      <p className="text-xs text-muted-foreground">
+                        {t("auth.passwordGuideline")}
+                      </p>
+                    )}
+                  </div>
+
+                  {!isLogin && (
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-muted-foreground text-sm">
+                        {t("auth.confirmPassword") || "Repeat Password"}
+                      </Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        minLength={6}
+                        autoComplete="new-password"
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
                   )}
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  minLength={6}
-                  autoComplete={isLogin ? "current-password" : "new-password"}
-                  className="bg-muted/50 border-border/50"
-                />
-                {!isLogin && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("auth.passwordGuideline")}
-                  </p>
-                )}
-              </div>
 
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-muted-foreground text-sm">
-                    {t("auth.confirmPassword") || "Repeat Password"}
-                  </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    minLength={6}
-                    autoComplete="new-password"
-                    className="bg-muted/50 border-border/50"
-                  />
-                </div>
+                  {/* Invite code field - only shown on signup (optional) */}
+                  {!isLogin && (
+                    <div className="space-y-2">
+                      <Label htmlFor="inviteCode" className="text-muted-foreground text-sm">
+                        {t("auth.inviteCode")} <span className="text-xs text-muted-foreground opacity-60">({t("common.optional")})</span>
+                      </Label>
+                      <Input
+                        id="inviteCode"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        placeholder={t("auth.inviteCodePlaceholder")}
+                        className="bg-muted/50 border-border/50 font-mono"
+                      />
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+                  >
+                    {submitting ? t("auth.submitting") : isLogin ? t("auth.signIn") : t("auth.signUp")}
+                  </Button>
+                </form>
               )}
 
-              {/* Invite code field - only shown on signup (optional) */}
-              {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="inviteCode" className="text-muted-foreground text-sm">
-                    {t("auth.inviteCode")} <span className="text-xs text-muted-foreground opacity-60">({t("common.optional")})</span>
-                  </Label>
-                  <Input
-                    id="inviteCode"
-                    value={inviteCode}
-                    onChange={(e) => setInviteCode(e.target.value)}
-                    placeholder={t("auth.inviteCodePlaceholder")}
-                    className="bg-muted/50 border-border/50 font-mono"
-                  />
-                </div>
+              {!isPasswordReset && !isUpdatingPassword && (
+                <>
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={() => setIsLogin(!isLogin)}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      {isLogin ? t("auth.switchToSignUp") : t("auth.switchToSignIn")}
+                    </button>
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-2">
+                    <div className="h-px flex-1 bg-border/50"></div>
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
+                      {t("common.or") || "OR"}
+                    </span>
+                    <div className="h-px flex-1 bg-border/50"></div>
+                  </div>
+
+                  <div className="mt-6">
+                    <Button
+                      variant="outline"
+                      onClick={handleStandalone}
+                      className="w-full border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors flex flex-col h-auto py-3 px-4 gap-1"
+                    >
+                      <span className="font-semibold text-primary">{t("auth.continueStandalone")}</span>
+                      <span className="text-[10px] text-muted-foreground font-normal whitespace-normal line-clamp-2">
+                        {t("auth.standaloneDesc")}
+                      </span>
+                    </Button>
+                  </div>
+                </>
               )}
-
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full gradient-primary font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
-              >
-                {submitting ? t("auth.submitting") : isLogin ? t("auth.signIn") : t("auth.signUp")}
-              </Button>
-            </form>
-          )}
-
-          {!isPasswordReset && (
-            <>
-              <div className="mt-4 text-center">
-                <button
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  {isLogin ? t("auth.switchToSignUp") : t("auth.switchToSignIn")}
-                </button>
-              </div>
-
-              <div className="mt-6 flex items-center gap-2">
-                <div className="h-px flex-1 bg-border/50"></div>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
-                  {t("common.or") || "OR"}
-                </span>
-                <div className="h-px flex-1 bg-border/50"></div>
-              </div>
-
-              <div className="mt-6">
-                <Button
-                  variant="outline"
-                  onClick={handleStandalone}
-                  className="w-full border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors flex flex-col h-auto py-3 px-4 gap-1"
-                >
-                  <span className="font-semibold text-primary">{t("auth.continueStandalone")}</span>
-                  <span className="text-[10px] text-muted-foreground font-normal whitespace-normal line-clamp-2">
-                    {t("auth.standaloneDesc")}
-                  </span>
-                </Button>
-              </div>
             </>
           )}
         </div>

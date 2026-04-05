@@ -35,7 +35,7 @@ Detailed technical changes made during codebase review and improvement session.
 - `src/types/projectPreferences.ts`
 
 **Changes:**
-- Migrated all project preference storage (ordering and default status) to a unified `localStorage` key (`project_preferences`).
+- Migrated all project preference storage (ordering and default status) to a unified user-scoped `localStorage` key (based on `LOCAL_PROJECT_PREFERENCES_KEY`).
 - Designed a `LocalProjectPreference` interface with optional `display_order` to handle "no order" states without forcing incorrect defaults.
 - Eliminated all Supabase/server-side dependencies for project preferences to ensure high performance, full offline support, and zero race conditions during the initial load/auth cycle.
 
