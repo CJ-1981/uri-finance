@@ -144,7 +144,7 @@ export const useProjects = () => {
 
   // Query: Fetch projects (either from Supabase or local storage)
   // SPEC-PROJ-001: Enhanced to fetch user preferences for custom ordering
-  const { data: projects = [], isLoading: loading, isFetching } = useQuery({
+  const { data: projects = [], isLoading: loading, isFetching, isFetched, status } = useQuery({
     queryKey: ["user_projects", isStandalone ? "standalone" : (user?.id || "anonymous")],
     queryFn: async () => {
       // Guard: If standalone, no user, or using the mock standalone user ID, use local storage
@@ -210,7 +210,9 @@ export const useProjects = () => {
       activeProjectId: activeProject?.id,
       hasRestored,
       userId: user?.id,
-      isFetching
+      isFetching,
+      isFetched,
+      status
     });
 
     // Only proceed if useProjects query is no longer loading and authentication is settled
@@ -219,8 +221,9 @@ export const useProjects = () => {
     // 1. Handle empty projects list
     if (projects.length === 0) {
       // ONLY clear active project if we're CERTAIN the user has no projects.
-      // We check !isFetching to ensure we're not in the middle of a background update
-      if (!isFetching) {
+      // We check isFetched and status === 'success' to ensure the query actually finished
+      // fetching for the current user/key.
+      if (isFetched && status === 'success' && !isFetching) {
         if (activeProject) {
           console.log('[useProjects] Truly no projects found for user, clearing active project', {
             userId: user?.id,
