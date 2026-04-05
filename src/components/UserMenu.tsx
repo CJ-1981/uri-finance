@@ -9,7 +9,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { PasswordChangeDialog } from "@/components/PasswordChangeDialog";
 import { LogOut, KeyRound, Sun, Moon, Globe, Lock, LockOpen, Keyboard } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
@@ -18,11 +17,14 @@ import PinSetupDialog from "@/components/PinSetupDialog";
 import PinDisableDialog from "@/components/PinDisableDialog";
 import ShortcutSettings from "@/components/ShortcutSettings";
 
-export const UserMenu = () => {
+interface UserMenuProps {
+  onOpenPasswordDialog?: () => void;
+}
+
+export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
   const { user, signOut, isStandalone } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinDisableDialogOpen, setPinDisableDialogOpen] = useState(false);
   const [shortcutDialogOpen, setShortcutDialogOpen] = useState(false);
@@ -125,7 +127,7 @@ export const UserMenu = () => {
               <DropdownMenuItem
                 onClick={(e) => {
                   e.preventDefault();
-                  setPasswordDialogOpen(true);
+                  onOpenPasswordDialog?.();
                 }}
                 className="cursor-pointer"
               >
@@ -148,11 +150,6 @@ export const UserMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <PasswordChangeDialog
-        open={passwordDialogOpen}
-        onOpenChange={setPasswordDialogOpen}
-      />
 
       <PinSetupDialog 
         open={pinDialogOpen} 

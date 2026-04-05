@@ -19,6 +19,7 @@ import ExportTransactions from "@/components/ExportTransactions";
 import PeriodSelector, { PeriodKey, DateRange, filterByPeriod, PeriodSelectorHandle } from "@/components/PeriodSelector";
 import CategorySelector, { CategorySelectorHandle } from "@/components/CategorySelector";
 import { UserMenu } from "@/components/UserMenu";
+import { PasswordChangeDialog } from "@/components/PasswordChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BarChart3, List, Settings, Eye, Calculator, UserPlus, Loader2, FileText } from "lucide-react";
@@ -62,6 +63,20 @@ const Dashboard = () => {
   });
   const pendingCount = pendingMutations.length;
   const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin, updateProjectOrder, setDefaultProject } = useProjects();
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const recoveryDialogShownRef = useRef(false);
+
+  // SPEC-004: Detect password recovery mode and auto-open dialog
+  useEffect(() => {
+    if (user?.app_metadata?.recovery && !recoveryDialogShownRef.current) {
+      console.log('Dashboard: Recovery mode detected, opening password dialog');
+      setPasswordDialogOpen(true);
+      recoveryDialogShownRef.current = true;
+    } else if (!user?.app_metadata?.recovery) {
+      // Reset guard if recovery flag is removed
+      recoveryDialogShownRef.current = false;
+    }
+  }, [user]);
 
   // SPEC-PROJ-001: Wrapper functions for ProjectSwitcher
   // Works for all users regardless of authentication level, uses localStorage
@@ -430,7 +445,11 @@ const Dashboard = () => {
               </Tooltip>
             )}
 
-            <UserMenu />
+            <UserMenu onOpenPasswordDialog={() => setPasswordDialogOpen(true)} />
+            <PasswordChangeDialog 
+              open={passwordDialogOpen} 
+              onOpenChange={setPasswordDialogOpen} 
+            />
           </div>
         </div>
         {activeProject && (

@@ -35,6 +35,14 @@ const getStandaloneUser = (): User => ({
   factors: [],
 });
 
+// Helper to build normalized redirect URL for auth emails
+const buildAuthRedirectUrl = () => {
+  const rawBaseUrl = import.meta.env.BASE_URL || '/';
+  const baseUrl = rawBaseUrl.startsWith('/') ? rawBaseUrl : `/${rawBaseUrl}`;
+  const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  return `${window.location.origin}${normalizedBaseUrl}auth/callback`;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -85,15 +93,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [isStandalone]);
 
   const signUp = async (email: string, password: string) => {
-    // Construct the email redirect URL with the correct base path
-    const baseUrl = import.meta.env.VITE_BASE_URL || '/';
-    const redirectTo = `${window.location.origin}${baseUrl}auth/callback`;
-
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectTo,
+        emailRedirectTo: buildAuthRedirectUrl(),
       },
     });
     return { error };
@@ -150,11 +154,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetPassword = async (email: string) => {
-    const baseUrl = import.meta.env.VITE_BASE_URL || '/';
-    const redirectTo = `${window.location.origin}${baseUrl}auth/callback`;
-
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
+      redirectTo: buildAuthRedirectUrl(),
     });
     return { error };
   };
