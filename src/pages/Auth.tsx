@@ -85,6 +85,22 @@ const Auth = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Manual validation to avoid default browser tooltips
+    if (!email.trim()) {
+      toast.error(t("auth.emailRequired") || "Email is required");
+      return;
+    }
+    if (!password) {
+      toast.error(t("auth.passwordRequired") || "Password is required");
+      return;
+    }
+
+    if (!isLogin && password !== confirmPassword) {
+      toast.error(t("auth.passwordMismatch"));
+      return;
+    }
+
     setSubmitting(true);
 
     if (isLogin) {
@@ -171,7 +187,6 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  required
                   autoComplete="email"
                   className="bg-muted/50 border-border/50"
                 />
@@ -207,7 +222,6 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  required
                   autoComplete={isLogin ? "username" : "email"}
                   className="bg-muted/50 border-border/50"
                 />
@@ -234,7 +248,6 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
                   minLength={6}
                   autoComplete={isLogin ? "current-password" : "new-password"}
                   className="bg-muted/50 border-border/50"
@@ -245,6 +258,24 @@ const Auth = () => {
                   </p>
                 )}
               </div>
+
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-muted-foreground text-sm">
+                    {t("auth.confirmPassword") || "Repeat Password"}
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="bg-muted/50 border-border/50"
+                  />
+                </div>
+              )}
 
               {/* Invite code field - only shown on signup (optional) */}
               {!isLogin && (
