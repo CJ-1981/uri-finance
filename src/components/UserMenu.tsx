@@ -28,6 +28,14 @@ export const UserMenu = () => {
   const [shortcutDialogOpen, setShortcutDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(isPinSet());
 
+  // Auto-open password change dialog if user is in a recovery session
+  useEffect(() => {
+    if (user?.app_metadata?.recovery) {
+      console.log('UserMenu: Recovery mode detected, opening password dialog');
+      setPasswordDialogOpen(true);
+    }
+  }, [user]);
+
   // Update pin state when dialogs close or components mount
   useEffect(() => {
     setHasPin(isPinSet());

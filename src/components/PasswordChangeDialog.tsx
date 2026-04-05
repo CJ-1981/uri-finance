@@ -36,8 +36,17 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!currentPassword) {
+    // Check if user is in a recovery session (from password reset link)
+    // In recovery mode, Supabase allows updating password without the old one.
+    const isRecovery = user?.app_metadata?.recovery || false;
+
+    if (!isRecovery && !currentPassword) {
       toast.error(t("auth.currentPasswordRequired"));
+      return;
+    }
+
+    if (!newPassword) {
+      toast.error(t("auth.passwordRequired") || "New password is required");
       return;
     }
 
@@ -58,15 +67,17 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
 
     setSubmitting(true);
 
-    // First verify current password is correct
-    const { error: signInError } = await signIn(user.email, currentPassword);
-    if (signInError) {
-      setSubmitting(false);
-      toast.error(t("auth.wrongCurrentPassword"));
-      return;
+    // Only verify current password if not in recovery mode
+    if (!isRecovery) {
+      const { error: signInError } = await signIn(user.email, currentPassword);
+      if (signInError) {
+        setSubmitting(false);
+        toast.error(t("auth.wrongCurrentPassword"));
+        return;
+      }
     }
 
-    // Current password is correct, now update to new password
+    // Update to new password
     const { error } = await updatePassword(newPassword);
     setSubmitting(false);
 
@@ -82,6 +93,8 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
     }
   };
 
+  const isRecovery = user?.app_metadata?.recovery || false;
+
   // If controlled, render without DialogTrigger
   if (isControlled) {
     return (
@@ -90,25 +103,26 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
           <DialogHeader>
             <DialogTitle>{t("auth.changePassword")}</DialogTitle>
             <DialogDescription>
-              {t("auth.passwordGuideline")}
+              {isRecovery ? t("auth.recoveryModeDesc") || "You can now set a new password for your account." : t("auth.passwordGuideline")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="current-password" className="text-sm">
-                {t("auth.currentPassword")}
-              </Label>
-              <Input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className="bg-muted/50 border-border/50"
-              />
-            </div>
+            {!isRecovery && (
+              <div className="space-y-2">
+                <Label htmlFor="current-password" className="text-sm">
+                  {t("auth.currentPassword")}
+                </Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  className="bg-muted/50 border-border/50"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="new-password" className="text-sm">
@@ -120,7 +134,6 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
-                required
                 minLength={6}
                 autoComplete="new-password"
                 className="bg-muted/50 border-border/50"
@@ -137,7 +150,6 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                required
                 minLength={6}
                 autoComplete="new-password"
                 className="bg-muted/50 border-border/50"
@@ -180,25 +192,26 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
         <DialogHeader>
           <DialogTitle>{t("auth.changePassword")}</DialogTitle>
           <DialogDescription>
-            {t("auth.passwordGuideline")}
+            {isRecovery ? t("auth.recoveryModeDesc") || "You can now set a new password for your account." : t("auth.passwordGuideline")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current-password" className="text-sm">
-              {t("auth.currentPassword")}
-            </Label>
-            <Input
-              id="current-password"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-              className="bg-muted/50 border-border/50"
-            />
-          </div>
+          {!isRecovery && (
+            <div className="space-y-2">
+              <Label htmlFor="current-password" className="text-sm">
+                {t("auth.currentPassword")}
+              </Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                className="bg-muted/50 border-border/50"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="new-password" className="text-sm">
@@ -210,7 +223,6 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="••••••••"
-              required
               minLength={6}
               autoComplete="new-password"
               className="bg-muted/50 border-border/50"
@@ -227,7 +239,6 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
-              required
               minLength={6}
               autoComplete="new-password"
               className="bg-muted/50 border-border/50"
