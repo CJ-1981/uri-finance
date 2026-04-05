@@ -52,6 +52,30 @@ Detailed technical changes made during codebase review and improvement session.
 - Fixed a critical race condition where the active project would be cleared during the initial render before the user's project list was fetched.
 - Integrated `isFetched` and `status` from TanStack Query into the cleanup guard to prevent accidental clearing during background refreshes or query key changes.
 
+### 34. Configurable Landing Page Header (#28)
+**Files Changed:**
+- `src/lib/i18n.ts`
+- `src/vite-env.d.ts`
+- `.github/workflows/deploy.yml`
+- `.env.example`
+
+**Changes:**
+- Decoupled the landing page title ("FinTrack") and its subtitle from static i18n keys.
+- Mapped these values to environment variables (`VITE_APP_AUTH_TITLE`, `VITE_APP_AUTH_SUBTITLE`) with language-specific override support (`_KO`).
+- Updated the CI/CD pipeline to inject these variables during the build process, enabling white-labeling of the login screen without code changes.
+
+### 35. Intelligent Language Toggle UI
+**Files Changed:**
+- `src/pages/Auth.tsx`
+- `src/components/UserMenu.tsx`
+- `src/lib/i18n.ts`
+
+**Changes:**
+- Refined the language toggle logic to display the **target language** name instead of the current one.
+- This ensures that non-native speakers who land on the Korean version can immediately identify the "English" button to switch.
+- Added explicit `lang.en` and `lang.ko` keys to the translation resources.
+
+
 
 ## Administrative UX & Pagination Refinement
 

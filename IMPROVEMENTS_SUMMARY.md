@@ -11,6 +11,13 @@
 - **Accessibility Enhancements**: Improved the `ProjectSwitcher` component with ARIA roles, full keyboard navigation (Enter/Space support), and focus management.
 - **Localized UI**: Integrated new translation keys for reordering, default selection, and error handling in both English and Korean.
 
+## ⚙️ **Configurability & UX Refinement**
+- **Configurable Branding**: Decoupled the landing page title and subtitle from code, allowing customization via GitHub Workflow environment variables (Issue #28).
+- **Intelligent Language Toggle**: Refined the language switch button to always show the *target* language name (e.g., "English" when viewing in Korean), significantly improving accessibility for non-native speakers.
+- **Themed Validation**: Replaced browser-default validation tooltips with themed toast notifications for a consistent visual identity.
+- **Seamless Password Recovery**: Automated the password reset flow to skip obsolete "Current Password" requirements and auto-open the update dialog upon landing from a reset link.
+
+
 **Date**: 2026-03-09
 **Session Focus**: Security, Performance, and Code Quality Improvements
 

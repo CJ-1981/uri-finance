@@ -166,6 +166,8 @@ VITE_SYSTEM_ADMIN_EMAILS=owner@example.com,admin@example.com
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Anon/public key for client access | Yes | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
 | `VITE_SUPABASE_PROJECT_ID` | Your Supabase project ID | Yes | `smaezjholbhtffflegvt` |
 | `VITE_SYSTEM_ADMIN_EMAILS` | Email addresses allowed to access global admin | No | `admin@example.com,dev@example.com` |
+| `VITE_APP_AUTH_TITLE` | Custom title for the login page | No | `My Finance App` |
+| `VITE_APP_AUTH_SUBTITLE` | Custom subtitle for the login page | No | `Securely track team expenses` |
 
 #### Getting Your Supabase Credentials
 
