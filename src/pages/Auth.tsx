@@ -13,10 +13,17 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   
-  // Detect if we are in recovery mode via URL
+  // Detect if we are in recovery mode via URL or sessionStorage flag (preserved from AuthCallback)
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(() => {
-    return window.location.hash.includes("type=recovery") || 
-           window.location.search.includes("type=recovery");
+    const hasUrlFlag = window.location.hash.includes("type=recovery") || 
+                       window.location.search.includes("type=recovery");
+    const hasStorageFlag = sessionStorage.getItem("auth_recovery") === "1";
+    
+    if (hasStorageFlag) {
+      sessionStorage.removeItem("auth_recovery");
+      return true;
+    }
+    return hasUrlFlag;
   });
 
   const [email, setEmail] = useState("");
@@ -53,7 +60,8 @@ const Auth = () => {
     setSubmitting(false);
 
     if (error) {
-      const isRateLimit = error.message?.toLowerCase().includes("rate limit") || (error as any).status === 429;
+      const isRateLimit = error.message?.toLowerCase().includes("rate limit") || 
+                          (typeof error === 'object' && error !== null && 'status' in error && (error as any).status === 429);
       toast.error(isRateLimit ? t("auth.rateLimitError") || "Too many requests. Please wait a while before trying again." : t("auth.resetPasswordError"));
       console.error("Password reset error:", error);
     } else {
@@ -104,9 +112,15 @@ const Auth = () => {
       return;
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      toast.error(t("auth.passwordMismatch"));
-      return;
+    if (!isLogin) {
+      if (password.length < 6) {
+        toast.error(t("auth.passwordTooShort") || "Password must be at least 6 characters");
+        return;
+      }
+      if (password !== confirmPassword) {
+        toast.error(t("auth.passwordMismatch"));
+        return;
+      }
     }
 
     setSubmitting(true);

@@ -28,6 +28,7 @@ const AuthCallback = () => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const searchParams = new URLSearchParams(window.location.search);
     
+    // Recovery/Type detection - preserved for diagnostics and logging
     const type = hashParams.get('type') || searchParams.get('type');
     const isRecovery = type === 'recovery';
     
@@ -75,6 +76,12 @@ const AuthCallback = () => {
           console.log('AuthCallback: Session established, redirecting to dashboard');
           // If we have a real session, ensure standalone mode is off
           disableStandaloneMode();
+          
+          // SPEC-004: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
+          if (isRecovery) {
+            sessionStorage.setItem("auth_recovery", "1");
+          }
+          
           // Clear hash/query to avoid re-processing
           window.history.replaceState({}, document.title, window.location.pathname);
           navigate('/', { replace: true });
@@ -116,6 +123,12 @@ const AuthCallback = () => {
           console.log('AuthCallback: User signed in, redirecting...');
           // If we have a real session, ensure standalone mode is off
           disableStandaloneMode();
+          
+          // SPEC-004: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
+          if (isRecovery) {
+            sessionStorage.setItem("auth_recovery", "1");
+          }
+          
           setProcessing(false);
           // Clear the hash to avoid re-processing
           window.history.replaceState({}, document.title, window.location.pathname);

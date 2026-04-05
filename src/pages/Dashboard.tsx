@@ -64,12 +64,17 @@ const Dashboard = () => {
   const pendingCount = pendingMutations.length;
   const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin, updateProjectOrder, setDefaultProject } = useProjects();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const recoveryDialogShownRef = useRef(false);
 
   // SPEC-004: Detect password recovery mode and auto-open dialog
   useEffect(() => {
-    if (user?.app_metadata?.recovery) {
+    if (user?.app_metadata?.recovery && !recoveryDialogShownRef.current) {
       console.log('Dashboard: Recovery mode detected, opening password dialog');
       setPasswordDialogOpen(true);
+      recoveryDialogShownRef.current = true;
+    } else if (!user?.app_metadata?.recovery) {
+      // Reset guard if recovery flag is removed
+      recoveryDialogShownRef.current = false;
     }
   }, [user]);
 

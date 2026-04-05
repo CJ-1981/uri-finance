@@ -9,7 +9,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { PasswordChangeDialog } from "@/components/PasswordChangeDialog";
 import { LogOut, KeyRound, Sun, Moon, Globe, Lock, LockOpen, Keyboard } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";

@@ -33,12 +33,12 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
   const isOpen = isControlled ? controlledOpen : internalOpen;
   const setIsOpen = onOpenChange || setInternalOpen;
 
+  // Check if user is in a recovery session (from password reset link)
+  // In recovery mode, Supabase allows updating password without the old one.
+  const isRecovery = user?.app_metadata?.recovery || false;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Check if user is in a recovery session (from password reset link)
-    // In recovery mode, Supabase allows updating password without the old one.
-    const isRecovery = user?.app_metadata?.recovery || false;
 
     if (!isRecovery && !currentPassword) {
       toast.error(t("auth.currentPasswordRequired"));
@@ -92,8 +92,6 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
       setConfirmPassword("");
     }
   };
-
-  const isRecovery = user?.app_metadata?.recovery || false;
 
   // If controlled, render without DialogTrigger
   if (isControlled) {
