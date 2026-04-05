@@ -2,7 +2,56 @@
 
 Detailed technical changes made during codebase review and improvement session.
 
-## Session Date: 2026-04-03
+## Session Date: 2026-04-04
+
+## Project Ordering and Default Selection (SPEC-PROJ-001)
+
+### 30. Custom Project Reordering (Drag-and-Drop)
+**Files Changed:**
+- `src/components/ProjectSwitcher.tsx`
+- `src/hooks/useProjects.tsx`
+- `src/types/projectPreferences.ts`
+
+**Changes:**
+- Integrated `@dnd-kit` into the `ProjectSwitcher` component to support custom drag-and-drop reordering of the project list.
+- Implemented `SortableProjectItem` with full accessibility support, including `aria-label`, focus management, and keyboard navigation (Enter/Space to select).
+- Created a shared `sortProjectsByPreferences` helper in `useProjects.tsx` to ensure consistent ordering across standalone and Supabase modes.
+- Added a `proj.dragToReorder` localization key for the new drag handle button.
+
+### 31. Default Project Selection (Star Feature)
+**Files Changed:**
+- `src/components/ProjectSwitcher.tsx`
+- `src/hooks/useProjects.tsx`
+- `src/lib/i18n.ts`
+
+**Changes:**
+- Implemented a "Star" button in the project list allowing users to mark a project as their default.
+- Default projects are automatically selected upon a fresh sign-in (when the active project cache is empty).
+- Added `proj.default`, `proj.setDefault`, `proj.removeDefault`, and `proj.defaultSet` localization keys with parameter interpolation for project names.
+
+### 32. Purely Local Preference Management
+**Files Changed:**
+- `src/hooks/useProjects.tsx`
+- `src/types/projectPreferences.ts`
+
+**Changes:**
+- Migrated all project preference storage (ordering and default status) to a unified `localStorage` key (`project_preferences`).
+- Designed a `LocalProjectPreference` interface with optional `display_order` to handle "no order" states without forcing incorrect defaults.
+- Eliminated all Supabase/server-side dependencies for project preferences to ensure high performance, full offline support, and zero race conditions during the initial load/auth cycle.
+
+### 33. Robust Project Restoration Guard
+**Files Changed:**
+- `src/hooks/useProjects.tsx`
+
+**Changes:**
+- Implemented a `hasRestored` state guard and a comprehensive `isStillAuthenticating` check (waiting for `authLoading` and `user` to settle).
+- Refined the `activeProject` restoration logic to prioritize:
+    1.  **Cache (Last Active):** Persists the current project across page refreshes.
+    2.  **Default (Starred):** Falls back to the starred project on a new sign-in or when the cache is empty.
+    3.  **Fallback (First Project):** Ensures a project is always selected if others fail.
+- Fixed a critical race condition where the active project would be cleared during the initial render before the user's project list was fetched.
+- Integrated `isFetched` and `status` from TanStack Query into the cleanup guard to prevent accidental clearing during background refreshes or query key changes.
+
 
 ## Administrative UX & Pagination Refinement
 

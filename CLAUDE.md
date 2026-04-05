@@ -77,7 +77,7 @@ Definition: Single entry point for all MoAI development workflows.
 Subcommands: plan, run, sync, project, fix, loop, mx, feedback, review, clean, codemaps, coverage, e2e
 Default (natural language): Routes to autonomous workflow (plan -> run -> sync pipeline)
 
-Allowed Tools: Full access (Agent, AskUserQuestion, TaskCreate, TaskUpdate, TaskList, TaskGet, Bash, Read, Write, Edit, Glob, Grep)
+Allowed Tools: Full access (Agent, AskUserQuestion, TaskCreate, TaskUpdate, TaskList, TaskGet, Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, mcp__context7__resolve-library-id, mcp__context7__query-docs, TeamCreate, SendMessage, TeamDelete)
 
 ### Unified Skill: /agency
 
@@ -397,7 +397,8 @@ For core parallel execution principles, see .claude/rules/moai/core/moai-constit
 ### Worktree Isolation Rules [HARD]
 
 - [HARD] Implementation teammates in team mode (role_profiles: implementer, tester, designer) MUST use `isolation: "worktree"` when spawned via Agent()
-- [HARD] Read-only teammates (role_profiles: researcher, analyst, reviewer) MUST NOT use `isolation: "worktree"`
+- [HARD] Read-only teammates (role_profiles: researcher, analyst, architect, reviewer) MUST NOT use `isolation: "worktree"`
+- [HARD] Architect role_profile uses mode: plan by default, preventing writes without explicit isolation changes
 - [HARD] One-shot sub-agents making cross-file changes SHOULD use `isolation: "worktree"`
 - [HARD] GitHub workflow fixer agents MUST use `isolation: "worktree"` for branch isolation
 

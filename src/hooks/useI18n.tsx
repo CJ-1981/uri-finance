@@ -3,8 +3,9 @@ import { Locale, translations } from "@/lib/i18n";
 
 interface I18nContextType {
   locale: Locale;
+  language: Locale;
   setLocale: (locale: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -27,12 +28,25 @@ export const I18nProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const t = useCallback(
-    (key: string) => translations[locale][key] || translations.en[key] || key,
+    (key: string, params?: Record<string, string | number>) => {
+      let template = translations[locale][key] || translations.en[key] || key;
+      if (params) {
+        Object.entries(params).forEach(([paramKey, value]) => {
+          template = template.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(value));
+          // Also support ICU message format for plurals
+          template = template.replace(
+            new RegExp(`\\{${paramKey},\\s*plural,\\s*one\\s+\\{([^}]+)\\}\\s+other\\s+\\{([^}]+)\\}`, 'g'),
+            value === 1 ? `$1` : `$2`
+          );
+        });
+      }
+      return template;
+    },
     [locale]
   );
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t }}>
+    <I18nContext.Provider value={{ locale, language: locale, setLocale, t }}>
       {children}
     </I18nContext.Provider>
   );
