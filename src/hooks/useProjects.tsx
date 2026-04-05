@@ -45,7 +45,7 @@ export const sortProjectsByPreferences = (projects: Project[], preferences: Loca
 };
 
 export const useProjects = () => {
-  const { user, isStandalone } = useAuth();
+  const { user, isStandalone, loading: authLoading } = useAuth();
   const { t } = useI18n();
   const { isSystemAdmin: isRealSystemAdmin } = useSystemAdmin();
   const isOnline = useOnlineStatus();
@@ -199,16 +199,25 @@ export const useProjects = () => {
   // Restore logic
   // SPEC-PROJ-001: Enhanced to prioritize user's default project from local cache only
   useEffect(() => {
+    // Only proceed if useProjects query is no longer loading
     if (loading) return;
 
-    // 1. If no projects exist, ensure active project is cleared
+    // 1. Handle empty projects list
     if (projects.length === 0) {
-      if (activeProject) {
-        localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
-        localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
-        setActiveProject(null);
+      // ONLY clear active project if we're CERTAIN the user has no projects.
+      // We skip clearing if the auth is still loading (useAuth.loading is true)
+      // or if we're in Supabase mode and the user is null (still waiting for auth session).
+      const isStillAuthenticating = authLoading || (!isStandalone && !user);
+      
+      if (!isStillAuthenticating) {
+        if (activeProject) {
+          console.log('[useProjects] Truly no projects found for user, clearing active project');
+          localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
+          localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+          setActiveProject(null);
+        }
+        setHasRestored(true);
       }
-      setHasRestored(true);
       return;
     }
 
@@ -280,7 +289,7 @@ export const useProjects = () => {
       }
       setHasRestored(true);
     }
-  }, [loading, projects, activeProject, hasRestored, handleSetActiveProject, fetchProjectPreferences]);
+  }, [loading, authLoading, projects, activeProject, hasRestored, handleSetActiveProject, fetchProjectPreferences, isStandalone, user]);
 
   // Reset restoration flag when user or mode changes
   useEffect(() => {
