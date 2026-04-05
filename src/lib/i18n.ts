@@ -529,6 +529,8 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Language
     "lang.label": "EN",
+    "lang.ko": "한국어",
+    "lang.en": "English",
     "common.clear": "Clear",
     "common.close": "Close",
     "common.optional": "optional",
@@ -1189,6 +1191,8 @@ export const translations: Record<Locale, Record<string, string>> = {
 
     // Language
     "lang.label": "한국어",
+    "lang.ko": "한국어",
+    "lang.en": "English",
     "common.clear": "지우기",
     "common.close": "닫기",
     "common.optional": "선택 사항",

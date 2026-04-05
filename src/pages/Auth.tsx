@@ -179,7 +179,7 @@ const Auth = () => {
         onClick={() => setLocale(locale === "en" ? "ko" : "en")}
         className="fixed top-4 right-4 z-50 rounded-lg bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
       >
-        {t("lang.label")}
+        {locale === "en" ? t("lang.ko") : t("lang.en")}
       </button>
 
       <div className="w-full max-w-sm animate-fade-in">

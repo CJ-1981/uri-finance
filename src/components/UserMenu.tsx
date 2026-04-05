@@ -95,7 +95,7 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
 
           <DropdownMenuItem onClick={toggleLocale} className="cursor-pointer">
             <Globe className="mr-2 h-4 w-4" />
-            <span>{locale === "en" ? "한국어" : "English"}</span>
+            <span>{locale === "en" ? t("lang.ko") : t("lang.en")}</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem 
