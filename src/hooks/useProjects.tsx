@@ -209,9 +209,20 @@ export const useProjects = () => {
       return;
     }
 
-    // 2. If we have projects but none active, try to restore from default preference or cache
+    // 2. If we have projects but none active, try to restore from cache or default preference
     if (!activeProject) {
-      // SPEC-PROJ-001: Priority 1 - Local default from localStorage preferences (Star feature)
+      // SPEC-PROJ-001: Priority 1 - Cached project from localStorage (last selected)
+      // This ensures we keep the last project on page refresh
+      const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
+      const foundCached = projects.find((p: Project) => p.id === cachedId);
+
+      if (foundCached) {
+        handleSetActiveProject(foundCached, 'cache');
+        return;
+      }
+
+      // SPEC-PROJ-001: Priority 2 - Local default from localStorage preferences (Star feature)
+      // Since signOut clears the cache, a new sign-in will fall back to this
       const preferences = fetchProjectPreferences();
       const defaultPref = preferences.find(p => p.is_default);
       
@@ -223,16 +234,8 @@ export const useProjects = () => {
         }
       }
 
-      // SPEC-PROJ-001: Priority 2 - Cached project from localStorage (last selected)
-      const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
-      const found = projects.find((p: Project) => p.id === cachedId);
-
-      if (found) {
-        handleSetActiveProject(found, 'cache');
-      } else {
-        // Fallback to first project
-        handleSetActiveProject(projects[0], 'cache');
-      }
+      // Fallback to first project if nothing else matches
+      handleSetActiveProject(projects[0], 'cache');
       return;
     }
 
