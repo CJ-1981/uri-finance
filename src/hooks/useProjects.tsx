@@ -199,29 +199,51 @@ export const useProjects = () => {
   // Restore logic
   // SPEC-PROJ-001: Enhanced to prioritize user's default project from local cache only
   useEffect(() => {
-    // Only proceed if useProjects query is no longer loading and authentication is settled
     const isStillAuthenticating = authLoading || (!isStandalone && !user);
+    
+    // DEBUG LOG
+    console.log('[useProjects] Restore Effect:', {
+      loading,
+      authLoading,
+      isStillAuthenticating,
+      projectsCount: projects.length,
+      activeProjectId: activeProject?.id,
+      hasRestored,
+      userId: user?.id,
+      isFetching
+    });
+
+    // Only proceed if useProjects query is no longer loading and authentication is settled
     if (loading || isStillAuthenticating) return;
 
     // 1. Handle empty projects list
     if (projects.length === 0) {
-      if (activeProject) {
-        console.log('[useProjects] Truly no projects found for user, clearing active project');
-        localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
-        localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
-        setActiveProject(null);
+      // ONLY clear active project if we're CERTAIN the user has no projects.
+      // We check !isFetching to ensure we're not in the middle of a background update
+      if (!isFetching) {
+        if (activeProject) {
+          console.log('[useProjects] Truly no projects found for user, clearing active project', {
+            userId: user?.id,
+            projectsCount: projects.length
+          });
+          localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
+          localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+          setActiveProject(null);
+        }
+        setHasRestored(true);
       }
-      setHasRestored(true);
       return;
     }
 
     // 2. If we have projects but none active, try to restore from cache or default preference
     if (!activeProject && !hasRestored) {
+      console.log('[useProjects] No active project, attempting restoration', { projectsCount: projects.length });
       // SPEC-PROJ-001: Priority 1 - Cached project from localStorage (last selected)
       const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
       const foundCached = projects.find((p: Project) => p.id === cachedId);
 
       if (foundCached) {
+        console.log('[useProjects] Restoring from cache:', foundCached.name);
         handleSetActiveProject(foundCached, 'cache');
         setHasRestored(true);
         return;
@@ -234,6 +256,7 @@ export const useProjects = () => {
       if (defaultPref) {
         const defaultProject = projects.find((p: Project) => p.id === defaultPref.project_id);
         if (defaultProject) {
+          console.log('[useProjects] Restoring from default preference:', defaultProject.name);
           handleSetActiveProject(defaultProject, 'cache');
           setHasRestored(true);
           return;
@@ -241,6 +264,7 @@ export const useProjects = () => {
       }
 
       // Fallback to first project if nothing else matches
+      console.log('[useProjects] Falling back to first project:', projects[0].name);
       handleSetActiveProject(projects[0], 'cache');
       setHasRestored(true);
       return;
@@ -256,7 +280,7 @@ export const useProjects = () => {
           localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(freshProject));
           setActiveProject(freshProject);
         }
-      } else {
+      } else if (!isFetching) {
         // Current active project is no longer in the projects list (deleted or access revoked)
         console.warn('[useProjects] Active project no longer available, attempting fallback');
         
@@ -279,7 +303,7 @@ export const useProjects = () => {
       }
       setHasRestored(true);
     }
-  }, [loading, authLoading, projects, activeProject, hasRestored, handleSetActiveProject, fetchProjectPreferences, isStandalone, user]);
+  }, [loading, authLoading, projects, activeProject, hasRestored, handleSetActiveProject, fetchProjectPreferences, isStandalone, user, isFetching]);
 
   // Reset restoration flag when user or mode changes
   useEffect(() => {
