@@ -1,5 +1,16 @@
 # Codebase Improvements Summary
 
+**Session Date**: 2026-04-04
+**Focus**: UX/UI Refinement and Project Preference Management (SPEC-PROJ-001)
+
+### 🌟 **Project Management (SPEC-PROJ-001)**
+- **Custom Reordering**: Implemented drag-and-drop support for the project list using `@dnd-kit`, allowing users to prioritize their projects.
+- **Default (Starred) Projects**: Added a star system to mark a default project, ensuring it is automatically selected upon a fresh sign-in.
+- **Improved Persistence**: Engineered a robust restoration guard that ensures the last active project persists correctly across page refreshes by waiting for authentication to fully settle.
+- **Offline/Local-Only Preferences**: Migrated all project preferences to a purely `localStorage`-based system, ensuring high performance and reliable operation across all modes (Supabase, standalone, offline).
+- **Accessibility Enhancements**: Improved the `ProjectSwitcher` component with ARIA roles, full keyboard navigation (Enter/Space support), and focus management.
+- **Localized UI**: Integrated new translation keys for reordering, default selection, and error handling in both English and Korean.
+
 **Date**: 2026-03-09
 **Session Focus**: Security, Performance, and Code Quality Improvements
 
