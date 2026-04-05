@@ -3,7 +3,7 @@
 **Session Date**: 2026-04-04
 **Focus**: UX/UI Refinement and Project Preference Management (SPEC-PROJ-001)
 
-### 🌟 **Project Management (SPEC-PROJ-001)**
+## 🌟 **Project Management (SPEC-PROJ-001)**
 - **Custom Reordering**: Implemented drag-and-drop support for the project list using `@dnd-kit`, allowing users to prioritize their projects.
 - **Default (Starred) Projects**: Added a star system to mark a default project, ensuring it is automatically selected upon a fresh sign-in.
 - **Improved Persistence**: Engineered a robust restoration guard that ensures the last active project persists correctly across page refreshes by waiting for authentication to fully settle.

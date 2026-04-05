@@ -22,11 +22,14 @@ export interface ProjectSwitcherHandle {
 }
 
 // SPEC-PROJ-001: Helper to extract default project ID from preferences
-const getDefaultProjectIdFromPrefs = (): string | null => {
+const getDefaultProjectIdFromPrefs = (isStandalone: boolean, userId?: string): string | null => {
   try {
-    const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
+    const ownerId = isStandalone ? "standalone" : (userId || "anonymous");
+    const prefsKey = `${LOCAL_PROJECT_PREFERENCES_KEY}_${ownerId}`;
+    const localPrefs = localStorage.getItem(prefsKey);
     if (!localPrefs) return null;
     const prefs = JSON.parse(localPrefs);
+    if (!Array.isArray(prefs)) return null;
     const defaultPref = prefs.find((p: LocalProjectPreference) => p.is_default);
     return defaultPref?.project_id || null;
   } catch (err) {
@@ -170,14 +173,14 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
   const isOnline = useOnlineStatus();
 
   // SPEC-PROJ-001: State for default project ID - read from localStorage via helper
-  const [defaultProjectId, setDefaultProjectId] = useState<string | null>(getDefaultProjectIdFromPrefs);
+  const [defaultProjectId, setDefaultProjectId] = useState<string | null>(() => getDefaultProjectIdFromPrefs(isStandalone, user?.id));
 
   // SPEC-PROJ-001: Refresh default project ID when sheet opens
   useEffect(() => {
     if (open) {
-      setDefaultProjectId(getDefaultProjectIdFromPrefs());
+      setDefaultProjectId(getDefaultProjectIdFromPrefs(isStandalone, user?.id));
     }
-  }, [open]);
+  }, [open, isStandalone, user?.id]);
 
   // SPEC-PROJ-001: DnD sensors configuration
   const sensors = useSensors(
