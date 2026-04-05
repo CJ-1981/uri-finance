@@ -18,23 +18,18 @@ import PinSetupDialog from "@/components/PinSetupDialog";
 import PinDisableDialog from "@/components/PinDisableDialog";
 import ShortcutSettings from "@/components/ShortcutSettings";
 
-export const UserMenu = () => {
+interface UserMenuProps {
+  onOpenPasswordDialog?: () => void;
+}
+
+export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
   const { user, signOut, isStandalone } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [pinDialogOpen, setPinDialogOpen] = useState(false);
   const [pinDisableDialogOpen, setPinDisableDialogOpen] = useState(false);
   const [shortcutDialogOpen, setShortcutDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(isPinSet());
-
-  // Auto-open password change dialog if user is in a recovery session
-  useEffect(() => {
-    if (user?.app_metadata?.recovery) {
-      console.log('UserMenu: Recovery mode detected, opening password dialog');
-      setPasswordDialogOpen(true);
-    }
-  }, [user]);
 
   // Update pin state when dialogs close or components mount
   useEffect(() => {
@@ -133,7 +128,7 @@ export const UserMenu = () => {
               <DropdownMenuItem
                 onClick={(e) => {
                   e.preventDefault();
-                  setPasswordDialogOpen(true);
+                  onOpenPasswordDialog?.();
                 }}
                 className="cursor-pointer"
               >
@@ -156,11 +151,6 @@ export const UserMenu = () => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <PasswordChangeDialog
-        open={passwordDialogOpen}
-        onOpenChange={setPasswordDialogOpen}
-      />
 
       <PinSetupDialog 
         open={pinDialogOpen} 
