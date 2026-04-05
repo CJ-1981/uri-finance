@@ -42,6 +42,10 @@ jobs:
           VITE_SYSTEM_ADMIN_EMAILS: ${{ secrets.VITE_SYSTEM_ADMIN_EMAILS }}
           VITE_APP_TITLE: ${{ github.event_name == 'pull_request' && '재정부 (Preview)' || '우리교회 재정부' }}
           VITE_APP_ICON_SUFFIX: ${{ github.event_name == 'pull_request' && '-preview' || '' }}
+          VITE_APP_AUTH_TITLE: ${{ secrets.VITE_APP_AUTH_TITLE }}
+          VITE_APP_AUTH_SUBTITLE: ${{ secrets.VITE_APP_AUTH_SUBTITLE }}
+          VITE_APP_AUTH_TITLE_KO: ${{ secrets.VITE_APP_AUTH_TITLE_KO }}
+          VITE_APP_AUTH_SUBTITLE_KO: ${{ secrets.VITE_APP_AUTH_SUBTITLE_KO }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4

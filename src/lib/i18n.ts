@@ -3,8 +3,8 @@ export type Locale = "en" | "ko";
 export const translations: Record<Locale, Record<string, string>> = {
   en: {
     // Auth
-    "auth.title": "FinTrack",
-    "auth.subtitle": "Team finance tracking made simple",
+    "auth.title": import.meta.env.VITE_APP_AUTH_TITLE || "FinTrack",
+    "auth.subtitle": import.meta.env.VITE_APP_AUTH_SUBTITLE || "Team finance tracking made simple",
     "auth.welcomeBack": "Welcome back",
     "auth.createAccount": "Create account",
     "auth.email": "Email",
@@ -665,8 +665,8 @@ export const translations: Record<Locale, Record<string, string>> = {
   },
   ko: {
     // Auth
-    "auth.title": "FinTrack",
-    "auth.subtitle": "팀 재무 관리를 간편하게",
+    "auth.title": import.meta.env.VITE_APP_AUTH_TITLE_KO || import.meta.env.VITE_APP_AUTH_TITLE || "FinTrack",
+    "auth.subtitle": import.meta.env.VITE_APP_AUTH_SUBTITLE_KO || import.meta.env.VITE_APP_AUTH_SUBTITLE || "팀 재무 관리를 간편하게",
     "auth.welcomeBack": "다시 오신 것을 환영합니다",
     "auth.createAccount": "계정 만들기",
     "auth.email": "이메일",
