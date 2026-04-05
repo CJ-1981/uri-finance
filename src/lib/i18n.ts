@@ -415,6 +415,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.maxItemsAllowed": "Maximum {max} items allowed per operation",
     "admin.maxItemsNote": "Note: Maximum {max} items per operation",
     "admin.exitSelectMode": "Exit selection mode",
+    "admin.deletingTransactions": "Deleting {count} {count, plural, one {transaction} other {transactions}}...",
+    "admin.deleteSuccess": "Successfully deleted {count} {count, plural, one {transaction} other {transactions}}",
+    "admin.deleteError": "Failed to delete {count} {count, plural, one {transaction} other {transactions}}",
+    "common.pleaseWait": "Please wait...",
 
     // Archive
     "admin.archive": "Data Archive",
@@ -1062,6 +1066,10 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.maxItemsAllowed": "최대 {max}개 항목 허용",
     "admin.maxItemsNote": "참고: 최대 {max}개 항목",
     "admin.exitSelectMode": "선택 모드 종료",
+    "admin.deletingTransactions": "{count}개 거래 삭제 중...",
+    "admin.deleteSuccess": "{count}개 거래가 삭제되었습니다",
+    "admin.deleteError": "{count}개 거래 삭제에 실패했습니다",
+    "common.pleaseWait": "잠시만 기다려주세요...",
 
     // Archive
     "admin.archive": "데이터 아카이브",

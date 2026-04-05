@@ -43,6 +43,7 @@ interface SortableProjectItemProps {
 
 const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, onSetDefault, onEdit }: SortableProjectItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: project.id });
+  const { t } = useI18n();
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -56,6 +57,8 @@ const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, 
       tabIndex={0}
       onClick={() => onSelect(project)}
       onKeyDown={(e) => {
+        // Prevent trigger from bubbled events from nested buttons
+        if (e.currentTarget !== e.target) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect(project);
@@ -67,15 +70,16 @@ const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, 
     >
       {/* Drag Handle (owners only) */}
       {isOwner && (
-        <div
-          className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-2 touch-manipulation z-10"
+        <button
+          type="button"
+          className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-2 touch-manipulation z-10 rounded-md hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary outline-none"
           {...attributes}
           {...listeners}
-          aria-label="Drag to reorder"
+          aria-label={t("proj.dragToReorder")}
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
-        </div>
+        </button>
       )}
 
       {/* Project Info */}
@@ -83,7 +87,7 @@ const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, 
         <div className="flex items-center gap-2">
           <p className="font-medium text-sm text-foreground">{project.name}</p>
           {isDefault && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">Default</span>
+            <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">{t("proj.default")}</span>
           )}
         </div>
         {project.description && (
@@ -92,20 +96,20 @@ const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, 
       </div>
 
       {/* Actions */}
-      {isOwner && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 z-10">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8"
-            onClick={(e) => {
-              e.stopPropagation();
-              onSetDefault(project);
-            }}
-            aria-label={isDefault ? "Remove default" : "Set as default"}
-          >
-            <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-primary text-primary" : ""}`} />
-          </Button>
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 z-10">
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSetDefault(project);
+          }}
+          aria-label={isDefault ? t("proj.removeDefault") : t("proj.setDefault")}
+        >
+          <Star className={`h-3.5 w-3.5 ${isDefault ? "fill-primary text-primary" : ""}`} />
+        </Button>
+        {isOwner && (
           <Button
             size="icon"
             variant="ghost"
@@ -114,8 +118,8 @@ const SortableProjectItem = ({ project, isActive, isOwner, isDefault, onSelect, 
           >
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
@@ -301,8 +305,8 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
         display_order: index,
       }));
 
-      // Persist to backend via the passed callback
-      if (onUpdateProjectOrder && user) {
+      // Persist to backend/local via the passed callback
+      if (onUpdateProjectOrder) {
         try {
           await onUpdateProjectOrder(updates);
           toast.success(t("proj.orderUpdated"));

@@ -101,7 +101,8 @@ export const useProjects = () => {
         } else {
           prefsMap.set(projectId, {
             project_id: projectId,
-            display_order: 0,
+            // SPEC-PROJ-001: Do not force display_order: 0, leave it undefined for new preferences
+            display_order: undefined as any, 
             is_default: true,
           });
         }
@@ -243,9 +244,11 @@ export const useProjects = () => {
 
     // 2. If we have projects but none active, try to restore from default preference or cache
     if (!activeProject) {
-      // SPEC-PROJ-001: Priority 1 - User's default project from localStorage preferences
+      // SPEC-PROJ-001: Priority 1 - Server-synced default project from user_preferences (if available)
+      // fetchProjectPreferences already includes both local and server-merged prefs potentially
       const preferences = fetchProjectPreferences();
       const defaultPref = preferences.find(p => p.is_default);
+      
       if (defaultPref) {
         const defaultProject = projects.find((p: Project) => p.id === defaultPref.project_id);
         if (defaultProject) {
