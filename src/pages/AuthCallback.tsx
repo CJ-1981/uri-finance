@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { ArrowRightLeft } from "lucide-react";
 
 /**
@@ -16,6 +17,7 @@ import { ArrowRightLeft } from "lucide-react";
  */
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const { disableStandaloneMode } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(true);
 
@@ -26,6 +28,9 @@ const AuthCallback = () => {
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const searchParams = new URLSearchParams(window.location.search);
     
+    const type = hashParams.get('type') || searchParams.get('type');
+    const isRecovery = type === 'recovery';
+    
     const hasAccessToken = hashParams.has('access_token');
     const hasCode = searchParams.has('code');
     const hasError = hashParams.has('error') || searchParams.has('error');
@@ -34,6 +39,7 @@ const AuthCallback = () => {
       hasAccessToken,
       hasCode,
       hasError,
+      isRecovery,
       hashLength: window.location.hash.length,
       search: window.location.search
     });
@@ -67,6 +73,8 @@ const AuthCallback = () => {
 
         if (session) {
           console.log('AuthCallback: Session established, redirecting to dashboard');
+          // If we have a real session, ensure standalone mode is off
+          disableStandaloneMode();
           // Clear hash/query to avoid re-processing
           window.history.replaceState({}, document.title, window.location.pathname);
           navigate('/', { replace: true });
@@ -106,6 +114,8 @@ const AuthCallback = () => {
 
         if (event === 'SIGNED_IN' && session) {
           console.log('AuthCallback: User signed in, redirecting...');
+          // If we have a real session, ensure standalone mode is off
+          disableStandaloneMode();
           setProcessing(false);
           // Clear the hash to avoid re-processing
           window.history.replaceState({}, document.title, window.location.pathname);
@@ -121,7 +131,7 @@ const AuthCallback = () => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, disableStandaloneMode]);
 
   // Show loading state while Supabase processes the auth hash
   if (processing && !error) {

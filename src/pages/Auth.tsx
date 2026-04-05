@@ -46,7 +46,8 @@ const Auth = () => {
     setSubmitting(false);
 
     if (error) {
-      toast.error(t("auth.resetPasswordError"));
+      const isRateLimit = error.message?.toLowerCase().includes("rate limit") || (error as any).status === 429;
+      toast.error(isRateLimit ? t("auth.rateLimitError") || "Too many requests. Please wait a while before trying again." : t("auth.resetPasswordError"));
       console.error("Password reset error:", error);
     } else {
       toast.success(t("auth.resetPasswordSent"));
