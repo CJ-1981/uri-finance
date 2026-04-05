@@ -199,32 +199,25 @@ export const useProjects = () => {
   // Restore logic
   // SPEC-PROJ-001: Enhanced to prioritize user's default project from local cache only
   useEffect(() => {
-    // Only proceed if useProjects query is no longer loading
-    if (loading) return;
+    // Only proceed if useProjects query is no longer loading and authentication is settled
+    const isStillAuthenticating = authLoading || (!isStandalone && !user);
+    if (loading || isStillAuthenticating) return;
 
     // 1. Handle empty projects list
     if (projects.length === 0) {
-      // ONLY clear active project if we're CERTAIN the user has no projects.
-      // We skip clearing if the auth is still loading (useAuth.loading is true)
-      // or if we're in Supabase mode and the user is null (still waiting for auth session).
-      const isStillAuthenticating = authLoading || (!isStandalone && !user);
-      
-      if (!isStillAuthenticating) {
-        if (activeProject) {
-          console.log('[useProjects] Truly no projects found for user, clearing active project');
-          localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
-          localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
-          setActiveProject(null);
-        }
-        setHasRestored(true);
+      if (activeProject) {
+        console.log('[useProjects] Truly no projects found for user, clearing active project');
+        localStorage.removeItem(ACTIVE_PROJECT_ID_KEY);
+        localStorage.removeItem(ACTIVE_PROJECT_CACHE_KEY);
+        setActiveProject(null);
       }
+      setHasRestored(true);
       return;
     }
 
     // 2. If we have projects but none active, try to restore from cache or default preference
     if (!activeProject && !hasRestored) {
       // SPEC-PROJ-001: Priority 1 - Cached project from localStorage (last selected)
-      // This ensures we keep the last project on page refresh if the state was lost but storage remains
       const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
       const foundCached = projects.find((p: Project) => p.id === cachedId);
 
@@ -235,7 +228,6 @@ export const useProjects = () => {
       }
 
       // SPEC-PROJ-001: Priority 2 - Local default from localStorage preferences (Star feature)
-      // Since signOut clears the cache, a new sign-in will fall back to this
       const preferences = fetchProjectPreferences();
       const defaultPref = preferences.find(p => p.is_default);
       
@@ -255,12 +247,10 @@ export const useProjects = () => {
     }
 
     // 3. If we have an active project, update it with fresh data from server
-    // SPEC-PROJ-001: Ensure the active project object is still in the projects list
     if (activeProject) {
       const freshProject = projects.find((p: Project) => p.id === activeProject.id);
       if (freshProject) {
         // Update active project with fresh data if it changed (e.g. name, currency)
-        // Only do this if it's not a fresh user selection to avoid race conditions
         if (JSON.stringify(freshProject) !== JSON.stringify(activeProject)) {
           console.log('[useProjects] Updating active project with fresh data');
           localStorage.setItem(ACTIVE_PROJECT_CACHE_KEY, JSON.stringify(freshProject));
@@ -268,11 +258,11 @@ export const useProjects = () => {
         }
       } else {
         // Current active project is no longer in the projects list (deleted or access revoked)
-        // Fall back to Priority 1 (Cache) then Priority 2 (Default)
         console.warn('[useProjects] Active project no longer available, attempting fallback');
         
         const cachedId = localStorage.getItem(ACTIVE_PROJECT_ID_KEY);
         const foundCached = projects.find((p: Project) => p.id === cachedId);
+        
         if (foundCached && foundCached.id !== activeProject.id) {
           handleSetActiveProject(foundCached, 'cache');
         } else {
