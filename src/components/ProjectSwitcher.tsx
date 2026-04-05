@@ -14,21 +14,26 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities';
 
 import { useAuth } from "@/hooks/useAuth";
-
-// SPEC-PROJ-001: Local storage key for project preferences
-const LOCAL_PROJECT_PREFERENCES_KEY = "project_preferences";
-
-// Local project preference interface (matches useProjects.tsx)
-interface LocalProjectPreference {
-  project_id: string;
-  display_order: number;
-  is_default: boolean;
-}
+import { LOCAL_PROJECT_PREFERENCES_KEY, LocalProjectPreference } from "@/types/projectPreferences";
 
 export interface ProjectSwitcherHandle {
   openJoinTab: () => void;
   openCreateTab: () => void;
 }
+
+// SPEC-PROJ-001: Helper to extract default project ID from preferences
+const getDefaultProjectIdFromPrefs = (): string | null => {
+  try {
+    const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
+    if (!localPrefs) return null;
+    const prefs = JSON.parse(localPrefs);
+    const defaultPref = prefs.find((p: LocalProjectPreference) => p.is_default);
+    return defaultPref?.project_id || null;
+  } catch (err) {
+    console.warn('[ProjectSwitcher] Failed to parse local project preferences:', err);
+    return null;
+  }
+};
 
 // SPEC-PROJ-001: Sortable project item component with drag-and-drop
 interface SortableProjectItemProps {
@@ -164,34 +169,13 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
   const { t } = useI18n();
   const isOnline = useOnlineStatus();
 
-  // SPEC-PROJ-001: State for default project ID - read from localStorage
-  const [defaultProjectId, setDefaultProjectId] = useState<string | null>(() => {
-    try {
-      const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
-      if (!localPrefs) return null;
-      const prefs = JSON.parse(localPrefs);
-      const defaultPref = prefs.find((p: LocalProjectPreference) => p.is_default);
-      return defaultPref?.project_id || null;
-    } catch {
-      return null;
-    }
-  });
+  // SPEC-PROJ-001: State for default project ID - read from localStorage via helper
+  const [defaultProjectId, setDefaultProjectId] = useState<string | null>(getDefaultProjectIdFromPrefs);
 
   // SPEC-PROJ-001: Refresh default project ID when sheet opens
   useEffect(() => {
     if (open) {
-      try {
-        const localPrefs = localStorage.getItem(LOCAL_PROJECT_PREFERENCES_KEY);
-        if (!localPrefs) {
-          setDefaultProjectId(null);
-          return;
-        }
-        const prefs = JSON.parse(localPrefs);
-        const defaultPref = prefs.find((p: LocalProjectPreference) => p.is_default);
-        setDefaultProjectId(defaultPref?.project_id || null);
-      } catch {
-        setDefaultProjectId(null);
-      }
+      setDefaultProjectId(getDefaultProjectIdFromPrefs());
     }
   }, [open]);
 
@@ -312,7 +296,7 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
           toast.success(t("proj.orderUpdated"));
         } catch (error) {
           console.error('Failed to update project order:', error);
-          toast.error(t("proj.onlyOwnerCanReorder"));
+          toast.error(t("proj.orderUpdateFailed"));
         }
       }
 
@@ -333,11 +317,11 @@ const ProjectSwitcher = forwardRef<ProjectSwitcherHandle, Props>(({
       if (isCurrentlyDefault) {
         toast.success(t("proj.removeDefault"));
       } else {
-        toast.success(t("proj.defaultSet").replace("{name}", project.name));
+        toast.success(t("proj.defaultSet", { name: project.name }));
       }
     } catch (error) {
       console.error('Failed to set default project:', error);
-      toast.error(t("proj.onlyOwnerCanSetDefault"));
+      toast.error(t("proj.defaultSetFailed"));
     }
   };
 

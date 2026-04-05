@@ -153,7 +153,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "proj.dragToReorder": "Drag to reorder",
     "proj.defaultSet": "Default project set to {name}",
     "proj.orderUpdated": "Project order updated",
+    "proj.orderUpdateFailed": "Failed to save project order",
     "proj.onlyOwnerCanReorder": "Only project owners can reorder projects",
+    "proj.defaultSetFailed": "Failed to set default project",
     "proj.onlyOwnerCanSetDefault": "Only project owners can set default project",
 
 
@@ -804,7 +806,9 @@ export const translations: Record<Locale, Record<string, string>> = {
     "proj.dragToReorder": "드래그하여 순서 변경",
     "proj.defaultSet": "기본 프로젝트가 {name}(으)로 설정되었습니다",
     "proj.orderUpdated": "프로젝트 순서가 업데이트되었습니다",
+    "proj.orderUpdateFailed": "프로젝트 순서 저장에 실패했습니다",
     "proj.onlyOwnerCanReorder": "프로젝트 소유자만 순서를 변경할 수 있습니다",
+    "proj.defaultSetFailed": "기본 프로젝트 설정에 실패했습니다",
     "proj.onlyOwnerCanSetDefault": "프로젝트 소유자만 기본값을 설정할 수 있습니다",
 
 
