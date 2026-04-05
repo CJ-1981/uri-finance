@@ -229,8 +229,9 @@ export const useProjects = () => {
       if (!activeProject) {
         // SPEC-PROJ-001: Priority 1 - Server-synced default project from user_preferences (if online)
         let serverDefaultId: string | null = null;
-        if (!isStandalone && isOnline && user) {
+        if (!isStandalone && user) {
           try {
+            console.log('[useProjects] Fetching server-synced default project preference for user:', user.id);
             const { data, error } = await supabase
               .from('user_preferences')
               .select('default_project_id')
@@ -239,8 +240,10 @@ export const useProjects = () => {
             
             if (!error && data?.default_project_id) {
               serverDefaultId = data.default_project_id;
+              console.log('[useProjects] Found server default project preference:', serverDefaultId);
               const serverProject = projects.find((p: Project) => p.id === serverDefaultId);
               if (serverProject) {
+                console.log('[useProjects] Restoring server-synced default project:', serverProject.name);
                 handleSetActiveProject(serverProject, 'server');
                 return;
               }
