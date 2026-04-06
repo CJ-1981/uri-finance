@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2026-04-06
+
+### Added
+- **Layout & Accessibility**:
+  - Constrained main dashboard and header content to a maximum width of 1536px (screen-2xl) for better readability on ultra-wide displays.
+  - Centered all major UI elements including the transaction list, charts, and administrative pages.
+  - Relocated the language toggle on the Auth page to be adjacent to the login container, ensuring it remains accessible on wide screens.
+  - Added an accessible `aria-label` to the PWA installation prompt dismiss button for improved screen reader support.
+  - Constrained the floating action button (FAB) and PWA instructions banner within the centered content width.
+
 ## [1.3.4] - 2026-04-06
 
 ### Fixed

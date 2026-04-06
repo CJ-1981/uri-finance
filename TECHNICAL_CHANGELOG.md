@@ -31,6 +31,19 @@ Detailed technical changes made during codebase review and improvement session.
 - Prevents the desktop "Install App" banner from appearing on macOS/Windows/Linux browsers where it is often perceived as intrusive or redundant.
 - Maintained existing `isStandalone` and `dismissed` checks to ensure the banner only appears when appropriate for mobile users.
 
+### 38. Responsive Width Constraints & UI Centering
+**Files Changed:**
+- `src/pages/Dashboard.tsx`
+- `src/pages/Auth.tsx`
+- `src/components/AddTransactionSheet.tsx`
+- `src/components/PWAInstructions.tsx`
+
+**Changes:**
+- Added `max-w-screen-2xl mx-auto` to the `Dashboard` main content and inner header wrapper to constrain width on large displays.
+- Relocated the `Auth` page language toggle button from a fixed absolute position in the corner to a relative position within the centered `max-w-sm` container, improving accessibility and visual proximity.
+- Modified `AddTransactionSheet` and `PWAInstructions` to ensure floating elements (FAB and banner) are constrained within the central content area instead of sticking to the far edges of the viewport.
+- Added `aria-label` to the `PWAInstructions` close button for screen reader compatibility.
+
 ## Session Date: 2026-04-04
 
 ## Project Ordering and Default Selection (SPEC-PROJ-001)

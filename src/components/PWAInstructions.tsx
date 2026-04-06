@@ -87,6 +87,7 @@ export const PWAInstructions = () => {
                 <button 
                   onClick={handleDismiss}
                   className="p-1 hover:bg-muted rounded-full transition-colors"
+                  aria-label={t("common.close")}
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>
