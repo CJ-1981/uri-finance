@@ -52,8 +52,11 @@ const Index = () => {
 
   if (!user) {
     // @MX:ANCHOR: If the URL contains recovery info or an access token, 
-    // DON'T redirect yet. Let the AuthProvider/Supabase client process it.
-    if (hasAuthMarkers()) {
+    // OR if we have a recovery flag in storage, DON'T redirect yet.
+    // Let the AuthProvider/Supabase client process it.
+    const hasRecoveryFlag = sessionStorage.getItem("auth_recovery") === "1";
+    
+    if (hasAuthMarkers() || hasRecoveryFlag) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="animate-pulse text-muted-foreground">{t("auth.loading")}</div>

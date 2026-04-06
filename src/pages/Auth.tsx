@@ -29,11 +29,14 @@ const Auth = () => {
                        window.location.search.includes("type=recovery");
     const hasStorageFlag = sessionStorage.getItem("auth_recovery") === "1";
     
-    if (hasStorageFlag) {
+    // Only remove flag if we are NOT redirecting (i.e. if user is NOT present)
+    // Actually, if we ARE here and user is null, we stay here.
+    // If user is present, we redirect to dashboard which NEEDS this flag.
+    if (hasStorageFlag && !user) {
       sessionStorage.removeItem("auth_recovery");
       return true;
     }
-    return hasUrlFlag;
+    return hasUrlFlag || hasStorageFlag;
   });
 
   const [email, setEmail] = useState("");
