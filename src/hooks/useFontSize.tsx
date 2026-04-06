@@ -47,7 +47,7 @@ export const FontSizeProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // @MX:NOTE: Apply font scale to document root. 
-    // This scales all rem units throughout the app.
+    // @MX:NOTE: This scales all rem units throughout the app.
     document.documentElement.style.setProperty("--app-font-scale", clampedSize.toString());
     
     // @MX:WARN: Direct root font-size modification
@@ -57,7 +57,7 @@ export const FontSizeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // @MX:NOTE: Force 1.0 on auth page, otherwise use stored size
-    // This is reactive to location changes thanks to useLocation()
+    // @MX:NOTE: This is reactive to location changes thanks to useLocation()
     const scale = isAuthPage ? 1.0 : fontSize;
 
     document.documentElement.style.setProperty("--app-font-scale", scale.toString());
