@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "next-themes";
 import { I18nProvider } from "@/hooks/useI18n";
+import { FontSizeProvider } from "@/hooks/useFontSize";
 import { usePreventZoom } from "@/hooks/usePreventZoom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -172,30 +173,32 @@ const App = () => {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <I18nProvider>
-        <ErrorBoundary>
-          <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
-            <AuthProvider>
-              <TooltipProvider>
-                <ThemeMetaUpdater />
-                <Toaster />
-                <Sonner />
-                <AppLockGate>
-                  <BrowserRouter basename={import.meta.env.DEV ? "/" : "/uri-finance"} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                    <RouteRestoration />
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/auth/callback" element={<AuthCallback />} />
-                      <Route path="/admin" element={<AdminPage />} />
-                      <Route path="/global-admin" element={<GlobalAdminPage />} />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </BrowserRouter>
-                </AppLockGate>
-              </TooltipProvider>
-            </AuthProvider>
-          </PersistQueryClientProvider>
-        </ErrorBoundary>
+        <FontSizeProvider>
+          <ErrorBoundary>
+            <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+              <AuthProvider>
+                <TooltipProvider>
+                  <ThemeMetaUpdater />
+                  <Toaster />
+                  <Sonner />
+                  <AppLockGate>
+                    <BrowserRouter basename={import.meta.env.DEV ? "/" : "/uri-finance"} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                      <RouteRestoration />
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/auth/callback" element={<AuthCallback />} />
+                        <Route path="/admin" element={<AdminPage />} />
+                        <Route path="/global-admin" element={<GlobalAdminPage />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </AppLockGate>
+                </TooltipProvider>
+              </AuthProvider>
+            </PersistQueryClientProvider>
+          </ErrorBoundary>
+        </FontSizeProvider>
       </I18nProvider>
     </ThemeProvider>
   );
