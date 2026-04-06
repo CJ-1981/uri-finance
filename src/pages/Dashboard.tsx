@@ -380,7 +380,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background pb-24" data-testid="dashboard" data-pending-mutations={pendingCount}>
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
-        <div className="flex items-center justify-between relative">
+        <div className="max-w-screen-2xl mx-auto">
+          <div className="flex items-center justify-between relative">
           <div className="flex items-center gap-1">
             <ProjectSwitcher
               ref={projectSwitcherRef}
@@ -520,9 +521,10 @@ const Dashboard = () => {
             )}
           </div>
         )}
+        </div>
       </header>
 
-      <main className="px-4 pt-4">
+      <main className="px-4 pt-4 max-w-screen-2xl mx-auto">
         {!activeProject ? (
           <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">

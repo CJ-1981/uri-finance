@@ -672,17 +672,21 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetTrigger asChild>
-          <Button
-            ref={triggerRef}
-            size="icon"
-            className="fixed bottom-6 left-6 z-40 h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30"
-            aria-label={t("tx.addTransaction") || "Add transaction"}
-            data-testid="add-transaction-button"
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
+        <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
+          <div className="max-w-screen-2xl mx-auto px-4 relative h-24">
+            <SheetTrigger asChild>
+              <Button
+                ref={triggerRef}
+                size="icon"
+                className="absolute bottom-6 left-4 pointer-events-auto h-14 w-14 rounded-full gradient-primary shadow-lg shadow-primary/30"
+                aria-label={t("tx.addTransaction") || "Add transaction"}
+                data-testid="add-transaction-button"
+              >
+                <Plus className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+          </div>
+        </div>
         <SheetContent
           ref={sheetRef}
           onKeyDown={handleFormKeyDown}

@@ -176,16 +176,17 @@ const Auth = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6 gradient-dark" data-testid="auth-page">
-      {/* Language toggle */}
-      <button
-        onClick={() => setLocale(locale === "en" ? "ko" : "en")}
-        className="fixed top-4 right-4 z-50 rounded-lg bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {locale === "en" ? t("lang.ko") : t("lang.en")}
-      </button>
-
+    <div className="flex min-h-screen flex-col items-center justify-center px-6 gradient-dark relative" data-testid="auth-page">
       <div className="w-full max-w-sm animate-fade-in">
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setLocale(locale === "en" ? "ko" : "en")}
+            className="rounded-lg bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {locale === "en" ? t("lang.ko") : t("lang.en")}
+          </button>
+        </div>
+
         <div className="mb-10 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl gradient-primary">
             <ArrowRightLeft className="h-7 w-7 text-primary-foreground" />

@@ -69,34 +69,36 @@ export const PWAInstructions = () => {
   return (
     <>
       {show && (
-        <div className="fixed bottom-20 left-4 right-4 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="glass-card p-4 flex flex-col gap-3 border-primary/20 bg-primary/5 shadow-lg">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Download className="h-5 w-5 text-primary" />
+        <div className="fixed bottom-20 left-0 right-0 z-50 pointer-events-none">
+          <div className="max-w-screen-2xl mx-auto px-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="glass-card p-4 flex flex-col gap-3 border-primary/20 bg-primary/5 shadow-lg pointer-events-auto">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Download className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">{t("pwa.installTitle")}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {t("pwa.installDesc")}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-sm">{t("pwa.installTitle")}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {t("pwa.installDesc")}
-                  </p>
-                </div>
+                <button 
+                  onClick={handleDismiss}
+                  className="p-1 hover:bg-muted rounded-full transition-colors"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
               </div>
-              <button 
-                onClick={handleDismiss}
-                className="p-1 hover:bg-muted rounded-full transition-colors"
+              <Button 
+                size="sm" 
+                className="w-full gradient-primary text-xs font-semibold"
+                onClick={handleInstall}
               >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
+                {t("pwa.installBtn")}
+              </Button>
             </div>
-            <Button 
-              size="sm" 
-              className="w-full gradient-primary text-xs font-semibold"
-              onClick={handleInstall}
-            >
-              {t("pwa.installBtn")}
-            </Button>
           </div>
         </div>
       )}
