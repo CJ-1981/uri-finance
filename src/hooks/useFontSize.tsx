@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 
 interface FontSizeContextType {
   fontSize: number;
@@ -15,11 +16,11 @@ const MAX_SCALE = 1.5;
 const STEP = 0.1;
 
 export const FontSizeProvider = ({ children }: { children: ReactNode }) => {
+  const location = useLocation();
+  const isAuthPage = location.pathname.endsWith('/auth') || location.pathname.endsWith('/auth/');
+
   const [fontSize, setFontSizeState] = useState<number>(() => {
     try {
-      const isAuthPage = window.location.pathname.endsWith('/auth') || window.location.pathname.endsWith('/auth/');
-      if (isAuthPage) return 1.0;
-
       const stored = localStorage.getItem(STORAGE_KEY);
       const parsed = stored ? parseFloat(stored) : 1.0;
       // Ensure we have a valid, finite number within range
@@ -31,8 +32,8 @@ export const FontSizeProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const setFontSize = useCallback((size: number) => {
-    const isAuthPage = window.location.pathname.endsWith('/auth') || window.location.pathname.endsWith('/auth/');
-    if (isAuthPage) return; // Disable changes on auth page
+    // @MX:NOTE: Disable font size changes on the auth page to maintain design consistency
+    if (isAuthPage) return;
 
     const roundedSize = Math.round(size * 10) / 10;
     const clampedSize = Math.max(MIN_SCALE, Math.min(MAX_SCALE, roundedSize));
@@ -52,16 +53,16 @@ export const FontSizeProvider = ({ children }: { children: ReactNode }) => {
     // @MX:WARN: Direct root font-size modification
     // @MX:REASON: Required to scale all 'rem' units globally without changing every component.
     document.documentElement.style.fontSize = `${clampedSize * 100}%`;
-  }, []);
+  }, [isAuthPage]);
 
   useEffect(() => {
-    // Force 1.0 on auth page, otherwise use stored size
-    const isAuthPage = window.location.pathname.endsWith('/auth') || window.location.pathname.endsWith('/auth/');
+    // @MX:NOTE: Force 1.0 on auth page, otherwise use stored size
+    // This is reactive to location changes thanks to useLocation()
     const scale = isAuthPage ? 1.0 : fontSize;
 
     document.documentElement.style.setProperty("--app-font-scale", scale.toString());
     document.documentElement.style.fontSize = `${scale * 100}%`;
-  }, [fontSize]);
+  }, [fontSize, isAuthPage]);
 
   const increaseFontSize = useCallback(() => {
     setFontSize(fontSize + STEP);

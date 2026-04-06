@@ -173,16 +173,16 @@ const App = () => {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <I18nProvider>
-        <FontSizeProvider>
-          <ErrorBoundary>
-            <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
-              <AuthProvider>
-                <TooltipProvider>
-                  <ThemeMetaUpdater />
-                  <Toaster />
-                  <Sonner />
-                  <AppLockGate>
-                    <BrowserRouter basename={import.meta.env.DEV ? "/" : "/uri-finance"} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ErrorBoundary>
+          <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+            <AuthProvider>
+              <TooltipProvider>
+                <ThemeMetaUpdater />
+                <Toaster />
+                <Sonner />
+                <AppLockGate>
+                  <BrowserRouter basename={import.meta.env.DEV ? "/" : "/uri-finance"} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                    <FontSizeProvider>
                       <RouteRestoration />
                       <Routes>
                         <Route path="/" element={<Index />} />
@@ -192,13 +192,13 @@ const App = () => {
                         <Route path="/global-admin" element={<GlobalAdminPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
-                    </BrowserRouter>
-                  </AppLockGate>
-                </TooltipProvider>
-              </AuthProvider>
-            </PersistQueryClientProvider>
-          </ErrorBoundary>
-        </FontSizeProvider>
+                    </FontSizeProvider>
+                  </BrowserRouter>
+                </AppLockGate>
+              </TooltipProvider>
+            </AuthProvider>
+          </PersistQueryClientProvider>
+        </ErrorBoundary>
       </I18nProvider>
     </ThemeProvider>
   );
