@@ -340,6 +340,27 @@ Make sure to set production environment variables in your hosting platform:
 - `VITE_SUPABASE_PROJECT_ID`
 - `VITE_SYSTEM_ADMIN_EMAILS` (for system admin access control)
 
+## PWA & Branding Customization
+
+You can customize the application name and icons displayed in the browser and when installed as a PWA using environment variables and GitHub Workflows.
+
+### Application Name
+The app name is controlled by the `VITE_APP_TITLE` variable. In the provided GitHub Workflow (`.github/workflows/deploy.yml`), it is configured to show different names for production and pull request previews:
+- **Production**: "우리교회 재정부"
+- **Previews**: "재정부 (Preview)"
+
+To change this, update the `VITE_APP_TITLE` logic in the workflow file.
+
+### Custom Icons
+The application supports multiple icon sets (e.g., for different themes or environments) via the `VITE_APP_ICON_SUFFIX` variable.
+1. Place your custom icons in the `public/` directory following this naming convention:
+   - `favicon{suffix}.ico`
+   - `apple-touch-icon{suffix}.png`
+   - `icon-192x192{suffix}.png`
+   - `icon-512x512{suffix}.png`
+2. Set `VITE_APP_ICON_SUFFIX` in your environment or workflow (e.g., `-mytheme`).
+3. The build process will automatically detect if these files exist and use them; otherwise, it will fall back to the default icons.
+
 ## Contributing
 
 1. Fork the repository
