@@ -35,7 +35,7 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
 
   // Check if user is in a recovery session (from password reset link)
   // In recovery mode, Supabase allows updating password without the old one.
-  const isRecovery = user?.app_metadata?.recovery || false;
+  const isRecovery = user?.app_metadata?.recovery || sessionStorage.getItem("auth_recovery") === "1" || false;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +90,8 @@ export const PasswordChangeDialog = ({ open: controlledOpen, onOpenChange }: Pas
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      // Clear recovery flag after successful password change
+      sessionStorage.removeItem("auth_recovery");
     }
   };
 

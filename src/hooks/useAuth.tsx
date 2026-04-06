@@ -121,6 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("active_project_cache");
     localStorage.removeItem("pending_invite_code");
     localStorage.removeItem("is_standalone");
+    sessionStorage.removeItem("auth_recovery");
     
     // Aggressively clear all Supabase-related keys from localStorage to prevent re-login while offline
     Object.keys(localStorage).forEach(key => {
@@ -155,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: buildAuthRedirectUrl(),
+      redirectTo: `${buildAuthRedirectUrl()}?type=recovery`,
     });
     return { error };
   };

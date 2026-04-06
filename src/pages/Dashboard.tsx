@@ -70,11 +70,14 @@ const Dashboard = () => {
 
   // SPEC-004: Detect password recovery mode and auto-open dialog
   useEffect(() => {
-    if (user?.app_metadata?.recovery && !recoveryDialogShownRef.current) {
+    const hasStorageFlag = sessionStorage.getItem("auth_recovery") === "1";
+    const isRecoveryMode = user?.app_metadata?.recovery || hasStorageFlag;
+    
+    if (isRecoveryMode && !recoveryDialogShownRef.current) {
       console.log('Dashboard: Recovery mode detected, opening password dialog');
       setPasswordDialogOpen(true);
       recoveryDialogShownRef.current = true;
-    } else if (!user?.app_metadata?.recovery) {
+    } else if (!isRecoveryMode) {
       // Reset guard if recovery flag is removed
       recoveryDialogShownRef.current = false;
     }

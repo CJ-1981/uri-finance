@@ -86,7 +86,11 @@ const AuthCallback = () => {
           console.log('AuthCallback: Session established, redirecting to dashboard');
           
           // @MX:NOTE: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
-          if (isRecovery) {
+          // Check both URL params and session's user metadata for recovery flag
+          const isActuallyRecovery = isRecovery || session.user?.app_metadata?.recovery;
+          
+          if (isActuallyRecovery) {
+            console.log('AuthCallback: Recovery mode confirmed, setting storage flag');
             sessionStorage.setItem("auth_recovery", "1");
           }
           
@@ -127,11 +131,12 @@ const AuthCallback = () => {
       (event, session) => {
         console.log('AuthCallback: Auth state changed', { event, hasSession: !!session });
 
-        if (event === 'SIGNED_IN' && session) {
-          console.log('AuthCallback: User signed in, redirecting...');
+        if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session) {
+          console.log('AuthCallback: User signed in or recovery session active, redirecting...');
           
           // @MX:NOTE: Preserve recovery mode flag for Auth.tsx/Dashboard.tsx
-          if (isRecovery) {
+          if (isRecovery || event === 'PASSWORD_RECOVERY' || session.user?.app_metadata?.recovery) {
+            console.log('AuthCallback: Recovery mode detected in auth state change, setting storage flag');
             sessionStorage.setItem("auth_recovery", "1");
           }
           
