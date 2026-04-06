@@ -13,11 +13,11 @@ export const PWAInstructions = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
-    // Check if app is already running in standalone mode
+    // Check if app is already running in standalone mode (installed PWA)
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     
-    // Only show if in standalone mode AND NOT already running as PWA
-    if (isStandalone && !isPWA) {
+    // Only show if NOT already running as PWA
+    if (!isPWA) {
       // Check if user has dismissed it before in this session
       const dismissed = sessionStorage.getItem("pwa_instructions_dismissed");
       if (!dismissed) {
@@ -28,6 +28,12 @@ export const PWAInstructions = () => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      
+      // Ensure banner is shown if we get the prompt and it wasn't dismissed
+      const dismissed = sessionStorage.getItem("pwa_instructions_dismissed");
+      if (!isPWA && !dismissed) {
+        setShow(true);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -35,7 +41,7 @@ export const PWAInstructions = () => {
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     };
-  }, [isStandalone]);
+  }, []);
 
   const handleDismiss = () => {
     setShow(false);
