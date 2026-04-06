@@ -16,8 +16,11 @@ export const PWAInstructions = () => {
     // Check if app is already running in standalone mode (installed PWA)
     const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     
-    // Only show if NOT already running as PWA
-    if (!isPWA) {
+    // Check if device is mobile (phone or tablet)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Only show if on mobile AND NOT already running as PWA
+    if (isMobile && !isPWA) {
       // Check if user has dismissed it before in this session
       const dismissed = sessionStorage.getItem("pwa_instructions_dismissed");
       if (!dismissed) {
@@ -31,7 +34,7 @@ export const PWAInstructions = () => {
       
       // Ensure banner is shown if we get the prompt and it wasn't dismissed
       const dismissed = sessionStorage.getItem("pwa_instructions_dismissed");
-      if (!isPWA && !dismissed) {
+      if (isMobile && !isPWA && !dismissed) {
         setShow(true);
       }
     };
