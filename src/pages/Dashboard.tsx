@@ -23,7 +23,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { PasswordChangeDialog } from "@/components/PasswordChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { BarChart3, List, Settings, Eye, Calculator, UserPlus, Loader2, FileText, Plus, Minus, Type } from "lucide-react";
+import { BarChart3, List, Settings, Eye, Calculator, UserPlus, Loader2, FileText, Plus, Minus, Type, RotateCcw } from "lucide-react";
 import CashCalculator from "@/components/CashCalculator";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 import { UserRole } from "@/hooks/useUserRole";
@@ -64,7 +64,7 @@ const Dashboard = () => {
   });
   const pendingCount = pendingMutations.length;
   const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin, updateProjectOrder, setDefaultProject } = useProjects();
-  const { fontSize, increaseFontSize, decreaseFontSize } = useFontSize();
+  const { fontSize, increaseFontSize, decreaseFontSize, resetFontSize } = useFontSize();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const recoveryDialogShownRef = useRef(false);
 
@@ -458,7 +458,7 @@ const Dashboard = () => {
           <div className="flex items-center gap-2 mt-1">
             <p className="text-[10px] text-muted-foreground truncate flex-1">{activeProject.name}</p>
             
-            {/* Font Size Controls */}
+            {/* @MX:NOTE: Font size adjustment controls */}
             <div className="flex items-center gap-0.5 bg-muted/30 rounded-md px-1 py-0.5 shrink-0">
               <Button
                 variant="ghost"
@@ -466,18 +466,29 @@ const Dashboard = () => {
                 className="h-5 w-5 hover:bg-muted/50"
                 onClick={decreaseFontSize}
                 title={t("dash.decreaseFontSize") || "Decrease Font Size"}
+                aria-label={t("dash.decreaseFontSize") || "Decrease Font Size"}
               >
                 <Minus className="h-2.5 w-2.5" />
               </Button>
-              <div className="flex items-center justify-center w-4">
-                <Type className="h-2.5 w-2.5 text-muted-foreground" />
-              </div>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5 hover:bg-muted/50"
+                onClick={resetFontSize}
+                title={t("dash.resetFontSize") || "Reset Font Size"}
+                aria-label={t("dash.resetFontSize") || "Reset Font Size"}
+              >
+                <RotateCcw className="h-2.5 w-2.5 text-muted-foreground" />
+              </Button>
+
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 hover:bg-muted/50"
                 onClick={increaseFontSize}
                 title={t("dash.increaseFontSize") || "Increase Font Size"}
+                aria-label={t("dash.increaseFontSize") || "Increase Font Size"}
               >
                 <Plus className="h-2.5 w-2.5" />
               </Button>

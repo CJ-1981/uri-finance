@@ -69,6 +69,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.getStartedDescStandalone": "Create a local project to start tracking your finances.",
     "dash.increaseFontSize": "Increase font size",
     "dash.decreaseFontSize": "Decrease font size",
+    "dash.resetFontSize": "Reset font size",
     "dash.joinProject": "Join a Project",
     "dash.standaloneFilesNotice": "Files are not available in Standalone Mode.",
 
@@ -733,6 +734,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "dash.getStartedDescStandalone": "로컬 프로젝트를 만들어 재무 관리를 시작하세요.",
     "dash.increaseFontSize": "글자 크기 키우기",
     "dash.decreaseFontSize": "글자 크기 줄이기",
+    "dash.resetFontSize": "글자 크기 초기화",
     "dash.joinProject": "프로젝트 참여",
     "dash.standaloneFilesNotice": "독립 실행 모드에서는 파일을 사용할 수 없습니다.",
 

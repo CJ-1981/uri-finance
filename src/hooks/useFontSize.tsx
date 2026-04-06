@@ -17,29 +17,50 @@ const STEP = 0.1;
 export const FontSizeProvider = ({ children }: { children: ReactNode }) => {
   const [fontSize, setFontSizeState] = useState<number>(() => {
     try {
+      const isAuthPage = window.location.pathname.endsWith('/auth') || window.location.pathname.endsWith('/auth/');
+      if (isAuthPage) return 1.0;
+
       const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? parseFloat(stored) : 1.0;
+      const parsed = stored ? parseFloat(stored) : 1.0;
+      // Ensure we have a valid, finite number within range
+      if (isNaN(parsed) || !isFinite(parsed)) return 1.0;
+      return Math.max(MIN_SCALE, Math.min(MAX_SCALE, parsed));
     } catch {
       return 1.0;
     }
   });
 
   const setFontSize = useCallback((size: number) => {
+    const isAuthPage = window.location.pathname.endsWith('/auth') || window.location.pathname.endsWith('/auth/');
+    if (isAuthPage) return; // Disable changes on auth page
+
     const roundedSize = Math.round(size * 10) / 10;
     const clampedSize = Math.max(MIN_SCALE, Math.min(MAX_SCALE, roundedSize));
-    setFontSizeState(clampedSize);
-    localStorage.setItem(STORAGE_KEY, clampedSize.toString());
     
-    // Apply to document root
+    setFontSizeState(clampedSize);
+    
+    try {
+      localStorage.setItem(STORAGE_KEY, clampedSize.toString());
+    } catch (err) {
+      console.warn('[useFontSize] Failed to persist font size:', err);
+    }
+    
+    // @MX:NOTE: Apply font scale to document root. 
+    // This scales all rem units throughout the app.
     document.documentElement.style.setProperty("--app-font-scale", clampedSize.toString());
-    // Also adjust root font size to scale rem units
+    
+    // @MX:WARN: Direct root font-size modification
+    // @MX:REASON: Required to scale all 'rem' units globally without changing every component.
     document.documentElement.style.fontSize = `${clampedSize * 100}%`;
   }, []);
 
   useEffect(() => {
-    // Initial apply
-    document.documentElement.style.setProperty("--app-font-scale", fontSize.toString());
-    document.documentElement.style.fontSize = `${fontSize * 100}%`;
+    // Force 1.0 on auth page, otherwise use stored size
+    const isAuthPage = window.location.pathname.endsWith('/auth') || window.location.pathname.endsWith('/auth/');
+    const scale = isAuthPage ? 1.0 : fontSize;
+
+    document.documentElement.style.setProperty("--app-font-scale", scale.toString());
+    document.documentElement.style.fontSize = `${scale * 100}%`;
   }, [fontSize]);
 
   const increaseFontSize = useCallback(() => {
