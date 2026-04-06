@@ -2,6 +2,35 @@
 
 Detailed technical changes made during codebase review and improvement session.
 
+## Session Date: 2026-04-06
+
+### 36. Robust Password Recovery Flow (SPEC-004)
+**Files Changed:**
+- `src/pages/AuthCallback.tsx`
+- `src/pages/Dashboard.tsx`
+- `src/pages/Auth.tsx`
+- `src/pages/Index.tsx`
+- `src/components/PasswordChangeDialog.tsx`
+- `src/hooks/useAuth.tsx`
+
+**Changes:**
+- Enhanced `AuthCallback` to detect recovery mode using both URL parameters (`type=recovery`) and Supabase session metadata.
+- Implemented `sessionStorage` persistence for the `auth_recovery` flag to ensure the recovery state survives SPA navigation and redirects.
+- Updated `Dashboard` to automatically trigger the `PasswordChangeDialog` when the recovery flag is detected.
+- Modified `PasswordChangeDialog` to bypass the current password verification requirement during recovery sessions.
+- Added a `PASSWORD_RECOVERY` event listener to `AuthCallback` for PKCE-based recovery flows.
+- Fixed a race condition in `Index` where it would redirect to `/auth` before the session was fully established during recovery.
+- Added `?type=recovery` to the `redirectTo` URL in `resetPassword` for explicit flow tracking.
+
+### 37. Mobile-Only PWA Install Suggestions
+**Files Changed:**
+- `src/components/PWAInstructions.tsx`
+
+**Changes:**
+- Implemented user agent detection in `PWAInstructions` to restrict installation banners to mobile browsers (iOS/Android).
+- Prevents the desktop "Install App" banner from appearing on macOS/Windows/Linux browsers where it is often perceived as intrusive or redundant.
+- Maintained existing `isStandalone` and `dismissed` checks to ensure the banner only appears when appropriate for mobile users.
+
 ## Session Date: 2026-04-04
 
 ## Project Ordering and Default Selection (SPEC-PROJ-001)

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2026-04-06
+
+### Fixed
+- **Password Recovery**:
+  - Improved robust detection of recovery flow using both URL markers and user metadata.
+  - Added support for `PASSWORD_RECOVERY` event in authentication callback.
+  - Implemented `sessionStorage` flag to persist recovery state and ensure password reset dialog remains open.
+  - Bypassed current password requirement when in recovery mode for a smoother user experience.
+- **PWA Integration**:
+  - Restricted PWA install suggestions to mobile browsers only (Android/iOS) to prevent noise on desktop.
+- **Navigation & Auth**:
+  - Prevented premature consumption of the `auth_recovery` flag by waiting for user session load in `Index` page.
+  - Preserved recovery flag during redirects from Auth page to Dashboard.
+  - Ensured recovery flag is cleared upon successful password change, logout, or sign-out.
+
 ## [1.3.3] - 2026-04-04
 
 ### Added
