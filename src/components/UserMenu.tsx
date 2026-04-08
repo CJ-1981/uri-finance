@@ -106,6 +106,7 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
             onClick={(e) => {
               e.preventDefault();
               hasPin ? setPinDisableDialogOpen(true) : setPinDialogOpen(true);
+              setMenuOpen(false);
             }} 
             className="cursor-pointer"
           >
