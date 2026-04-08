@@ -483,7 +483,7 @@ const Dashboard = () => {
                 title={t("dash.resetFontSize") || "Reset Font Size"}
                 aria-label={t("dash.resetFontSize") || "Reset Font Size"}
               >
-                <RotateCcw className="h-2.5 w-2.5 text-muted-foreground" />
+                <RotateCcw className={`h-2.5 w-2.5 ${fontSize !== 1.0 ? "text-primary" : "text-muted-foreground"}`} />
               </Button>
 
               <Button
