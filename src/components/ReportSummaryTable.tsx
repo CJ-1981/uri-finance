@@ -144,8 +144,8 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
   return (
     <div className="glass-card overflow-hidden" data-report-summary="true">
       <div className="px-4 pt-4 pb-2 border-b border-border/30">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 mr-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1 sm:mr-4">
             <div className="relative group flex items-center">
               <input
                 value={summaryTitle}
