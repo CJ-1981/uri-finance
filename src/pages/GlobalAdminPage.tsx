@@ -55,8 +55,8 @@ const GlobalAdminPage = () => {
 
   return (
     <div className="min-h-screen bg-background pb-12">
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-3">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 py-3">
+        <div className="max-w-6xl mx-auto px-4 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
