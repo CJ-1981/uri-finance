@@ -433,7 +433,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             {customColumns.filter(col => !(isViewer && col.masked)).map((col) => (
               <span key={col.id} className="hidden sm:block w-24 text-right shrink-0">{col.name}</span>
             ))}
-            <span className="w-28 text-right shrink-0 pr-4">{headers.amount}</span>
+            <span className="w-32 text-right shrink-0 pr-4">{headers.amount}</span>
           </div>
         )}
       </div>
@@ -519,7 +519,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             );
           })}
           <p
-            className={`w-28 text-right text-sm font-semibold shrink-0 pr-4 ${
+            className={`w-32 text-right text-sm font-semibold shrink-0 pr-4 ${
               tx.type === "income" ? "text-income" : "text-expense"
             }`}
           >
