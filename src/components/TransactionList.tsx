@@ -415,8 +415,8 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground w-full">
-            <div className="w-10 shrink-0 flex items-center justify-center">
+          <div className="flex items-center gap-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground w-full">
+            <div className="w-10 shrink-0 flex items-center justify-center pl-4">
               {!isViewer && (
                 <Button
                   variant="ghost"
@@ -433,7 +433,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             {customColumns.filter(col => !(isViewer && col.masked)).map((col) => (
               <span key={col.id} className="hidden sm:block w-24 text-right shrink-0">{col.name}</span>
             ))}
-            <span className="w-28 text-right shrink-0">{headers.amount}</span>
+            <span className="w-28 text-right shrink-0 pr-4">{headers.amount}</span>
           </div>
         )}
       </div>
