@@ -356,7 +356,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   return (
     <div className="space-y-2 w-full animate-fade-in" data-testid="transaction-list">
       {/* Search */}
-      <div className="relative px-1">
+      <div className="relative px-4">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           ref={searchRef}
@@ -380,7 +380,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
       </div>
 
       {/* Selection toolbar */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-4">
         {!isViewer && selectMode ? (
           <div className="flex items-center gap-2 w-full animate-fade-in">
             <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-muted-foreground h-8 px-2">
