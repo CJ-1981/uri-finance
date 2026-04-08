@@ -455,7 +455,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
           onTouchStart={(e) => handleTouchStart(tx, e)}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer active:scale-[0.98] transition-all ${
+          className={`flex items-center gap-2 rounded-xl px-4 py-3 cursor-pointer active:scale-[0.98] transition-all ${
             selected.has(tx.id)
               ? "bg-primary/10 ring-1 ring-primary/30"
               : "bg-muted/30 hover:bg-muted/50"
