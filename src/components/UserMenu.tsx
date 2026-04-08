@@ -29,6 +29,7 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
   const [pinDisableDialogOpen, setPinDisableDialogOpen] = useState(false);
   const [shortcutDialogOpen, setShortcutDialogOpen] = useState(false);
   const [hasPin, setHasPin] = useState(isPinSet());
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Update pin state when dialogs close or components mount
   useEffect(() => {
@@ -53,21 +54,24 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
     };
     if (!doc.startViewTransition) {
       setTheme(newTheme);
+      setMenuOpen(false);
       return;
     }
     doc.startViewTransition(() => {
       setTheme(newTheme);
+      setMenuOpen(false);
     });
   };
 
   const toggleLocale = (e: React.MouseEvent) => {
     e.preventDefault();
     setLocale(locale === "en" ? "ko" : "en");
+    setMenuOpen(false);
   };
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -102,6 +106,7 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
             onClick={(e) => {
               e.preventDefault();
               hasPin ? setPinDisableDialogOpen(true) : setPinDialogOpen(true);
+              setMenuOpen(false);
             }} 
             className="cursor-pointer"
           >
@@ -113,6 +118,7 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
             onClick={(e) => {
               e.preventDefault();
               setShortcutDialogOpen(true);
+              setMenuOpen(false);
             }} 
             className="cursor-pointer hidden md:flex"
           >
@@ -128,6 +134,7 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
                 onClick={(e) => {
                   e.preventDefault();
                   onOpenPasswordDialog?.();
+                  setMenuOpen(false);
                 }}
                 className="cursor-pointer"
               >
@@ -142,6 +149,7 @@ export const UserMenu = ({ onOpenPasswordDialog }: UserMenuProps) => {
             onClick={(e) => {
               e.preventDefault();
               signOut();
+              setMenuOpen(false);
             }}
             className="cursor-pointer text-destructive focus:text-destructive"
           >

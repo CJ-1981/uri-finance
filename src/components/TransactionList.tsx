@@ -356,7 +356,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   return (
     <div className="space-y-2 w-full animate-fade-in" data-testid="transaction-list">
       {/* Search */}
-      <div className="relative px-1">
+      <div className="relative px-4">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input
           ref={searchRef}
@@ -380,7 +380,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
       </div>
 
       {/* Selection toolbar */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-4">
         {!isViewer && selectMode ? (
           <div className="flex items-center gap-2 w-full animate-fade-in">
             <Button variant="ghost" size="sm" onClick={exitSelectMode} className="text-muted-foreground h-8 px-2">
@@ -415,14 +415,14 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-4 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground w-full">
-            <div className="w-10 shrink-0 flex items-center justify-center">
+          <div className="flex items-center gap-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground w-full">
+            <div className="w-10 shrink-0 flex items-center justify-center pl-4">
               {!isViewer && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectMode(true)}
-                  className="text-muted-foreground h-7 w-8 px-0 text-[10px]"
+                  className="text-muted-foreground h-7 w-8 px-0 text-xs"
                 >
                   <CheckSquare className="h-3.5 w-3.5" />
                 </Button>
@@ -433,7 +433,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             {customColumns.filter(col => !(isViewer && col.masked)).map((col) => (
               <span key={col.id} className="hidden sm:block w-24 text-right shrink-0">{col.name}</span>
             ))}
-            <span className="w-28 text-right shrink-0">{headers.amount}</span>
+            <span className="w-32 text-right shrink-0 pr-4">{headers.amount}</span>
           </div>
         )}
       </div>
@@ -455,7 +455,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
           onTouchStart={(e) => handleTouchStart(tx, e)}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex items-center gap-3 rounded-xl px-4 py-3 cursor-pointer active:scale-[0.98] transition-all ${
+          className={`flex items-center gap-2 rounded-xl py-3 cursor-pointer active:scale-[0.98] transition-all pl-4 ${
             selected.has(tx.id)
               ? "bg-primary/10 ring-1 ring-primary/30"
               : "bg-muted/30 hover:bg-muted/50"
@@ -519,7 +519,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             );
           })}
           <p
-            className={`w-28 text-right text-sm font-semibold shrink-0 ${
+            className={`w-32 text-right text-sm font-semibold shrink-0 pr-4 ${
               tx.type === "income" ? "text-income" : "text-expense"
             }`}
           >

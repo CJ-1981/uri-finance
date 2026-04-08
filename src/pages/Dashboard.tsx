@@ -379,8 +379,8 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24" data-testid="dashboard" data-pending-mutations={pendingCount}>
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 px-4 py-2">
-        <div className="max-w-screen-2xl mx-auto">
+      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/30 py-2">
+        <div className="max-w-screen-2xl mx-auto px-4">
           <div className="flex items-center justify-between relative">
           <div className="flex items-center gap-1">
             <ProjectSwitcher
@@ -483,7 +483,7 @@ const Dashboard = () => {
                 title={t("dash.resetFontSize") || "Reset Font Size"}
                 aria-label={t("dash.resetFontSize") || "Reset Font Size"}
               >
-                <RotateCcw className="h-2.5 w-2.5 text-muted-foreground" />
+                <RotateCcw className={`h-2.5 w-2.5 ${fontSize !== 1.0 ? "text-primary" : "text-muted-foreground"}`} />
               </Button>
 
               <Button

@@ -144,8 +144,8 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
   return (
     <div className="glass-card overflow-hidden" data-report-summary="true">
       <div className="px-4 pt-4 pb-2 border-b border-border/30">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 mr-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-1 sm:mr-4">
             <div className="relative group flex items-center">
               <input
                 value={summaryTitle}
@@ -175,7 +175,7 @@ export default function ReportSummaryTable({ summaryData, projectCurrency, onTra
               <Pencil className="h-2.5 w-2.5 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity ml-1 mt-0.5 flex-shrink-0" data-html2canvas-ignore="true" />
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="flex items-center gap-2 bg-muted/20 px-3 py-1.5 rounded-full border border-border/20" data-html2canvas-ignore="true">
               <Switch
                 id="show-details"
