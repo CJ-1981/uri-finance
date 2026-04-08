@@ -415,14 +415,14 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground w-full">
+          <div className="flex items-center gap-2 py-1.5 text-xs uppercase tracking-wider text-muted-foreground w-full">
             <div className="w-10 shrink-0 flex items-center justify-center pl-4">
               {!isViewer && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSelectMode(true)}
-                  className="text-muted-foreground h-7 w-8 px-0 text-[10px]"
+                  className="text-muted-foreground h-7 w-8 px-0 text-xs"
                 >
                   <CheckSquare className="h-3.5 w-3.5" />
                 </Button>
