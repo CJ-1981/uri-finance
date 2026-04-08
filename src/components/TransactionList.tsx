@@ -473,7 +473,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             </div>
           ) : (
             <div
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl pl-4 ${
                 categoryIconMap.has(tx.category)
                   ? "bg-muted/50"
                   : tx.type === "income" ? "income-badge" : "expense-badge"
