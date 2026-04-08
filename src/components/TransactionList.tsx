@@ -455,14 +455,14 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
           onTouchStart={(e) => handleTouchStart(tx, e)}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex items-center gap-2 rounded-xl px-4 py-3 cursor-pointer active:scale-[0.98] transition-all ${
+          className={`flex items-center gap-2 rounded-xl py-3 cursor-pointer active:scale-[0.98] transition-all ${
             selected.has(tx.id)
               ? "bg-primary/10 ring-1 ring-primary/30"
               : "bg-muted/30 hover:bg-muted/50"
           }`}
         >
           {selectMode ? (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center pl-4">
               {!ownTxIds.has(tx.id) ? (
                 <div className="h-5 w-5 rounded border border-muted-foreground/20" />
               ) : selected.has(tx.id) ? (
@@ -519,7 +519,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             );
           })}
           <p
-            className={`w-28 text-right text-sm font-semibold shrink-0 ${
+            className={`w-28 text-right text-sm font-semibold shrink-0 pr-4 ${
               tx.type === "income" ? "text-income" : "text-expense"
             }`}
           >
