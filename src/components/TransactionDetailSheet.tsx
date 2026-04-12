@@ -409,6 +409,7 @@ const TransactionDetailSheet = ({
           {isOwn && transaction && (
             <div className="flex items-center gap-2">
               <FileUploadSheet
+                uploadMode="single"
                 onUpload={async (file, remark) => {
                   try {
                     await uploadFile({ file, remark, transactionId: transaction.id });

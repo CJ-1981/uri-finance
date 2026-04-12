@@ -58,6 +58,7 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
  * @returns Lowercase file extension with dot (e.g., ".pdf")
  */
 export const getFileExtension = (filename: string): string => {
+  if (!filename || typeof filename !== 'string') return '';
   const ext = filename.toLowerCase().split('.').pop();
   return ext ? `.${ext}` : '';
 };

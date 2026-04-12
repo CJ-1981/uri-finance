@@ -512,6 +512,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
             <div className="flex items-center gap-2">
               <FileUploadSheet
+                uploadMode="single"
                 onUpload={async (file, remark) => {
                   // Store file as pending until transaction is created
                   setPendingFiles(prev => [...prev, { file, remark }]);
