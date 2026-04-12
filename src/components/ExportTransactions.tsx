@@ -143,7 +143,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   const totalRows = transactions.length + 1; // header + data rows
   const totalCols = 7 + cols.length; // 7 base columns + custom columns
 
-  const xml = \`<?xml version="1.0" encoding="UTF-8"?>
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -151,8 +151,8 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:html="http://www.w3.org/TR/REC-html40">
  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-  <Created>\${new Date().toISOString()}</Created>
-  <Version>16.00</Version>
+  <Created>${new Date().toISOString()}</Created>
+  <Version(16.00)</Version>
  </DocumentProperties>
  <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
   <WindowHeight>9000</WindowHeight>
@@ -163,28 +163,28 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
  <Worksheet ss:Name="Transactions">
-  <Table ss:ExpandedColumnCount="\${totalCols}" ss:ExpandedRowCount="\${totalRows}" x:FullRows="1" ss:DefaultRowHeight="15">
-   \${header}
-   \${rows}
+  <Table ss:ExpandedColumnCount="${totalCols}" ss:ExpandedRowCount="${totalRows}" x:FullRows="1" ss:DefaultRowHeight="15">
+   ${header}
+   ${rows}
   </Table>
  </Worksheet>
-</Workbook>\`;
+</Workbook>`;
   const timestamp = getExportTimestamp();
-  downloadFile(xml, `transactions_\${timestamp}.xls`, "application/vnd.ms-excel", msg);
+  downloadFile(xml, `transactions_${timestamp}.xls`, "application/vnd.ms-excel", msg);
 };
 
 const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[], t?: (k: string) => string) => {
-  const colH = cols.map((c) => ` \${c.name} |`).join("");
-  const header = \`| \${h.date} | \${h.type} | \${h.category} | Code | \${h.description} | \${h.amount} | Currency |\${colH}\`;
+  const colH = cols.map((c) => ` ${c.name} |`).join("");
+  const header = `| ${h.date} | ${h.type} | ${h.category} | Code | ${h.description} | ${h.amount} | Currency |${colH}`;
   const colSep = cols.map(() => " ---: |").join("");
-  const sep = \`| --- | --- | --- | --- | --- | ---: | --- |\${colSep}\`;
+  const sep = `| --- | --- | --- | --- | --- | ---: | --- |${colSep}`;
   const rows = transactions.map((tx) => {
     const typeVal = t ? translateType(tx.type, t) : tx.type;
-    const colVals = cols.map((c) => ` \${getCustomVal(tx, c) || "-"} |`).join("");
-    return \`| \${formatDate(tx)} | \${typeVal} | \${tx.category} | \${getCategoryCode(tx, categories) || "-"} | \${tx.description || "-"} | \${formatAmount(tx)} | \${tx.currency || "-"} |\${colVals}\`;
+    const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
+    return `| ${formatDate(tx)} | ${typeVal} | ${tx.category} | ${getCategoryCode(tx, categories) || "-"} | ${tx.description || "-"} | ${formatAmount(tx)} | ${tx.currency || "-"} |${colVals}`;
   });
   const timestamp = getExportTimestamp();
-  downloadFile([header, sep, ...rows].join("\n"), `transactions_\${timestamp}.md`, "text/markdown", msg);
+  downloadFile([header, sep, ...rows].join("\n"), `transactions_${timestamp}.md`, "text/markdown", msg);
 };
 
 // --- CSV Import helpers ---
