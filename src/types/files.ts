@@ -11,7 +11,7 @@ export type FileUploadResult = {
   path: string;
 };
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB in bytes (Supabase limit)
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB in bytes (Supabase limit)
 export const IMAGE_COMPRESSION_THRESHOLD = 1 * 1024 * 1024; // 1 MB (Threshold to trigger image compression)
 export const SIGNED_URL_EXPIRY = 60 * 60; // 60 minutes in seconds
 
