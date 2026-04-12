@@ -227,7 +227,16 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   const filteredTransactions = useMemo(() => {
     if (!searchQuery.trim()) return transactions;
     const q = searchQuery.toLowerCase();
+    
+    // Translation keywords for type search
+    const incomeTerm = (t("tx.income") || "income").toLowerCase();
+    const expenseTerm = (t("tx.expense") || "expense").toLowerCase();
+
     return transactions.filter((tx) => {
+      // Check for type match with translated terms
+      if (tx.type === "income" && incomeTerm.includes(q)) return true;
+      if (tx.type === "expense" && expenseTerm.includes(q)) return true;
+
       if (tx.description?.toLowerCase().includes(q)) return true;
       if (tx.category.toLowerCase().includes(q)) return true;
       if (tx.type.toLowerCase().includes(q)) return true;
@@ -244,7 +253,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
       }
       return false;
     });
-  }, [transactions, searchQuery, maskedColumnNames, categoryCodeMap]);
+  }, [transactions, searchQuery, maskedColumnNames, categoryCodeMap, t]);
 
   // Reset page when search or data changes
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));

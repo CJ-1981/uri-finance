@@ -330,10 +330,18 @@ const handleTransferOwnership = async (newOwnerId: string) => {
     const cols = customColumns;
     const colHeaders = cols.map((c) => c.name).join(",");
     const csvHeader = `${h.date},${h.type},${h.category},${h.description},${h.amount}${cols.length ? "," + colHeaders : ""}`;
+    
+    const translateType = (type: string) => {
+      if (type === "income") return t("tx.income") || "Income";
+      if (type === "expense") return t("tx.expense") || "Expense";
+      return type;
+    };
+
     const csvRows = txs.map((tx: { transaction_date: string; type: string; amount: number; category: string; description?: string; custom_values?: Record<string, number | string> }) => {
       const fmtDate = tx.transaction_date;
       const fmtAmt = `${tx.type === "income" ? "" : "-"}${Number(tx.amount).toFixed(2)}`;
-      const base = `${fmtDate},${tx.type},"${tx.category}","${tx.description || ""}",${fmtAmt}`;
+      const typeVal = translateType(tx.type);
+      const base = `${fmtDate},"${typeVal}","${tx.category}","${tx.description || ""}",${fmtAmt}`;
       const custom = cols.map((c) => {
         const val = tx.custom_values?.[c.name];
         return `"${val != null ? (c.column_type === "numeric" ? Number(val).toFixed(2) : String(val)) : ""}"`;

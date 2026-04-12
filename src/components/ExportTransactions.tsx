@@ -64,6 +64,12 @@ const escapeXML = (val: unknown) => {
 const formatAmount = (tx: Transaction) =>
   `${tx.type === "income" ? "" : "-"}${Number(tx.amount).toFixed(2)}`;
 
+const translateType = (type: string, t: (k: string) => string) => {
+  if (type === "income") return t("tx.income") || "Income";
+  if (type === "expense") return t("tx.expense") || "Expense";
+  return type;
+};
+
 const formatDate = (tx: Transaction) =>
   format(parseISO(tx.transaction_date), "yyyy-MM-dd");
 
@@ -89,11 +95,12 @@ const getCustomVal = (tx: Transaction, col: CustomColumn) => {
   return col.column_type === "numeric" ? Number(val).toFixed(2) : String(val);
 };
 
-const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
+const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[], t?: (k: string) => string) => {
   const colHeaders = cols.map((c) => c.name).join(",");
   const header = `${h.date},${h.type},${h.category},Code,${h.description},${h.amount},Currency${cols.length ? "," + colHeaders : ""}`;
   const rows = transactions.map((tx) => {
-    const base = `${formatDate(tx)},${tx.type},"${tx.category}","${getCategoryCode(tx, categories)}","${tx.description || ""}",${formatAmount(tx)},"${tx.currency || ""}"`;
+    const typeVal = t ? translateType(tx.type, t) : tx.type;
+    const base = `${formatDate(tx)},"${typeVal}","${tx.category}","${getCategoryCode(tx, categories)}","${tx.description || ""}",${formatAmount(tx)},"${tx.currency || ""}"`;
     const custom = cols.map((c) => `"${getCustomVal(tx, c)}"`).join(",");
     return cols.length ? `${base},${custom}` : base;
   });
@@ -101,7 +108,7 @@ const exportCSV = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   downloadFile([header, ...rows].join("\n"), `transactions_${timestamp}.csv`, "text/csv", msg);
 };
 
-const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
+const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[], t?: (k: string) => string) => {
   const colNames = cols.map((c) => c.name);
   const header = `<Row ss:AutoFitHeight="0">
     <Cell><Data ss:Type="String">${escapeXML(h.date)}</Data></Cell>
@@ -115,6 +122,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   </Row>`;
 
   const rows = transactions.map((tx) => {
+    const typeVal = t ? translateType(tx.type, t) : tx.type;
     const customCells = cols.map((c) => {
       const val = getCustomVal(tx, c);
       const type = c.column_type === "numeric" ? "Number" : "String";
@@ -122,7 +130,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
     }).join("");
     return `<Row ss:AutoFitHeight="0">
       <Cell><Data ss:Type="String">${formatDate(tx)}</Data></Cell>
-      <Cell><Data ss:Type="String">${tx.type}</Data></Cell>
+      <Cell><Data ss:Type="String">${escapeXML(typeVal)}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.category)}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(getCategoryCode(tx, categories))}</Data></Cell>
       <Cell><Data ss:Type="String">${escapeXML(tx.description || "")}</Data></Cell>
@@ -135,7 +143,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   const totalRows = transactions.length + 1; // header + data rows
   const totalCols = 7 + cols.length; // 7 base columns + custom columns
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  const xml = \`<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -143,7 +151,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:html="http://www.w3.org/TR/REC-html40">
  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-  <Created>${new Date().toISOString()}</Created>
+  <Created>\${new Date().toISOString()}</Created>
   <Version>16.00</Version>
  </DocumentProperties>
  <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
@@ -155,27 +163,28 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
  <Worksheet ss:Name="Transactions">
-  <Table ss:ExpandedColumnCount="${totalCols}" ss:ExpandedRowCount="${totalRows}" x:FullRows="1" ss:DefaultRowHeight="15">
-   ${header}
-   ${rows}
+  <Table ss:ExpandedColumnCount="\${totalCols}" ss:ExpandedRowCount="\${totalRows}" x:FullRows="1" ss:DefaultRowHeight="15">
+   \${header}
+   \${rows}
   </Table>
  </Worksheet>
-</Workbook>`;
+</Workbook>\`;
   const timestamp = getExportTimestamp();
-  downloadFile(xml, `transactions_${timestamp}.xls`, "application/vnd.ms-excel", msg);
+  downloadFile(xml, `transactions_\${timestamp}.xls`, "application/vnd.ms-excel", msg);
 };
 
-const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[]) => {
-  const colH = cols.map((c) => ` ${c.name} |`).join("");
-  const header = `| ${h.date} | ${h.type} | ${h.category} | Code | ${h.description} | ${h.amount} | Currency |${colH}`;
+const exportMarkdown = (transactions: Transaction[], h: ColumnHeaders, cols: CustomColumn[], msg: string, categories?: Category[], t?: (k: string) => string) => {
+  const colH = cols.map((c) => ` \${c.name} |`).join("");
+  const header = \`| \${h.date} | \${h.type} | \${h.category} | Code | \${h.description} | \${h.amount} | Currency |\${colH}\`;
   const colSep = cols.map(() => " ---: |").join("");
-  const sep = `| --- | --- | --- | --- | --- | ---: | --- |${colSep}`;
+  const sep = \`| --- | --- | --- | --- | --- | ---: | --- |\${colSep}\`;
   const rows = transactions.map((tx) => {
-    const colVals = cols.map((c) => ` ${getCustomVal(tx, c) || "-"} |`).join("");
-    return `| ${formatDate(tx)} | ${tx.type} | ${tx.category} | ${getCategoryCode(tx, categories) || "-"} | ${tx.description || "-"} | ${formatAmount(tx)} | ${tx.currency || "-"} |${colVals}`;
+    const typeVal = t ? translateType(tx.type, t) : tx.type;
+    const colVals = cols.map((c) => ` \${getCustomVal(tx, c) || "-"} |`).join("");
+    return \`| \${formatDate(tx)} | \${typeVal} | \${tx.category} | \${getCategoryCode(tx, categories) || "-"} | \${tx.description || "-"} | \${formatAmount(tx)} | \${tx.currency || "-"} |\${colVals}\`;
   });
   const timestamp = getExportTimestamp();
-  downloadFile([header, sep, ...rows].join("\n"), `transactions_${timestamp}.md`, "text/markdown", msg);
+  downloadFile([header, sep, ...rows].join("\n"), `transactions_\${timestamp}.md`, "text/markdown", msg);
 };
 
 // --- CSV Import helpers ---
@@ -418,15 +427,15 @@ const ExportTransactions = ({ transactions, headers, customColumns, isViewer, ca
         <DropdownMenuContent align="end">
           {transactions.length > 0 && (
             <>
-              <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg, categories)}>
+              <DropdownMenuItem onClick={() => exportCSV(transactions, headers, visibleCols, msg, categories, t)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 {t("export.csv")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg, categories)}>
+              <DropdownMenuItem onClick={() => exportXLS(transactions, headers, visibleCols, msg, categories, t)}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 {t("export.xls")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg, categories)}>
+              <DropdownMenuItem onClick={() => exportMarkdown(transactions, headers, visibleCols, msg, categories, t)}>
                 <FileText className="h-4 w-4 mr-2" />
                 {t("export.markdown")}
               </DropdownMenuItem>
