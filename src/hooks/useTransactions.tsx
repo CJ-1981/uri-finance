@@ -378,9 +378,9 @@ export const useTransactions = (projectId: string | undefined) => {
     onSuccess: (data, variables) => {
       toast.success(t("import.success").replace("{n}", String(variables.txs.length)));
     },
-    onError: (err: any) => {
+    onError: (err: any, variables) => {
       if (isNetworkError(err)) return;
-      toast.error(t("import.failed").replace("{n}", ""));
+      toast.error(t("import.failed").replace("{n}", String(variables.txs.length)));
     },
     onSettled: () => {
       if (navigator.onLine || isStandalone) {

@@ -233,7 +233,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
     const expenseTerm = (t("tx.expense") || "expense").toLowerCase();
 
     return transactions.filter((tx) => {
-      // Check for type match with translated terms
+      // @MX:NOTE Check for type match with translated terms
       if (tx.type === "income" && incomeTerm.includes(q)) return true;
       if (tx.type === "expense" && expenseTerm.includes(q)) return true;
 

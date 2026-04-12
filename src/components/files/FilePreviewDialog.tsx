@@ -68,7 +68,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
   // Threshold for closing dialog (in pixels)
   const CLOSE_THRESHOLD = 100;
 
-  // Reset zoom when file changes or dialog opens/closes
+  // @MX:NOTE Reset zoom when file changes or dialog opens/closes
   useEffect(() => {
     setZoom(1);
   }, [file, open]);
@@ -230,16 +230,16 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
               
               {isImage && previewUrl && (
                 <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} disabled={zoom <= 0.25}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} disabled={zoom <= 0.25} aria-label="Zoom out">
                     <ZoomOut className="h-4 w-4" />
                   </Button>
                   <span className="text-[10px] font-medium w-9 text-center">
                     {Math.round(zoom * 100)}%
                   </span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn} disabled={zoom >= 5}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn} disabled={zoom >= 5} aria-label="Zoom in">
                     <ZoomIn className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleResetZoom}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleResetZoom} aria-label="Reset zoom">
                     <Maximize className="h-4 w-4" />
                   </Button>
                 </div>

@@ -241,6 +241,17 @@ interface ValidationResult { row: ImportRow; errors: string[]; valid: boolean; p
 function validateRow(row: ImportRow, categories: Category[], projectCurrency: string, t: (k: string) => string, customColumns: CustomColumn[]): ValidationResult {
   const errors: string[] = [];
   let typeLower = row.type.toLowerCase();
+  
+  // Normalize localized types back to canonical "income"/"expense"
+  const incomeLabel = (t("tx.income") || "Income").toLowerCase();
+  const expenseLabel = (t("tx.expense") || "Expense").toLowerCase();
+  
+  if (typeLower === incomeLabel) {
+    typeLower = "income";
+  } else if (typeLower === expenseLabel) {
+    typeLower = "expense";
+  }
+
   let amount = Number(row.amount);
 
   // If amount is negative, treat it as an expense and use absolute value

@@ -59,8 +59,11 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
  */
 export const getFileExtension = (filename: string): string => {
   if (!filename || typeof filename !== 'string') return '';
-  const ext = filename.toLowerCase().split('.').pop();
-  return ext ? `.${ext}` : '';
+  const lastIndex = filename.lastIndexOf('.');
+  if (lastIndex > 0 && lastIndex < filename.length - 1) {
+    return filename.substring(lastIndex).toLowerCase();
+  }
+  return '';
 };
 
 /**

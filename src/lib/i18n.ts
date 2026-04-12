@@ -440,6 +440,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.archiveExportDelete": "Export & Archive",
     "admin.archiveConfirm": "This will export {n} transactions as CSV and soft-delete them. Continue?",
     "admin.archiveSuccess": "{n} transactions archived",
+    "admin.archiveError": "Failed to archive transactions",
     "admin.archiveEmpty": "No transactions found in selected range.",
     "admin.archiving": "Archiving...",
 
@@ -1105,6 +1106,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.archiveExportDelete": "내보내기 & 아카이브",
     "admin.archiveConfirm": "{n}개의 거래를 CSV로 내보내고 삭제합니다. 계속하시겠습니까?",
     "admin.archiveSuccess": "{n}개의 거래가 아카이브되었습니다",
+    "admin.archiveError": "아카이브 처리에 실패했습니다",
     "admin.archiveEmpty": "선택한 기간에 거래가 없습니다.",
     "admin.archiving": "아카이브 중...",
 

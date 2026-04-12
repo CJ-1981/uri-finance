@@ -351,43 +351,52 @@ const handleTransferOwnership = async (newOwnerId: string) => {
     const csvContent = [csvHeader, ...csvRows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `archive_${archiveFrom}_${archiveTo}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
 
-    // Soft-delete all archived transactions
-    const ids = txs.map((tx: { id: string }) => tx.id);
-    const batchSize = 50;
-    for (let i = 0; i < ids.length; i += batchSize) {
-      const batch = ids.slice(i, i + batchSize);
-      await supabase
-        .from("transactions")
-        .update({ deleted_at: new Date().toISOString() })
-        .in("id", batch);
-    }
-
-    // Unlink all files associated with archived transactions
-    for (let i = 0; i < ids.length; i += batchSize) {
-      const batch = ids.slice(i, i + batchSize);
-      const { error: unlinkError } = await supabase
-        .from("project_files")
-        .update({ transaction_id: null })
-        .in("transaction_id", batch);
-
-      if (unlinkError) {
-        console.error("Failed to unlink files from archived transactions:", unlinkError);
+    try {
+      // Soft-delete all archived transactions
+      const ids = txs.map((tx: { id: string }) => tx.id);
+      const batchSize = 50;
+      for (let i = 0; i < ids.length; i += batchSize) {
+        const batch = ids.slice(i, i + batchSize);
+        const { error: archiveError } = await supabase
+          .from("transactions")
+          .update({ deleted_at: new Date().toISOString() })
+          .in("id", batch);
+        
+        if (archiveError) throw archiveError;
       }
+
+      // Unlink all files associated with archived transactions
+      for (let i = 0; i < ids.length; i += batchSize) {
+        const batch = ids.slice(i, i + batchSize);
+        const { error: unlinkError } = await supabase
+          .from("project_files")
+          .update({ transaction_id: null })
+          .in("transaction_id", batch);
+
+        if (unlinkError) throw unlinkError;
+      }
+
+      // Export as CSV after successful DB updates
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `archive_${archiveFrom}_${archiveTo}.csv`;
+      a.click();
+      
+      // Invalidate file list cache to refresh UI with unlinked files
+      queryClient.invalidateQueries({ queryKey: ["project-files", activeProject.id] });
+      queryClient.invalidateQueries({ queryKey: ["transactions", activeProject.id] });
+
+      setArchiveFrom("");
+      setArchiveTo("");
+      toast.success(t("admin.archiveSuccess").replace("{n}", String(txs.length)));
+    } catch (err) {
+      console.error("Archive failed:", err);
+      toast.error(t("admin.archiveError") || "Failed to archive transactions");
+    } finally {
+      URL.revokeObjectURL(url);
+      setArchiving(false);
     }
-
-    // Invalidate file list cache to refresh UI with unlinked files
-    queryClient.invalidateQueries({ queryKey: ["project-files", activeProject.id] });
-
-    setArchiving(false);
-    setArchiveFrom("");
-    setArchiveTo("");
-    toast.success(t("admin.archiveSuccess").replace("{n}", String(txs.length)));
   };
 
   const handleDeleteProject = async () => {
