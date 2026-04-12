@@ -670,6 +670,8 @@ const Dashboard = () => {
                 headers={headers} 
                 customColumns={customColumns} 
                 isViewer={isViewer}
+                role={effectiveRole}
+                isOwner={isOwner}
                 hasNextPage={hasNextPage}
                 fetchNextPage={fetchNextPage}
                 isFetchingNextPage={isFetchingNextPage}
@@ -740,6 +742,8 @@ const Dashboard = () => {
               onDelete={deleteTransaction}
               customColumns={customColumns}
               isViewer={isViewer}
+              role={effectiveRole}
+              isOwner={isOwner}
               transactionList={bulkEditTxs.length > 0 ? bulkEditTxs : navigableTxs}
               onNavigate={handleNavigateTx}
               allTransactions={transactions}

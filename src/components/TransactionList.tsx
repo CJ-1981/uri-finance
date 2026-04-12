@@ -8,6 +8,7 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NumberedSelect from "@/components/NumberedSelect";
@@ -35,6 +36,8 @@ interface Props {
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
   isViewer?: boolean;
+  role?: UserRole;
+  isOwner?: boolean;
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
@@ -67,6 +70,8 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   headers, 
   customColumns, 
   isViewer,
+  role,
+  isOwner,
   hasNextPage,
   fetchNextPage,
   isFetchingNextPage
@@ -74,6 +79,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   const { t } = useI18n();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const isAdmin = role === "admin" || isOwner;
   const searchRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({ focusSearch: () => searchRef.current?.focus() }));
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,7 +117,8 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
 
   // Handle long press on transaction item
   const handleTouchStart = (tx: Transaction, e: React.TouchEvent) => {
-    if (!isMobile || isViewer || !ownTxIds.has(tx.id) || isTouchBlocked()) return;
+    if (!isMobile || isViewer || isTouchBlocked()) return;
+    if (!isAdmin && tx.user_id !== user?.id) return;
 
     const touch = e.touches[0];
     const rect = e.currentTarget.getBoundingClientRect();
@@ -296,7 +303,10 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
     return sums;
   }, [selectMode, selected, filteredTransactions]);
 
-  const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
+  const ownTxIds = useMemo(() => 
+    new Set(transactions.filter((tx) => isAdmin || tx.user_id === user?.id).map((tx) => tx.id)),
+    [transactions, isAdmin, user?.id]
+  );
 
   const toggleSelect = (id: string) => {
     if (!ownTxIds.has(id)) return;
@@ -446,7 +456,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             selectMode ? toggleSelect(tx.id) : onSelect(tx);
           }}
           onContextMenu={(e) => {
-            if (!isViewer && !selectMode && ownTxIds.has(tx.id)) {
+            if (!isViewer && !selectMode && (isAdmin || tx.user_id === user?.id)) {
               e.preventDefault();
               setSelectMode(true);
               setSelected(new Set([tx.id]));
