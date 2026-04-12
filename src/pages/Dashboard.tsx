@@ -63,7 +63,7 @@ const Dashboard = () => {
     filters: { status: 'pending' },
   });
   const pendingCount = pendingMutations.length;
-  const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading, isSystemAdmin, updateProjectOrder, setDefaultProject } = useProjects();
+  const { projects, activeProject, setActiveProject, createProject, updateProject, joinProject, loading: projectsLoading, isSystemAdmin, updateProjectOrder, setDefaultProject } = useProjects();
   const { fontSize, increaseFontSize, decreaseFontSize, resetFontSize } = useFontSize();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const recoveryDialogShownRef = useRef(false);
@@ -94,6 +94,7 @@ const Dashboard = () => {
   };
   const { 
     transactions, 
+    loading: transactionsLoading,
     addTransaction, 
     updateTransaction, 
     deleteTransaction, 
@@ -368,7 +369,7 @@ const Dashboard = () => {
   useKeyboardShortcut("prevTx", goPrevTx, canNavigate, undefined, true);
 
   // Show loading screen when loading and no project
-  if (loading && !activeProject) {
+  if (projectsLoading && !activeProject) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center py-20 text-center animate-fade-in">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -675,6 +676,7 @@ const Dashboard = () => {
                 hasNextPage={hasNextPage}
                 fetchNextPage={fetchNextPage}
                 isFetchingNextPage={isFetchingNextPage}
+                isLoading={transactionsLoading}
               />
             ) : view === "charts" ? (
               <div className="space-y-4">

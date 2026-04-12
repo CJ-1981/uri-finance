@@ -41,6 +41,7 @@ interface Props {
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
+  isLoading?: boolean;
 }
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
@@ -74,7 +75,8 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   isOwner,
   hasNextPage,
   fetchNextPage,
-  isFetchingNextPage
+  isFetchingNextPage,
+  isLoading
 }, ref) => {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -363,6 +365,15 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
     const selectedTxs = filteredTransactions.filter((tx) => selected.has(tx.id));
     onBulkEditOpen(selectedTxs);
   };
+
+  if (isLoading) {
+    return (
+      <div className="py-20 flex flex-col items-center justify-center text-muted-foreground animate-fade-in">
+        <Loader2 className="h-10 w-10 animate-spin text-primary/60 mb-4" />
+        <p className="text-sm font-medium">{t("global.loading") || "Loading transactions..."}</p>
+      </div>
+    );
+  }
 
   if (transactions.length === 0) {
     return (
