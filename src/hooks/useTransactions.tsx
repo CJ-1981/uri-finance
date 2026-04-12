@@ -2,6 +2,7 @@ import { useMemo, useCallback } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useI18n } from "@/hooks/useI18n";
 import { toast } from "sonner";
 import { isNetworkError } from "@/lib/networkUtils";
 import { format } from "date-fns";
@@ -43,6 +44,7 @@ export type PageParam = { lastId: string } | { date: string; createdAt: string }
 
 export const useTransactions = (projectId: string | undefined) => {
   const { user, isStandalone } = useAuth();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
 
   const TRANSACTIONS_KEY = ["infinite_transactions", projectId];
@@ -189,7 +191,7 @@ export const useTransactions = (projectId: string | undefined) => {
       return { previous };
     },
     onSuccess: (data, variables) => {
-      toast.success("Transaction added!", { duration: 2000 });
+      toast.success(t("tx.added"), { duration: 2000 });
       queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
         if (!old) return old;
         return {
@@ -202,11 +204,11 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onError: (err: any, variables, context) => {
       if (isNetworkError(err)) {
-        toast.info("Saved offline - will sync when online");
+        toast.info(t("dash.offlineHint"));
         return;
       }
       queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
-      toast.error("Failed to add transaction");
+      toast.error(t("tx.addFailed"));
     },
     onSettled: () => {
       if (navigator.onLine || isStandalone) {
@@ -250,14 +252,14 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onError: (err: any, variables, context) => {
       if (isNetworkError(err)) {
-        toast.info("Update saved offline");
+        toast.info(t("dash.offlineHint"));
         return;
       }
       queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
-      toast.error("Failed to update transaction");
+      toast.error(t("tx.updateFailed"));
     },
     onSuccess: (data, variables) => {
-      toast.success("Transaction updated!");
+      toast.success(t("tx.updated"));
       queryClient.setQueryData(TRANSACTIONS_KEY, (old: any) => {
         if (!old) return old;
         return {
@@ -317,14 +319,14 @@ export const useTransactions = (projectId: string | undefined) => {
     },
     onError: (err: any, variables, context) => {
       if (isNetworkError(err)) {
-        toast.info("Delete pending offline");
+        toast.info(t("dash.offlineHint"));
         return;
       }
       queryClient.setQueryData(TRANSACTIONS_KEY, context?.previous);
-      toast.error("Failed to delete transaction");
+      toast.error(t("tx.deleteFailed"));
     },
     onSuccess: () => {
-      toast.success("Transaction deleted");
+      toast.success(t("tx.deleted"));
       if (projectId && navigator.onLine) {
         queryClient.invalidateQueries({ queryKey: ["project-files", projectId] });
       }
@@ -373,12 +375,12 @@ export const useTransactions = (projectId: string | undefined) => {
       const { error } = await supabase.from("transactions").insert(rows);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast.success("Transactions imported!");
+    onSuccess: (data, variables) => {
+      toast.success(t("import.success").replace("{n}", String(variables.txs.length)));
     },
-    onError: (err: any) => {
+    onError: (err: any, variables) => {
       if (isNetworkError(err)) return;
-      toast.error("Failed to import transactions");
+      toast.error(t("import.failed").replace("{n}", String(variables.txs.length)));
     },
     onSettled: () => {
       if (navigator.onLine || isStandalone) {

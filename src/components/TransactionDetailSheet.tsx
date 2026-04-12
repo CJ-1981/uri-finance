@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Transaction } from "@/hooks/useTransactions";
 import { Category } from "@/hooks/useCategories";
 import { CustomColumn } from "@/hooks/useCustomColumns";
+import { UserRole } from "@/hooks/useUserRole";
 import { useI18n } from "@/hooks/useI18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -40,6 +41,8 @@ interface Props {
   onUpdate: (id: string, updates: Partial<Pick<Transaction, "type" | "amount" | "category" | "description" | "transaction_date" | "custom_values" | "currency">>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   isViewer?: boolean;
+  role?: UserRole;
+  isOwner?: boolean;
   /** For multi-edit: full list of selected transactions */
   transactionList?: Transaction[];
   onNavigate?: (tx: Transaction) => void;
@@ -53,7 +56,24 @@ interface Props {
   projectCurrency?: string;
 }
 
-const TransactionDetailSheet = ({ transaction, categories, customColumns, open, onOpenChange, onUpdate, onDelete, isViewer, transactionList, onNavigate, allTransactions, projectId, onViewInFiles, projectCurrency }: Props) => {
+const TransactionDetailSheet = ({ 
+  transaction, 
+  categories, 
+  customColumns, 
+  open, 
+  onOpenChange, 
+  onUpdate, 
+  onDelete, 
+  isViewer, 
+  role,
+  isOwner,
+  transactionList, 
+  onNavigate, 
+  allTransactions, 
+  projectId, 
+  onViewInFiles, 
+  projectCurrency 
+}: Props) => {
   const { user } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
@@ -75,7 +95,8 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
   const { files, isLoading: isLoadingFiles, downloadFile, uploadFile, isUploading } = useFiles(projectId || "");
   const transactionFiles = transaction && projectId ? files.filter(f => f.transaction_id === transaction.id) : [];
 
-  const isOwn = !isViewer && transaction?.user_id === user?.id;
+  const isAdmin = role === "admin" || isOwner;
+  const isOwn = !isViewer && (isAdmin || transaction?.user_id === user?.id);
 
   // Build suggestion lists per text column
   const columnSuggestions = useMemo(() => {
@@ -388,6 +409,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           {isOwn && transaction && (
             <div className="flex items-center gap-2">
               <FileUploadSheet
+                uploadMode="single"
                 onUpload={async (file, remark) => {
                   try {
                     await uploadFile({ file, remark, transactionId: transaction.id });
@@ -687,7 +709,7 @@ const TransactionDetailSheet = ({ transaction, categories, customColumns, open, 
           ref={sheetRef}
           onKeyDown={handleFormKeyDown}
           side="bottom"
-          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
+          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl w-full max-w-2xl mx-auto"
           tabIndex={-1}
           onOpenAutoFocus={(e) => {
             if (!isMobile && amountInputRef.current && !amountInputRef.current.disabled) {

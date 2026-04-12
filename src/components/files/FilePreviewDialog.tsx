@@ -3,7 +3,7 @@
 // Created: 2026-03-21
 // Updated: 2026-03-22 - Added drag-to-close functionality for mobile
 
-import { File, Download, Loader2 } from 'lucide-react';
+import { File, Download, Loader2, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { useState, useEffect, useRef, TouchEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -56,6 +56,7 @@ const canPreview = (mimeType: string): boolean => {
 export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialogProps) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const isMobile = useIsMobile();
 
   // Drag-to-close state for mobile
@@ -66,6 +67,11 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
 
   // Threshold for closing dialog (in pixels)
   const CLOSE_THRESHOLD = 100;
+
+  // @MX:NOTE Reset zoom when file changes or dialog opens/closes
+  useEffect(() => {
+    setZoom(1);
+  }, [file, open]);
 
   // Fetch signed URL or create local URL when file or open state changes
   useEffect(() => {
@@ -139,9 +145,13 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
     }
   };
 
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 5));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.25));
+  const handleResetZoom = () => setZoom(1);
+
   // Touch handlers for drag-to-close on mobile
   const handleTouchStart = (e: TouchEvent) => {
-    if (!isMobile) return;
+    if (!isMobile || zoom !== 1) return;
     const touch = e.touches[0];
     setDragStartY(touch.clientY);
     setCurrentDragY(touch.clientY);
@@ -149,7 +159,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
   };
 
   const handleTouchMove = (e: TouchEvent) => {
-    if (!isMobile || !isDragging) return;
+    if (!isMobile || !isDragging || zoom !== 1) return;
     const touch = e.touches[0];
     const deltaY = touch.clientY - dragStartY;
     // Only allow dragging down
@@ -159,7 +169,7 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
   };
 
   const handleTouchEnd = () => {
-    if (!isMobile || !isDragging) return;
+    if (!isMobile || !isDragging || zoom !== 1) return;
     const dragDistance = currentDragY - dragStartY;
 
     if (dragDistance > CLOSE_THRESHOLD) {
@@ -208,21 +218,43 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
         {/* Wrapper div for drag animation - doesn't interfere with DialogContent positioning */}
         <div ref={contentRef} style={dragWrapperStyle} className="flex flex-col flex-1 min-h-0 gap-4">
           <DialogHeader className="flex-shrink-0">
-            <DialogTitle className="truncate pr-8" title={file.file_name}>
-              {file.file_name}
-            </DialogTitle>
-            <DialogDescription className="sr-only">
-              File preview window for {file.file_name} showing file content or download options.
-            </DialogDescription>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <DialogTitle className="truncate pr-8" title={file.file_name}>
+                  {file.file_name}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  File preview window for {file.file_name} showing file content or download options.
+                </DialogDescription>
+              </div>
+              
+              {isImage && previewUrl && (
+                <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomOut} disabled={zoom <= 0.25} aria-label="Zoom out">
+                    <ZoomOut className="h-4 w-4" />
+                  </Button>
+                  <span className="text-[10px] font-medium w-9 text-center">
+                    {Math.round(zoom * 100)}%
+                  </span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleZoomIn} disabled={zoom >= 5} aria-label="Zoom in">
+                    <ZoomIn className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleResetZoom} aria-label="Reset zoom">
+                    <Maximize className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
             {/* Visual indicator for drag-to-close on mobile */}
-            {isMobile && (
+            {isMobile && zoom === 1 && (
               <div className="flex justify-center pb-2">
                 <div className="w-12 h-1.5 bg-muted-foreground/30 rounded-full" />
               </div>
             )}
           </DialogHeader>
 
-          <div className="flex-1 min-h-0 flex items-center justify-center bg-muted/30 rounded-lg overflow-hidden">
+          <div className="flex-1 min-h-0 flex items-center justify-center bg-muted/30 rounded-lg overflow-auto">
             {isLoading ? (
               <div className="text-center">
                 <Loader2 className="h-8 w-8 text-muted-foreground mx-auto mb-4 animate-spin" />
@@ -235,11 +267,19 @@ export const FilePreviewDialog = ({ file, open, onOpenChange }: FilePreviewDialo
                 <p className="text-sm text-muted-foreground mt-2">Please download to view the file</p>
               </div>
             ) : isImage ? (
-              <img
-                src={previewUrl ?? ''}
-                alt={file.file_name}
-                className="max-w-full max-h-full object-contain"
-              />
+              <div 
+                className="relative transition-transform duration-200 ease-out flex items-center justify-center min-h-full min-w-full"
+                style={{ 
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'center center'
+                }}
+              >
+                <img
+                  src={previewUrl ?? ''}
+                  alt={file.file_name}
+                  className="max-w-full max-h-full object-contain shadow-md"
+                />
+              </div>
             ) : isPdf ? (
               <iframe
                 src={previewUrl ?? ''}

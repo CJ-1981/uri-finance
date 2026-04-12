@@ -33,7 +33,7 @@ const COMPRESSIBLE_IMAGE_TYPES = [
 ];
 
 // Compression quality (0.1 to 1.0, where 1.0 is maximum quality)
-const COMPRESSION_QUALITY = 0.8;
+const COMPRESSION_QUALITY = 0.5;
 
 // Maximum size before attempting compression (1MB)
 const COMPRESSION_THRESHOLD = IMAGE_COMPRESSION_THRESHOLD;

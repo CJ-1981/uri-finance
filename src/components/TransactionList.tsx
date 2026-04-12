@@ -8,6 +8,7 @@ import { CustomColumn } from "@/hooks/useCustomColumns";
 import { useI18n } from "@/hooks/useI18n";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NumberedSelect from "@/components/NumberedSelect";
@@ -35,6 +36,8 @@ interface Props {
   headers: ColumnHeaders;
   customColumns: CustomColumn[];
   isViewer?: boolean;
+  role?: UserRole;
+  isOwner?: boolean;
   hasNextPage?: boolean;
   fetchNextPage?: () => void;
   isFetchingNextPage?: boolean;
@@ -67,6 +70,8 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   headers, 
   customColumns, 
   isViewer,
+  role,
+  isOwner,
   hasNextPage,
   fetchNextPage,
   isFetchingNextPage
@@ -74,6 +79,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   const { t } = useI18n();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const isAdmin = role === "admin" || isOwner;
   const searchRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({ focusSearch: () => searchRef.current?.focus() }));
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,7 +117,8 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
 
   // Handle long press on transaction item
   const handleTouchStart = (tx: Transaction, e: React.TouchEvent) => {
-    if (!isMobile || isViewer || !ownTxIds.has(tx.id) || isTouchBlocked()) return;
+    if (!isMobile || isViewer || isTouchBlocked()) return;
+    if (!isAdmin && tx.user_id !== user?.id) return;
 
     const touch = e.touches[0];
     const rect = e.currentTarget.getBoundingClientRect();
@@ -220,7 +227,16 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
   const filteredTransactions = useMemo(() => {
     if (!searchQuery.trim()) return transactions;
     const q = searchQuery.toLowerCase();
+    
+    // Translation keywords for type search
+    const incomeTerm = (t("tx.income") || "income").toLowerCase();
+    const expenseTerm = (t("tx.expense") || "expense").toLowerCase();
+
     return transactions.filter((tx) => {
+      // @MX:NOTE Check for type match with translated terms
+      if (tx.type === "income" && incomeTerm.includes(q)) return true;
+      if (tx.type === "expense" && expenseTerm.includes(q)) return true;
+
       if (tx.description?.toLowerCase().includes(q)) return true;
       if (tx.category.toLowerCase().includes(q)) return true;
       if (tx.type.toLowerCase().includes(q)) return true;
@@ -237,7 +253,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
       }
       return false;
     });
-  }, [transactions, searchQuery, maskedColumnNames, categoryCodeMap]);
+  }, [transactions, searchQuery, maskedColumnNames, categoryCodeMap, t]);
 
   // Reset page when search or data changes
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
@@ -296,7 +312,10 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
     return sums;
   }, [selectMode, selected, filteredTransactions]);
 
-  const ownTxIds = new Set(transactions.filter((tx) => tx.user_id === user?.id).map((tx) => tx.id));
+  const ownTxIds = useMemo(() => 
+    new Set(transactions.filter((tx) => isAdmin || tx.user_id === user?.id).map((tx) => tx.id)),
+    [transactions, isAdmin, user?.id]
+  );
 
   const toggleSelect = (id: string) => {
     if (!ownTxIds.has(id)) return;
@@ -446,7 +465,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
             selectMode ? toggleSelect(tx.id) : onSelect(tx);
           }}
           onContextMenu={(e) => {
-            if (!isViewer && !selectMode && ownTxIds.has(tx.id)) {
+            if (!isViewer && !selectMode && (isAdmin || tx.user_id === user?.id)) {
               e.preventDefault();
               setSelectMode(true);
               setSelected(new Set([tx.id]));
@@ -537,7 +556,7 @@ const TransactionList = forwardRef<TransactionListHandle, Props>(({
                 value={String(pageSize)}
                 onValueChange={(v) => { const n = Number(v); setPageSize(n); localStorage.setItem("tx_page_size", v); setPage(0); }}
                 items={PAGE_SIZES.map((s) => ({ value: String(s), label: String(s) }))}
-                className="h-7 min-w-[72px] w-fit text-xs bg-muted/30 border-border/50 px-2"
+                className="h-7 w-[4.5rem] text-xs bg-muted/30 border-border/50 px-2"
                 showNumbers
               />
               <span className="text-xs text-muted-foreground">/ {t("tx.page") || "page"}</span>

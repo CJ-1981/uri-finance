@@ -512,6 +512,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
 
             <div className="flex items-center gap-2">
               <FileUploadSheet
+                uploadMode="single"
                 onUpload={async (file, remark) => {
                   // Store file as pending until transaction is created
                   setPendingFiles(prev => [...prev, { file, remark }]);
@@ -691,7 +692,7 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
           ref={sheetRef}
           onKeyDown={handleFormKeyDown}
           side="bottom"
-          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
+          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl w-full max-w-2xl mx-auto"
           data-testid="add-transaction-form"
           tabIndex={-1}
           onOpenAutoFocus={(e) => {

@@ -11,7 +11,7 @@ export type FileUploadResult = {
   path: string;
 };
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB in bytes (Supabase limit)
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB in bytes (Supabase limit)
 export const IMAGE_COMPRESSION_THRESHOLD = 1 * 1024 * 1024; // 1 MB (Threshold to trigger image compression)
 export const SIGNED_URL_EXPIRY = 60 * 60; // 60 minutes in seconds
 
@@ -58,8 +58,12 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
  * @returns Lowercase file extension with dot (e.g., ".pdf")
  */
 export const getFileExtension = (filename: string): string => {
-  const ext = filename.toLowerCase().split('.').pop();
-  return ext ? `.${ext}` : '';
+  if (!filename || typeof filename !== 'string') return '';
+  const lastIndex = filename.lastIndexOf('.');
+  if (lastIndex > 0 && lastIndex < filename.length - 1) {
+    return filename.substring(lastIndex).toLowerCase();
+  }
+  return '';
 };
 
 /**
