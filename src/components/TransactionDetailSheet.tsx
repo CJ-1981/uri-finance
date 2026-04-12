@@ -709,7 +709,7 @@ const TransactionDetailSheet = ({
           ref={sheetRef}
           onKeyDown={handleFormKeyDown}
           side="bottom"
-          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl"
+          className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 h-[85vh] sm:h-[90vh] flex flex-col outline-none shadow-2xl w-full max-w-2xl mx-auto left-1/2 -translate-x-1/2"
           tabIndex={-1}
           onOpenAutoFocus={(e) => {
             if (!isMobile && amountInputRef.current && !amountInputRef.current.disabled) {

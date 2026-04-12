@@ -152,7 +152,7 @@ const exportXLS = (transactions: Transaction[], h: ColumnHeaders, cols: CustomCo
  xmlns:html="http://www.w3.org/TR/REC-html40">
  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
   <Created>${new Date().toISOString()}</Created>
-  <Version(16.00)</Version>
+  <Version>16.00</Version>
  </DocumentProperties>
  <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
   <WindowHeight>9000</WindowHeight>
