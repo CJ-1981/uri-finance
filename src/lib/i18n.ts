@@ -1082,7 +1082,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     "admin.selectAll": "모두",
     "admin.selected": "{n}개 선택됨",
     "admin.transaction": "거래",
-    "admin.transactions": "거래",
+    "admin.transactions": "거래 내역",
     "admin.bulkRestore": "복원",
     "admin.bulkRestoreConfirmTitle": "선택한 거래를 복원하시겠습니까?",
     "admin.bulkDelete": "삭제",
