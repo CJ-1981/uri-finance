@@ -59,7 +59,7 @@ const BulkEditSheet = ({ transactions, categories, open, onOpenChange, onBulkUpd
 
   return (
     <Sheet open={open} onOpenChange={handleSheetOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[60vh] flex flex-col">
+      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-0 pb-0 max-h-[60vh] flex flex-col w-full max-w-2xl mx-auto left-1/2 -translate-x-1/2">
         <div className="px-6 pt-6 pb-2 shrink-0 border-b border-border/5">
           <SheetHeader>
             <SheetTitle className="text-foreground">

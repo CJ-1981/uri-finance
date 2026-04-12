@@ -257,7 +257,7 @@ export const FileUploadSheet = ({ onUpload, isUploading, remark = '', onRemarkCh
           {t('files.uploadFile')}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8">
+      <SheetContent side="bottom" className="rounded-t-3xl bg-card border-border/50 px-6 pb-8 w-full max-w-2xl mx-auto left-1/2 -translate-x-1/2">
         <SheetHeader>
           <SheetTitle>{t('files.uploadFile')}</SheetTitle>
           <SheetDescription className="sr-only">
