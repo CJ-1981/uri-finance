@@ -92,6 +92,27 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
     }
   }, [open, customColumns]);
 
+  // Calculate most used categories for shortcuts
+  const mostUsedCategories = useMemo(() => {
+    const counts: Record<string, number> = {};
+    // Only look at last 100 transactions for relevance
+    const recentTxs = transactions.slice(0, 100);
+    recentTxs.forEach(tx => {
+      counts[tx.category] = (counts[tx.category] || 0) + 1;
+    });
+
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5) // Show top 5
+      .map(([name]) => {
+        const cat = categories.find(c => c.name === name);
+        return {
+          name,
+          icon: cat?.icon || "📁"
+        };
+      });
+  }, [transactions, categories]);
+
   // Build suggestion lists per text column: imported + historical
   const columnSuggestions = useMemo(() => {
     const map: Record<string, string[]> = {};
@@ -338,11 +359,33 @@ const AddTransactionSheet = ({ categories, customColumns, transactions, projectC
         {/* Category */}
         <div className="space-y-2">
           <Label className="text-muted-foreground text-xs">{t("tx.category")}</Label>
-          <CategoryNameSelector
-            categories={categories}
-            selectedCategoryName={category}
-            onCategoryChange={setCategory}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <CategoryNameSelector
+              categories={categories}
+              selectedCategoryName={category}
+              onCategoryChange={setCategory}
+            />
+            {mostUsedCategories.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {mostUsedCategories.map((cat, idx) => (
+                  <button
+                    key={`${cat.name}-${idx}`}
+                    type="button"
+                    onClick={() => setCategory(cat.name)}
+                    className={cn(
+                      "flex items-center gap-1 px-2 py-1.5 rounded-full text-[10px] font-medium transition-all border",
+                      category === cat.name
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-muted/30 text-muted-foreground border-border/50 hover:bg-muted/50 hover:border-border"
+                    )}
+                  >
+                    <span>{cat.icon}</span>
+                    <span className="max-w-[80px] truncate">{cat.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Custom columns (after category) */}

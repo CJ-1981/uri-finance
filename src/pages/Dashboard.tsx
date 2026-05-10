@@ -115,7 +115,7 @@ const Dashboard = () => {
   const [view, setView] = useState<"list" | "charts" | "cash" | "files">("list");
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [period, setPeriod] = useState<PeriodKey>("all");
+  const [period, setPeriod] = useState<PeriodKey>("today");
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const navigate = useNavigate();

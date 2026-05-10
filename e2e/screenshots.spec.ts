@@ -75,7 +75,7 @@ test.describe('App Screenshots', () => {
       await page.waitForSelector('[data-testid="dashboard"]');
 
       // Try to change period to "All" to show any existing transactions
-      const periodButton = page.locator('button:has-text("전체"), button:has-text("All")').first();
+      const periodButton = page.locator('button').filter({ hasText: /전체|All|오늘|Today|기간|Period/ }).first();
       if (await periodButton.isVisible().catch(() => false)) {
         await periodButton.click();
         await page.waitForTimeout(1000);
@@ -194,7 +194,7 @@ test.describe('App Screenshots', () => {
       await page.waitForSelector('[data-testid="dashboard"]');
 
       // Click period selector button
-      const periodButton = page.locator('button').filter({ hasText: /전체|All|기간|Period/ }).first();
+      const periodButton = page.locator('button').filter({ hasText: /전체|All|오늘|Today|기간|Period/ }).first();
       await periodButton.click();
       await page.waitForTimeout(500);
 
